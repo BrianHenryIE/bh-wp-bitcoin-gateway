@@ -115,7 +115,7 @@ class Order {
 		// Schedule address generation if needed.
 		if ( $num_remaining_addresses < 20 ) {
 			$this->logger->debug( "Under 20 addresses ($num_remaining_addresses) remaining, scheduling generate_new_addresses background job.", array( 'num_remaining_addresses' => $num_remaining_addresses ) );
-			$this->background_jobs->schedule_check_assigned_bitcoin_address_for_transactions();
+			$this->background_jobs->schedule_generate_new_addresses();
 		}
 	}
 
