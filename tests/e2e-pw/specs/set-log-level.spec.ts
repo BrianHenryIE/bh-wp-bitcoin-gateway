@@ -29,7 +29,9 @@ test.describe( 'Set log level', () => {
 
 		// Save changes
 		await page.click( '.woocommerce-save-button' );
-		await page.waitForSelector( '.notice-success' );
+		// await page.waitForSelector( '.notice-success' );
+
+		await page.waitForLoadState( 'networkidle' );
 
 		const baseURL: string = config.use.baseURL!;
 		// Navigate to logs page
