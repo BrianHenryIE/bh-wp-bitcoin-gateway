@@ -5,7 +5,6 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 use BrianHenryIE\ColorLogger\ColorLogger;
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduling_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use Codeception\Stub\Expected;
 
 /**
@@ -48,7 +47,7 @@ class Order_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 		$logger               = new ColorLogger();
 		$background_jobs_mock = $this->makeEmpty( Background_Jobs_Scheduling_Interface::class );
 		$api                  = $this->makeEmpty(
-			API_Interface::class,
+			API_WooCommerce_Interface::class,
 			array(
 				'is_order_has_bitcoin_gateway' => Expected::never(),
 			)

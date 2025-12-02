@@ -43,6 +43,7 @@ class Admin_Order_UI {
 	 */
 	public function register_address_transactions_meta_box(): void {
 
+		/** @var WP_Post $post */
 		global $post;
 
 		if ( 'shop_order' !== $post->post_type ) {

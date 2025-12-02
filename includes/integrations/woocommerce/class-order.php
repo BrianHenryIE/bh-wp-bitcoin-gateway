@@ -42,11 +42,11 @@ class Order {
 	/**
 	 * Constructor.
 	 *
-	 * @param API_Interface   $api The main plugin functions. Used to check is the gateway a Bitcoin gateway.
-	 * @param LoggerInterface $logger A PSR logger.
+	 * @param API_WooCommerce_Interface $api The main plugin functions. Used to check is the gateway a Bitcoin gateway.
+	 * @param LoggerInterface           $logger A PSR logger.
 	 */
 	public function __construct(
-		protected API_Interface $api,
+		protected API_WooCommerce_Interface $api,
 		protected Background_Jobs_Scheduling_Interface $background_jobs,
 		LoggerInterface $logger
 	) {
@@ -107,8 +107,7 @@ class Order {
 		$bitcoin_order = $this->api->get_order_details( $order );
 
 		$wallet_id = $bitcoin_order->get_address()->get_wallet_parent_post_id();
-		/** @var Bitcoin_Wallet $wallet */
-		$wallet = new Bitcoin_Wallet( $wallet_id );
+		$wallet    = new Bitcoin_Wallet( $wallet_id );
 
 		$num_remaining_addresses = count( $wallet->get_fresh_addresses() );
 

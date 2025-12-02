@@ -325,7 +325,7 @@ trait API_WooCommerce_Trait {
 			}
 		}
 
-		if ( $updated ) {
+		if ( $updated && ! is_null( $confirmed_value_current ) ) {
 			$bitcoin_order->set_amount_received( $confirmed_value_current );
 		}
 		$bitcoin_order->set_last_checked_time( $time_now );

@@ -10,7 +10,6 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Currency;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\UnknownCurrencyException;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
-use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
 use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
 use Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
@@ -123,7 +122,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 			$method_description .= $this->get_formatted_link_to_order_confirmation_edit();
 		}
 
-		return apply_filters( 'woocommerce_gateway_method_description', $method_description, $this );
+		return (string) apply_filters( 'woocommerce_gateway_method_description', $method_description, $this );
 	}
 
 	/**
@@ -323,7 +322,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 			'default'     => 'info',
 		);
 
-		$this->form_fields = apply_filters( 'wc_gateway_bitcoin_form_fields', $settings_fields, $this->id );
+		$this->form_fields = (array) apply_filters( 'wc_gateway_bitcoin_form_fields', $settings_fields, $this->id );
 	}
 
 

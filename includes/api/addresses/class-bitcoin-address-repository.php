@@ -102,9 +102,8 @@ class Bitcoin_Address_Repository {
 		return new Bitcoin_Address( $post_id );
 	}
 
-
 	/**
-	 * @param Bitcoin_Address_Status $post_staus
+	 * @param Bitcoin_Address_Status $post_staus Status unused|assigned|etc. that should be returned.
 	 * @param int                    $number_posts Defaults to WP_Query's max of 200.
 	 *
 	 * @return WP_Post[]

@@ -71,14 +71,24 @@ class Bitcoin_Address {
 		$this->post_id                         = $post_id;
 		$this->wallet_parent_post_id           = $this->post->post_parent;
 		$this->status                          = Bitcoin_Address_Status::from( $this->post->post_status );
-		$this->derivation_path_sequence_number = (int) get_post_meta( $post_id, self::DERIVATION_PATH_SEQUENCE_NUMBER_META_KEY, true );
+		$this->derivation_path_sequence_number = ( function () use ( $post_id ) {
+			$meta_value = intval( get_post_meta( $post_id, self::DERIVATION_PATH_SEQUENCE_NUMBER_META_KEY, true ) );
+			return $meta_value ?: null;
+		} )();
 		$this->raw_address                     = $this->post->post_excerpt;
-		$this->transactions                    = get_post_meta( $post_id, self::TRANSACTION_META_KEY, true ) ?: null;
-		$balance                               = get_post_meta( $post_id, self::BALANCE_META_KEY, true );
-		$this->balance                         = empty( $balance ) ? null : Money::of( $balance, 'BTC' );
-		$target_amount                         = get_post_meta( $post_id, self::TARGET_AMOUNT_META_KEY, true );
-		$this->target_amount                   = empty( $target_amount ) ? null : Money::of( ...$target_amount );
-		$this->order_id                        = intval( get_post_meta( $post_id, self::ORDER_ID_META_KEY, true ) );
+		$this->transactions                    = ( function () use ( $post_id ): ?array {
+			$transactions_meta = (array) get_post_meta( $post_id, self::TRANSACTION_META_KEY, true ) ?: null;
+			return empty( $transactions_meta ) ? null : $transactions_meta;
+		} )();
+		$this->balance                         = ( function () use ( $post_id ): ?Money {
+			$balance_meta = (array) get_post_meta( $post_id, self::BALANCE_META_KEY, true );
+			return empty( $balance_meta ) ? null : Money::of( ...$balance_meta );
+		} )();
+		$this->target_amount                   = ( function () use ( $post_id ): ?Money {
+			$target_amount = (array) get_post_meta( $post_id, self::TARGET_AMOUNT_META_KEY, true );
+			return empty( $target_amount ) ? null : Money::of( ...$target_amount );
+		} )();
+		$this->order_id                        = intval( get_post_meta( $post_id, self::ORDER_ID_META_KEY, true ) ) ?: null;
 	}
 
 	/**

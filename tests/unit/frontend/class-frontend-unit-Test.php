@@ -33,6 +33,7 @@ class Frontend_Unit_Test extends \Codeception\Test\Unit {
 	 */
 	public function test_enqueue_styles(): void {
 
+		/** @var string $plugin_root_dir */
 		global $plugin_root_dir;
 		$plugin_root_url = 'http://localhost:8080/bh-wp-bitcoin-gateway/wp-content/plugins/bh-wp-bitcoin-gateway/';
 

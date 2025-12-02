@@ -321,7 +321,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 
 			// Eh.
 			$this->background_jobs->schedule_check_newly_generated_bitcoin_addresses_for_transactions(
-				DateTimeImmutable::createFromFormat( 'U', (string) ( time() + ( 15 * constant( (string) MINUTE_IN_SECONDS ) ) ) ),
+				DateTimeImmutable::createFromFormat( 'U', (string) ( time() + ( 15 * ( (int) constant( 'MINUTE_IN_SECONDS' ) ) ) ) ),
 			);
 		}
 
