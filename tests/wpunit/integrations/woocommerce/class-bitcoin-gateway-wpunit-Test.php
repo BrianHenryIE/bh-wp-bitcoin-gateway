@@ -224,6 +224,11 @@ class Bitcoin_Gateway_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 						throw new Exception( 'This message will not be shown!' );
 					}
 				),
+				'convert_fiat_to_btc'         => Expected::once(
+					function ( Money $money ) {
+						return $money;
+					}
+				),
 			)
 		);
 

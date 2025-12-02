@@ -9,6 +9,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\API;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain_API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Exchange_Rate_API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Generate_Address_API_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use Codeception\Stub\Expected;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Repository;
@@ -237,11 +238,7 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 				Bitcoin_Address::class,
 				array(
 					'get_raw_address' => 'success',
-					'set_status'      => Expected::once(
-						function ( Bitcoin_Address_Status $status ) {
-							assert( 'assigned' === $status->value );
-						}
-					),
+					'assign'          => Expected::once(),
 				)
 			),
 			self::make( Bitcoin_Address::class ),
@@ -276,7 +273,9 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 		$order->set_payment_method( 'bitcoin' );
 		$order->save();
 
-		$result = $sut->get_fresh_address_for_order( $order );
+		$btc_amount = Money::of( '0.00123', 'BTC' );
+
+		$result = $sut->get_fresh_address_for_order( $order, $btc_amount );
 
 		$this->assertEquals( 'success', $result->get_raw_address() );
 	}

@@ -10,6 +10,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Currency;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\UnknownCurrencyException;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
 use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
 use Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
@@ -382,6 +383,10 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 
 		$api = $this->api;
 
+		$fiat_total = Money::of( $order->get_total(), $order->get_currency() );
+
+		$btc_total = $api->convert_fiat_to_btc( $fiat_total );
+
 		/**
 		 * There should never really be an exception here, since the availability of a fresh address was checked before
 		 * offering the option to pay by Bitcoin.
@@ -394,7 +399,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 			 * @see Order::BITCOIN_ADDRESS_META_KEY
 			 * @see Bitcoin_Address::get_raw_address()
 			 */
-			$btc_address = $api->get_fresh_address_for_order( $order );
+			$btc_address = $api->get_fresh_address_for_order( $order, $btc_total );
 		} catch ( Exception $e ) {
 			$this->logger->error( $e->getMessage(), array( 'exception' => $e ) );
 			throw new Exception( 'Unable to find Bitcoin address to send to. Please choose another payment method.' );
@@ -410,8 +415,6 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 			Order::EXCHANGE_RATE_AT_TIME_OF_PURCHASE_META_KEY,
 			$api->get_exchange_rate( Currency::of( $order->get_currency() ) )?->jsonSerialize()
 		);
-
-		$btc_total = $api->convert_fiat_to_btc( Money::of( $order->get_total(), $order->get_currency() ) );
 
 		// Record the amount the customer has been asked to pay in BTC.
 		$order->add_meta_data(

@@ -116,7 +116,7 @@ trait API_WooCommerce_Trait {
 	 * @return Bitcoin_Address
 	 * @throws Exception
 	 */
-	public function get_fresh_address_for_order( WC_Order $order ): Bitcoin_Address {
+	public function get_fresh_address_for_order( WC_Order $order, Money $btc_total ): Bitcoin_Address {
 		$this->logger->debug( 'Get fresh address for `shop_order:' . $order->get_id() . '`' );
 
 		$btc_addresses = $this->get_fresh_addresses_for_gateway( $this->get_bitcoin_gateways()[ $order->get_payment_method() ] );
@@ -127,10 +127,10 @@ trait API_WooCommerce_Trait {
 
 		$btc_address = array_shift( $btc_addresses );
 
+		$btc_address->assign( $order->get_id(), $btc_total );
+
 		$order->add_meta_data( Order::BITCOIN_ADDRESS_META_KEY, $btc_address->get_raw_address() );
 		$order->save();
-
-		$btc_address->set_status( Bitcoin_Address_Status::ASSIGNED );
 
 		$this->logger->info(
 			sprintf(
@@ -219,7 +219,7 @@ trait API_WooCommerce_Trait {
 		$order_transactions_before = $bitcoin_order->get_address()->get_blockchain_transactions();
 
 		if ( is_null( $order_transactions_before ) ) {
-			$this->logger->debug( 'Checking for the first time' );
+			$this->logger->debug( 'Refresh order: Checking for the first time' );
 			$order_transactions_before = array();
 		}
 

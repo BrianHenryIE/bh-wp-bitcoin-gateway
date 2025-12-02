@@ -8,6 +8,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order_Interface;
 use Exception;
 use WC_Order;
@@ -54,7 +55,7 @@ interface API_WooCommerce_Interface extends API_Interface {
 	 * @return Bitcoin_Address
 	 * @throws Exception When no address is available.
 	 */
-	public function get_fresh_address_for_order( WC_Order $order ): Bitcoin_Address;
+	public function get_fresh_address_for_order( WC_Order $order, Money $btc_total ): Bitcoin_Address;
 
 	/**
 	 * Return the current Bitcoin details for an order, optionally refresh.
