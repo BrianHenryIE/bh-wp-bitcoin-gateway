@@ -39,17 +39,10 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet_Factory;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Order;
-use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Thank_You;
-use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Bitcoin_Gateway;
 use DateTimeImmutable;
-use DateTimeZone;
 use Exception;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
-use WC_Order;
-use WC_Payment_Gateway;
-use WC_Payment_Gateways;
 
 class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommerce_Interface {
 	use LoggerAwareTrait;
