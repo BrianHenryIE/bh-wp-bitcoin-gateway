@@ -10,8 +10,9 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\MoneyMismatchException;
+use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\UnknownCurrencyException;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
-use Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\Admin\Addresses_List_Table;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Bitcoin_Gateway;
 use RuntimeException;
@@ -20,6 +21,9 @@ use WP_Post;
 
 /**
  * Facade on WP_Post and post_meta.
+ *
+ * @phpstan-type MoneySerializedArray array{amount:string,currency:string}
+ * @phpstan-type WpUpdatePostArray array{ID?: int, post_author?: int, post_date?: string, post_date_gmt?: string, post_content?: string, post_content_filtered?: string, post_title?: string, post_excerpt?: string}
  */
 class Bitcoin_Address {
 
@@ -33,15 +37,27 @@ class Bitcoin_Address {
 
 	/**
 	 * The wp_post database row, as a WordPress post object, for the custom post type used to store the data.
-	 *
-	 * @var WP_Post
 	 */
 	protected WP_Post $post;
 
-	protected int $post_id;
+	/**
+	 * Current status of the address, used, unused, assigned...
+	 */
 	protected Bitcoin_Address_Status $status;
+
+	/**
+	 * The wp_post.id for the {@see Bitcoin_Wallet} the address was derived from.
+	 */
 	protected int $wallet_parent_post_id;
+
+	/**
+	 * The nth address generated from the wallet.
+	 *
+	 * TODO: Why is this nullable
+	 */
 	protected ?int $derivation_path_sequence_number;
+
+	/** The Bitcoin xpub address shared with the customer for payment. */
 	protected string $raw_address;
 
 	/** @var array<string,Transaction_Interface> */
@@ -50,8 +66,16 @@ class Bitcoin_Address {
 	/** The address will be considered paid when this amount has been received */
 	protected ?Money $target_amount;
 
+	// TODO: Add `protected ?int $required_number_of_confirmations`.
+
+	/**
+	 * The saved balance. Really be a calculation on the transactions.
+	 */
 	protected ?Money $balance;
 
+	/**
+	 * The wp post_id of the associated order this address has been assigned to.
+	 */
 	protected ?int $order_id;
 
 	/**
@@ -59,7 +83,7 @@ class Bitcoin_Address {
 	 *
 	 * @param int $post_id The wp_post ID the Bitcoin address detail is stored under.
 	 *
-	 * @throws Exception When the supplied post_id is not a post of this type.
+	 * @throws InvalidArgumentException When the supplied post_id is not a post of this type.
 	 */
 	public function __construct( int $post_id ) {
 		$post = get_post( $post_id );
@@ -68,27 +92,36 @@ class Bitcoin_Address {
 		}
 
 		$this->post                            = $post;
-		$this->post_id                         = $post_id;
 		$this->wallet_parent_post_id           = $this->post->post_parent;
 		$this->status                          = Bitcoin_Address_Status::from( $this->post->post_status );
 		$this->derivation_path_sequence_number = ( function () use ( $post_id ) {
-			$meta_value = intval( get_post_meta( $post_id, self::DERIVATION_PATH_SEQUENCE_NUMBER_META_KEY, true ) );
-			return $meta_value ?: null;
+			/** @var array|bool|float|int|resource|string|null|mixed $meta_value */
+			$meta_value = get_post_meta( $post_id, self::DERIVATION_PATH_SEQUENCE_NUMBER_META_KEY, true );
+			return is_numeric( $meta_value ) ? intval( $meta_value ) : null;
 		} )();
 		$this->raw_address                     = $this->post->post_excerpt;
 		$this->transactions                    = ( function () use ( $post_id ): ?array {
-			$transactions_meta = (array) get_post_meta( $post_id, self::TRANSACTION_META_KEY, true ) ?: null;
+			// Previously the idea was to use `null` to suggest the address had never been checked but instead we should log each check.
+			// TODO: validate the array of `Transaction_Interface` objects.
+			// TODO: create a bitcoin-transactions post type!
+			$transactions_meta = array_filter( (array) get_post_meta( $post_id, self::TRANSACTION_META_KEY, true ) );
 			return empty( $transactions_meta ) ? null : $transactions_meta;
 		} )();
 		$this->balance                         = ( function () use ( $post_id ): ?Money {
-			$balance_meta = (array) get_post_meta( $post_id, self::BALANCE_META_KEY, true );
+			/** @var MoneySerializedArray|array{} $balance_meta */
+			$balance_meta = array_filter( (array) get_post_meta( $post_id, self::BALANCE_META_KEY, true ) );
 			return empty( $balance_meta ) ? null : Money::of( ...$balance_meta );
 		} )();
 		$this->target_amount                   = ( function () use ( $post_id ): ?Money {
-			$target_amount = (array) get_post_meta( $post_id, self::TARGET_AMOUNT_META_KEY, true );
-			return empty( $target_amount ) ? null : Money::of( ...$target_amount );
+			/** @var MoneySerializedArray|array{} $target_amount_meta */
+			$target_amount_meta = array_filter( (array) get_post_meta( $post_id, self::TARGET_AMOUNT_META_KEY, true ) );
+			return empty( $target_amount_meta ) ? null : Money::of( ...$target_amount_meta );
 		} )();
-		$this->order_id                        = intval( get_post_meta( $post_id, self::ORDER_ID_META_KEY, true ) ) ?: null;
+		$this->order_id                        = ( function () use ( $post_id ): ?int {
+			/** @var array|bool|float|int|resource|string|null|mixed $order_id_meta */
+			$order_id_meta = get_post_meta( $post_id, self::ORDER_ID_META_KEY, true );
+			return is_numeric( $order_id_meta ) ? intval( $order_id_meta ) : null;
+		} )();
 	}
 
 	/**
@@ -134,7 +167,7 @@ class Bitcoin_Address {
 		return is_array( $this->transactions ) ? $this->transactions : null;
 	}
 
-	// get_mempool_transactions()
+	// TODO: `get_mempool_transactions()`.
 
 	/**
 	 * Save the transactions recently fetched from the API.
@@ -154,17 +187,12 @@ class Bitcoin_Address {
 
 		if ( empty( $refreshed_transactions ) ) {
 			$update['post_status'] = Bitcoin_Address_Status::UNUSED->value;
-		} elseif ( Bitcoin_Address_Status::UNKNOWN->value === $this->get_status() ) {
+		} elseif ( Bitcoin_Address_Status::UNKNOWN === $this->get_status() ) {
 			$update['post_status'] = Bitcoin_Address_Status::USED->value;
 		}
 
-		/** @var int|\WP_Error $result */
-		$result = wp_update_post( $update );
-		if ( ! is_wp_error( $result ) ) {
-			$this->transactions = $refreshed_transactions;
-		} else {
-			throw new RuntimeException( $result->get_error_message() );
-		}
+		$this->wp_update_post( $update );
+		$this->transactions = $refreshed_transactions;
 	}
 
 	/**
@@ -177,7 +205,7 @@ class Bitcoin_Address {
 	 * @return ?Money Null if unknown.
 	 */
 	public function get_balance(): ?Money {
-		return Bitcoin_Address_Status::UNKNOWN->value === $this->get_status() ? null : $this->balance;
+		return Bitcoin_Address_Status::UNKNOWN === $this->get_status() ? null : $this->balance;
 	}
 
 	/**
@@ -187,6 +215,15 @@ class Bitcoin_Address {
 		return $this->get_balance();
 	}
 
+	/**
+	 * From the received transactions, sum those who have enough confirmations.
+	 *
+	 * @param int $blockchain_height The current blockchain height. (TODO: explain why).
+	 * @param int $required_confirmations A confirmation is a subsequent block mined after the transaction.
+	 *
+	 * @throws MoneyMismatchException If the calculations were somehow using two different currencies.
+	 * @throws UnknownCurrencyException If `BTC` has not correctly been added to Money's currency list.
+	 */
 	public function get_confirmed_balance( int $blockchain_height, int $required_confirmations ): ?Money {
 		return array_reduce(
 			$this->transactions ?? array(),
@@ -201,18 +238,10 @@ class Bitcoin_Address {
 	}
 
 	/**
-	 * Return the current status of the Bitcoin address object. One of:
-	 * * unknown: probably brand new and unchecked
-	 * * unused: new and no order id assigned
-	 * * assigned: assigned to an order, payment incomplete
-	 * * used: transactions present and no order id, or and order id assigned and payment complete
-	 *
-	 * TODO: Check the saved status is valid.
-	 *
-	 * @return string unknown|unused|assigned|used.
+	 * Return the current status of the Bitcoin address object/post.
 	 */
-	public function get_status(): string {
-		return $this->status->value;
+	public function get_status(): Bitcoin_Address_Status {
+		return $this->status;
 	}
 
 	/**
@@ -227,30 +256,18 @@ class Bitcoin_Address {
 	 */
 	public function set_status( Bitcoin_Address_Status $status ): void {
 
-		if ( ! in_array( $status, Bitcoin_Address_Status::cases(), true ) ) {
-			throw new InvalidArgumentException( "{$status->value} should be one of unknown|unused|assigned|used" );
-		}
-
-		/** @var int|\WP_Error $result */
-		$result = wp_update_post(
-			array(
-				'post_type'   => self::POST_TYPE,
-				'ID'          => $this->post->ID,
-				'post_status' => $status->value,
-			)
+		$update = array(
+			'post_type'   => self::POST_TYPE,
+			'ID'          => $this->post->ID,
+			'post_status' => $status->value,
 		);
 
-		if ( ! is_wp_error( $result ) ) {
-			$this->status = $status;
-		} else {
-			throw new RuntimeException( $result->get_error_message() );
-		}
+		$this->wp_update_post( $update );
+		$this->status = $status;
 	}
 
 	/**
 	 * Get the order id associated with this address, or null if none has ever been assigned.
-	 *
-	 * @return ?int
 	 */
 	public function get_order_id(): ?int {
 		return 0 === $this->order_id ? null : $this->order_id;
@@ -270,24 +287,68 @@ class Bitcoin_Address {
 			),
 		);
 
-		if ( 'assigned' !== $this->get_status() ) {
+		if ( Bitcoin_Address_Status::ASSIGNED !== $this->get_status() ) {
 			$update['post_status'] = Bitcoin_Address_Status::ASSIGNED->value;
 		}
 
-		/** @var int|\WP_Error $result */
-		$result = wp_update_post( $update );
-		if ( ! is_wp_error( $result ) ) {
-			$this->order_id = $order_id;
-		} else {
-			throw new RuntimeException( $result->get_error_message() );
-		}
+		$this->wp_update_post( $update );
+		$this->order_id = $order_id;
 	}
 
+	/**
+	 * Associate the Bitcoin Address with an order's post_id, set the expected amount to be paid, change the status
+	 * to "assigned".
+	 *
+	 * @see Bitcoin_Address_Status::ASSIGNED
+	 *
+	 * @param int   $post_id The post_id (e.g. WooCommerce order id) that transactions to this address represent payment for.
+	 * @param Money $btc_total The target amount to be paid, after which the order should be updated.
+	 */
 	public function assign( int $post_id, Money $btc_total ): void {
 		$this->set_order_id( $post_id );
 		$this->set_target_amount( $btc_total );
+		$this->set_status_assigned();
 	}
 
+	/**
+	 * Sets the Bitcoin Address's status to `assigned` if not already so.
+	 *
+	 * @see Bitcoin_Address_Status::ASSIGNED
+	 */
+	protected function set_status_assigned(): void {
+
+		if ( Bitcoin_Address_Status::ASSIGNED === $this->get_status() ) {
+			return;
+		}
+
+		$this->set_status( Bitcoin_Address_Status::ASSIGNED );
+	}
+
+	/**
+	 * After saving, reload the post.
+	 *
+	 * `wp_update_post()` just returns the post_id, so we fetch the post here separately.
+	 *
+	 * This should be pulled from cache.
+	 *
+	 * @throws RuntimeException In the unlikely event the exist post cannot be refreshed.
+	 */
+	protected function refresh_wp_post(): void {
+		$this->post = get_post( $this->post->ID ) ?? ( function () {
+			throw new RuntimeException( 'get_post( ' . $this->post->ID . ' ) failed to refresh post.' );
+		} )();
+	}
+
+	/**
+	 * The target amount of bitcoin to receive for the order the address is associated with.
+	 *
+	 * Saved in post_meta as `array{amount:string,currency:string}`.
+	 *
+	 * @param Money $btc_total The amount of BitCoin received until this address's status should change to ~"complete"/"paid".
+	 *
+	 * @see self::TARGET_AMOUNT_META_KEY
+	 * @see Money::jsonSerialize()
+	 */
 	protected function set_target_amount( Money $btc_total ): void {
 		$update = array(
 			'ID'         => $this->post->ID,
@@ -296,15 +357,30 @@ class Bitcoin_Address {
 			),
 		);
 
-		/** @var int|\WP_Error $result */
-		$result = wp_update_post( $update );
-		if ( ! is_wp_error( $result ) ) {
-			$this->target_amount = $btc_total;
-		} else {
-			throw new RuntimeException( $result->get_error_message() );
-		}
+		$this->wp_update_post( $update );
+		$this->target_amount = $btc_total;
 	}
 
+	/**
+	 * Run `wp_update_post()`, after setting the post_id, throw exception on failure, refresh on success.
+	 *
+	 * @param WpUpdatePostArray $update The array for `wp_update_post()`.
+	 *
+	 * @throws RuntimeException When failing to save to the WordPress db.
+	 */
+	protected function wp_update_post( array $update ): void {
+		$update['ID'] = $this->post->ID;
+		/** @var int|\WP_Error $result */
+		$result = wp_update_post( $update );
+		if ( is_wp_error( $result ) ) {
+			throw new RuntimeException( $result->get_error_message() );
+		}
+		$this->refresh_wp_post();
+	}
+
+	/**
+	 * The received amount needed to consider the order "paid".
+	 */
 	public function get_target_amount(): ?Money {
 		return $this->target_amount;
 	}

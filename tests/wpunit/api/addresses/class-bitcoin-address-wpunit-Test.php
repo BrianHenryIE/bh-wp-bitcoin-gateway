@@ -3,6 +3,7 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
+use ReflectionProperty;
 
 /**
  * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address
@@ -101,7 +102,7 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 
 		$result = $sut->get_status();
 
-		$this->assertEquals( 'assigned', $result );
+		$this->assertEquals( 'assigned', $result->value );
 	}
 
 	/**
@@ -113,7 +114,7 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 				'post_type'   => 'bh-bitcoin-address',
 				'post_status' => 'used',
 				'meta_input'  => array(
-					Bitcoin_Address::BALANCE_META_KEY => '1.23456789',
+					Bitcoin_Address::BALANCE_META_KEY => array( '1.23456789', 'BTC' ),
 				),
 			)
 		);
@@ -188,5 +189,33 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 		$result = $sut->get_balance();
 
 		$this->assertNull( $result );
+	}
+
+	/**
+	 * Test the immediately invoked function which throws an exception does not run until the null coalesce operator
+	 * evaluates the left hand side.
+	 *
+	 * @covers ::refresh_wp_post
+	 */
+	public function test_refresh_address(): void {
+		$post_property = new ReflectionProperty( Bitcoin_Address::class, 'post' );
+		$post_property->setAccessible( true );
+
+		$bitcoin_address_repository = new Bitcoin_Address_Repository();
+
+		$wallet = $this->makeEmpty( Bitcoin_Wallet::class );
+
+		$bitcoin_address_post_id = $bitcoin_address_repository->save_new( 'address', 2, $wallet );
+
+		$bitcoin_address_object = $bitcoin_address_repository->get_by_post_id( $bitcoin_address_post_id );
+
+		( fn() => $this->refresh_wp_post() )->call( $bitcoin_address_object );
+
+		$post     = $post_property->getValue( $bitcoin_address_object );
+		$post->ID = 999;
+
+		$this->expectException( \RuntimeException::class );
+
+		( fn() => $this->refresh_wp_post() )->call( $bitcoin_address_object );
 	}
 }
