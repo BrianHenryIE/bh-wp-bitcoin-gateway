@@ -161,7 +161,7 @@ class Addresses_List_Table extends \WP_Posts_List_Table {
 
 		$bitcoin_address = $this->get_cached_bitcoin_address_object( $item );
 
-		echo esc_html( $bitcoin_address->get_status() );
+		echo esc_html( $bitcoin_address->get_status()->value );
 	}
 
 	/**
