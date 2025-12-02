@@ -11,7 +11,6 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
-use DateTimeInterface;
 use Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\Admin\Addresses_List_Table;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Bitcoin_Gateway;
@@ -28,6 +27,7 @@ class Bitcoin_Address {
 
 	const TRANSACTION_META_KEY                     = 'address_transactions';
 	const DERIVATION_PATH_SEQUENCE_NUMBER_META_KEY = 'derivation_path_sequence_number';
+	const TARGET_AMOUNT_META_KEY                   = 'target_amount';
 	const BALANCE_META_KEY                         = 'balance';
 	const ORDER_ID_META_KEY                        = 'order_id';
 
@@ -47,10 +47,12 @@ class Bitcoin_Address {
 	/** @var array<string,Transaction_Interface> */
 	protected ?array $transactions = null;
 
+	/** The address will be considered paid when this amount has been received */
+	protected ?Money $target_amount;
+
 	protected ?Money $balance;
 
 	protected ?int $order_id;
-
 
 	/**
 	 * Constructor
@@ -74,6 +76,8 @@ class Bitcoin_Address {
 		$this->transactions                    = get_post_meta( $post_id, self::TRANSACTION_META_KEY, true ) ?: null;
 		$balance                               = get_post_meta( $post_id, self::BALANCE_META_KEY, true );
 		$this->balance                         = empty( $balance ) ? null : Money::of( $balance, 'BTC' );
+		$target_amount                         = get_post_meta( $post_id, self::TARGET_AMOUNT_META_KEY, true );
+		$this->target_amount                   = empty( $target_amount ) ? null : Money::of( ...$target_amount );
 		$this->order_id                        = intval( get_post_meta( $post_id, self::ORDER_ID_META_KEY, true ) );
 	}
 
@@ -267,5 +271,31 @@ class Bitcoin_Address {
 		} else {
 			throw new RuntimeException( $result->get_error_message() );
 		}
+	}
+
+	public function assign( int $post_id, Money $btc_total ): void {
+		$this->set_order_id( $post_id );
+		$this->set_target_amount( $btc_total );
+	}
+
+	protected function set_target_amount( Money $btc_total ): void {
+		$update = array(
+			'ID'         => $this->post->ID,
+			'meta_input' => array(
+				self::TARGET_AMOUNT_META_KEY => $btc_total->jsonSerialize(),
+			),
+		);
+
+		/** @var int|\WP_Error $result */
+		$result = wp_update_post( $update );
+		if ( ! is_wp_error( $result ) ) {
+			$this->target_amount = $btc_total;
+		} else {
+			throw new RuntimeException( $result->get_error_message() );
+		}
+	}
+
+	public function get_target_amount(): ?Money {
+		return $this->target_amount;
 	}
 }
