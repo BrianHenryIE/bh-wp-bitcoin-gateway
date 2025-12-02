@@ -7,10 +7,25 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses;
 
 enum Bitcoin_Address_Status: string {
 
-	case UNKNOWN  = 'unknown';
-	case UNUSED   = 'unused';
+	/**
+	 * probably brand new and unchecked
+	 */
+	case UNKNOWN = 'unknown';
+
+	/**
+	 * new and no order id assigned
+	 */
+	case UNUSED = 'unused';
+
+	/**
+	 * assigned to an order, payment incomplete
+	 */
 	case ASSIGNED = 'assigned';
-	case USED     = 'used';
+
+	/**
+	 * transactions present and no order id, or and order id assigned and payment complete
+	 */
+	case USED = 'used';
 
 	// Inherent WordPress status.
 	case DRAFT   = 'draft';
