@@ -19,7 +19,12 @@ class Order_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	public function test_schedule_check_for_transactions(): void {
 
 		$logger               = new ColorLogger();
-		$background_jobs_mock = $this->makeEmpty( Background_Jobs_Scheduling_Interface::class );
+		$background_jobs_mock = $this->makeEmpty(
+			Background_Jobs_Scheduling_Interface::class,
+			array(
+				'schedule_check_assigned_bitcoin_address_for_transactions' => Expected::once(),
+			)
+		);
 		$api                  = $this->makeEmpty(
 			API_WooCommerce_Interface::class,
 			array(
@@ -32,11 +37,7 @@ class Order_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 		$order    = new \WC_Order();
 		$order_id = $order->save();
 
-		assert( false === as_has_scheduled_action( Background_Jobs_Actions_Interface::CHECK_ASSIGNED_ADDRESSES_TRANSACTIONS_HOOK ) );
-
 		$sut->schedule_check_for_transactions( $order_id, 'pending', 'on-hold' );
-
-		$this->assertTrue( as_has_scheduled_action( Background_Jobs_Actions_Interface::CHECK_ASSIGNED_ADDRESSES_TRANSACTIONS_HOOK ) );
 	}
 
 	/**
