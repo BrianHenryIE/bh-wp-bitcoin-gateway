@@ -10,10 +10,19 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses;
 use Exception;
 use wpdb;
 
-/**
- * Factory for wallets, saved in wp_posts.
- */
 class Bitcoin_Wallet_Repository {
+
+	public function __construct(
+		protected Bitcoin_Wallet_Factory $bitcoin_wallet_factory,
+	) {
+	}
+
+	// public function get_by_xpub( string $xpub ): ?Bitcoin_Wallet {
+	// }
+
+	public function get_by_wp_post_id( int $post_id ): ?Bitcoin_Wallet {
+		return $this->bitcoin_wallet_factory->get_by_wp_post_id( $post_id );
+	}
 
 	/**
 	 * Given a post_id,
@@ -26,30 +35,34 @@ class Bitcoin_Wallet_Repository {
 	 */
 	public function get_post_id_for_wallet( string $xpub ): ?int {
 
-		$post_id = wp_cache_get( $xpub, Bitcoin_Wallet::POST_TYPE );
+		$post_id = wp_cache_get( $xpub, Bitcoin_Wallet_WP_Post_Interface::POST_TYPE );
 
-		if ( false !== $post_id ) {
+		if ( is_numeric( $post_id ) ) {
 			return (int) $post_id;
 		}
 
 		/**
 		 * The WordPress wpdb object for database operations.
 		 *
-		 * TODO: Can this be replaced with a `get_posts( array( 'post_name' => $xpub, 'post_type' => Bitcoin_Wallet::POST_TYPE, 'numberposts' => 1 ) )` call?
+		 * TODO: Can this be replaced with a `get_posts( array( 'post_name' => $xpub, 'post_type' => Bitcoin_Wallet_WP_Post_Interface::POST_TYPE, 'numberposts' => 1 ) )` call?
 		 *
 		 * @var wpdb $wpdb
 		 */
 		global $wpdb;
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
-		// @phpstan-ignore-next-line
+		/**
+		 * phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		 *
+		 * @var int|bool $post_id
+		 * @phpstan-ignore-next-line
+		 */
 		$post_id = $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE post_name=%s", sanitize_title( $xpub ) ) );
 
-		if ( ! is_null( $post_id ) ) {
+		if ( false !== $post_id ) {
 			$post_id = intval( $post_id );
-			wp_cache_add( $xpub, $post_id, Bitcoin_Wallet::POST_TYPE );
+			wp_cache_add( $xpub, $post_id, Bitcoin_Wallet_WP_Post_Interface::POST_TYPE );
 		}
 
-		return $post_id;
+		return $post_id ?: null;
 	}
 
 	/**
@@ -71,9 +84,9 @@ class Bitcoin_Wallet_Repository {
 		$args['post_status']  = ! is_null( $gateway_id ) ? 'active' : 'inactive';
 		$args['post_excerpt'] = $master_public_key;
 		$args['post_name']    = sanitize_title( $master_public_key ); // An indexed column.
-		$args['post_type']    = Bitcoin_Wallet::POST_TYPE;
+		$args['post_type']    = Bitcoin_Wallet_WP_Post_Interface::POST_TYPE;
 		$args['meta_input']   = array(
-			Bitcoin_Wallet::GATEWAY_IDS_META_KEY => array( $gateway_id ),
+			Bitcoin_Wallet_WP_Post_Interface::GATEWAY_IDS_META_KEY => array( $gateway_id ),
 		);
 
 		$post_id = wp_insert_post( $args, true );
@@ -94,6 +107,19 @@ class Bitcoin_Wallet_Repository {
 	 * @throws Exception When the post_type of the post returned for the given post_id is not a Bitcoin_Wallet.
 	 */
 	public function get_by_post_id( int $post_id ): Bitcoin_Wallet {
-		return new Bitcoin_Wallet( $post_id );
+
+		return $this->bitcoin_wallet_factory->get_by_wp_post_id( $post_id );
+	}
+
+	/**
+	 * TODO: This should not be here.
+	 *
+	 * Save the index of the highest generated address.
+	 *
+	 * @param \WP_Post $post The Bitcoin Wallet to indicate its newest derived address index.
+	 * @param int      $index Nth address generated index.
+	 */
+	public function set_highest_address_index( \WP_Post $post, int $index ): void {
+		update_post_meta( $post->ID, Bitcoin_Wallet_WP_Post_Interface::LAST_DERIVED_ADDRESS_INDEX_META_KEY, $index );
 	}
 }

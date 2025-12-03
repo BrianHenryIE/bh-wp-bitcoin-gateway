@@ -11,6 +11,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet_WP_Post_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use WP_Query;
 
@@ -64,7 +65,7 @@ class Post_BH_Bitcoin_Wallet {
 			'plugin_objects' => $this->plugin_objects,
 		);
 
-		register_post_type( BITCOIN_WALLET::POST_TYPE, $args );
+		register_post_type( Bitcoin_Wallet_WP_Post_Interface::POST_TYPE, $args );
 
 		register_post_status(
 			'active',

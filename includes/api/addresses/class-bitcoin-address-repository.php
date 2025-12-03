@@ -16,6 +16,11 @@ use wpdb;
  */
 class Bitcoin_Address_Repository {
 
+	public function __construct(
+		protected Bitcoin_Address_Factory $bitcoin_address_factory,
+	) {
+	}
+
 	/**
 	 * Given a bitcoin master public key, get the WordPress post_id it is saved under.
 	 *
@@ -25,7 +30,7 @@ class Bitcoin_Address_Repository {
 	 */
 	public function get_post_id_for_address( string $address ): ?int {
 
-		$post_id = wp_cache_get( $address, Bitcoin_Address::POST_TYPE );
+		$post_id = wp_cache_get( $address, Bitcoin_Address_WP_Post_Interface::POST_TYPE );
 
 		if ( is_numeric( $post_id ) ) {
 			return (int) $post_id;
@@ -43,40 +48,93 @@ class Bitcoin_Address_Repository {
 		// @phpstan-ignore-next-line
 		$post_id = $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE post_name=%s", sanitize_title( $address ) ) );
 
-		if ( ! is_null( $post_id ) ) {
+		if ( is_numeric( $post_id ) ) {
 			$post_id = intval( $post_id );
-			wp_cache_add( $address, $post_id, Bitcoin_Address::POST_TYPE );
+			wp_cache_add( $address, $post_id, Bitcoin_Address_WP_Post_Interface::POST_TYPE );
+			return $post_id;
 		}
 
-		return $post_id;
+		return null;
+	}
+
+	/**
+	 * Given the id of the wp_posts row storing the bitcoin address, return the typed Bitcoin_Address object.
+	 *
+	 * @param int $post_id WordPress wp_posts ID.
+	 *
+	 * @return Bitcoin_Address
+	 * @throws Exception When the post_type of the post returned for the given post_id is not a Bitcoin_Address.
+	 */
+	public function get_by_post_id( int $post_id ): Bitcoin_Address {
+		return $this->bitcoin_address_factory->get_by_wp_post_id( $post_id );
+	}
+
+	/**
+	 * @return Bitcoin_Address[]
+	 */
+	public function get_assigned_bitcoin_addresses(): array {
+		return $this->get_addresses(
+			new Bitcoin_Address_Query(
+				status: Bitcoin_Address_Status::ASSIGNED,
+				numberposts: 200,
+			)
+		);
+	}
+
+	/**
+	 * Check do we have at least 1 assigned address, i.e. an address waiting for transactions.
+	 *
+	 * Across all wallets.
+	 */
+	public function has_assigned_bitcoin_addresses(): bool {
+		return ! empty(
+			$this->get_addresses(
+				new Bitcoin_Address_Query(
+					status: Bitcoin_Address_Status::ASSIGNED,
+					numberposts: 1,
+				)
+			)
+		);
+	}
+
+	/**
+	 * @return Bitcoin_Address[]
+	 */
+	public function get_unknown_bitcoin_addresses(): array {
+		// 'orderby'        => 'ID',
+		// 'order'          => 'ASC',
+		// TODO: Should this query use ID.asc as a way to order?
+		// TODO: updated_at is probably correct.
+
+		return $this->get_addresses(
+			new Bitcoin_Address_Query(
+				status: Bitcoin_Address_Status::UNKNOWN,
+			)
+		);
+	}
+
+
+	/**
+	 * @return Bitcoin_Address[]
+	 */
+	public function get_addresses( Bitcoin_Address_Query $filter ): array {
+
+		return array_map(
+			fn( WP_Post $wp_post ) => $this->bitcoin_address_factory->get_by_wp_post( $wp_post ),
+			get_posts( $filter->to_query_array() )
+		);
 	}
 
 	/**
 	 * Wrapper on wp_insert_post(), sets the address as the post_title, post_excerpt and post_name.
 	 *
-	 * @param string         $address The Bitcoin address.
-	 * @param int            $address_index The derivation sequence number.
-	 * @param Bitcoin_Wallet $wallet The wallet whose xpub this address was derived from.
-	 *
-	 * @return int The new post_id.
-	 *
 	 * @throws Exception When WordPress fails to create the wp_post.
 	 */
-	public function save_new( string $address, int $address_index, Bitcoin_Wallet $wallet ): int {
+	public function save_new( Bitcoin_Address_Query $query ): int {
 
 		// TODO: Validate address, throw exception.
 
-		$args = array(
-			'post_type'    => Bitcoin_Address::POST_TYPE,
-			'post_name'    => sanitize_title( $address ), // An indexed column.
-			'post_excerpt' => $address,
-			'post_title'   => $address,
-			'post_status'  => Bitcoin_Address_Status::UNKNOWN->value,
-			'post_parent'  => $wallet->get_post_id(),
-			'meta_input'   => array(
-				Bitcoin_Address::DERIVATION_PATH_SEQUENCE_NUMBER_META_KEY => $address_index,
-			),
-		);
+		$args = $query->to_query_array();
 
 		$post_id = wp_insert_post( $args, true );
 
@@ -90,69 +148,30 @@ class Bitcoin_Address_Repository {
 		return $post_id;
 	}
 
-	/**
-	 * Given the id of the wp_posts row storing the bitcoin address, return the typed Bitcoin_Address object.
-	 *
-	 * @param int $post_id WordPress wp_posts ID.
-	 *
-	 * @return Bitcoin_Address
-	 * @throws Exception When the post_type of the post returned for the given post_id is not a Bitcoin_Address.
-	 */
-	public function get_by_post_id( int $post_id ): Bitcoin_Address {
-		return new Bitcoin_Address( $post_id );
-	}
 
 	/**
-	 * @param Bitcoin_Address_Status $post_staus Status unused|assigned|etc. that should be returned.
-	 * @param int                    $number_posts Defaults to WP_Query's max of 200.
+	 * Find addresses generated from this wallet which are unused and return them as `Bitcoin_Address` objects.
 	 *
-	 * @return WP_Post[]
+	 * TODO: Maybe this shouldn't be in here?
+	 *
+	 * @return Bitcoin_Address[]
 	 */
-	protected function get_bitcoin_address_posts( Bitcoin_Address_Status $post_staus, int $number_posts = 200 ): array {
-		$assigned_addresses = get_posts(
+	public function get_fresh_addresses(): array {
+		$posts = get_posts(
 			array(
-				'post_type'   => Bitcoin_Address::POST_TYPE,
-				'post_status' => $post_staus->value,
-				'orderby'     => 'post_modified',
-				'order'       => 'ASC',
-				'numberposts' => $number_posts,
+				// 'post_parent'    => $this->post->ID,
+												'post_type' => Bitcoin_Address_WP_Post_Interface::POST_TYPE,
+				'post_status'    => Bitcoin_Address_Status::UNUSED->value,
+				'orderby'        => 'ID',
+				'order'          => 'ASC',
+				'posts_per_page' => -1,
 			)
 		);
-		return $assigned_addresses;
-	}
-
-	/**
-	 * @return WP_Post[]
-	 */
-	public function get_assigned_bitcoin_addresses_wp_posts(): array {
-		return $this->get_bitcoin_address_posts( Bitcoin_Address_Status::ASSIGNED );
-	}
-
-	/**
-	 * @return Bitcoin_Address[]
-	 */
-	public function get_assigned_bitcoin_addresses(): array {
 		return array_map(
-			fn( WP_Post $bitcoin_address_wp_post ) => new Bitcoin_Address( $bitcoin_address_wp_post->ID ),
-			$this->get_bitcoin_address_posts( Bitcoin_Address_Status::ASSIGNED )
-		);
-	}
-
-	/**
-	 * Check do we have at least 1 assigned address, i.e. an address waiting for transactions.
-	 */
-	public function has_assigned_bitcoin_addresses(): bool {
-		$assigned_addresses = $this->get_bitcoin_address_posts( Bitcoin_Address_Status::ASSIGNED, 1 );
-		return ! empty( $assigned_addresses );
-	}
-
-	/**
-	 * @return Bitcoin_Address[]
-	 */
-	public function get_unknown_bitcoin_addresses(): array {
-		return array_map(
-			fn( WP_Post $bitcoin_address_wp_post ) => new Bitcoin_Address( $bitcoin_address_wp_post->ID ),
-			$this->get_bitcoin_address_posts( Bitcoin_Address_Status::UNKNOWN )
+			function ( WP_Post $post ) {
+				return $this->bitcoin_address_factory->get_by_wp_post( $post );
+			},
+			$posts
 		);
 	}
 }

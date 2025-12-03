@@ -11,9 +11,10 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Admin;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Repository;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Factory;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_WP_Post_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Bitcoin_Gateway;
 use Exception;
 use WP_Post;
@@ -31,7 +32,7 @@ class Addresses_List_Table extends \WP_Posts_List_Table {
 	 *
 	 * @uses API_Interface::get_bitcoin_gateways()
 	 */
-	protected API_Interface $api;
+	protected API_Interface&API_WooCommerce_Interface $api;
 
 	/**
 	 * Constructor
@@ -56,20 +57,6 @@ class Addresses_List_Table extends \WP_Posts_List_Table {
 
 		add_filter( 'post_row_actions', array( $this, 'edit_row_actions' ), 10, 2 );
 	}
-
-	/**
-	 * Cache to avoid repeatedly instantiating each Bitcoin_Address.
-	 *
-	 * @var array<int, Bitcoin_Address>
-	 */
-	protected array $addresses_cache = array();
-
-	/**
-	 * Cache to avoid repeatedly instantiating each Bitcoin_Wallet.
-	 *
-	 * @var array<int, Bitcoin_Wallet>
-	 */
-	protected array $wallet_cache = array();
 
 	/**
 	 * When rendering the wallet column, we will link to the gateways it is being used in.
@@ -120,11 +107,9 @@ class Addresses_List_Table extends \WP_Posts_List_Table {
 	 * @return Bitcoin_Address
 	 * @throws Exception When the post/post id does not match a bh-bitcoin-address cpt.
 	 */
-	protected function get_cached_bitcoin_address_object( WP_Post $post ): Bitcoin_Address {
-		if ( ! isset( $this->addresses_cache[ $post->ID ] ) ) {
-			$this->addresses_cache[ $post->ID ] = new Bitcoin_Address( $post->ID );
-		}
-		return $this->addresses_cache[ $post->ID ];
+	protected function get_bitcoin_address_object( WP_Post $post ): Bitcoin_Address {
+		$bitcoin_address_factory = new Bitcoin_Address_Factory();
+		return $bitcoin_address_factory->get_by_wp_post( $post );
 	}
 
 	/**
@@ -140,7 +125,7 @@ class Addresses_List_Table extends \WP_Posts_List_Table {
 		parent::column_title( $post );
 		$render = (string) ob_get_clean();
 
-		$bitcoin_address = $this->get_cached_bitcoin_address_object( $post );
+		$bitcoin_address = $this->get_bitcoin_address_object( $post );
 
 		$link = esc_url( "https://www.blockchain.com/btc/address/{$bitcoin_address->get_raw_address()}" );
 
@@ -159,7 +144,7 @@ class Addresses_List_Table extends \WP_Posts_List_Table {
 	 */
 	public function column_status( WP_Post $item ): void {
 
-		$bitcoin_address = $this->get_cached_bitcoin_address_object( $item );
+		$bitcoin_address = $this->get_bitcoin_address_object( $item );
 
 		echo esc_html( $bitcoin_address->get_status()->value );
 	}
@@ -172,7 +157,7 @@ class Addresses_List_Table extends \WP_Posts_List_Table {
 	 */
 	public function column_order_id( WP_Post $item ): void {
 
-		$bitcoin_address = $this->get_cached_bitcoin_address_object( $item );
+		$bitcoin_address = $this->get_bitcoin_address_object( $item );
 
 		$order_id = $bitcoin_address->get_order_id();
 		if ( ! is_null( $order_id ) ) {
@@ -190,7 +175,7 @@ class Addresses_List_Table extends \WP_Posts_List_Table {
 	 */
 	public function column_transactions_count( WP_Post $item ): void {
 
-		$bitcoin_address = $this->get_cached_bitcoin_address_object( $item );
+		$bitcoin_address = $this->get_bitcoin_address_object( $item );
 
 		$transactions = $bitcoin_address->get_blockchain_transactions();
 		if ( is_array( $transactions ) ) {
@@ -208,7 +193,7 @@ class Addresses_List_Table extends \WP_Posts_List_Table {
 	 */
 	public function column_received( WP_Post $item ): void {
 
-		$bitcoin_address = $this->get_cached_bitcoin_address_object( $item );
+		$bitcoin_address = $this->get_bitcoin_address_object( $item );
 
 		echo esc_html( $bitcoin_address->get_balance() ?? 'unknown' );
 	}
@@ -229,7 +214,7 @@ class Addresses_List_Table extends \WP_Posts_List_Table {
 	public function column_wallet( WP_Post $item ): void {
 
 		try {
-			$bitcoin_address = $this->get_cached_bitcoin_address_object( $item );
+			$bitcoin_address = $this->get_bitcoin_address_object( $item );
 		} catch ( Exception $exception ) {
 			return;
 		}
@@ -278,7 +263,7 @@ class Addresses_List_Table extends \WP_Posts_List_Table {
 	 */
 	public function column_derive_path_sequence( WP_Post $item ) {
 
-		$bitcoin_address = $this->get_cached_bitcoin_address_object( $item );
+		$bitcoin_address = $this->get_bitcoin_address_object( $item );
 
 		$nth  = $bitcoin_address->get_derivation_path_sequence_number();
 		$path = "0/$nth";
@@ -300,7 +285,7 @@ class Addresses_List_Table extends \WP_Posts_List_Table {
 	 */
 	public function edit_row_actions( array $actions, WP_Post $post ): array {
 
-		if ( Bitcoin_Address::POST_TYPE !== $post->post_type ) {
+		if ( Bitcoin_Address_WP_Post_Interface::POST_TYPE !== $post->post_type ) {
 			return $actions;
 		}
 

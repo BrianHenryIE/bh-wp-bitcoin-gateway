@@ -20,6 +20,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\API;
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\API_Background_Jobs_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduling_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Query;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Status;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain\Rate_Limit_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Addresses_Generation_Result;
@@ -39,6 +40,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
+use DateInterval;
 use DateTimeImmutable;
 use Exception;
 use Psr\Log\LoggerAwareTrait;
@@ -58,7 +60,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 	 *
 	 * @param Settings_Interface             $settings The plugin settings.
 	 * @param LoggerInterface                $logger A PSR logger.
-	 * @param Bitcoin_Wallet_Repository         $bitcoin_wallet_factory Wallet repository.
+	 * @param Bitcoin_Wallet_Repository      $bitcoin_wallet_repository Wallet repository.
 	 * @param Bitcoin_Address_Repository     $bitcoin_address_repository Repository to save and fetch addresses from wp_posts.
 	 * @param Blockchain_API_Interface       $blockchain_api The object/client to query the blockchain for transactions.
 	 * @param Generate_Address_API_Interface $generate_address_api Object that does the maths to generate new addresses for a wallet.
@@ -67,7 +69,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 	public function __construct(
 		protected Settings_Interface $settings,
 		LoggerInterface $logger,
-		protected Bitcoin_Wallet_Repository $bitcoin_wallet_factory,
+		protected Bitcoin_Wallet_Repository $bitcoin_wallet_repository,
 		protected Bitcoin_Address_Repository $bitcoin_address_repository,
 		protected Blockchain_API_Interface $blockchain_api,
 		protected Generate_Address_API_Interface $generate_address_api,
@@ -159,10 +161,10 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 	 */
 	public function generate_new_wallet( string $master_public_key, ?string $gateway_id = null ): Wallet_Generation_Result {
 
-		$post_id = $this->bitcoin_wallet_factory->get_post_id_for_wallet( $master_public_key )
-			?? $this->bitcoin_wallet_factory->save_new( $master_public_key, $gateway_id );
+		$post_id = $this->bitcoin_wallet_repository->get_post_id_for_wallet( $master_public_key )
+			?? $this->bitcoin_wallet_repository->save_new( $master_public_key, $gateway_id );
 
-		$wallet = $this->bitcoin_wallet_factory->get_by_post_id( $post_id );
+		$wallet = $this->bitcoin_wallet_repository->get_by_post_id( $post_id );
 
 		$existing_fresh_addresses = $wallet->get_fresh_addresses();
 
@@ -208,11 +210,11 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 
 		foreach ( $this->get_bitcoin_gateways() as $gateway ) {
 			$gateway_master_public_key = $gateway->get_xpub();
-			$gateway_wallet_post_id    = $this->bitcoin_wallet_factory->get_post_id_for_wallet( $gateway_master_public_key );
+			$gateway_wallet_post_id    = $this->bitcoin_wallet_repository->get_post_id_for_wallet( $gateway_master_public_key );
 			if ( is_null( $gateway_wallet_post_id ) ) {
-				$gateway_wallet_post_id = $this->bitcoin_wallet_factory->save_new( $gateway_master_public_key, $gateway->id );
+				$gateway_wallet_post_id = $this->bitcoin_wallet_repository->save_new( $gateway_master_public_key, $gateway->id );
 			}
-			$wallet = $this->bitcoin_wallet_factory->get_by_post_id( $gateway_wallet_post_id );
+			$wallet = $this->bitcoin_wallet_repository->get_by_post_id( $gateway_wallet_post_id );
 
 			$results[] = $this->generate_new_addresses_for_wallet( $wallet );
 		}
@@ -243,7 +245,14 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 				continue;
 			}
 
-			$bitcoin_address_new_post_id = $this->bitcoin_address_repository->save_new( $new_address_string, $address_index, $wallet );
+			$bitcoin_address_new_post_id = $this->bitcoin_address_repository->save_new(
+				new Bitcoin_Address_Query(
+					wp_post_parent_id: $wallet->get_post_id(),
+					status: Bitcoin_Address_Status::UNKNOWN,
+					xpub: $new_address_string,
+					derivation_path_sequence_index: $address_index,
+				)
+			);
 
 			$generated_addresses_post_ids[] = $bitcoin_address_new_post_id;
 			++$generated_addresses_count;
@@ -270,9 +279,9 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 		}
 
 		return new Addresses_Generation_Result(
-			$wallet,
-			$generated_addresses,
-			$address_index,
+			wallet: $wallet,
+			new_addresses: $generated_addresses,
+			address_index: $address_index,
 		);
 	}
 
@@ -285,8 +294,6 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 	 */
 	public function check_new_addresses_for_transactions(): Check_Assigned_Addresses_For_Transactions_Result {
 
-		// 'orderby'        => 'ID',
-		// 'order'          => 'ASC',
 		$addresses = $this->bitcoin_address_repository->get_unknown_bitcoin_addresses();
 
 		if ( empty( $addresses ) ) {
@@ -304,6 +311,8 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 	 * @param Bitcoin_Address[] $addresses Array of address objects to query and update.
 	 *
 	 * @return Check_Assigned_Addresses_For_Transactions_Result (was array<string, array<string, Transaction_Interface>>))
+	 *
+	 * @throws Rate_Limit_Exception
 	 */
 	public function check_addresses_for_transactions( array $addresses ): Check_Assigned_Addresses_For_Transactions_Result {
 
@@ -319,9 +328,8 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 			// Reschedule if we hit 429 (there will always be at least one address to check if it 429s.).
 			$this->logger->debug( $exception->getMessage() );
 
-			// Eh.
 			$this->background_jobs->schedule_check_newly_generated_bitcoin_addresses_for_transactions(
-				DateTimeImmutable::createFromFormat( 'U', (string) ( time() + ( 15 * ( (int) constant( 'MINUTE_IN_SECONDS' ) ) ) ) ),
+				( new DateTimeImmutable() )->add( new DateInterval( 'PT15M' ) ),
 			);
 		}
 

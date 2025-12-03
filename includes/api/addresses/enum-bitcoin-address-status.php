@@ -8,22 +8,22 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses;
 enum Bitcoin_Address_Status: string {
 
 	/**
-	 * probably brand new and unchecked
+	 * Probably brand new and unchecked.
 	 */
 	case UNKNOWN = 'unknown';
 
 	/**
-	 * new and no order id assigned
+	 * New and no order id assigned.
 	 */
 	case UNUSED = 'unused';
 
 	/**
-	 * assigned to an order, payment incomplete
+	 * Assigned to an order, payment incomplete.
 	 */
 	case ASSIGNED = 'assigned';
 
 	/**
-	 * transactions present and no order id, or and order id assigned and payment complete
+	 * Transactions present and no order id, or and order id assigned and payment complete.
 	 */
 	case USED = 'used';
 

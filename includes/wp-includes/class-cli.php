@@ -9,15 +9,19 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes;
 
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Factory;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Repository;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_WP_Post_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Order;
+use InvalidArgumentException;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 use WC_Order;
 use WP_CLI;
+use WP_CLI\ExitException;
 use WP_CLI_Command;
 
 /**
@@ -36,18 +40,18 @@ class CLI extends WP_CLI_Command {
 	/**
 	 * All CLI functions call into an instance of the API_Interface.
 	 *
-	 * @var API_Interface $api The main plugin API definition.
+	 * @var API_Interface&API_WooCommerce_Interface $api The main plugin API definition.
 	 */
-	protected API_Interface $api;
+	protected API_Interface&API_WooCommerce_Interface $api;
 
 	/**
 	 * Constructor.
 	 *
-	 * @param API_Interface      $api The main plugin functions.
-	 * @param Settings_Interface $settings The plugin's settings.
-	 * @param LoggerInterface    $logger A PSR logger.
+	 * @param API_Interface&API_WooCommerce_Interface $api The main plugin functions.
+	 * @param Settings_Interface                      $settings The plugin's settings.
+	 * @param LoggerInterface                         $logger A PSR logger.
 	 */
-	public function __construct( API_Interface $api, Settings_Interface $settings, LoggerInterface $logger ) {
+	public function __construct( API_Interface&API_WooCommerce_Interface $api, Settings_Interface $settings, LoggerInterface $logger ) {
 		parent::__construct();
 		$this->setLogger( $logger );
 		$this->settings = $settings;
@@ -125,20 +129,22 @@ class CLI extends WP_CLI_Command {
 	 * @param string[]             $args The address.
 	 * @param array<string,string> $assoc_args List of named arguments.
 	 *
-	 * @throws WP_CLI\ExitException When given input that does not match a known xpub, or post_id for a bitcoin address or relevant WooCommerce order.
+	 * @throws ExitException When given input that does not match a known xpub, or post_id for a bitcoin address or relevant WooCommerce order.
+	 * @throws InvalidArgumentException When the input does not match an existing object.
 	 */
 	public function check_transactions( array $args, array $assoc_args ): void {
 
 		$input  = $args[0];
 		$format = isset( $assoc_args['format'] ) ? $assoc_args['format'] : 'table';
 
-		$address_factory = new Bitcoin_Address_Repository();
+		$bitcoin_address_factory    = new Bitcoin_Address_Factory();
+		$bitcoin_address_repository = new Bitcoin_Address_Repository( $bitcoin_address_factory );
 
 		try {
 			switch ( get_post_type( intval( $input ) ) ) {
-				case Bitcoin_Address::POST_TYPE:
+				case Bitcoin_Address_WP_Post_Interface::POST_TYPE:
 					$this->logger->debug( "CLI input was `bh-bitcoin-address:{$input}`" );
-					$bitcoin_address = new Bitcoin_Address( intval( $input ) );
+					$bitcoin_address = $bitcoin_address_factory->get_by_wp_post_id( intval( $input ) );
 					break;
 				case 'shop_order':
 					$order_id = intval( $input );
@@ -153,22 +159,26 @@ class CLI extends WP_CLI_Command {
 						$this->logger->error( "`shop_order:{$order_id}` is not a Bitcoin order" );
 						return;
 					}
-					$address                 = $order->get_meta( Order::BITCOIN_ADDRESS_META_KEY );
-					$bitcoin_address_post_id = $address_factory->get_post_id_for_address( $address );
+					/** @var string|null $address */
+					$address = $order->get_meta( Order::BITCOIN_ADDRESS_META_KEY );
+					if ( empty( $address ) ) {
+						throw new \InvalidArgumentException( 'Order ' . $order->get_id() . ' has no Bitcoin address' );
+					}
+					$bitcoin_address_post_id = $bitcoin_address_repository->get_post_id_for_address( $address );
 					if ( is_null( $bitcoin_address_post_id ) ) {
 						$this->logger->error( "Could not find Bitcoin address object for address {$address} from order id {$input}." );
 						return;
 					}
-					$bitcoin_address = $address_factory->get_by_post_id( $bitcoin_address_post_id );
+					$bitcoin_address = $bitcoin_address_repository->get_by_post_id( $bitcoin_address_post_id );
 					break;
 				default:
 					// Assuming a raw address has been input.
-					$bitcoin_address_post_id = $address_factory->get_post_id_for_address( $input );
+					$bitcoin_address_post_id = $bitcoin_address_repository->get_post_id_for_address( $input );
 					if ( is_null( $bitcoin_address_post_id ) ) {
 						$this->logger->error( "Could not find Bitcoin address object for {$input}." );
 						return;
 					}
-					$bitcoin_address = $address_factory->get_by_post_id( $bitcoin_address_post_id );
+					$bitcoin_address = $bitcoin_address_repository->get_by_post_id( $bitcoin_address_post_id );
 			}
 
 			$result = $this->api->update_address_transactions( $bitcoin_address );

@@ -29,7 +29,7 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 	protected function get_sut(
 		?Settings_Interface $settings = null,
 		?LoggerInterface $logger = null,
-		?Bitcoin_Wallet_Repository $bitcoin_wallet_factory = null,
+		?Bitcoin_Wallet_Repository $bitcoin_wallet_repository = null,
 		?Bitcoin_Address_Repository $bitcoin_address_repository = null,
 		?Blockchain_API_Interface $blockchain_api = null,
 		?Generate_Address_API_Interface $generate_address_api = null,
@@ -38,7 +38,7 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 	): API {
 		$settings                   = $settings ?? $this->makeEmpty( Settings_Interface::class );
 		$logger                     = $logger ?? new ColorLogger();
-		$bitcoin_wallet_factory     = $bitcoin_wallet_factory ?? $this->makeEmpty( Bitcoin_Wallet_Repository::class );
+		$bitcoin_wallet_repository  = $bitcoin_wallet_repository ?? $this->makeEmpty( Bitcoin_Wallet_Repository::class );
 		$bitcoin_address_repository = $bitcoin_address_repository ?? $this->makeEmpty( Bitcoin_Address_Repository::class );
 		$blockchain_api             = $blockchain_api ?? $this->makeEmpty( Blockchain_API_Interface::class );
 		$generate_address_api       = $generate_address_api ?? $this->makeEmpty( Generate_Address_API_Interface::class );
@@ -48,7 +48,7 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 		$api = new API(
 			$settings,
 			$logger,
-			$bitcoin_wallet_factory,
+			$bitcoin_wallet_repository,
 			$bitcoin_address_repository,
 			$blockchain_api,
 			$generate_address_api,
@@ -157,7 +157,7 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 			)
 		);
 
-		$bitcoin_wallet_factory = $this->makeEmpty(
+		$bitcoin_wallet_repository = $this->makeEmpty(
 			Bitcoin_Wallet_Repository::class,
 			array(
 				'get_post_id_for_wallet' => Expected::once( 123 ),
@@ -166,7 +166,7 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 		);
 
 		$sut = $this->get_sut(
-			bitcoin_wallet_factory: $bitcoin_wallet_factory
+			bitcoin_wallet_repository: $bitcoin_wallet_repository
 		);
 
 		$bitcoin_gateway                   = new Bitcoin_Gateway( $sut );
@@ -205,7 +205,7 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 			)
 		);
 
-		$bitcoin_wallet_factory = $this->makeEmpty(
+		$bitcoin_wallet_repository = $this->makeEmpty(
 			Bitcoin_Wallet_Repository::class,
 			array(
 				'get_post_id_for_wallet' => Expected::once( 123 ),
@@ -214,7 +214,7 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 		);
 
 		$sut = $this->get_sut(
-			bitcoin_wallet_factory: $bitcoin_wallet_factory
+			bitcoin_wallet_repository: $bitcoin_wallet_repository
 		);
 
 		$bitcoin_gateway                   = new Bitcoin_Gateway( $sut );
@@ -251,7 +251,7 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 			)
 		);
 
-		$bitcoin_wallet_factory = $this->makeEmpty(
+		$bitcoin_wallet_repository = $this->makeEmpty(
 			Bitcoin_Wallet_Repository::class,
 			array(
 				'get_post_id_for_wallet' => Expected::once( 123 ),
@@ -260,7 +260,7 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 		);
 
 		$sut = $this->get_sut(
-			bitcoin_wallet_factory: $bitcoin_wallet_factory,
+			bitcoin_wallet_repository: $bitcoin_wallet_repository,
 		);
 
 		$wc_payment_gateways                              = WC_Payment_Gateways::instance();
@@ -300,7 +300,7 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 			)
 		);
 
-		$bitcoin_wallet_factory = $this->makeEmpty( Bitcoin_Wallet_Repository::class );
+		$bitcoin_wallet_repository = $this->makeEmpty( Bitcoin_Wallet_Repository::class );
 
 		$bitcoin_address_repository = $this->makeEmpty(
 			Bitcoin_Address_Repository::class,
@@ -318,17 +318,12 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 		$blockchain_api = self::makeEmpty(
 			Blockchain_API_Interface::class,
 			array(
-				// 'get_blockchain_height' => Expected::once(
-				// function (): int {
-				// return 1000;
-				// }
-				// ),
-					'get_transactions' => array(),
+				'get_transactions' => array(),
 			)
 		);
 
 		$sut = $this->get_sut(
-			bitcoin_wallet_factory: $bitcoin_wallet_factory,
+			bitcoin_wallet_repository: $bitcoin_wallet_repository,
 			bitcoin_address_repository: $bitcoin_address_repository,
 			blockchain_api: $blockchain_api,
 		);

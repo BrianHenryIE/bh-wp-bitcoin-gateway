@@ -22,106 +22,78 @@ use WP_Post;
 /**
  * Facade on WP_Post and post_meta.
  *
- * @phpstan-type MoneySerializedArray array{amount:string,currency:string}
  * @phpstan-type WpUpdatePostArray array{ID?: int, post_author?: int, post_date?: string, post_date_gmt?: string, post_content?: string, post_content_filtered?: string, post_title?: string, post_excerpt?: string}
  */
-class Bitcoin_Address {
+class Bitcoin_Address implements Bitcoin_Address_Interface {
 
-	const POST_TYPE = 'bh-bitcoin-address';
-
-	const TRANSACTION_META_KEY                     = 'address_transactions';
-	const DERIVATION_PATH_SEQUENCE_NUMBER_META_KEY = 'derivation_path_sequence_number';
-	const TARGET_AMOUNT_META_KEY                   = 'target_amount';
-	const BALANCE_META_KEY                         = 'balance';
-	const ORDER_ID_META_KEY                        = 'order_id';
-
-	/**
-	 * The wp_post database row, as a WordPress post object, for the custom post type used to store the data.
-	 */
-	protected WP_Post $post;
-
-	/**
-	 * Current status of the address, used, unused, assigned...
-	 */
-	protected Bitcoin_Address_Status $status;
-
-	/**
-	 * The wp_post.id for the {@see Bitcoin_Wallet} the address was derived from.
-	 */
-	protected int $wallet_parent_post_id;
-
-	/**
-	 * The nth address generated from the wallet.
-	 *
-	 * TODO: Why is this nullable
-	 */
-	protected ?int $derivation_path_sequence_number;
-
-	/** The Bitcoin xpub address shared with the customer for payment. */
-	protected string $raw_address;
-
-	/** @var array<string,Transaction_Interface> */
-	protected ?array $transactions = null;
-
-	/** The address will be considered paid when this amount has been received */
-	protected ?Money $target_amount;
-
+	// **
+	// * The wp_post database row, as a WordPress post object, for the custom post type used to store the data.
+	// */
+	// protected WP_Post $post;
+	//
+	// **
+	// * Current status of the address, used, unused, assigned...
+	// */
+	// protected Bitcoin_Address_Status $status;
+	//
+	// **
+	// * The wp_post.id for the {@see Bitcoin_Wallet} the address was derived from.
+	// */
+	// protected int $wallet_parent_post_id;
+	//
+	// **
+	// * The nth address generated from the wallet.
+	// *
+	// * TODO: Why is this nullable
+	// */
+	// protected ?int $derivation_path_sequence_number;
+	//
+	// ** The Bitcoin xpub address shared with the customer for payment. */
+	// protected string $raw_address;
+	//
+	// ** @var array<string,Transaction_Interface> */
+	// protected ?array $transactions = null;
+	//
+	// ** The address will be considered paid when this amount has been received */
+	// protected ?Money $target_amount;
+	//
 	// TODO: Add `protected ?int $required_number_of_confirmations`.
+	//
+	// **
+	// * The saved balance. Really be a calculation on the transactions.
+	// */
+	// protected ?Money $balance;
+	//
+	// **
+	// * The wp post_id of the associated order this address has been assigned to.
+	// */
+	// protected ?int $order_id;
 
-	/**
-	 * The saved balance. Really be a calculation on the transactions.
-	 */
-	protected ?Money $balance;
-
-	/**
-	 * The wp post_id of the associated order this address has been assigned to.
-	 */
-	protected ?int $order_id;
+	protected Bitcoin_Address_Repository $bitcoin_address_repository;
 
 	/**
 	 * Constructor
 	 *
-	 * @param int $post_id The wp_post ID the Bitcoin address detail is stored under.
+	 * @param WP_Post                 $post The wp_post the Bitcoin address detail is stored as.
+	 * @param Transaction_Interface[] $transactions TODO: or should this be the ids of those posts?
 	 *
 	 * @throws InvalidArgumentException When the supplied post_id is not a post of this type.
 	 */
-	public function __construct( int $post_id ) {
-		$post = get_post( $post_id );
-		if ( ! ( $post instanceof WP_Post ) || self::POST_TYPE !== $post->post_type ) {
-			throw new InvalidArgumentException( 'post_id ' . $post_id . ' is not a ' . self::POST_TYPE . ' post object' );
-		}
+	public function __construct(
+		protected WP_Post $post,
+		protected int $wallet_parent_post_id,
+		protected Bitcoin_Address_Status $status,
+		protected ?int $derivation_path_sequence_number,
+		protected string $raw_address,
+		protected ?Money $target_amount,
+		protected ?Money $balance,
+		protected ?int $order_id,
+		protected ?array $transactions = null,
+	) {
+	}
 
-		$this->post                            = $post;
-		$this->wallet_parent_post_id           = $this->post->post_parent;
-		$this->status                          = Bitcoin_Address_Status::from( $this->post->post_status );
-		$this->derivation_path_sequence_number = ( function () use ( $post_id ) {
-			/** @var array|bool|float|int|resource|string|null|mixed $meta_value */
-			$meta_value = get_post_meta( $post_id, self::DERIVATION_PATH_SEQUENCE_NUMBER_META_KEY, true );
-			return is_numeric( $meta_value ) ? intval( $meta_value ) : null;
-		} )();
-		$this->raw_address                     = $this->post->post_excerpt;
-		$this->transactions                    = ( function () use ( $post_id ): ?array {
-			// Previously the idea was to use `null` to suggest the address had never been checked but instead we should log each check.
-			// TODO: validate the array of `Transaction_Interface` objects.
-			// TODO: create a bitcoin-transactions post type!
-			$transactions_meta = array_filter( (array) get_post_meta( $post_id, self::TRANSACTION_META_KEY, true ) );
-			return empty( $transactions_meta ) ? null : $transactions_meta;
-		} )();
-		$this->balance                         = ( function () use ( $post_id ): ?Money {
-			/** @var MoneySerializedArray|array{} $balance_meta */
-			$balance_meta = array_filter( (array) get_post_meta( $post_id, self::BALANCE_META_KEY, true ) );
-			return empty( $balance_meta ) ? null : Money::of( ...$balance_meta );
-		} )();
-		$this->target_amount                   = ( function () use ( $post_id ): ?Money {
-			/** @var MoneySerializedArray|array{} $target_amount_meta */
-			$target_amount_meta = array_filter( (array) get_post_meta( $post_id, self::TARGET_AMOUNT_META_KEY, true ) );
-			return empty( $target_amount_meta ) ? null : Money::of( ...$target_amount_meta );
-		} )();
-		$this->order_id                        = ( function () use ( $post_id ): ?int {
-			/** @var array|bool|float|int|resource|string|null|mixed $order_id_meta */
-			$order_id_meta = get_post_meta( $post_id, self::ORDER_ID_META_KEY, true );
-			return is_numeric( $order_id_meta ) ? intval( $order_id_meta ) : null;
-		} )();
+	public function set_bitcoin_address_repository( Bitcoin_Address_Repository $bitcoin_address_repository ): void {
+		$this->bitcoin_address_repository = $bitcoin_address_repository;
 	}
 
 	/**
@@ -139,7 +111,7 @@ class Bitcoin_Address {
 	 * @readonly
 	 */
 	public function get_derivation_path_sequence_number(): ?int {
-		return is_numeric( $this->derivation_path_sequence_number ) ? intval( $this->derivation_path_sequence_number ) : null;
+		return $this->derivation_path_sequence_number;
 	}
 
 	/**
@@ -164,7 +136,7 @@ class Bitcoin_Address {
 	 * @return array<string,Transaction_Interface>|null
 	 */
 	public function get_blockchain_transactions(): ?array {
-		return is_array( $this->transactions ) ? $this->transactions : null;
+		return $this->transactions;
 	}
 
 	// TODO: `get_mempool_transactions()`.
@@ -181,7 +153,7 @@ class Bitcoin_Address {
 		$update = array(
 			'ID'         => $this->post->ID,
 			'meta_input' => array(
-				self::TRANSACTION_META_KEY => $refreshed_transactions,
+				Bitcoin_Address_WP_Post_Interface::TRANSACTION_META_KEY => $refreshed_transactions,
 			),
 		);
 
@@ -257,7 +229,7 @@ class Bitcoin_Address {
 	public function set_status( Bitcoin_Address_Status $status ): void {
 
 		$update = array(
-			'post_type'   => self::POST_TYPE,
+			'post_type'   => Bitcoin_Address_WP_Post_Interface::POST_TYPE,
 			'ID'          => $this->post->ID,
 			'post_status' => $status->value,
 		);
@@ -283,7 +255,7 @@ class Bitcoin_Address {
 		$update = array(
 			'ID'         => $this->post->ID,
 			'meta_input' => array(
-				self::ORDER_ID_META_KEY => $order_id,
+				Bitcoin_Address_WP_Post_Interface::ORDER_ID_META_KEY => $order_id,
 			),
 		);
 
@@ -353,7 +325,7 @@ class Bitcoin_Address {
 		$update = array(
 			'ID'         => $this->post->ID,
 			'meta_input' => array(
-				self::TARGET_AMOUNT_META_KEY => $btc_total->jsonSerialize(),
+				Bitcoin_Address_WP_Post_Interface::TARGET_AMOUNT_META_KEY => $btc_total->jsonSerialize(),
 			),
 		);
 
