@@ -1,0 +1,136 @@
+<?php
+/**
+ * The functions expected by the core plugin when using a Bitcoin_Address.
+ *
+ * @package    brianhenryie/bh-wp-bitcoin-gateway
+ */
+
+namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses;
+
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\MoneyMismatchException;
+use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\UnknownCurrencyException;
+use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
+use BrianHenryIE\WP_Bitcoin_Gateway\Admin\Addresses_List_Table;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Bitcoin_Gateway;
+
+interface Bitcoin_Address_Interface {
+
+	/**
+	 * The post ID for the xpub|ypub|zpub wallet this address was derived for.
+	 *
+	 * @return int
+	 */
+	public function get_wallet_parent_post_id(): int;
+
+	/**
+	 * Get this Bitcoin address's derivation path.
+	 *
+	 * @readonly
+	 */
+	public function get_derivation_path_sequence_number(): ?int;
+
+	/**
+	 * Return the raw Bitcoin address this object represents.
+	 *
+	 * @used-by API::check_new_addresses_for_transactions() When verifying newly generated addresses have no existing transactions.
+	 * @used-by API::get_fresh_address_for_order() When adding the payment address to the order meta.
+	 * @used-by Bitcoin_Gateway::process_payment() When adding a link in the order notes to view transactions on a 3rd party website.
+	 * @used-by API::update_address_transactions() When checking has an order been paid.
+	 */
+	public function get_raw_address(): string;
+
+	/**
+	 * Return the previously saved transactions for this address.
+	 *
+	 * @used-by API::update_address_transactions() When checking previously fetched transactions before a new query.
+	 * @used-by API::get_order_details() When displaying the order/address details in the admin/frontend UI.
+	 * @used-by Addresses_List_Table::print_columns() When displaying all addresses.
+	 *
+	 * @return array<string,Transaction_Interface>|null
+	 */
+	public function get_blockchain_transactions(): ?array;
+
+	// TODO: `get_mempool_transactions()`.
+
+	/**
+	 * Save the transactions recently fetched from the API.
+	 *
+	 * @used-by API::update_address_transactions()
+	 *
+	 * @param array<string,Transaction_Interface> $refreshed_transactions Array of the transaction details keyed by each transaction id.
+	 */
+	public function set_transactions( array $refreshed_transactions ): void;
+
+	/**
+	 * Return the balance saved in the post meta, or null if the address status is unknown.
+	 *
+	 * TODO: Might need a $confirmations parameter and calculate the balance from the transactions.
+	 *
+	 * @used-by Addresses_List_Table::print_columns()
+	 *
+	 * @return ?Money Null if unknown.
+	 */
+	public function get_balance(): ?Money;
+
+	/**
+	 * TODO: "balance" is not an accurate term for what we need.
+	 */
+	public function get_amount_received(): ?Money;
+
+	/**
+	 * From the received transactions, sum those who have enough confirmations.
+	 *
+	 * @param int $blockchain_height The current blockchain height. (TODO: explain why).
+	 * @param int $required_confirmations A confirmation is a subsequent block mined after the transaction.
+	 *
+	 * @throws MoneyMismatchException If the calculations were somehow using two different currencies.
+	 * @throws UnknownCurrencyException If `BTC` has not correctly been added to Money's currency list.
+	 */
+	public function get_confirmed_balance( int $blockchain_height, int $required_confirmations ): ?Money;
+
+	/**
+	 * Return the current status of the Bitcoin address object/post.
+	 */
+	public function get_status(): Bitcoin_Address_Status;
+
+	/**
+	 * Set the current status of the address.
+	 *
+	 * Valid statuses: unknown|unused|assigned|used.
+	 *
+	 * TODO: Throw an exception if an invalid status is set. Maybe in the `wp_insert_post_data` filter.
+	 * TODO: Maybe throw an exception if the update fails.
+	 *
+	 * @param Bitcoin_Address_Status $status Status to assign.
+	 */
+	public function set_status( Bitcoin_Address_Status $status ): void;
+
+	/**
+	 * Get the order id associated with this address, or null if none has ever been assigned.
+	 */
+	public function get_order_id(): ?int;
+
+	/**
+	 * Add order_id metadata to the bitcoin address and update the status to assigned.
+	 *
+	 * @param int $order_id The WooCommerce order id the address is being used for.
+	 */
+	public function set_order_id( int $order_id ): void;
+
+	/**
+	 * Associate the Bitcoin Address with an order's post_id, set the expected amount to be paid, change the status
+	 * to "assigned".
+	 *
+	 * @see Bitcoin_Address_Status::ASSIGNED
+	 *
+	 * @param int   $post_id The post_id (e.g. WooCommerce order id) that transactions to this address represent payment for.
+	 * @param Money $btc_total The target amount to be paid, after which the order should be updated.
+	 */
+	public function assign( int $post_id, Money $btc_total ): void;
+
+	/**
+	 * The received amount needed to consider the order "paid".
+	 */
+	public function get_target_amount(): ?Money;
+}

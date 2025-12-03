@@ -32,6 +32,8 @@ class Order_Integration_Test extends WPTestCase {
 		$order->payment_complete();
 		$order->save();
 
+		// TODO: mark address as used.... its xpub has been shared with a customer.
+
 		$this->assertFalse( as_has_scheduled_action( $hook, $args ) );
 	}
 }

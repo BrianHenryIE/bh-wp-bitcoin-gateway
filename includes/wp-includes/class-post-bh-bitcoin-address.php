@@ -20,6 +20,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Status;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_WP_Post_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use WP_Query;
@@ -73,12 +74,12 @@ class Post_BH_Bitcoin_Address {
 			'plugin_objects' => $this->plugin_objects,
 			'show_in_rest'   => true,
 		);
-		register_post_type( BITCOIN_ADDRESS::POST_TYPE, $args );
+		register_post_type( Bitcoin_Address_WP_Post_Interface::POST_TYPE, $args );
 
 		register_post_status(
 			Bitcoin_Address_Status::UNKNOWN->value,
 			array(
-				'post_type'                 => array( Bitcoin_Address::POST_TYPE ),
+				'post_type'                 => array( Bitcoin_Address_WP_Post_Interface::POST_TYPE ),
 				'label'                     => _x( 'Unknown', 'post' ),
 				'public'                    => true,
 				'show_in_admin_all_list'    => true,
@@ -91,7 +92,7 @@ class Post_BH_Bitcoin_Address {
 		register_post_status(
 			Bitcoin_Address_Status::UNUSED->value,
 			array(
-				'post_type'                 => array( Bitcoin_Address::POST_TYPE ),
+				'post_type'                 => array( Bitcoin_Address_WP_Post_Interface::POST_TYPE ),
 				'label'                     => _x( 'Unused', 'post' ),
 				'public'                    => true,
 				'show_in_admin_all_list'    => true,
@@ -104,7 +105,7 @@ class Post_BH_Bitcoin_Address {
 		register_post_status(
 			Bitcoin_Address_Status::ASSIGNED->value,
 			array(
-				'post_type'                 => array( Bitcoin_Address::POST_TYPE ),
+				'post_type'                 => array( Bitcoin_Address_WP_Post_Interface::POST_TYPE ),
 				'label'                     => _x( 'Assigned', 'post' ),
 				'public'                    => true,
 				'show_in_admin_all_list'    => true,
@@ -117,7 +118,7 @@ class Post_BH_Bitcoin_Address {
 		register_post_status(
 			Bitcoin_Address_Status::USED->value,
 			array(
-				'post_type'                 => array( Bitcoin_Address::POST_TYPE ),
+				'post_type'                 => array( Bitcoin_Address_WP_Post_Interface::POST_TYPE ),
 				'label'                     => _x( 'Used', 'post' ),
 				'public'                    => true,
 				'show_in_admin_all_list'    => true,

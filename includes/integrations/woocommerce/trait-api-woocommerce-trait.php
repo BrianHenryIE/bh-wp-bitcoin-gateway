@@ -1,9 +1,11 @@
 <?php
+/**
+ * @package brianhenryie/bh-wp-bitcoin-gateway
+ */
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Status;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
@@ -112,6 +114,7 @@ trait API_WooCommerce_Trait {
 	 * @used-by Bitcoin_Gateway::process_payment()
 	 *
 	 * @param WC_Order $order The order that will use the address.
+	 * @param Money    $btc_total The required value of Bitcoin after which this order will be considered paid.
 	 *
 	 * @return Bitcoin_Address
 	 * @throws Exception
@@ -157,10 +160,10 @@ trait API_WooCommerce_Trait {
 			return array();
 		}
 
-		$wallet_post_id = $this->bitcoin_wallet_factory->get_post_id_for_wallet( $gateway->get_xpub() )
-							?? $this->bitcoin_wallet_factory->save_new( $gateway->get_xpub(), $gateway->id );
+		$wallet_post_id = $this->bitcoin_wallet_repository->get_post_id_for_wallet( $gateway->get_xpub() )
+							?? $this->bitcoin_wallet_repository->save_new( $gateway->get_xpub(), $gateway->id );
 
-		$wallet = $this->bitcoin_wallet_factory->get_by_post_id( $wallet_post_id );
+		$wallet = $this->bitcoin_wallet_repository->get_by_post_id( $wallet_post_id );
 
 		return $wallet->get_fresh_addresses();
 	}
@@ -207,6 +210,8 @@ trait API_WooCommerce_Trait {
 	/**
 	 *
 	 * TODO: mempool.
+	 *
+	 * @param WC_Bitcoin_Order_Interface $bitcoin_order
 	 *
 	 * @throws Exception
 	 */
@@ -347,9 +352,11 @@ trait API_WooCommerce_Trait {
 	 * @param bool     $refresh Should saved order details be returned or remote APIs be queried.
 	 *
 	 * @return array<string, mixed>
-	 * @throws Exception
+	 *
 	 * @uses \BrianHenryIE\WP_Bitcoin_Gateway\API_Interface::get_order_details()
 	 * @see  Details_Formatter
+	 *
+	 * @throws Exception
 	 */
 	public function get_formatted_order_details( WC_Order $order, bool $refresh = true ): array {
 
