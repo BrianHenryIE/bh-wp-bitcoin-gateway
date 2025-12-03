@@ -9,12 +9,6 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses;
 
-use Exception;
-use WP_Post;
-
-/**
- * Facade on WP_Post and post_meta.
- */
 class Bitcoin_Wallet implements Bitcoin_Wallet_Interface {
 
 	/**
