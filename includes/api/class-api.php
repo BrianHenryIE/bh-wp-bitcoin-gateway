@@ -36,7 +36,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet_Factory;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
 use DateTimeImmutable;
@@ -58,7 +58,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 	 *
 	 * @param Settings_Interface             $settings The plugin settings.
 	 * @param LoggerInterface                $logger A PSR logger.
-	 * @param Bitcoin_Wallet_Factory         $bitcoin_wallet_factory Wallet repository.
+	 * @param Bitcoin_Wallet_Repository         $bitcoin_wallet_factory Wallet repository.
 	 * @param Bitcoin_Address_Repository     $bitcoin_address_repository Repository to save and fetch addresses from wp_posts.
 	 * @param Blockchain_API_Interface       $blockchain_api The object/client to query the blockchain for transactions.
 	 * @param Generate_Address_API_Interface $generate_address_api Object that does the maths to generate new addresses for a wallet.
@@ -67,7 +67,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 	public function __construct(
 		protected Settings_Interface $settings,
 		LoggerInterface $logger,
-		protected Bitcoin_Wallet_Factory $bitcoin_wallet_factory,
+		protected Bitcoin_Wallet_Repository $bitcoin_wallet_factory,
 		protected Bitcoin_Address_Repository $bitcoin_address_repository,
 		protected Blockchain_API_Interface $blockchain_api,
 		protected Generate_Address_API_Interface $generate_address_api,

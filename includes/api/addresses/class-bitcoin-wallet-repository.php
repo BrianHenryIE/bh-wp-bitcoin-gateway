@@ -13,7 +13,7 @@ use wpdb;
 /**
  * Factory for wallets, saved in wp_posts.
  */
-class Bitcoin_Wallet_Factory {
+class Bitcoin_Wallet_Repository {
 
 	/**
 	 * Given a post_id,

@@ -10,7 +10,7 @@ use Codeception\Stub\Expected;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet_Factory;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
 use Psr\Log\LoggerInterface;
 
@@ -22,7 +22,7 @@ class API_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	protected function get_sut(
 		?Settings_Interface $settings = null,
 		?LoggerInterface $logger = null,
-		?Bitcoin_Wallet_Factory $bitcoin_wallet_factory = null,
+		?Bitcoin_Wallet_Repository $bitcoin_wallet_factory = null,
 		?Bitcoin_Address_Repository $bitcoin_address_repository = null,
 		?Blockchain_API_Interface $blockchain_api = null,
 		?Generate_Address_API_Interface $generate_address_api = null,
@@ -31,7 +31,7 @@ class API_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	): API {
 		$settings                   = $settings ?? $this->makeEmpty( Settings_Interface::class );
 		$logger                     = $logger ?? new ColorLogger();
-		$bitcoin_wallet_factory     = $bitcoin_wallet_factory ?? $this->makeEmpty( Bitcoin_Wallet_Factory::class );
+		$bitcoin_wallet_factory     = $bitcoin_wallet_factory ?? $this->makeEmpty( Bitcoin_Wallet_Repository::class );
 		$bitcoin_address_repository = $bitcoin_address_repository ?? $this->makeEmpty( Bitcoin_Address_Repository::class );
 		$blockchain_api             = $blockchain_api ?? $this->makeEmpty( Blockchain_API_Interface::class );
 		$generate_address_api       = $generate_address_api ?? $this->makeEmpty( Generate_Address_API_Interface::class );
@@ -63,7 +63,7 @@ class API_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 
 		$wallet                 = $this->makeEmpty( Bitcoin_Wallet::class );
 		$bitcoin_wallet_factory = $this->makeEmpty(
-			Bitcoin_Wallet_Factory::class,
+			Bitcoin_Wallet_Repository::class,
 			array(
 				'get_post_id_for_wallet' => Expected::once( 123 ),
 				'get_by_post_id'         => Expected::once( $wallet ),
