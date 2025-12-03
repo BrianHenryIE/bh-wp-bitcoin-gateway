@@ -20,8 +20,6 @@ use InvalidArgumentException;
 use WP_Post;
 
 /**
- * Facade on WP_Post and post_meta.
- *
  * @phpstan-type WpUpdatePostArray array{ID?: int, post_author?: int, post_date?: string, post_date_gmt?: string, post_content?: string, post_content_filtered?: string, post_title?: string, post_excerpt?: string}
  */
 class Bitcoin_Address implements Bitcoin_Address_Interface {
