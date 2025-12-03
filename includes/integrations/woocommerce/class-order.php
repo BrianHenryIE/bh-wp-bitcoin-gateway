@@ -11,7 +11,9 @@ use ActionScheduler;
 use Automattic\WooCommerce\Internal\DataStores\Orders\OrdersTableDataStore;
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs;
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduling_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
@@ -27,11 +29,6 @@ use WC_Order;
 class Order {
 	use LoggerAwareTrait;
 
-	/**
-	 * Used to check is the gateway a Bitcoin gateway.
-	 */
-	protected API_Interface $api;
-
 	const BITCOIN_ADDRESS_META_KEY = 'bh_wp_bitcoin_gateway_address';
 
 	const EXCHANGE_RATE_AT_TIME_OF_PURCHASE_META_KEY = 'bh_wp_bitcoin_gateway_exchange_rate_at_time_of_purchase';
@@ -45,12 +42,15 @@ class Order {
 	/**
 	 * Constructor.
 	 *
-	 * @param API_Interface   $api The main plugin functions.
-	 * @param LoggerInterface $logger A PSR logger.
+	 * @param API_WooCommerce_Interface $api The main plugin functions. Used to check is the gateway a Bitcoin gateway.
+	 * @param LoggerInterface           $logger A PSR logger.
 	 */
-	public function __construct( API_Interface $api, LoggerInterface $logger ) {
+	public function __construct(
+		protected API_WooCommerce_Interface $api,
+		protected Background_Jobs_Scheduling_Interface $background_jobs,
+		LoggerInterface $logger
+	) {
 		$this->setLogger( $logger );
-		$this->api = $api;
 	}
 
 	/**
@@ -107,18 +107,14 @@ class Order {
 		$bitcoin_order = $this->api->get_order_details( $order );
 
 		$wallet_id = $bitcoin_order->get_address()->get_wallet_parent_post_id();
-		/** @var Bitcoin_Wallet $wallet */
-		$wallet = new Bitcoin_Wallet( $wallet_id );
+		$wallet    = new Bitcoin_Wallet( $wallet_id );
 
 		$num_remaining_addresses = count( $wallet->get_fresh_addresses() );
 
 		// Schedule address generation if needed.
 		if ( $num_remaining_addresses < 20 ) {
-			$hook = Background_Jobs_Actions_Interface::GENERATE_NEW_ADDRESSES_HOOK;
-			if ( ! as_has_scheduled_action( $hook ) ) {
-				$this->logger->debug( "Under 20 addresses ($num_remaining_addresses) remaining, scheduling generate_new_addresses background job.", array( 'num_remaining_addresses' => $num_remaining_addresses ) );
-				as_schedule_single_action( time(), $hook );
-			}
+			$this->logger->debug( "Under 20 addresses ($num_remaining_addresses) remaining, scheduling generate_new_addresses background job.", array( 'num_remaining_addresses' => $num_remaining_addresses ) );
+			$this->background_jobs->schedule_generate_new_addresses();
 		}
 	}
 
@@ -143,66 +139,6 @@ class Order {
 		}
 
 		// Schedule background check for payment.
-		$hook = Background_Jobs_Actions_Interface::CHECK_ASSIGNED_ADDRESSES_TRANSACTIONS_HOOK;
-		$args = array( 'order_id' => $order_id );
-
-		if ( ! as_has_scheduled_action( $hook, $args ) ) {
-			$timestamp         = time() + ( 10 * MINUTE_IN_SECONDS );
-			$recurring_seconds = ( 10 * MINUTE_IN_SECONDS );
-			$this->logger->debug( "New order created, `shop_order:{$order_id}`, scheduling background job to check for payments" );
-			as_schedule_recurring_action( $timestamp, $recurring_seconds, $hook, $args );
-		}
-	}
-
-	/**
-	 * When an order's status changes away from "pending" and "on-hold", cancel the scheduled background.
-	 *
-	 * E.g. when the order is paid or canceled.
-	 *
-	 * @hooked woocommerce_order_status_changed
-	 * @see WC_Order::status_transition()
-	 *
-	 * @param int|numeric-string $order_id The id of the order whose status has changed.
-	 * @param string             $status_from The old status.
-	 * @param string             $status_to The new status.
-	 */
-	public function unschedule_check_for_transactions( int|string $order_id, string $status_from, string $status_to ): void {
-
-		// TODO: failed, custom statuses
-		if ( in_array( $status_to, array( 'pending', 'on-hold' ), true ) ) {
-			return;
-		}
-
-		if ( ! $this->api->is_order_has_bitcoin_gateway( $order_id ) ) {
-			return;
-		}
-
-		if ( empty( $status_to ) ) {
-			$status_to = 'trash?';
-		}
-
-		$context = array(
-			'order_id'    => $order_id,
-			'status_from' => $status_from,
-			'status_to'   => $status_to,
-		);
-
-		$hook  = Background_Jobs_Actions_Interface::CHECK_ASSIGNED_ADDRESSES_TRANSACTIONS_HOOK;
-		$args  = array( 'order_id' => $order_id );
-		$query = array(
-			'hook' => $hook,
-			'args' => $args,
-		);
-
-		$context['action_scheduler_query'] = $query;
-
-		$actions = as_get_scheduled_actions( $query );
-		if ( ! empty( $actions ) ) {
-			$action_id = array_key_first( $actions );
-			$this->logger->debug( "`shop_order:{$order_id}` status changed from $status_from to $status_to, running `as_unschedule_all_actions` for check_unpaid_order job, action_id $action_id.", $context );
-			as_unschedule_all_actions( $hook, $args );
-		} else {
-			$this->logger->debug( "`shop_order:{$order_id}` status changed from $status_from to $status_to. No check_unpaid_order background job present to cancel.", $context );
-		}
+		$this->background_jobs->schedule_check_assigned_bitcoin_address_for_transactions();
 	}
 }

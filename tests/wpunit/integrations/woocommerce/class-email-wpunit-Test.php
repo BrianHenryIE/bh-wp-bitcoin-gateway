@@ -19,7 +19,7 @@ class Email_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 
 		$logger = new ColorLogger();
 		$api    = $this->makeEmpty(
-			API_Interface::class,
+			API_WooCommerce_Interface::class,
 			array(
 				'is_bitcoin_gateway' => Expected::once(
 					function ( $gateway_id ) {
@@ -84,7 +84,7 @@ class Email_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 
 		$logger = new ColorLogger();
 		$api    = $this->makeEmpty(
-			API_Interface::class,
+			API_WooCommerce_Interface::class,
 			array(
 				'is_bitcoin_gateway' => Expected::once(
 					function ( $gateway_id ) {
@@ -125,7 +125,7 @@ class Email_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 
 		$logger = new ColorLogger();
 		$api    = $this->makeEmpty(
-			API_Interface::class,
+			API_WooCommerce_Interface::class,
 			array(
 				'is_bitcoin_gateway'          => Expected::once(
 					function ( $gateway_id ) {

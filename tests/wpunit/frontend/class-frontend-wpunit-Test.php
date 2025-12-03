@@ -3,6 +3,7 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Frontend;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
 use Codeception\Stub\Expected;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
@@ -35,7 +36,7 @@ class Frontend_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 			)
 		);
 		$api      = $this->makeEmpty(
-			API_Interface::class,
+			API_WooCommerce_Interface::class,
 			array(
 				'is_order_has_bitcoin_gateway' => Expected::once(
 					function ( $order_id ) {
@@ -98,7 +99,7 @@ class Frontend_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 				'get_plugin_version' => Expected::never(),
 			)
 		);
-		$api      = $this->makeEmpty( API_Interface::class );
+		$api      = $this->makeEmpty( API_WooCommerce_Interface::class );
 
 		$GLOBALS['order-received'] = 123;
 

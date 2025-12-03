@@ -4,6 +4,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\Frontend;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
 use Codeception\Stub\Expected;
 use Exception;
 use WC_Order;
@@ -43,7 +44,7 @@ class AJAX_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 		);
 
 		$api = $this->makeEmpty(
-			API_Interface::class,
+			API_WooCommerce_Interface::class,
 			array(
 				'get_formatted_order_details' => Expected::once( $data_from_api_class ),
 			)

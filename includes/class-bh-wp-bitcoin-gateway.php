@@ -212,7 +212,6 @@ class BH_WP_Bitcoin_Gateway {
 		$order = $this->container->get( Order::class );
 
 		add_action( 'woocommerce_order_status_changed', array( $order, 'schedule_check_for_transactions' ), 10, 3 );
-		add_action( 'woocommerce_order_status_changed', array( $order, 'unschedule_check_for_transactions' ), 10, 3 );
 	}
 
 	/**
@@ -288,7 +287,7 @@ class BH_WP_Bitcoin_Gateway {
 		add_action( Background_Jobs_Actions_Interface::CHECK_NEW_ADDRESSES_TRANSACTIONS_HOOK, array( $background_jobs, 'check_new_addresses_for_transactions' ) );
 		add_action( Background_Jobs_Actions_Interface::CHECK_ASSIGNED_ADDRESSES_TRANSACTIONS_HOOK, array( $background_jobs, 'check_assigned_addresses_for_transactions' ) );
 		add_action( Background_Jobs_Actions_Interface::CHECK_FOR_ASSIGNED_ADDRESSES_HOOK, array( $background_jobs, 'schedule_check_for_assigned_addresses_repeating_action' ) );
-		add_action( 'action_scheduler_init', array( $background_jobs, 'ensure_schedule_repeating_actions' ) );
+		add_action( 'action_scheduler_run_recurring_actions_schedule_hook', array( $background_jobs, 'ensure_schedule_repeating_actions' ) );
 	}
 
 	/**
@@ -343,6 +342,7 @@ class BH_WP_Bitcoin_Gateway {
 			WP_CLI::add_command( 'bh-bitcoin generate-new-addresses', array( $cli, 'generate_new_addresses' ) );
 			WP_CLI::add_command( 'bh-bitcoin check-transactions', array( $cli, 'check_transactions' ) );
 		} catch ( Exception $e ) {
+			/** @var LoggerInterface $logger */
 			$logger = $this->container->get( LoggerInterface::class );
 			$logger->error( 'Failed to register WP CLI commands: ' . $e->getMessage(), array( 'exception' => $e ) );
 		}

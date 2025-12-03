@@ -87,3 +87,7 @@ wp wc payment_gateway update cheque --enabled=1
 #wp post create --post_type=page --post_title="Blocks Checkout" --post_status=publish ./wp-content/plugins/bh-wp-bitcoin-gateway/tests/e2e/docker/blocks-checkout-post-content.txt
 
 wp option set woocommerce_coming_soon no
+
+# Not doing well with PHP 8.4.
+wp plugin deactivate crypto-payments-woo
+wp plugin deactivate bh-wc-set-gateway-by-url

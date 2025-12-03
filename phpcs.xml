@@ -138,6 +138,9 @@
     <rule ref="Squiz.Commenting.FunctionCommentThrowTag.Missing">
         <exclude-pattern>*/tests/*</exclude-pattern>
     </rule>
-
+    <!-- Allow development functions in the development plugin -->
+    <rule ref="WordPress.PHP.DevelopmentFunctions.error_log_print_r">
+        <exclude-pattern>*/development-plugin/*</exclude-pattern>
+    </rule>
 
 </ruleset>

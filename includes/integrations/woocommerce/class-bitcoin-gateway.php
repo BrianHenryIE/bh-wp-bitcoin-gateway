@@ -7,15 +7,12 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet_Factory;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Currency;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\UnknownCurrencyException;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
 use Exception;
-use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
-use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LogLevel;
 use Psr\Log\NullLogger;
@@ -42,9 +39,9 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 	/**
 	 * Used to generate new wallets when the xpub is entered, and to fetch addresses when orders are placed.
 	 *
-	 * @var ?API_Interface
+	 * @var ?API_WooCommerce_Interface
 	 */
-	protected ?API_Interface $api = null;
+	protected ?API_WooCommerce_Interface $api = null;
 
 	/**
 	 * The plugin settings.
@@ -63,9 +60,9 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 	/**
 	 * Constructor for the gateway.
 	 *
-	 * @param ?API_Interface $api The main plugin functions.
+	 * @param ?API_WooCommerce_Interface $api The main plugin functions.
 	 */
-	public function __construct( ?API_Interface $api = null ) {
+	public function __construct( ?API_WooCommerce_Interface $api = null ) {
 
 		/**
 		 * Set a null logger to prevent null pointer exceptions. Later this will be correctly set
@@ -125,7 +122,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 			$method_description .= $this->get_formatted_link_to_order_confirmation_edit();
 		}
 
-		return apply_filters( 'woocommerce_gateway_method_description', $method_description, $this );
+		return (string) apply_filters( 'woocommerce_gateway_method_description', $method_description, $this );
 	}
 
 	/**
@@ -299,7 +296,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 				),
 				wc_get_checkout_url()
 			);
-			$settings_fields['description']['description'] .= ' <a href="' . esc_url( $checkout_url ) . '">View checkout</a>.';
+			$settings_fields['description']['description'] .= ' <a href="' . esc_url( $checkout_url ) . '" title="Adds an item to your cart and opens the checkout in a new tab.">Visit checkout</a>.';
 		}
 
 		$saved_xpub = $this->plugin_settings->get_master_public_key( $this->id );
@@ -325,7 +322,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 			'default'     => 'info',
 		);
 
-		$this->form_fields = apply_filters( 'wc_gateway_bitcoin_form_fields', $settings_fields, $this->id );
+		$this->form_fields = (array) apply_filters( 'wc_gateway_bitcoin_form_fields', $settings_fields, $this->id );
 	}
 
 
@@ -385,6 +382,10 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 
 		$api = $this->api;
 
+		$fiat_total = Money::of( $order->get_total(), $order->get_currency() );
+
+		$btc_total = $api->convert_fiat_to_btc( $fiat_total );
+
 		/**
 		 * There should never really be an exception here, since the availability of a fresh address was checked before
 		 * offering the option to pay by Bitcoin.
@@ -397,7 +398,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 			 * @see Order::BITCOIN_ADDRESS_META_KEY
 			 * @see Bitcoin_Address::get_raw_address()
 			 */
-			$btc_address = $api->get_fresh_address_for_order( $order );
+			$btc_address = $api->get_fresh_address_for_order( $order, $btc_total );
 		} catch ( Exception $e ) {
 			$this->logger->error( $e->getMessage(), array( 'exception' => $e ) );
 			throw new Exception( 'Unable to find Bitcoin address to send to. Please choose another payment method.' );
@@ -413,8 +414,6 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 			Order::EXCHANGE_RATE_AT_TIME_OF_PURCHASE_META_KEY,
 			$api->get_exchange_rate( Currency::of( $order->get_currency() ) )?->jsonSerialize()
 		);
-
-		$btc_total = $api->convert_fiat_to_btc( Money::of( $order->get_total(), $order->get_currency() ) );
 
 		// Record the amount the customer has been asked to pay in BTC.
 		$order->add_meta_data(

@@ -14,6 +14,7 @@ require( 'dotenv' ).config();
  */
 export default defineConfig( {
 	testDir: './tests/e2e-pw',
+	testIgnore: '**/helpers-tests/**',
 	// globalSetup: require.resolve("./global-setup"),
 	globalSetup: require.resolve( './tests/e2e-pw/config/global-setup' ),
 	/* Run tests in files in parallel */

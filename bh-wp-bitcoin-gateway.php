@@ -39,6 +39,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Exchange_Rate\Bitfinex_API;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Exchange_Rate_API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Generate_Address_API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Settings;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\lucatume\DI52\Container;
 use BrianHenryIE\WP_Bitcoin_Gateway\WC_Logger\WC_Logger_Settings_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\WC_Logger\WC_PSR_Logger;
@@ -96,7 +97,7 @@ $container->bind( Background_Jobs_Actions_Interface::class, Background_Jobs::cla
 $container->singleton(
 	API::class,
 	static function ( Container $container ) {
-		$api = $container->make( API::class );
+		$api             = $container->make( API::class );
 		$background_jobs = $container->get( Background_Jobs::class );
 		$api->set_background_jobs( $background_jobs );
 		return $api;
@@ -104,6 +105,7 @@ $container->singleton(
 );
 
 $container->bind( API_Background_Jobs_Interface::class, API::class );
+$container->bind( API_WooCommerce_Interface::class, API::class );
 
 $container->bind( API_Interface::class, API::class );
 $container->bind( Settings_Interface::class, Settings::class );

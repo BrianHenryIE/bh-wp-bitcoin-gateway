@@ -20,7 +20,7 @@ class Thank_You_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 
 		$logger = new ColorLogger();
 		$api    = $this->makeEmpty(
-			API_Interface::class,
+			API_WooCommerce_Interface::class,
 			array(
 				'is_order_has_bitcoin_gateway' => Expected::once(
 					function ( int $order_id ) {
@@ -67,7 +67,7 @@ class Thank_You_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 
 		$logger = new ColorLogger();
 		$api    = $this->makeEmpty(
-			API_Interface::class,
+			API_WooCommerce_Interface::class,
 			array(
 				'is_order_has_bitcoin_gateway' => Expected::once(
 					function ( int $order_id ) {

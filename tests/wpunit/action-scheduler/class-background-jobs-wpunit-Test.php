@@ -25,6 +25,7 @@ class Background_Jobs_WPUnit_Test extends WPTestCase {
 		$api                        = $this->makeEmpty( API_Background_Jobs_Interface::class );
 		$bitcoin_address_repository = $this->makeEmpty( Bitcoin_Address_Repository::class );
 
+		as_unschedule_all_actions( Background_Jobs_Actions_Interface::CHECK_FOR_ASSIGNED_ADDRESSES_HOOK );
 		assert( false === as_has_scheduled_action( Background_Jobs_Actions_Interface::CHECK_FOR_ASSIGNED_ADDRESSES_HOOK ) );
 
 		/** @var Background_Jobs_Actions_Interface $sut */
@@ -140,7 +141,7 @@ class Background_Jobs_WPUnit_Test extends WPTestCase {
 	}
 
 	/**
-	 * @covers ::schedule_check_newly_assigned_bitcoin_address_for_transactions
+	 * @covers ::schedule_check_assigned_bitcoin_address_for_transactions
 	 * @covers ::schedule_check_assigned_addresses_for_transactions
 	 */
 	public function test_schedule_check_newly_assigned_bitcoin_address_for_transactions(): void {
@@ -152,8 +153,8 @@ class Background_Jobs_WPUnit_Test extends WPTestCase {
 		/** @var Background_Jobs_Scheduling_Interface $sut */
 		$sut = new Background_Jobs( $api, $bitcoin_address_repository, $logger );
 
-		/** @see Background_Jobs::schedule_check_newly_assigned_bitcoin_address_for_transactions() */
-		$sut->schedule_check_newly_assigned_bitcoin_address_for_transactions();
+		/** @see Background_Jobs::schedule_check_assigned_bitcoin_address_for_transactions() */
+		$sut->schedule_check_assigned_bitcoin_address_for_transactions();
 	}
 
 	/**

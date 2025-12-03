@@ -7,8 +7,6 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
-use DateTime;
-use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 use WC_Order;
@@ -22,22 +20,18 @@ class Admin_Order_UI {
 
 	const TEMPLATE_NAME = 'admin/single-order-ui-bitcoin-details-metabox.php';
 
-	/**
-	 * Instance of the mail plugin class.
-	 *
-	 * @var API_Interface
-	 */
-	protected API_Interface $api;
 
 	/**
 	 * Constructor
 	 *
-	 * @param API_Interface   $api Required for order details.
-	 * @param LoggerInterface $logger PSR logger.
+	 * @param API_WooCommerce_Interface $api Instance of the main plugin class. Required for order details.
+	 * @param LoggerInterface           $logger PSR logger.
 	 */
-	public function __construct( API_Interface $api, LoggerInterface $logger ) {
+	public function __construct(
+		protected API_WooCommerce_Interface $api,
+		LoggerInterface $logger
+	) {
 		$this->setLogger( $logger );
-		$this->api = $api;
 	}
 
 	/**
@@ -49,6 +43,7 @@ class Admin_Order_UI {
 	 */
 	public function register_address_transactions_meta_box(): void {
 
+		/** @var WP_Post $post */
 		global $post;
 
 		if ( 'shop_order' !== $post->post_type ) {

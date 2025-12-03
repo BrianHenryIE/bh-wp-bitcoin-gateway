@@ -8,6 +8,7 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses;
 
 use Exception;
+use WP_Post;
 use wpdb;
 
 /**
@@ -101,12 +102,11 @@ class Bitcoin_Address_Repository {
 		return new Bitcoin_Address( $post_id );
 	}
 
-
 	/**
-	 * @param Bitcoin_Address_Status $post_staus
+	 * @param Bitcoin_Address_Status $post_staus Status unused|assigned|etc. that should be returned.
 	 * @param int                    $number_posts Defaults to WP_Query's max of 200.
 	 *
-	 * @return \WP_Post[]
+	 * @return WP_Post[]
 	 */
 	protected function get_bitcoin_address_posts( Bitcoin_Address_Status $post_staus, int $number_posts = 200 ): array {
 		$assigned_addresses = get_posts(
@@ -122,7 +122,7 @@ class Bitcoin_Address_Repository {
 	}
 
 	/**
-	 * @return \WP_Post[]
+	 * @return WP_Post[]
 	 */
 	public function get_assigned_bitcoin_addresses_wp_posts(): array {
 		return $this->get_bitcoin_address_posts( Bitcoin_Address_Status::ASSIGNED );
@@ -133,7 +133,7 @@ class Bitcoin_Address_Repository {
 	 */
 	public function get_assigned_bitcoin_addresses(): array {
 		return array_map(
-			fn( \WP_Post $bitcoin_address_wp_post ) => new Bitcoin_Address( $bitcoin_address_wp_post->ID ),
+			fn( WP_Post $bitcoin_address_wp_post ) => new Bitcoin_Address( $bitcoin_address_wp_post->ID ),
 			$this->get_bitcoin_address_posts( Bitcoin_Address_Status::ASSIGNED )
 		);
 	}
@@ -144,5 +144,15 @@ class Bitcoin_Address_Repository {
 	public function has_assigned_bitcoin_addresses(): bool {
 		$assigned_addresses = $this->get_bitcoin_address_posts( Bitcoin_Address_Status::ASSIGNED, 1 );
 		return ! empty( $assigned_addresses );
+	}
+
+	/**
+	 * @return Bitcoin_Address[]
+	 */
+	public function get_unknown_bitcoin_addresses(): array {
+		return array_map(
+			fn( WP_Post $bitcoin_address_wp_post ) => new Bitcoin_Address( $bitcoin_address_wp_post->ID ),
+			$this->get_bitcoin_address_posts( Bitcoin_Address_Status::UNKNOWN )
+		);
 	}
 }

@@ -2,6 +2,8 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses;
 
+use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
+
 /**
  * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address
  */
@@ -123,6 +125,29 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 		$result = $sut->get_balance();
 
 		$this->assertEquals( '1.23456789', $result?->getAmount() );
+	}
+
+	/**
+	 * @covers ::get_balance
+	 */
+	public function test_get_target_amount(): void {
+		$post_id = wp_insert_post(
+			array(
+				'post_type'   => 'bh-bitcoin-address',
+				'post_status' => 'used',
+			)
+		);
+
+		$bitcoin_address_repository = new Bitcoin_Address_Repository();
+
+		$sut = $bitcoin_address_repository->get_by_post_id( $post_id );
+
+		$sut->assign( 123, Money::of( '0.000123', 'BTC' ) );
+
+		$sut    = $bitcoin_address_repository->get_by_post_id( $post_id );
+		$result = $sut->get_target_amount();
+
+		$this->assertEquals( '0.000123', $result?->getAmount()->toFloat() );
 	}
 
 	/**

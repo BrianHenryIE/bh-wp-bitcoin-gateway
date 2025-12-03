@@ -13,10 +13,11 @@ use ActionScheduler;
 use ActionScheduler_Abstract_RecurringSchedule;
 use ActionScheduler_Action;
 use Exception;
+use JsonException;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
-use function BrianHenryIE\WP_Bitcoin_Gateway\;
+use WP_REST_Server;
 
 // TODO check for stray requests: exchange rate query seems to be happening too frequently.
 // https://api-pub.bitfinex.com/v2/tickers?symbols=tBTCUSD
@@ -120,11 +121,11 @@ EOT;
 add_action( 'admin_footer', __NAMESPACE__ . '\order_link' );
 
 
-( new \BrianHenryIE\WP_Bitcoin_Gateway\E2E_Test_Helper_Plugin() )->register_hooks();
+( new \BrianHenryIE\WP_Bitcoin_Gateway\Development_Plugin\E2E_Test_Helper_Plugin() )->register_hooks();
 
 class E2E_Test_Helper_Plugin {
 
-	public function register_hooks() {
+	public function register_hooks(): void {
 		add_filter( 'rest_pre_dispatch', array( $this, 'show_settings_in_rest' ) );
 		/**
 		 * @see \Automattic\WooCommerce\StoreApi\Routes\V1\AbstractCartRoute::check_nonce()
@@ -162,7 +163,7 @@ class E2E_Test_Helper_Plugin {
 	 *
 	 * @see WP_REST_Settings_Controller
 	 */
-	public function show_settings_in_rest( $short_circuit ) {
+	public function show_settings_in_rest( mixed $short_circuit ): mixed {
 		global $wp_registered_settings;
 
 		if ( ! in_array( 'woocommerce_checkout_page_id', $wp_registered_settings, true ) ) {
@@ -183,7 +184,7 @@ class E2E_Test_Helper_Plugin {
 	 * @see WP_REST_Server::check_authentication()
 	 * @hooked rest_authentication_errors
 	 */
-	public function set_rest_user_admin( $errors ) {
+	public function set_rest_user_admin( $errors ): mixed {
 
 		wp_set_current_user( 1 );
 
@@ -195,19 +196,27 @@ class E2E_Test_Helper_Plugin {
 	 */
 	public function login_as_any_user(): void {
 		if ( isset( $_GET['login_as_user'] ) ) {
-			$wp_user = get_user_by( 'slug', $_GET['login_as_user'] );
+			$login_as_user = sanitize_text_field( $_GET['login_as_user'] );
+			/** @var \WP_User|false $wp_user */
+			$wp_user = get_user_by( 'slug', $login_as_user );
+			if ( ! $wp_user ) {
+				throw new \Exception( 'Could not find user: ' . $login_as_user );
+			}
 			wp_set_current_user( $wp_user->ID );
 			wp_set_current_user( $wp_user->ID, $wp_user->user_login );
 			wp_set_auth_cookie( $wp_user->ID );
 		}
 	}
 
-
+	/**
+	 * @throws JsonException
+	 */
 	public function activate_custom_theme_callback( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 
-		$json = json_decode( $request->get_body(), true );
+		$request_body = json_decode( $request->get_body(), true, 512, JSON_THROW_ON_ERROR );
+		// $request_body = $request->get_params();
 
-		$theme_slug = $json['theme_slug'] ?? null;
+		$theme_slug = ( (string) $request_body['theme_slug'] ) ?: null;
 
 		if ( ! $theme_slug ) {
 			return new WP_Error( 'rest_missing_param', 'Missing theme_slug parameter: ' . $request->get_body(), array( 'status' => 400 ) );
@@ -235,7 +244,7 @@ class E2E_Test_Helper_Plugin {
 	 *
 	 * @hooked rest_api_init
 	 */
-	public function bh_activate_theme() {
+	public function bh_activate_theme(): void {
 		register_rest_route(
 			'e2e-test-helper/v1',
 			'/activate',
@@ -313,13 +322,16 @@ class E2E_Test_Helper_Plugin {
 			'e2e-test-helper/v1',
 			'/action_scheduler/search',
 			array(
-				'methods'             => \WP_REST_Server::READABLE,
+				'methods'             => WP_REST_Server::READABLE,
 				'callback'            => array( $this, 'action_scheduler_search' ),
 				'permission_callback' => '__return_true',
 			)
 		);
 	}
 
+	/**
+	 * Search for Action Scheduler schedule events.
+	 */
 	public function action_scheduler_search( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 
 		if ( ! function_exists( 'as_supports' ) ) {
@@ -394,25 +406,30 @@ class E2E_Test_Helper_Plugin {
 			'e2e-test-helper/v1',
 			'/action_scheduler/(?P<id>[\d]+)',
 			array(
-				'methods'             => \WP_REST_Server::DELETABLE,
+				'methods'             => WP_REST_Server::DELETABLE,
 				'callback'            => array( $this, 'action_scheduler_delete' ),
 				'permission_callback' => '__return_true',
 			)
 		);
 	}
 
+	/**
+	 * Delete an Action Scheduler scheduled task by id (int).
+	 */
 	public function action_scheduler_delete( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 
 		if ( ! function_exists( 'as_supports' ) ) {
 			return new WP_Error( '', 'Action scheduler is not loaded.', array( 'status' => 500 ) );
 		}
 
+		/** @var string $id */
 		$id = $request->get_param( 'id' );
 
 		if ( ! $id ) {
 			return new WP_Error( 'rest_missing_param', 'Missing id parameter.', array( 'status' => 400 ) );
 		}
 
+		/** @var \ActionScheduler_Store $store */
 		$store = ActionScheduler::store();
 
 		$claim_id = $store->get_claim_id( $id );

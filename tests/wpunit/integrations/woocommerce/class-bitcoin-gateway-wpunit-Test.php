@@ -24,7 +24,7 @@ class Bitcoin_Gateway_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 	public function test_generates_new_addresses_when_xpub_changes(): void {
 
 		$GLOBALS['bh_wp_bitcoin_gateway'] = $this->makeEmpty(
-			API_Interface::class,
+			API_WooCommerce_Interface::class,
 			array(
 				'generate_new_wallet'               => Expected::once(
 					function ( string $xpub_after, ?string $gateway_id = null ) {
@@ -58,7 +58,7 @@ class Bitcoin_Gateway_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 	public function test_does_not_generate_new_addresses_when_xpub_does_not_change(): void {
 
 		$GLOBALS['bh_wp_bitcoin_gateway'] = $this->makeEmpty(
-			API_Interface::class,
+			API_WooCommerce_Interface::class,
 			array()
 		);
 
@@ -81,7 +81,7 @@ class Bitcoin_Gateway_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 	public function test_checks_for_available_address_for_availability_true(): void {
 
 		$GLOBALS['bh_wp_bitcoin_gateway'] = $this->makeEmpty(
-			API_Interface::class,
+			API_WooCommerce_Interface::class,
 			array(
 				'is_fresh_address_available_for_gateway' => Expected::once(
 					function ( Bitcoin_Gateway $gateway ) {
@@ -110,7 +110,7 @@ class Bitcoin_Gateway_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 	public function test_checks_for_available_address_for_availability_false(): void {
 
 		$GLOBALS['bh_wp_bitcoin_gateway'] = $this->makeEmpty(
-			API_Interface::class,
+			API_WooCommerce_Interface::class,
 			array(
 				'is_fresh_address_available_for_gateway' => Expected::once(
 					function ( Bitcoin_Gateway $gateway ) {
@@ -134,7 +134,7 @@ class Bitcoin_Gateway_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 	public function test_checks_for_available_address_for_availability_uses_cache(): void {
 
 		$GLOBALS['bh_wp_bitcoin_gateway'] = $this->makeEmpty(
-			API_Interface::class,
+			API_WooCommerce_Interface::class,
 			array(
 				'is_fresh_address_available_for_gateway' => true,
 				'get_exchange_rate'                      => Money::of( 1, 'BTC' ),
@@ -172,7 +172,7 @@ class Bitcoin_Gateway_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 	 */
 	public function test_process_payment_returns_exception_on_bad_order_id(): void {
 
-		$GLOBALS['bh_wp_bitcoin_gateway'] = $this->makeEmpty( API_Interface::class );
+		$GLOBALS['bh_wp_bitcoin_gateway'] = $this->makeEmpty( API_WooCommerce_Interface::class );
 
 		$sut = new Bitcoin_Gateway();
 
@@ -217,11 +217,16 @@ class Bitcoin_Gateway_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 	public function test_process_payment_returns_exception_when_no_address_available(): void {
 
 		$GLOBALS['bh_wp_bitcoin_gateway'] = $this->makeEmpty(
-			API_Interface::class,
+			API_WooCommerce_Interface::class,
 			array(
 				'get_fresh_address_for_order' => Expected::once(
 					function ( WC_Order $order ) {
 						throw new Exception( 'This message will not be shown!' );
+					}
+				),
+				'convert_fiat_to_btc'         => Expected::once(
+					function ( Money $money ) {
+						return $money;
 					}
 				),
 			)

@@ -8,6 +8,8 @@
  * Schedule background job to generate new addresses as needed (fall below threshold defined elsewhere)
  * After generating new addresses, check for existing transactions to ensure they are available to use
  *
+ * TODO we need to always be checking the next address that might be assigned to ensure it is still unused.
+ *
  * @package    brianhenryie/bh-wp-bitcoin-gateway
  */
 
@@ -53,6 +55,8 @@ class Background_Jobs implements Background_Jobs_Scheduling_Interface, Backgroun
 			hook: self::GENERATE_NEW_ADDRESSES_HOOK,
 			unique: true
 		);
+		// TODO: check was it already scheduled.
+		$this->logger->info( 'New generate new addresses background job scheduled.' );
 	}
 
 	/**
@@ -101,7 +105,7 @@ class Background_Jobs implements Background_Jobs_Scheduling_Interface, Backgroun
 	 *
 	 * Generally, 'newly assigned address' = 'new_order'.
 	 */
-	public function schedule_check_newly_assigned_bitcoin_address_for_transactions(): void {
+	public function schedule_check_assigned_bitcoin_address_for_transactions(): void {
 		if ( as_has_scheduled_action( self::CHECK_ASSIGNED_ADDRESSES_TRANSACTIONS_HOOK )
 			&& ! doing_action( self::CHECK_ASSIGNED_ADDRESSES_TRANSACTIONS_HOOK ) ) {
 			return;
@@ -109,6 +113,7 @@ class Background_Jobs implements Background_Jobs_Scheduling_Interface, Backgroun
 		$this->schedule_check_assigned_addresses_for_transactions(
 			new DateTimeImmutable( 'now' )->add( new DateInterval( 'PT15M' ) )
 		);
+		// $this->logger->debug( "New order created, `shop_order:{$order_id}`, scheduling background job to check for payments" );
 	}
 
 	/**
@@ -168,7 +173,7 @@ class Background_Jobs implements Background_Jobs_Scheduling_Interface, Backgroun
 	/**
 	 * This is really just a failsafe in case the actual check gets unscheduled.
 	 * This should do nothing/return early when there are no assigned addresses.
-	 * New orders should have already scheduled a check with {@see self::schedule_check_newly_assigned_bitcoin_address_for_transactions()}
+	 * New orders should have already scheduled a check with {@see self::schedule_check_assigned_bitcoin_address_for_transactions()}
 	 *
 	 * @hooked {@see self::CHECK_FOR_ASSIGNED_ADDRESSES_HOOK}
 	 * @see self::CHECK_ASSIGNED_ADDRESSES_TRANSACTIONS_HOOK
@@ -228,16 +233,18 @@ class Background_Jobs implements Background_Jobs_Scheduling_Interface, Backgroun
 	/**
 	 * On every request, ensure we have the hourly check scheduled.
 	 *
-	 * @hooked action_scheduler_init
-	 * @see BH_WP_Bitcoin_Gateway::define_action_scheduler_hooks()
+	 * @hooked action_scheduler_run_recurring_actions_schedule_hook
+	 * @see \ActionScheduler_RecurringActionScheduler
 	 *
-	 * @see \ActionScheduler::init()
+	 * @used-by BH_WP_Bitcoin_Gateway::define_action_scheduler_hooks()
 	 * @see self::schedule_check_for_assigned_addresses_repeating_action()
+	 *
 	 * @see https://crontab.guru/every-1-hour
 	 * @see https://github.com/woocommerce/action-scheduler/issues/749
 	 */
 	public function ensure_schedule_repeating_actions(): void {
 		// TODO: what is the precise behaviour of unique here? If it already exists, it should not change the existing one.
+		// TODO: add warning log if thus makes a difference, it shows that the other scheduling was not working correctly.
 		as_schedule_cron_action(
 			timestamp: time(),
 			schedule: '0 * * * *',
