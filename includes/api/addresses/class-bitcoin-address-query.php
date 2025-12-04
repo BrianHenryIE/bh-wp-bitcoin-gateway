@@ -1,110 +1,70 @@
 <?php
+/**
+ * Strongly typed object for querying Bitcoin_Address in wp_posts table.
+ *
+ * @package brianhenryie/bh-wp-bitcoin-gateway
+ */
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses;
 
-use BackedEnum;
+use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Post_BH_Bitcoin_Address;
 
-class Bitcoin_Address_Query {
+/**
+ * @see Post_BH_Bitcoin_Address
+ */
+readonly class Bitcoin_Address_Query extends WP_Post_Query_Abstract {
 
 	/**
-	 * @see Bitcoin_Address_WP_Post_Interface::POST_TYPE
+	 * The Bitcoin_Address wp_post post_type.
 	 */
-	public readonly string $post_type;
+	protected function get_post_type(): string {
+		return Bitcoin_Address_WP_Post_Interface::POST_TYPE;
+	}
 
 	/**
-	 * @var array<string,string> $map to:from
+	 *
+	 * @return array<string,mixed> $map to:from
 	 */
-	protected array $map = array(
-		'post_name'    => 'xpub',
-		'post_excerpt' => 'xpub',
-		'post_title'   => 'xpub',
-		'post_status'  => 'status',
-		'post_parent'  => 'wp_post_parent_id',
-	);
+	protected function get_wp_post_fields(): array {
+		return array(
+			'post_name'    => $this->xpub,
+			'post_excerpt' => $this->xpub,
+			'post_title'   => $this->xpub,
+			'post_status'  => $this->status,
+			'post_parent'  => $this->wallet_wp_post_parent_id,
+			'order'        => $this->order_direction,
+		);
+	}
 
 	/**
-	 * @var string[]
+	 * @return array<string,mixed>
 	 */
-	protected array $valid_keys = array(
-		'post_type',
-		'post_name',
-		'post_excerpt',
-		'post_title',
-		'post_status',
-		'post_parent',
-		'numberposts',
-		'orderby',
-		'order',
-		'posts_per_page',
-		'meta_input',
-	);
+	protected function get_meta_input(): array {
+		return array(
+			Bitcoin_Address_WP_Post_Interface::DERIVATION_PATH_SEQUENCE_NUMBER_META_KEY => $this->derivation_path_sequence_index,
+		);
+	}
 
 	/**
-	 * @var array<string,string>
-	 */
-	protected array $meta_keys_map = array(
-		Bitcoin_Address_WP_Post_Interface::DERIVATION_PATH_SEQUENCE_NUMBER_META_KEY => 'derivation_path_sequence_index',
-	);
-
-	/**
-	 * @var array<string,string>
-	 */
-	protected array $valid_meta_keys = array(
-		Bitcoin_Address_WP_Post_Interface::DERIVATION_PATH_SEQUENCE_NUMBER_META_KEY,
-	);
-
-	/**
-	 * TODO: Use Bitcoin_Wallet objects where appropriate.
+	 * @param ?int                    $wallet_wp_post_parent_id The wp_posts id of the Bitcoin_Wallet this Bitcoin_Address belongs to.
+	 * @param ?Bitcoin_Address_Status $status Is the Bitcoin_Address available etc.
+	 * @param ?string                 $xpub The public key for the address.
+	 * @param ?int                    $derivation_path_sequence_index This Bitcoin Address is the nth one derived from the Bitcoin_Wallet.
+	 * @param ?int                    $numberposts The number of posts to return in the query (max 200).
+	 * @param ?string                 $orderby Which field to order the results by.
+	 * @param ?string                 $order_direction Order the results ASC or DESC.
+	 * @param ?int                    $posts_per_page TODO: What's the difference between this and `numberposts`?
 	 */
 	public function __construct(
 		public ?int $wp_post_parent_id = null,
 		public ?Bitcoin_Address_Status $status = null,
 		public ?string $xpub = null,
+		public ?int $derivation_path_sequence_index = null,
 		public ?int $numberposts = null,
 		public ?string $orderby = null,
-		public ?string $order = null,
+		public ?string $order_direction = null,
 		public ?int $posts_per_page = null,
-		public ?int $derivation_path_sequence_index = null,
 	) {
-		$this->post_type = Bitcoin_Address_WP_Post_Interface::POST_TYPE;
-	}
-
-	/**
-	 * TODO: move this to a parent class.
-	 * TODO: use getters.
-	 * TODO: PhpStan array shape.
-	 */
-	public function to_query_array(): array {
-
-		$object_vars = get_object_vars( $this );
-
-		unset( $object_vars['map'] );
-
-		foreach ( $this->map as $key => $value ) {
-			if ( isset( $object_vars[ $value ] ) ) {
-				$object_vars[ $key ] = $object_vars[ $value ];
-			}
-		}
-
-		$object_vars['meta_input'] = array();
-
-		foreach ( $this->meta_keys_map as $key => $value ) {
-			if ( isset( $object_vars[ $value ] ) ) {
-				$object_vars['meta_input'][ $key ] = $object_vars[ $value ];
-				unset( $object_vars[ $value ] );
-			}
-		}
-
-		foreach ( $object_vars as $key => $value ) {
-			if ( ! in_array( $key, $this->valid_keys ) ) {
-				unset( $object_vars[ $key ] );
-			}
-		}
-
-		$args = array_map(
-			fn( $value ) => $value instanceof BackedEnum ? $value->value : $value,
-			array_filter( $object_vars )
-		);
-		return $args;
+		parent::__construct();
 	}
 }
