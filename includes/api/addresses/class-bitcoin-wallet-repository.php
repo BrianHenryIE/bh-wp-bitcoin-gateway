@@ -17,10 +17,30 @@ class Bitcoin_Wallet_Repository {
 	) {
 	}
 
-	// public function get_by_xpub( string $xpub ): ?Bitcoin_Wallet {
-	// }
+	public function get_by_xpub( string $xpub ): ?Bitcoin_Wallet {
+		$args  = new Bitcoin_Wallet_Query(
+			master_public_key: $xpub,
+		);
+		$posts = get_posts( $args->to_query_array() );
+		if ( empty( $posts ) ) {
+			return null;
+		}
+		if ( 1 === count( $posts ) ) {
+			return $this->bitcoin_wallet_factory->get_by_wp_post( $posts[0] );
+		}
+		throw new Exception( 'TWO results found. Only one expected' );
+	}
 
-	public function get_by_wp_post_id( int $post_id ): ?Bitcoin_Wallet {
+	/**
+	 * Given the id of the wp_posts row storing the bitcoin wallet, return the typed Bitcoin_Wallet object.
+	 *
+	 * @param int $post_id WordPress wp_posts ID.
+	 *
+	 * @return Bitcoin_Wallet
+	 * @throws Exception When the post_type of the post returned for the given post_id is not a Bitcoin_Wallet.
+	 */
+	public function get_by_wp_post_id( int $post_id ): Bitcoin_Wallet {
+
 		return $this->bitcoin_wallet_factory->get_by_wp_post_id( $post_id );
 	}
 
@@ -78,37 +98,19 @@ class Bitcoin_Wallet_Repository {
 
 		// TODO: Validate xpub, throw exception.
 
-		$args = array();
-
-		$args['post_title']   = $master_public_key;
-		$args['post_status']  = ! is_null( $gateway_id ) ? 'active' : 'inactive';
-		$args['post_excerpt'] = $master_public_key;
-		$args['post_name']    = sanitize_title( $master_public_key ); // An indexed column.
-		$args['post_type']    = Bitcoin_Wallet_WP_Post_Interface::POST_TYPE;
-		$args['meta_input']   = array(
-			Bitcoin_Wallet_WP_Post_Interface::GATEWAY_IDS_META_KEY => array( $gateway_id ),
+		$args = new Bitcoin_Wallet_Query(
+			master_public_key: $master_public_key,
+			status: ! is_null( $gateway_id ) ? 'active' : 'inactive',
+			gateways: array( $gateway_id ),
 		);
 
-		$post_id = wp_insert_post( $args, true );
+		$post_id = wp_insert_post( $args->to_query_array(), true );
 
 		if ( is_wp_error( $post_id ) ) {
 			throw new Exception( 'Failed to save new wallet as wp_post' );
 		}
 
 		return $post_id;
-	}
-
-	/**
-	 * Given the id of the wp_posts row storing the bitcoin wallet, return the typed Bitcoin_Wallet object.
-	 *
-	 * @param int $post_id WordPress wp_posts ID.
-	 *
-	 * @return Bitcoin_Wallet
-	 * @throws Exception When the post_type of the post returned for the given post_id is not a Bitcoin_Wallet.
-	 */
-	public function get_by_post_id( int $post_id ): Bitcoin_Wallet {
-
-		return $this->bitcoin_wallet_factory->get_by_wp_post_id( $post_id );
 	}
 
 	/**
