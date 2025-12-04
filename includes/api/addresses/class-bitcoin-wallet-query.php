@@ -46,13 +46,13 @@ readonly class Bitcoin_Wallet_Query extends WP_Post_Query_Abstract {
 	/**
 	 * Constructor.
 	 *
-	 * @param ?string $master_public_key The Wallet's master public key.
-	 * @param ?string $status Current status, e.g. new. TODO: enum.
-	 * @param ?array $gateways List of gateways the Bitcoin_Wallet is being used by
+	 * @param ?string                $master_public_key The Wallet's master public key.
+	 * @param ?Bitcoin_Wallet_Status $status Current status, e.g. new.
+	 * @param ?array                 $gateways List of gateways the Bitcoin_Wallet is being used by.
 	 */
 	public function __construct(
 		public ?string $master_public_key = null,
-		public ?string $status = null,
+		public ?Bitcoin_Wallet_Status $status = null,
 		public ?array $gateways = null,
 	) {
 		parent::__construct();

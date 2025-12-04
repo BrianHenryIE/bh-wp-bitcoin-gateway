@@ -100,7 +100,7 @@ class Bitcoin_Wallet_Repository {
 
 		$args = new Bitcoin_Wallet_Query(
 			master_public_key: $master_public_key,
-			status: ! is_null( $gateway_id ) ? 'active' : 'inactive',
+			status: ! is_null( $gateway_id ) ? Bitcoin_Wallet_Status::ACTIVE : Bitcoin_Wallet_Status::INACTIVE,
 			gateways: array( $gateway_id ),
 		);
 
