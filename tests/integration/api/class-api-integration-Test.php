@@ -35,7 +35,7 @@ class API_Integration_Test extends WPTestCase {
 		$bitcoin_address_repository = new Bitcoin_Address_Repository( $bitcoin_address_factory );
 		$post_id                    = $bitcoin_address_repository->save_new(
 			new Bitcoin_Address_Query(
-				wp_post_parent_id: $wallet->get_post_id(),
+				wallet_wp_post_parent_id: $wallet->get_post_id(),
 				status: Bitcoin_Address_Status::UNKNOWN,
 				xpub: $test_wallet_address,
 				derivation_path_sequence_index: $address_index,

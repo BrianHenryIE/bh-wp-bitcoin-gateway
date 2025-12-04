@@ -76,7 +76,7 @@ class Bitcoin_Wallet implements Bitcoin_Wallet_Interface {
 		$bitcoin_address_repository = new Bitcoin_Address_Repository( $bitcoin_address_factory );
 		return $bitcoin_address_repository->get_addresses(
 			new Bitcoin_Address_Query(
-				wp_post_parent_id: $this->post_id,
+				wallet_wp_post_parent_id: $this->post_id,
 				status: Bitcoin_Address_Status::UNUSED,
 			)
 		);

@@ -35,7 +35,7 @@ class CLI_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 
 		$post_id = (string) $factory->save_new(
 			new Bitcoin_Address_Query(
-				wp_post_parent_id: $wallet->get_post_id(),
+				wallet_wp_post_parent_id: $wallet->get_post_id(),
 				xpub: 'mockaddress',
 				derivation_path_sequence_index: 0
 			)

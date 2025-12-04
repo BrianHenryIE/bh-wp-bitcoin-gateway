@@ -56,7 +56,7 @@ readonly class Bitcoin_Address_Query extends WP_Post_Query_Abstract {
 	 * @param ?int                    $posts_per_page TODO: What's the difference between this and `numberposts`?
 	 */
 	public function __construct(
-		public ?int $wp_post_parent_id = null,
+		public ?int $wallet_wp_post_parent_id = null,
 		public ?Bitcoin_Address_Status $status = null,
 		public ?string $xpub = null,
 		public ?int $derivation_path_sequence_index = null,

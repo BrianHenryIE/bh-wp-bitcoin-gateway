@@ -247,7 +247,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 
 			$bitcoin_address_new_post_id = $this->bitcoin_address_repository->save_new(
 				new Bitcoin_Address_Query(
-					wp_post_parent_id: $wallet->get_post_id(),
+					wallet_wp_post_parent_id: $wallet->get_post_id(),
 					status: Bitcoin_Address_Status::UNKNOWN,
 					xpub: $new_address_string,
 					derivation_path_sequence_index: $address_index,
