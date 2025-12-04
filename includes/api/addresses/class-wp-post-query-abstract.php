@@ -59,6 +59,8 @@ abstract readonly class WP_Post_Query_Abstract {
 
 	/**
 	 * @return string[] List of valid field in the WP_Query.
+	 *
+	 * TODO: Mark which fields are indexed.
 	 */
 	protected function get_valid_keys(): array {
 		return array(
@@ -92,6 +94,7 @@ abstract readonly class WP_Post_Query_Abstract {
 		}
 
 		$wp_post_fields['meta_input'] = $this->get_meta_input();
+		$wp_post_fields['post_type']  = $this->post_type;
 
 		$args = array_map(
 			fn( $value ) => $value instanceof BackedEnum ? $value->value : $value,
