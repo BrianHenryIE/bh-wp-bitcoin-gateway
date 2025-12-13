@@ -213,7 +213,7 @@ class Background_Jobs implements Background_Jobs_Scheduling_Interface, Backgroun
 		$this->logger->info( 'Starting check_assigned_addresses_for_transactions() background job.' );
 
 		try {
-			$result = $this->api->check_assigned_addresses_for_transactions();
+			$result = $this->api->check_assigned_addresses_for_payment();
 
 		} catch ( Rate_Limit_Exception $rate_limit_exception ) {
 			$this->schedule_check_assigned_addresses_for_transactions(

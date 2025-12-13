@@ -104,5 +104,5 @@ interface API_Interface {
 	/**
 	 * The main function for checking for payments received.
 	 */
-	public function check_assigned_addresses_for_transactions(): Check_Assigned_Addresses_For_Transactions_Result;
+	public function check_assigned_addresses_for_payment(): Check_Assigned_Addresses_For_Transactions_Result;
 }

@@ -379,7 +379,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 	 * @see Background_Jobs_Actions_Interface::check_assigned_addresses_for_transactions()
 	 * @used-by Background_Jobs::check_assigned_addresses_for_transactions()
 	 */
-	public function check_assigned_addresses_for_transactions(): Check_Assigned_Addresses_For_Transactions_Result {
+	public function check_assigned_addresses_for_payment(): Check_Assigned_Addresses_For_Transactions_Result {
 
 		foreach ( $this->bitcoin_address_repository->get_assigned_bitcoin_addresses() as $bitcoin_address ) {
 			$this->update_address_transactions( $bitcoin_address );
