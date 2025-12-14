@@ -3,14 +3,24 @@
 # Print the script name.
 echo $(basename "$0")
 
+# Avoid the "update database required" page.
+wp core update-db
+
 # Does this need to be done first?
 wp plugin activate woocommerce;
 
 # trying to avoid "'tests-wordpress.wp_lhr_log' doesn't exist", maybe if it's activated individually...
 wp plugin activate log-http-requests;
 
-echo "wp plugin activate --all"
-wp plugin activate --all
+wp plugin activate basic-auth;
+wp plugin activate checkout-fees-for-woocommerce;
+wp plugin activate woo-cancel-abandoned-order;
+wp plugin activate wp-mail-logging;
+
+wp plugin activate development-plugin;
+
+#echo "wp plugin activate --all"
+#wp plugin activate --all
 
 wp plugin deactivate give-next-gen --skip-plugins;
 wp plugin deactivate give --skip-plugins;
@@ -34,7 +44,7 @@ wp transient delete _wc_activation_redirect
 # wp theme install storefront --activate;
 
 
-
+# Error: The 'customer' username is already registered.
 echo "Creating WooCommerce Customer Account"
 wp user create customer customer@woocommercecoree2etestsuite.com \
 	--user_pass=password \

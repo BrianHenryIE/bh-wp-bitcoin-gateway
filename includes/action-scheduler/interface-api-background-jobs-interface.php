@@ -1,6 +1,6 @@
 <?php
 /**
- * Functions implemented by API class, which will be used by {@see Background_Jobs} class
+ * Functions implemented by API class, which will be used by {@see Background_Jobs_Actions_Handler} class
  *
  * @package brianhenryie/bh-wp-bitcoin-gateway
  */

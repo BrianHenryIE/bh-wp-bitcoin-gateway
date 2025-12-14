@@ -9,7 +9,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler;
 
 use DateTimeInterface;
 
-interface Background_Jobs_Scheduling_Interface {
+interface Background_Jobs_Scheduler_Interface {
 
 	public function schedule_generate_new_addresses(): void;
 
@@ -18,4 +18,6 @@ interface Background_Jobs_Scheduling_Interface {
 	public function schedule_check_assigned_bitcoin_address_for_transactions(): void;
 
 	public function schedule_check_for_assigned_addresses_repeating_action(): void;
+
+	public function schedule_check_assigned_addresses_for_transactions( ?DateTimeInterface $date_time = null ): void;
 }

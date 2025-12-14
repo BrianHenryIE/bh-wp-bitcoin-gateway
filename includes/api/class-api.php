@@ -19,8 +19,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\API;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\API_Background_Jobs_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduling_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Query;
+use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduler_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Status;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Transaction_Repository;
@@ -35,7 +34,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Currency;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Trait;
-use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs;
+use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Handler;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet;
@@ -53,21 +52,17 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 	use API_WooCommerce_Trait;
 
 	/**
-	 * @var Background_Jobs Object to schedule background jobs.
-	 */
-	protected Background_Jobs $background_jobs;
-
-	/**
 	 * Constructor
 	 *
-	 * @param Settings_Interface             $settings The plugin settings.
-	 * @param LoggerInterface                $logger A PSR logger.
-	 * @param Bitcoin_Wallet_Repository      $bitcoin_wallet_repository Wallet repository.
-	 * @param Bitcoin_Address_Repository     $bitcoin_address_repository Repository to save and fetch addresses from wp_posts.
-	 * @param Bitcoin_Transaction_Repository $bitcoin_transaction_repository
-	 * @param Blockchain_API_Interface       $blockchain_api The object/client to query the blockchain for transactions.
-	 * @param Generate_Address_API_Interface $generate_address_api Object that does the maths to generate new addresses for a wallet.
-	 * @param Exchange_Rate_API_Interface    $exchange_rate_api Object/client to fetch the exchange rate.
+	 * @param Settings_Interface                  $settings The plugin settings.
+	 * @param LoggerInterface                     $logger A PSR logger.
+	 * @param Bitcoin_Wallet_Repository           $bitcoin_wallet_repository Wallet repository.
+	 * @param Bitcoin_Address_Repository          $bitcoin_address_repository Repository to save and fetch addresses from wp_posts.
+	 * @param Bitcoin_Transaction_Repository      $bitcoin_transaction_repository
+	 * @param Blockchain_API_Interface            $blockchain_api The object/client to query the blockchain for transactions.
+	 * @param Generate_Address_API_Interface      $generate_address_api Object that does the maths to generate new addresses for a wallet.
+	 * @param Exchange_Rate_API_Interface         $exchange_rate_api Object/client to fetch the exchange rate.
+	 * @param Background_Jobs_Scheduler_Interface $background_jobs_scheduling
 	 */
 	public function __construct(
 		protected Settings_Interface $settings,
@@ -78,19 +73,9 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 		protected Blockchain_API_Interface $blockchain_api,
 		protected Generate_Address_API_Interface $generate_address_api,
 		protected Exchange_Rate_API_Interface $exchange_rate_api,
+		protected Background_Jobs_Scheduler_Interface $background_jobs_scheduling,
 	) {
 		$this->setLogger( $logger );
-	}
-
-	/**
-	 * Set the background jobs scheduler.
-	 *
-	 * This is not in the constructor to avoid an infinite loop/recursive dependency.
-	 *
-	 * @param Background_Jobs $background_jobs The background jobs scheduler.
-	 */
-	public function set_background_jobs( Background_Jobs $background_jobs ): void {
-		$this->background_jobs = $background_jobs;
 	}
 
 	/**
@@ -201,9 +186,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 	 *
 	 * @see API_Interface::generate_new_addresses()
 	 * @used-by CLI::generate_new_addresses()
-	 * @used-by Background_Jobs::generate_new_addresses()
-	 *
-	 * @return Addresses_Generation_Result[]
+	 * @used-by Background_Jobs_Actions_Handler::generate_new_addresses()
 	 */
 	public function generate_new_addresses(): array {
 
@@ -290,11 +273,10 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 	}
 
 	/**
-	 * @used-by Background_Jobs::check_new_addresses_for_transactions()
-	 *
-	 * @throws Rate_Limit_Exception
+	 * @used-by Background_Jobs_Actions_Handler::check_new_addresses_for_transactions()
 	 *
 	 * @return Check_Assigned_Addresses_For_Transactions_Result (was: array<string, array<string, Transaction_Interface>>)
+	 * @throws Rate_Limit_Exception
 	 */
 	public function check_new_addresses_for_transactions(): Check_Assigned_Addresses_For_Transactions_Result {
 
@@ -310,7 +292,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 	}
 
 	/**
-	 * @used-by Background_Jobs::check_new_addresses_for_transactions()
+	 * @used-by Background_Jobs_Actions_Handler::check_new_addresses_for_transactions()
 	 *
 	 * @param Bitcoin_Address[] $addresses Array of address objects to query and update.
 	 *

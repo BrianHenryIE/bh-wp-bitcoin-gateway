@@ -14,7 +14,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet_Generation_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Currency;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
-use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs;
+use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Handler;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Bitcoin_Gateway;
@@ -88,7 +88,7 @@ interface API_Interface {
 	/**
 	 * Validate addresses have not been used before by checking for transactions.
 	 *
-	 * @used-by Background_Jobs::check_new_addresses_for_transactions()
+	 * @used-by Background_Jobs_Actions_Handler::check_new_addresses_for_transactions()
 	 * @used-by API::generate_new_addresses()
 	 * @used-by API::generate_new_addresses_for_wallet()
 	 * @used-by API::generate_new_wallet()

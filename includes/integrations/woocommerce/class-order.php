@@ -9,9 +9,9 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
 use ActionScheduler;
 use Automattic\WooCommerce\Internal\DataStores\Orders\OrdersTableDataStore;
-use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs;
+use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Handler;
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduling_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduler_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet;
@@ -47,7 +47,7 @@ class Order {
 	 */
 	public function __construct(
 		protected API_WooCommerce_Interface $api,
-		protected Background_Jobs_Scheduling_Interface $background_jobs,
+		protected Background_Jobs_Scheduler_Interface $background_jobs,
 		LoggerInterface $logger
 	) {
 		$this->setLogger( $logger );

@@ -3,8 +3,10 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
-use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs;
+use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Handler;
+use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduler;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Status;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Transaction_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\API;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain_API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Exchange_Rate_API_Interface;
@@ -34,29 +36,20 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 		?Blockchain_API_Interface $blockchain_api = null,
 		?Generate_Address_API_Interface $generate_address_api = null,
 		?Exchange_Rate_API_Interface $exchange_rate_api = null,
-		?Background_Jobs $background_jobs = null,
+		?Background_Jobs_Actions_Handler $background_jobs_scheduler = null,
 	): API {
-		$settings                   = $settings ?? $this->makeEmpty( Settings_Interface::class );
-		$logger                     = $logger ?? new ColorLogger();
-		$bitcoin_wallet_repository  = $bitcoin_wallet_repository ?? $this->makeEmpty( Bitcoin_Wallet_Repository::class );
-		$bitcoin_address_repository = $bitcoin_address_repository ?? $this->makeEmpty( Bitcoin_Address_Repository::class );
-		$blockchain_api             = $blockchain_api ?? $this->makeEmpty( Blockchain_API_Interface::class );
-		$generate_address_api       = $generate_address_api ?? $this->makeEmpty( Generate_Address_API_Interface::class );
-		$exchange_rate_api          = $exchange_rate_api ?? $this->makeEmpty( Exchange_Rate_API_Interface::class );
-		$background_jobs            = $background_jobs ?? $this->makeEmpty( Background_Jobs::class );
-
-		$api = new API(
-			$settings,
-			$logger,
-			$bitcoin_wallet_repository,
-			$bitcoin_address_repository,
-			$blockchain_api,
-			$generate_address_api,
-			$exchange_rate_api,
+		$sut = new API(
+			settings: $settings ?? $this->makeEmpty( Settings_Interface::class ),
+			logger: $logger ?? new ColorLogger(),
+			bitcoin_wallet_repository: $bitcoin_wallet_repository ?? $this->make( Bitcoin_Wallet_Repository::class ),
+			bitcoin_address_repository: $bitcoin_address_repository ?? $this->make( Bitcoin_Address_Repository::class ),
+			bitcoin_transaction_repository: $bitcoin_transaction_repository ?? $this->make( Bitcoin_Transaction_Repository::class ),
+			blockchain_api: $blockchain_api ?? $this->makeEmpty( Blockchain_API_Interface::class ),
+			generate_address_api: $generate_address_api ?? $this->makeEmpty( Generate_Address_API_Interface::class ),
+			exchange_rate_api: $exchange_rate_api ?? $this->makeEmpty( Exchange_Rate_API_Interface::class ),
+			background_jobs_scheduling: $background_jobs_scheduler ?? $this->makeEmpty( Background_Jobs_Scheduler::class ),
 		);
-		$api->set_background_jobs( $background_jobs );
-
-		return $api;
+		return $sut;
 	}
 
 	/**

@@ -14,7 +14,7 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduling_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduler_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Admin\Register_List_Tables;
 use BrianHenryIE\WP_Bitcoin_Gateway\Frontend\Blocks\Bitcoin_Image_Block;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\Woo_Cancel_Abandoned_Order\Woo_Cancel_Abandoned_Order;
@@ -280,7 +280,7 @@ class BH_WP_Bitcoin_Gateway {
 	 */
 	protected function define_action_scheduler_hooks(): void {
 
-		/** @var Background_Jobs_Actions_Interface&Background_Jobs_Scheduling_Interface $background_jobs */
+		/** @var Background_Jobs_Actions_Interface&Background_Jobs_Scheduler_Interface $background_jobs */
 		$background_jobs = $this->container->get( Background_Jobs_Actions_Interface::class );
 
 		add_action( Background_Jobs_Actions_Interface::GENERATE_NEW_ADDRESSES_HOOK, array( $background_jobs, 'generate_new_addresses' ) );
