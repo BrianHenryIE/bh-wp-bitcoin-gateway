@@ -3,7 +3,6 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\Woo_Cancel_Abandoned_Order;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
-use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
 use Codeception\Stub\Expected;
@@ -66,6 +65,11 @@ class Woo_Cancel_Abandoned_Order_Unit_Test extends \lucatume\WPBrowser\TestCase\
 			array(
 				'is_order_has_bitcoin_gateway' => Expected::once( true ),
 				'get_order_details'            => Expected::once( $bitcoin_order_mock ),
+				'get_saved_transactions'       => Expected::once(
+					function () {
+						return array( 'not', 'empty' );
+					}
+				),
 			)
 		);
 

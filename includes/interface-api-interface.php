@@ -7,18 +7,17 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway;
 
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Addresses_Generation_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Check_Assigned_Addresses_For_Transactions_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet_Generation_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Currency;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
-use Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Bitcoin_Gateway;
-use WC_Order;
 
 /**
  * Methods in API class that are used by other classes, primarily Bitcoin_Gateway, Background_Jobs and CLI.
@@ -53,8 +52,6 @@ interface API_Interface {
 	 *
 	 * @param string  $master_public_key The wallet address to save as a wallet object cpt.
 	 * @param ?string $gateway_id The Bitcoin gateway (it is presumably linked to one).
-	 *
-	 * @return Wallet_Generation_Result
 	 */
 	public function generate_new_wallet( string $master_public_key, ?string $gateway_id = null ): Wallet_Generation_Result;
 
@@ -96,8 +93,6 @@ interface API_Interface {
 	 * @used-by API::generate_new_addresses_for_wallet()
 	 * @used-by API::generate_new_wallet()
 	 * @used-by CLI::generate_new_addresses()
-	 *
-	 * @return array<string, array{address:Bitcoin_Address, transactions:array<string, Transaction_Interface>}>
 	 */
 	public function check_new_addresses_for_transactions(): Check_Assigned_Addresses_For_Transactions_Result;
 
@@ -105,4 +100,13 @@ interface API_Interface {
 	 * The main function for checking for payments received.
 	 */
 	public function check_assigned_addresses_for_payment(): Check_Assigned_Addresses_For_Transactions_Result;
+
+	/**
+	 * Return transactions for a Bitcoin address without any remote API calls.
+	 *
+	 * @param Bitcoin_Address $bitcoin_address
+	 *
+	 * @return array<Bitcoin_Transaction&Transaction_Interface>
+	 */
+	public function get_saved_transactions( Bitcoin_Address $bitcoin_address ): ?array;
 }

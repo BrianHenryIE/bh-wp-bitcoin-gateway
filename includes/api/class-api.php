@@ -22,6 +22,8 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Int
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduling_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Query;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Status;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Transaction;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Transaction_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain\Rate_Limit_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Addresses_Generation_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Check_Assigned_Addresses_For_Transactions_Result;
@@ -62,6 +64,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 	 * @param LoggerInterface                $logger A PSR logger.
 	 * @param Bitcoin_Wallet_Repository      $bitcoin_wallet_repository Wallet repository.
 	 * @param Bitcoin_Address_Repository     $bitcoin_address_repository Repository to save and fetch addresses from wp_posts.
+	 * @param Bitcoin_Transaction_Repository $bitcoin_transaction_repository
 	 * @param Blockchain_API_Interface       $blockchain_api The object/client to query the blockchain for transactions.
 	 * @param Generate_Address_API_Interface $generate_address_api Object that does the maths to generate new addresses for a wallet.
 	 * @param Exchange_Rate_API_Interface    $exchange_rate_api Object/client to fetch the exchange rate.
@@ -71,6 +74,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 		LoggerInterface $logger,
 		protected Bitcoin_Wallet_Repository $bitcoin_wallet_repository,
 		protected Bitcoin_Address_Repository $bitcoin_address_repository,
+		protected Bitcoin_Transaction_Repository $bitcoin_transaction_repository,
 		protected Blockchain_API_Interface $blockchain_api,
 		protected Generate_Address_API_Interface $generate_address_api,
 		protected Exchange_Rate_API_Interface $exchange_rate_api,
@@ -385,5 +389,13 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 			$this->update_address_transactions( $bitcoin_address );
 		}
 		return new Check_Assigned_Addresses_For_Transactions_Result();
+	/**
+	 * @param Bitcoin_Address $bitcoin_address
+	 *
+	 * @return Bitcoin_Transaction[]
+	 */
+	public function get_saved_transactions( Bitcoin_Address $bitcoin_address ): ?array {
+		return $this->bitcoin_transaction_repository->get_transactions_for_address( $bitcoin_address );
+	}
 	}
 }

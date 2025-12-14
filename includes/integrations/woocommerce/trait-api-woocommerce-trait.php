@@ -371,7 +371,7 @@ trait API_WooCommerce_Trait {
 		$result['btc_total']           = $order_details->get_btc_total_price();
 		$result['btc_exchange_rate']   = $order_details->get_btc_exchange_rate();
 		$result['btc_address']         = $order_details->get_address()->get_raw_address();
-		$result['transactions']        = $order_details->get_address()->get_blockchain_transactions();
+		$result['transactions']        = $this->get_saved_transactions( $order_details->get_address() );
 		$result['btc_amount_received'] = $order_details->get_address()->get_amount_received() ?? 'unknown';
 
 		// Objects.

@@ -177,7 +177,7 @@ class Addresses_List_Table extends \WP_Posts_List_Table {
 
 		$bitcoin_address = $this->get_bitcoin_address_object( $item );
 
-		$transactions = $bitcoin_address->get_blockchain_transactions();
+		$transactions = $this->api->get_saved_transactions( $bitcoin_address );
 		if ( is_array( $transactions ) ) {
 			echo count( $transactions );
 		} else {

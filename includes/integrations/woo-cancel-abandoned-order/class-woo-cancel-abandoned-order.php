@@ -86,6 +86,8 @@ class Woo_Cancel_Abandoned_Order {
 			return false;
 		}
 
-		return empty( $bitcoin_order->get_address()->get_blockchain_transactions() );
+		$address_transaction = $this->api->get_saved_transactions( $bitcoin_order->get_address() );
+
+		return empty( $address_transaction );
 	}
 }
