@@ -27,10 +27,13 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain\Rate_Limit_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Addresses_Generation_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Check_Assigned_Addresses_For_Transactions_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_VOut;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet_Generation_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Math\BigDecimal;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Math\RoundingMode;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Currency;
+use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\MoneyMismatchException;
+use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\UnknownCurrencyException;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Trait;
@@ -155,11 +158,19 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 
 		$wallet = $this->bitcoin_wallet_repository->get_by_wp_post_id( $post_id );
 
-		$existing_fresh_addresses = $wallet->get_fresh_addresses();
+		$existing_fresh_addresses = $this->bitcoin_address_repository->get_addresses(
+			wallet: $wallet,
+			status: Bitcoin_Address_Status::UNUSED
+		);
 
 		$generated_addresses = array();
 
-		$count = count( $wallet->get_fresh_addresses() );
+		$fresh_addresses = $this->bitcoin_address_repository->get_addresses(
+			wallet: $wallet,
+			status: Bitcoin_Address_Status::UNUSED
+		);
+
+		$count = count( $fresh_addresses );
 		while ( $count < 20 ) {
 
 			$generate_addresses_result = $this->generate_new_addresses_for_wallet( $wallet );
@@ -184,6 +195,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 	/**
 	 * If a wallet has fewer than 20 fresh addresses available, generate some more.
 	 *
+	 * @return Addresses_Generation_Result[]
 	 * @see API_Interface::generate_new_addresses()
 	 * @used-by CLI::generate_new_addresses()
 	 * @used-by Background_Jobs_Actions_Handler::generate_new_addresses()
@@ -195,6 +207,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 		 */
 		$results = array();
 
+		// TODO: This should loop over wallets, not over gateways.
 		foreach ( $this->get_bitcoin_gateways() as $gateway ) {
 			$gateway_master_public_key = $gateway->get_xpub();
 			$gateway_wallet_post_id    = $this->bitcoin_wallet_repository->get_post_id_for_wallet( $gateway_master_public_key );
@@ -215,12 +228,12 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 	 *
 	 * @throws Exception When no wallet object is found for the master public key (xpub) string.
 	 */
-	public function generate_new_addresses_for_wallet( Bitcoin_Wallet $wallet, int $generate_count = 20 ): Addresses_Generation_Result {
+	public function generate_new_addresses_for_wallet( Bitcoin_Wallet $wallet, int $generate_count = 10 ): Addresses_Generation_Result {
 
 		$address_index = $wallet->get_address_index();
 
-		$generated_addresses_post_ids = array();
-		$generated_addresses_count    = 0;
+		$generated_addresses       = array();
+		$generated_addresses_count = 0;
 
 		do {
 			// TODO: Post increment or we will never generate address 0 like this.
@@ -232,26 +245,17 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 				continue;
 			}
 
-			$bitcoin_address_new_post_id = $this->bitcoin_address_repository->save_new(
-				new Bitcoin_Address_Query(
-					wallet_wp_post_parent_id: $wallet->get_post_id(),
-					status: Bitcoin_Address_Status::UNKNOWN,
-					xpub: $new_address_string,
-					derivation_path_sequence_index: $address_index,
-				)
+			$bitcoin_address = $this->bitcoin_address_repository->save_new(
+				wallet: $wallet,
+				derivation_path_sequence_index: $address_index,
+				xpub: $new_address_string,
 			);
 
-			$generated_addresses_post_ids[] = $bitcoin_address_new_post_id;
+			$generated_addresses[] = $bitcoin_address;
+
 			++$generated_addresses_count;
 
 		} while ( $generated_addresses_count < $generate_count );
-
-		$generated_addresses = array_map(
-			function ( int $post_id ): Bitcoin_Address {
-				return $this->bitcoin_address_repository->get_by_post_id( $post_id );
-			},
-			$generated_addresses_post_ids
-		);
 
 		$wallet->set_address_index( $address_index );
 
@@ -260,6 +264,10 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 			$this->check_new_addresses_for_transactions();
 
 			// Schedule more generation after it determines how many unused addresses are available.
+			$fresh_addresses = $this->bitcoin_address_repository->get_addresses(
+				wallet: $wallet,
+				status: Bitcoin_Address_Status::UNUSED,
+			);
 			if ( count( $fresh_addresses ) < 10 ) {
 				$this->background_jobs_scheduler->schedule_generate_new_addresses();
 			}
@@ -285,7 +293,9 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 		if ( empty( $addresses ) ) {
 			$this->logger->debug( 'No addresses with "unknown" status to check' );
 
-			return new Check_Assigned_Addresses_For_Transactions_Result(); // TODO: return something meaningful.
+			return new Check_Assigned_Addresses_For_Transactions_Result(
+				count: 0
+			); // TODO: return something meaningful.
 		}
 
 		return $this->check_addresses_for_transactions( $addresses );
@@ -300,7 +310,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 	 *
 	 * @throws Rate_Limit_Exception
 	 */
-	public function check_addresses_for_transactions( array $addresses ): Check_Assigned_Addresses_For_Transactions_Result {
+	protected function check_addresses_for_transactions( array $addresses ): Check_Assigned_Addresses_For_Transactions_Result {
 
 		$result = array();
 
@@ -309,7 +319,14 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 				$result[ $bitcoin_address->get_raw_address() ] = $this->update_address_transactions( $bitcoin_address );
 			}
 		} catch ( Rate_Limit_Exception $exception ) {
-			throw $exception;
+
+			$this->background_jobs_scheduler->schedule_check_newly_generated_bitcoin_addresses_for_transactions(
+				datetime: $exception->get_reset_time()
+			);
+
+			return new Check_Assigned_Addresses_For_Transactions_Result(
+				count: count( $result )
+			);
 		} catch ( Exception $exception ) {
 			// Reschedule if we hit 429 (there will always be at least one address to check if it 429s.).
 			$this->logger->debug( $exception->getMessage() );
@@ -323,7 +340,9 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 		// are already used). => We really need to generate new addresses until we have some.
 
 		// TODO: Return something useful.
-		return new Check_Assigned_Addresses_For_Transactions_Result();
+		return new Check_Assigned_Addresses_For_Transactions_Result(
+			count: count( $result )
+		);
 	}
 
 	/**
@@ -331,32 +350,40 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 	 *
 	 * @param Bitcoin_Address $address The address object to query.
 	 *
-	 * @return array<string, Transaction_Interface>
+	 * @return array<string, Transaction_Interface|Bitcoin_Transaction>
+	 *
+	 * @throws Rate_Limit_Exception
 	 */
 	public function update_address_transactions( Bitcoin_Address $address ): array {
 
-		$btc_xpub_address_string = $address->get_raw_address();
 		// TODO: retry on rate limit.
+		/** @var Bitcoin_Transaction[] $transactions */
+		$transactions = array();
 		try {
-			$updated_transactions = $this->blockchain_api->get_transactions_received( $btc_xpub_address_string );
-			$address->set_transactions( $updated_transactions );
-			return $updated_transactions;
+			$transactions_post_ids = array();
+			$updated_transactions  = $this->blockchain_api->get_transactions_received( btc_address: $address->get_raw_address() );
+			foreach ( $updated_transactions as $transaction ) {
+				$saved_transaction = $this->bitcoin_transaction_repository->save_new(
+					$transaction,
+					$address
+				);
+				$transactions[]    = $saved_transaction;
+				$transactions_post_ids[ $saved_transaction->get_post_id() ] = $saved_transaction->get_txid();
+			}
+			// TODO: Maybe this shouldn't be public. Or at least, should refer to ids rather than post ids!
+			$this->bitcoin_transaction_repository->associate_transactions_post_ids_to_address( $transactions_post_ids, $address );
+
+			// TODO: run a check on the address to see has the amount been paid, then  update the address status/state.
+
+			// TODO: do_action on changes for logging.
+
+			return $transactions;
 		} catch ( Exception $_exception ) {
-			// API is offline.
+			// E.g. API is offline.
 			// TODO: log, rate limit, notify.
 			// TODO: is empty array ok here?
-			return $address->get_blockchain_transactions() ?? array();
+			return $this->bitcoin_transaction_repository->get_transactions_for_address( $address ) ?? array();
 		}
-
-		// TODO: This should be in the API class.
-		// if ( $is_paid ) {
-		//
-		// each address has one parent post (order)
-		//
-		// $order_post_id = $address_post->post_parent;
-		// do_action( 'bh_wp_bitcoin_gateway_payment_received', $address_post_id, $order_post_id, $order_post_type );
-		//
-		// }
 	}
 
 	/**
@@ -368,9 +395,63 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 	public function check_assigned_addresses_for_payment(): Check_Assigned_Addresses_For_Transactions_Result {
 
 		foreach ( $this->bitcoin_address_repository->get_assigned_bitcoin_addresses() as $bitcoin_address ) {
-			$this->update_address_transactions( $bitcoin_address );
+			$this->check_address_for_payment( $bitcoin_address );
 		}
-		return new Check_Assigned_Addresses_For_Transactions_Result();
+		// TODO:
+		return new Check_Assigned_Addresses_For_Transactions_Result( count:0 );
+	}
+
+	protected function check_address_for_payment( Bitcoin_Address $bitcoin_address ): void {
+
+		$updated_transactions = $this->update_address_transactions( $bitcoin_address );
+
+		$total_received = $this->get_address_confirmed_balance(
+			raw_address: $bitcoin_address->get_raw_address(),
+			blockchain_height: 123,
+			required_confirmations: 3,
+			transactions: $updated_transactions
+		);
+
+		$target_amount = $bitcoin_address->get_target_amount();
+
+		if ( ! $target_amount ) {
+			return;
+		}
+
+		$is_paid = $total_received->isGreaterThanOrEqualTo( $target_amount );
+
+		if ( $is_paid ) {
+			$this->mark_address_as_paid( $bitcoin_address );
+		}
+	}
+
+	protected function mark_address_as_paid( Bitcoin_Address $bitcoin_address ) {
+
+		// TODO: Change the post status.
+		// $bitcoin_address->get_post_id()
+
+		$order_post_id = $bitcoin_address->get_order_id();
+
+		if ( ! $order_post_id ) {
+			return;
+		}
+
+		/** @var class-string $order_post_type */
+		$order_post_type = get_post_type( $order_post_id );
+
+		// TODO: Add `phpstan-type` on the Bitcoin_Address class importable by consumers.
+		$address_array = (array) $bitcoin_address;
+
+		/**
+		 * @phpstan-type array{} Bitcoin_Address_Array
+		 *
+		 * @param class-string $order_post_type
+		 * @param int $order_post_id
+		 * @param array{} $address_array
+		 */
+		do_action( 'bh_wp_bitcoin_gateway_payment_received', $order_post_type, $order_post_id, $address_array );
+	}
+
 	/**
 	 * @param Bitcoin_Address $bitcoin_address
 	 *
@@ -379,5 +460,47 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 	public function get_saved_transactions( Bitcoin_Address $bitcoin_address ): ?array {
 		return $this->bitcoin_transaction_repository->get_transactions_for_address( $bitcoin_address );
 	}
+
+	/**
+	 * From the received transactions, sum those who have enough confirmations.
+	 *
+	 * @param string                  $raw_address
+	 * @param int                     $blockchain_height The current blockchain height. (TODO: explain why).
+	 * @param int                     $required_confirmations A confirmation is a subsequent block mined after the transaction.
+	 * @param Transaction_Interface[] $transactions
+	 *
+	 * @throws MoneyMismatchException If the calculations were somehow using two different currencies.
+	 * @throws UnknownCurrencyException If `BTC` has not correctly been added to Money's currency list.
+	 */
+	public function get_address_confirmed_balance( string $raw_address, int $blockchain_height, int $required_confirmations, array $transactions ): Money {
+		return array_reduce(
+			$transactions,
+			function ( Money $carry, Transaction_Interface $transaction ) use ( $raw_address, $blockchain_height, $required_confirmations ) {
+				if ( ( $blockchain_height - $transaction->get_block_height() ) > $required_confirmations ) {
+					return $carry->plus( $this->get_value_for_transaction( $raw_address, $transaction ) );
+				}
+				return $carry;
+			},
+			Money::of( 0, 'BTC' )
+		);
+	}
+
+	/**
+	 * Either the inputs or outputs of related transactions ~sum to the value of the address
+	 */
+	private function get_value_for_transaction( string $to_address, Transaction_Interface $transaction ): Money {
+
+		$value_including_fee = array_reduce(
+			$transaction->get_v_out(),
+			function ( Money $carry, Transaction_VOut $out ) use ( $to_address ) {
+				if ( in_array( $to_address, $out->scriptPubKey->addresses, true ) ) {
+					return $carry->plus( $out->value );
+				}
+				return $carry;
+			},
+			Money::of( 0, 'BTC' )
+		);
+
+		return $value_including_fee->dividedBy( 100_000_000 );
 	}
 }
