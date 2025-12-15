@@ -7,14 +7,12 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
-use ActionScheduler;
 use Automattic\WooCommerce\Internal\DataStores\Orders\OrdersTableDataStore;
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduler_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Repository;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet;
-use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
-use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Status;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet_Repository;
 use Exception;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
@@ -40,11 +38,16 @@ class Order {
 	/**
 	 * Constructor.
 	 *
-	 * @param API_WooCommerce_Interface $api The main plugin functions. Used to check is the gateway a Bitcoin gateway.
-	 * @param LoggerInterface           $logger A PSR logger.
+	 * @param API_WooCommerce_Interface           $api The main plugin functions. Used to check is the gateway a Bitcoin gateway.
+	 * @param Bitcoin_Wallet_Repository           $bitcoin_wallet_repository To get the order's address's wallet to ensure more addresses are available.
+	 * @param Bitcoin_Address_Repository          $bitcoin_address_repository TO know how many available addresses there are for the wallet.
+	 * @param Background_Jobs_Scheduler_Interface $background_jobs_scheduler
+	 * @param LoggerInterface                     $logger A PSR logger.
 	 */
 	public function __construct(
 		protected API_WooCommerce_Interface $api,
+		protected Bitcoin_Wallet_Repository $bitcoin_wallet_repository,
+		protected Bitcoin_Address_Repository $bitcoin_address_repository,
 		protected Background_Jobs_Scheduler_Interface $background_jobs_scheduler,
 		LoggerInterface $logger
 	) {
@@ -105,9 +108,14 @@ class Order {
 		$bitcoin_order = $this->api->get_order_details( $order );
 
 		$wallet_id = $bitcoin_order->get_address()->get_wallet_parent_post_id();
-		$wallet    = new Bitcoin_Wallet( $wallet_id );
 
-		$num_remaining_addresses = count( $wallet->get_fresh_addresses() );
+		$wallet = $this->bitcoin_wallet_repository->get_by_wp_post_id( $wallet_id );
+
+		$fresh_addresses         = $this->bitcoin_address_repository->get_addresses(
+			wallet: $wallet,
+			status: Bitcoin_Address_Status::UNUSED,
+		);
+		$num_remaining_addresses = count( $fresh_addresses );
 
 		// Schedule address generation if needed.
 		if ( $num_remaining_addresses < 20 ) {
