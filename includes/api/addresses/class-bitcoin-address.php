@@ -9,9 +9,6 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses;
 
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\MoneyMismatchException;
-use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\UnknownCurrencyException;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\Admin\Addresses_List_Table;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Bitcoin_Gateway;
@@ -73,7 +70,6 @@ class Bitcoin_Address implements Bitcoin_Address_Interface {
 	 * Constructor
 	 *
 	 * @param WP_Post                 $post The wp_post the Bitcoin address detail is stored as.
-	 * @param Transaction_Interface[] $transactions TODO: or should this be the ids of those posts?
 	 *
 	 * @throws InvalidArgumentException When the supplied post_id is not a post of this type.
 	 */
@@ -86,7 +82,6 @@ class Bitcoin_Address implements Bitcoin_Address_Interface {
 		protected ?Money $target_amount,
 		protected ?Money $balance,
 		protected ?int $order_id,
-		protected ?array $transactions = null,
 	) {
 	}
 
@@ -124,46 +119,7 @@ class Bitcoin_Address implements Bitcoin_Address_Interface {
 		return $this->raw_address;
 	}
 
-	/**
-	 * Return the previously saved transactions for this address.
-	 *
-	 * @used-by API::update_address_transactions() When checking previously fetched transactions before a new query.
-	 * @used-by API::get_order_details() When displaying the order/address details in the admin/frontend UI.
-	 * @used-by Addresses_List_Table::print_columns() When displaying all addresses.
-	 *
-	 * @return array<string,Transaction_Interface>|null
-	 */
-	public function get_blockchain_transactions(): ?array {
-		return $this->transactions;
-	}
-
 	// TODO: `get_mempool_transactions()`.
-
-	/**
-	 * Save the transactions recently fetched from the API.
-	 *
-	 * @used-by API::update_address_transactions()
-	 *
-	 * @param array<string,Transaction_Interface> $refreshed_transactions Array of the transaction details keyed by each transaction id.
-	 */
-	public function set_transactions( array $refreshed_transactions ): void {
-
-		$update = array(
-			'ID'         => $this->post->ID,
-			'meta_input' => array(
-				Bitcoin_Address_WP_Post_Interface::TRANSACTION_META_KEY => $refreshed_transactions,
-			),
-		);
-
-		if ( empty( $refreshed_transactions ) ) {
-			$update['post_status'] = Bitcoin_Address_Status::UNUSED->value;
-		} elseif ( Bitcoin_Address_Status::UNKNOWN === $this->get_status() ) {
-			$update['post_status'] = Bitcoin_Address_Status::USED->value;
-		}
-
-		$this->wp_update_post( $update );
-		$this->transactions = $refreshed_transactions;
-	}
 
 	/**
 	 * Return the balance saved in the post meta, or null if the address status is unknown.
@@ -183,28 +139,6 @@ class Bitcoin_Address implements Bitcoin_Address_Interface {
 	 */
 	public function get_amount_received(): ?Money {
 		return $this->get_balance();
-	}
-
-	/**
-	 * From the received transactions, sum those who have enough confirmations.
-	 *
-	 * @param int $blockchain_height The current blockchain height. (TODO: explain why).
-	 * @param int $required_confirmations A confirmation is a subsequent block mined after the transaction.
-	 *
-	 * @throws MoneyMismatchException If the calculations were somehow using two different currencies.
-	 * @throws UnknownCurrencyException If `BTC` has not correctly been added to Money's currency list.
-	 */
-	public function get_confirmed_balance( int $blockchain_height, int $required_confirmations ): ?Money {
-		return array_reduce(
-			$this->transactions ?? array(),
-			function ( Money $carry, Transaction_Interface $transaction ) use ( $blockchain_height, $required_confirmations ) {
-				if ( $blockchain_height - ( $transaction->get_block_height() ?? $blockchain_height ) > $required_confirmations ) {
-					return $carry->plus( $transaction->get_value( $this->get_raw_address() ) );
-				}
-				return $carry;
-			},
-			Money::of( 0, 'BTC' )
-		);
 	}
 
 	/**

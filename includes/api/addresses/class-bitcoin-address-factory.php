@@ -49,13 +49,6 @@ class Bitcoin_Address_Factory {
 				return is_numeric( $meta_value ) ? intval( $meta_value ) : null;
 			} )(),
 			raw_address: $post->post_excerpt,
-			transactions: ( function () use ( $post ): ?array {
-				// Previously the idea was to use `null` to suggest the address had never been checked but instead we should log each check.
-				// TODO: validate the array of `Transaction_Interface` objects.
-				// TODO: create a bitcoin-transactions post type!
-				$transactions_meta = array_filter( (array) get_post_meta( $post->ID, Bitcoin_Address_WP_Post_Interface::TRANSACTION_META_KEY, true ) );
-				return empty( $transactions_meta ) ? null : $transactions_meta;
-			} )(),
 			target_amount: ( function () use ( $post ): ?Money {
 				/** @var MoneySerializedArray|array{} $target_amount_meta */
 				$target_amount_meta = array_filter( (array) get_post_meta( $post->ID, Bitcoin_Address_WP_Post_Interface::TARGET_AMOUNT_META_KEY, true ) );

@@ -7,9 +7,6 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses;
 
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\MoneyMismatchException;
-use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\UnknownCurrencyException;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\Admin\Addresses_List_Table;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Bitcoin_Gateway;
@@ -41,28 +38,6 @@ interface Bitcoin_Address_Interface {
 	public function get_raw_address(): string;
 
 	/**
-	 * Return the previously saved transactions for this address.
-	 *
-	 * @used-by API::update_address_transactions() When checking previously fetched transactions before a new query.
-	 * @used-by API::get_order_details() When displaying the order/address details in the admin/frontend UI.
-	 * @used-by Addresses_List_Table::print_columns() When displaying all addresses.
-	 *
-	 * @return array<string,Transaction_Interface>|null
-	 */
-	public function get_blockchain_transactions(): ?array;
-
-	// TODO: `get_mempool_transactions()`.
-
-	/**
-	 * Save the transactions recently fetched from the API.
-	 *
-	 * @used-by API::update_address_transactions()
-	 *
-	 * @param array<string,Transaction_Interface> $refreshed_transactions Array of the transaction details keyed by each transaction id.
-	 */
-	public function set_transactions( array $refreshed_transactions ): void;
-
-	/**
 	 * Return the balance saved in the post meta, or null if the address status is unknown.
 	 *
 	 * TODO: Might need a $confirmations parameter and calculate the balance from the transactions.
@@ -77,17 +52,6 @@ interface Bitcoin_Address_Interface {
 	 * TODO: "balance" is not an accurate term for what we need.
 	 */
 	public function get_amount_received(): ?Money;
-
-	/**
-	 * From the received transactions, sum those who have enough confirmations.
-	 *
-	 * @param int $blockchain_height The current blockchain height. (TODO: explain why).
-	 * @param int $required_confirmations A confirmation is a subsequent block mined after the transaction.
-	 *
-	 * @throws MoneyMismatchException If the calculations were somehow using two different currencies.
-	 * @throws UnknownCurrencyException If `BTC` has not correctly been added to Money's currency list.
-	 */
-	public function get_confirmed_balance( int $blockchain_height, int $required_confirmations ): ?Money;
 
 	/**
 	 * Return the current status of the Bitcoin address object/post.
