@@ -5,7 +5,10 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
+use ActionScheduler;
+use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Handler;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Status;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
@@ -165,7 +168,10 @@ trait API_WooCommerce_Trait {
 
 		$wallet = $this->bitcoin_wallet_repository->get_by_wp_post_id( $wallet_post_id );
 
-		return $wallet->get_fresh_addresses();
+		return $this->bitcoin_address_repository->get_addresses(
+			wallet: $wallet,
+			status: Bitcoin_Address_Status::UNUSED,
+		);
 	}
 
 	/**
@@ -221,7 +227,7 @@ trait API_WooCommerce_Trait {
 
 		$time_now = new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) );
 
-		$order_transactions_before = $bitcoin_order->get_address()->get_blockchain_transactions();
+		$order_transactions_before = $this->bitcoin_transaction_repository->get_transactions_for_address( $bitcoin_order->get_address() );
 
 		if ( is_null( $order_transactions_before ) ) {
 			$this->logger->debug( 'Refresh order: Checking for the first time' );
@@ -238,7 +244,7 @@ trait API_WooCommerce_Trait {
 		foreach ( $address_transactions_current as $txid => $transaction ) {
 			// TODO: maybe use block height at order creation rather than date?
 			// TODO: be careful with timezones.
-			if ( $transaction->get_time() > $bitcoin_order->get_date_created() ) {
+			if ( $transaction->get_block_time() > $bitcoin_order->get_date_created() ) {
 				$order_transactions_current[ $txid ] = $transaction;
 			}
 		}
@@ -266,27 +272,7 @@ trait API_WooCommerce_Trait {
 		// TODO: allow customising.
 		$required_confirmations = 3;
 
-		try {
-			$blockchain_height = $this->blockchain_api->get_blockchain_height();
-		} catch ( Exception $_e ) {
-			// TODO: log, notify, rate limit.
-			return false;
-		}
-
-		$raw_address = $bitcoin_order->get_address()->get_raw_address();
-
-		$confirmed_value_current = $bitcoin_order->get_address()->get_confirmed_balance( $blockchain_height, $required_confirmations );
-
-		$unconfirmed_value_current = array_reduce(
-			$order_transactions_current_blockchain,
-			function ( Money $carry, Transaction_Interface $transaction ) use ( $blockchain_height, $required_confirmations, $raw_address ) {
-				if ( $blockchain_height - ( $transaction->get_block_height() ?? $blockchain_height ) > $required_confirmations ) {
-					return $carry;
-				}
-				return $carry->plus( $transaction->get_value( $raw_address ) );
-			},
-			Money::of( 0, 'BTC' )
-		);
+		$confirmed_value_current = $bitcoin_order->get_address()->get_amount_received();
 
 		// Filter to transactions that have just been seen, so we can record them in notes.
 		$new_order_transactions = array();
