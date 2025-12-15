@@ -101,10 +101,9 @@ class Bitcoin_Transaction_Repository {
 	protected function get_transactions_wp_post_ids_for_address(
 		Bitcoin_Address $address,
 	): ?array {
-		/** @var string $saved_post_meta */
 		$saved_post_meta = get_post_meta( $address->get_post_id(), Bitcoin_Address_WP_Post_Interface::TRANSACTIONS_META_KEY, true );
 
-		if ( ! is_array( $saved_post_meta ) ) {
+		if ( empty( $saved_post_meta ) ) {
 			return null;
 		}
 
@@ -165,7 +164,7 @@ class Bitcoin_Transaction_Repository {
 
 		$this->associate_transaction_post_id_and_address( $transaction_post->ID, $address );
 
-		return $this->get_by_post_id($transaction_post->ID);
+		return $this->get_by_post_id( $transaction_post->ID );
 	}
 
 	/**

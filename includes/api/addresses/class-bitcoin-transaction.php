@@ -24,14 +24,14 @@ class Bitcoin_Transaction implements Transaction_Interface {
 	/**
 	 * Constructor
 	 *
-	 * @param WP_Post $post The wp_post the Bitcoin address detail is stored as.
-	 * @param int $block_height
+	 * @param WP_Post           $post The wp_post the Bitcoin address detail is stored as.
+	 * @param int               $block_height
 	 * @param DateTimeInterface $block_time
-	 * @param string $tx_id
-	 * @param string $hash
-	 * @param int $version
-	 * @param array $v_in
-	 * @param array $v_out
+	 * @param string            $tx_id
+	 * @param string            $hash
+	 * @param int               $version
+	 * @param array             $v_in
+	 * @param array             $v_out
 	 *
 	 * @throws InvalidArgumentException When the supplied post_id is not a post of this type.
 	 */
