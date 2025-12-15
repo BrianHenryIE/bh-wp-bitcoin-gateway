@@ -37,6 +37,9 @@ class WC_Bitcoin_Order implements WC_Bitcoin_Order_Interface {
 
 	/**
 	 * The number of confirmations the order needs for transactions.
+	 *
+	 * TODO: Different orders may have different number of confirmations. E.g. more expensive orders might want higher
+	 * number of confirmations, orders that need near-er instant completion might trust mempool.
 	 */
 	protected int $confirmations;
 	protected Money $amount_received;
@@ -49,11 +52,8 @@ class WC_Bitcoin_Order implements WC_Bitcoin_Order_Interface {
 	 * @return mixed
 	 */
 	public function __call( string $name, array $arguments ): mixed {
-		// if ( method_exists( WC_Order::class, $name ) ) {
-		// return call_user_func_array( array( $this->wc_order, $name ), $arguments );
-		// }
 		if ( is_callable( array( $this->wc_order, $name ) ) ) {
-			return call_user_func_array( array( $this->wc_order, $name ), $arguments );
+			return $this->wc_order->$name( ...$arguments );
 		}
 		throw new BadMethodCallException();
 	}
@@ -66,8 +66,9 @@ class WC_Bitcoin_Order implements WC_Bitcoin_Order_Interface {
 		$this->wc_order = $wc_order;
 
 		try {
-			$bitcoin_address         = $wc_order->get_meta( Order::BITCOIN_ADDRESS_META_KEY );
-			$bitcoin_address_post_id = $bitcoin_address_repository->get_post_id_for_address( $bitcoin_address );
+			/** @var ?string $bitcoin_address_xpub */
+			$bitcoin_address_xpub    = $wc_order->get_meta( Order::BITCOIN_ADDRESS_META_KEY );
+			$bitcoin_address_post_id = $bitcoin_address_repository->get_post_id_for_address( $bitcoin_address_xpub );
 			if ( is_null( $bitcoin_address_post_id ) ) {
 				throw new \Exception( 'Problem with order Bitcoin address.' );
 			}
