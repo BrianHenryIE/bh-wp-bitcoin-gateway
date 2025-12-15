@@ -13,6 +13,8 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Bitcoin_Gateway;
 
 interface Bitcoin_Address_Interface {
 
+	public function get_post_id(): int;
+
 	/**
 	 * The post ID for the xpub|ypub|zpub wallet this address was derived for.
 	 *

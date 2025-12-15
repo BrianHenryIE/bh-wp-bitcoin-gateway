@@ -69,7 +69,7 @@ class Bitcoin_Address implements Bitcoin_Address_Interface {
 	/**
 	 * Constructor
 	 *
-	 * @param WP_Post                 $post The wp_post the Bitcoin address detail is stored as.
+	 * @param WP_Post $post The wp_post the Bitcoin address detail is stored as.
 	 *
 	 * @throws InvalidArgumentException When the supplied post_id is not a post of this type.
 	 */
@@ -83,6 +83,10 @@ class Bitcoin_Address implements Bitcoin_Address_Interface {
 		protected ?Money $balance,
 		protected ?int $order_id,
 	) {
+	}
+
+	public function get_post_id(): int {
+		return $this->post->ID;
 	}
 
 	public function set_bitcoin_address_repository( Bitcoin_Address_Repository $bitcoin_address_repository ): void {

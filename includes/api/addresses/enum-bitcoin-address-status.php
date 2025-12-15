@@ -28,6 +28,7 @@ enum Bitcoin_Address_Status: string {
 	case USED = 'used';
 
 	// Inherent WordPress status.
+	case TRASH   = 'trash';
 	case DRAFT   = 'draft';
 	case PUBLISH = 'publish';
 	case ALL     = 'all';

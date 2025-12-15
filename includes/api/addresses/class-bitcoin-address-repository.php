@@ -75,7 +75,7 @@ class Bitcoin_Address_Repository {
 	 * @return Bitcoin_Address[]
 	 */
 	public function get_assigned_bitcoin_addresses(): array {
-		return $this->get_addresses(
+		return $this->get_addresses_query(
 			new Bitcoin_Address_Query(
 				status: Bitcoin_Address_Status::ASSIGNED,
 				numberposts: 200,
@@ -90,7 +90,7 @@ class Bitcoin_Address_Repository {
 	 */
 	public function has_assigned_bitcoin_addresses(): bool {
 		return ! empty(
-			$this->get_addresses(
+			$this->get_addresses_query(
 				new Bitcoin_Address_Query(
 					status: Bitcoin_Address_Status::ASSIGNED,
 					numberposts: 1,
@@ -108,22 +108,39 @@ class Bitcoin_Address_Repository {
 		// TODO: Should this query use ID.asc as a way to order?
 		// TODO: updated_at is probably correct.
 
-		return $this->get_addresses(
+		return $this->get_addresses_query(
 			new Bitcoin_Address_Query(
 				status: Bitcoin_Address_Status::UNKNOWN,
 			)
 		);
 	}
 
+	/**
+	 * @return Bitcoin_Address[]
+	 */
+	public function get_addresses(
+		?Bitcoin_Wallet $wallet = null,
+		?Bitcoin_Address_Status $status = null
+	): array {
+
+		return $this->get_addresses_query(
+			new Bitcoin_Address_Query(
+				wallet_wp_post_parent_id: $wallet?->get_post_id(),
+				status: $status, // TODO: Should this null-coalesce to 'all'?
+			)
+		);
+	}
 
 	/**
 	 * @return Bitcoin_Address[]
 	 */
-	public function get_addresses( Bitcoin_Address_Query $filter ): array {
+	protected function get_addresses_query( Bitcoin_Address_Query $filter ): array {
+		/** @var WP_Post[] $posts */
+		$posts = get_posts( $filter->to_query_array() );
 
 		return array_map(
 			fn( WP_Post $wp_post ) => $this->bitcoin_address_factory->get_by_wp_post( $wp_post ),
-			get_posts( $filter->to_query_array() )
+			$posts
 		);
 	}
 
@@ -132,7 +149,18 @@ class Bitcoin_Address_Repository {
 	 *
 	 * @throws Exception When WordPress fails to create the wp_post.
 	 */
-	public function save_new( Bitcoin_Address_Query $query ): int {
+	public function save_new(
+		Bitcoin_Wallet $wallet,
+		int $derivation_path_sequence_index,
+		string $xpub,
+	): Bitcoin_Address {
+
+		$query = new Bitcoin_Address_Query(
+			wallet_wp_post_parent_id: $wallet->get_post_id(),
+			status: Bitcoin_Address_Status::UNKNOWN,
+			xpub: $xpub,
+			derivation_path_sequence_index: $derivation_path_sequence_index,
+		);
 
 		// TODO: Validate address, throw exception.
 
@@ -148,7 +176,7 @@ class Bitcoin_Address_Repository {
 
 		// TODO: Maybe start a background job to check for transactions. Where is best to do that?
 
-		return $post_id;
+		return $this->bitcoin_address_factory->get_by_wp_post_id( $post_id );
 	}
 
 
