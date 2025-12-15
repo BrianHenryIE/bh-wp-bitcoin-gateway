@@ -62,7 +62,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 	 * @param Blockchain_API_Interface            $blockchain_api The object/client to query the blockchain for transactions.
 	 * @param Generate_Address_API_Interface      $generate_address_api Object that does the maths to generate new addresses for a wallet.
 	 * @param Exchange_Rate_API_Interface         $exchange_rate_api Object/client to fetch the exchange rate.
-	 * @param Background_Jobs_Scheduler_Interface $background_jobs_scheduling
+	 * @param Background_Jobs_Scheduler_Interface $background_jobs_scheduler
 	 */
 	public function __construct(
 		protected Settings_Interface $settings,
@@ -73,7 +73,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 		protected Blockchain_API_Interface $blockchain_api,
 		protected Generate_Address_API_Interface $generate_address_api,
 		protected Exchange_Rate_API_Interface $exchange_rate_api,
-		protected Background_Jobs_Scheduler_Interface $background_jobs_scheduling,
+		protected Background_Jobs_Scheduler_Interface $background_jobs_scheduler,
 	) {
 		$this->setLogger( $logger );
 	}
@@ -260,8 +260,8 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 			$this->check_new_addresses_for_transactions();
 
 			// Schedule more generation after it determines how many unused addresses are available.
-			if ( count( $wallet->get_fresh_addresses() ) < 20 ) {
-				$this->background_jobs->schedule_generate_new_addresses();
+			if ( count( $fresh_addresses ) < 10 ) {
+				$this->background_jobs_scheduler->schedule_generate_new_addresses();
 			}
 		}
 
@@ -314,7 +314,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 			// Reschedule if we hit 429 (there will always be at least one address to check if it 429s.).
 			$this->logger->debug( $exception->getMessage() );
 
-			$this->background_jobs->schedule_check_newly_generated_bitcoin_addresses_for_transactions(
+			$this->background_jobs_scheduler->schedule_check_newly_generated_bitcoin_addresses_for_transactions(
 				( new DateTimeImmutable() )->add( new DateInterval( 'PT15M' ) ),
 			);
 		}
@@ -363,7 +363,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 	 * TODO: The return value should be a structured summary that can be used in a log message.
 	 *
 	 * @see Background_Jobs_Actions_Interface::check_assigned_addresses_for_transactions()
-	 * @used-by Background_Jobs::check_assigned_addresses_for_transactions()
+	 * @used-by Background_Jobs_Actions_Handler::check_assigned_addresses_for_transactions()
 	 */
 	public function check_assigned_addresses_for_payment(): Check_Assigned_Addresses_For_Transactions_Result {
 

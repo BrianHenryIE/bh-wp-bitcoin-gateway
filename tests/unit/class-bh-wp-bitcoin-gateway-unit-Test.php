@@ -10,6 +10,7 @@ use BrianHenryIE\ColorLogger\ColorLogger;
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\API_Background_Jobs_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Handler;
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduler;
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduler_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Admin\Plugins_Page;
 use BrianHenryIE\WP_Bitcoin_Gateway\Admin\Register_List_Tables;
@@ -82,7 +83,7 @@ class BH_WP_Bitcoin_Gateway_Unit_Test extends \Codeception\Test\Unit {
 			}
 		);
 
-		$container->bind( Background_Jobs_Scheduler_Interface::class, Background_Jobs_Actions_Handler::class );
+		$container->bind( Background_Jobs_Scheduler_Interface::class, Background_Jobs_Scheduler::class );
 		$container->bind( Background_Jobs_Actions_Interface::class, Background_Jobs_Actions_Handler::class );
 
 		return $container;

@@ -28,9 +28,10 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\API_Background_Jobs_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs;
+use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Handler;
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduling_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduler;
+use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduler_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Nimq_API;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\API;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain\Blockstream_Info_API;
@@ -84,25 +85,8 @@ register_deactivation_hook( __FILE__, array( Deactivator::class, 'deactivate' ) 
 
 $container = new Container();
 
-$container->singleton(
-	Background_Jobs::class,
-	static function ( Container $container ) {
-		return $container->make( Background_Jobs::class );
-	}
-);
-
-$container->bind( Background_Jobs_Scheduling_Interface::class, Background_Jobs::class );
-$container->bind( Background_Jobs_Actions_Interface::class, Background_Jobs::class );
-
-$container->singleton(
-	API::class,
-	static function ( Container $container ) {
-		$api             = $container->make( API::class );
-		$background_jobs = $container->get( Background_Jobs::class );
-		$api->set_background_jobs( $background_jobs );
-		return $api;
-	}
-);
+$container->bind( Background_Jobs_Scheduler_Interface::class, Background_Jobs_Scheduler::class );
+$container->bind( Background_Jobs_Actions_Interface::class, Background_Jobs_Actions_Handler::class );
 
 $container->bind( API_Background_Jobs_Interface::class, API::class );
 $container->bind( API_WooCommerce_Interface::class, API::class );

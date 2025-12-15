@@ -9,8 +9,6 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
 use ActionScheduler;
 use Automattic\WooCommerce\Internal\DataStores\Orders\OrdersTableDataStore;
-use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Handler;
-use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduler_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Repository;
@@ -47,7 +45,7 @@ class Order {
 	 */
 	public function __construct(
 		protected API_WooCommerce_Interface $api,
-		protected Background_Jobs_Scheduler_Interface $background_jobs,
+		protected Background_Jobs_Scheduler_Interface $background_jobs_scheduler,
 		LoggerInterface $logger
 	) {
 		$this->setLogger( $logger );
@@ -114,7 +112,7 @@ class Order {
 		// Schedule address generation if needed.
 		if ( $num_remaining_addresses < 20 ) {
 			$this->logger->debug( "Under 20 addresses ($num_remaining_addresses) remaining, scheduling generate_new_addresses background job.", array( 'num_remaining_addresses' => $num_remaining_addresses ) );
-			$this->background_jobs->schedule_generate_new_addresses();
+			$this->background_jobs_scheduler->schedule_generate_new_addresses();
 		}
 	}
 
@@ -139,6 +137,6 @@ class Order {
 		}
 
 		// Schedule background check for payment.
-		$this->background_jobs->schedule_check_assigned_bitcoin_address_for_transactions();
+		$this->background_jobs_scheduler->schedule_check_assigned_bitcoin_address_for_transactions();
 	}
 }

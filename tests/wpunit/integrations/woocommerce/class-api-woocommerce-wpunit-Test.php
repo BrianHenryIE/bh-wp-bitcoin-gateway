@@ -47,7 +47,7 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 			blockchain_api: $blockchain_api ?? $this->makeEmpty( Blockchain_API_Interface::class ),
 			generate_address_api: $generate_address_api ?? $this->makeEmpty( Generate_Address_API_Interface::class ),
 			exchange_rate_api: $exchange_rate_api ?? $this->makeEmpty( Exchange_Rate_API_Interface::class ),
-			background_jobs_scheduling: $background_jobs_scheduler ?? $this->makeEmpty( Background_Jobs_Scheduler::class ),
+			background_jobs_scheduler: $background_jobs_scheduler ?? $this->makeEmpty( Background_Jobs_Scheduler::class ),
 		);
 		return $sut;
 	}

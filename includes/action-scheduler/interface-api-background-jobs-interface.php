@@ -8,12 +8,15 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain\Rate_Limit_Exception;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Addresses_Generation_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Check_Assigned_Addresses_For_Transactions_Result;
 
 interface API_Background_Jobs_Interface {
 
 	/**
 	 * Do the maths to generate new addresses for a wallet.
+	 *
+	 * @return Addresses_Generation_Result[]
 	 */
 	public function generate_new_addresses(): array;
 
@@ -28,7 +31,7 @@ interface API_Background_Jobs_Interface {
 	public function check_new_addresses_for_transactions(): Check_Assigned_Addresses_For_Transactions_Result;
 
 	/**
-	 * Check the list of assigned addressess for new transactions and mark them as complete as appropriate, which
+	 * Check the list of assigned addresses for new transactions and mark them as complete as appropriate, which
 	 * will also mark related orders as paid.
 	 *
 	 * @throws Rate_Limit_Exception When the remote API refuses too many requests.

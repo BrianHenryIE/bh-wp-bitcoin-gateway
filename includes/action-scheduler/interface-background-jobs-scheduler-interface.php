@@ -17,7 +17,7 @@ interface Background_Jobs_Scheduler_Interface {
 
 	public function schedule_check_assigned_bitcoin_address_for_transactions(): void;
 
-	public function schedule_check_for_assigned_addresses_repeating_action(): void;
-
 	public function schedule_check_assigned_addresses_for_transactions( ?DateTimeInterface $date_time = null ): void;
+
+	public function schedule_check_for_assigned_addresses_repeating_action(): void;
 }
