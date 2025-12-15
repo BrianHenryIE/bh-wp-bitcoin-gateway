@@ -8,8 +8,12 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses;
 
 use Exception;
+use WP_Post;
 use wpdb;
 
+/**
+ * @see Bitcoin_Wallet_WP_Post_Interface
+ */
 class Bitcoin_Wallet_Repository {
 
 	public function __construct(
@@ -18,10 +22,22 @@ class Bitcoin_Wallet_Repository {
 	}
 
 	public function get_by_xpub( string $xpub ): ?Bitcoin_Wallet {
-		$args  = new Bitcoin_Wallet_Query(
+		$args = new Bitcoin_Wallet_Query(
 			master_public_key: $xpub,
 		);
-		$posts = get_posts( $args->to_query_array() );
+
+		$all_wallets = get_posts( array( 'post_type' => Bitcoin_Wallet_WP_Post_Interface::POST_TYPE ) );
+
+		// Only use query vars relevant to the query. This may be unnecessary.
+		$query_array = $args->to_query_array();
+		$query       = array_filter(
+			$query_array,
+			fn( string $key ): bool => in_array( $key, array( 'post_title', 'post_type' ), true ),
+			ARRAY_FILTER_USE_KEY,
+		);
+
+		/** @var WP_Post[] $posts */
+		$posts = get_posts( $query );
 		if ( empty( $posts ) ) {
 			return null;
 		}
@@ -101,7 +117,7 @@ class Bitcoin_Wallet_Repository {
 		$args = new Bitcoin_Wallet_Query(
 			master_public_key: $master_public_key,
 			status: ! is_null( $gateway_id ) ? Bitcoin_Wallet_Status::ACTIVE : Bitcoin_Wallet_Status::INACTIVE,
-			gateways: array( $gateway_id ),
+			gateway_refs: $gateway_id ? array( $gateway_id ) : null,
 		);
 
 		$post_id = wp_insert_post( $args->to_query_array(), true );
@@ -114,14 +130,35 @@ class Bitcoin_Wallet_Repository {
 	}
 
 	/**
-	 * TODO: This should not be here.
-	 *
 	 * Save the index of the highest generated address.
 	 *
-	 * @param \WP_Post $post The Bitcoin Wallet to indicate its newest derived address index.
-	 * @param int      $index Nth address generated index.
+	 * @param Bitcoin_Wallet $wallet The Bitcoin Wallet to indicate its newest derived address index.
+	 * @param int            $index Nth address generated index.
 	 */
-	public function set_highest_address_index( \WP_Post $post, int $index ): void {
-		update_post_meta( $post->ID, Bitcoin_Wallet_WP_Post_Interface::LAST_DERIVED_ADDRESS_INDEX_META_KEY, $index );
+	public function set_highest_address_index( Bitcoin_Wallet $wallet, int $index ): void {
+
+		$this->update(
+			$wallet,
+			new Bitcoin_Wallet_Query(
+				last_derived_address_index: $index,
+			)
+		);
+	}
+
+	protected function update(
+		Bitcoin_Wallet $wallet,
+		Bitcoin_Wallet_Query $query
+	): void {
+		$args            = $query->to_query_array();
+		$args['post_id'] = $wallet->get_post_id();
+
+		/** @var int|\WP_Error $result */
+		$result = wp_update_post(
+			$args
+		);
+
+		if ( is_wp_error( $result ) ) {
+			throw new \RuntimeException( $result->get_error_message() );
+		}
 	}
 }

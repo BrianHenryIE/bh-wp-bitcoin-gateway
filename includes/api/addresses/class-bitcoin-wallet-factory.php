@@ -34,11 +34,10 @@ class Bitcoin_Wallet_Factory {
 
 		$bitcoin_wallet = new Bitcoin_Wallet(
 			post_id: $post->ID,
-			status: Bitcoin_Wallet_Status::from( $post->post_status ),
 			xpub: $post->post_excerpt,
-			balance: $this->get_balance( $post ),
-			fresh_addresses: array(),
+			status: Bitcoin_Wallet_Status::from( $post->post_status ),
 			address_index: $this->get_address_index( $post ),
+			balance: $this->get_balance( $post ),
 		);
 
 		// $bitcoin_wallet->set_bitcoin_address_repository( $this->bitcoin_address_repository );

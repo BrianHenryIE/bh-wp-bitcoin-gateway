@@ -34,18 +34,9 @@ interface Bitcoin_Wallet_Interface {
 	public function get_balance(): ?string;
 
 	/**
-	 * Find addresses generated from this wallet which are unused and return them as `Bitcoin_Address` objects.
-	 *
-	 * TODO: Maybe this shouldn't be in here?
-	 *
-	 * @return Bitcoin_Address[]
-	 */
-	public function get_fresh_addresses(): array;
-
-	/**
 	 * Get the index of the last generated address, so generating new addresses can start higher.
 	 */
-	public function get_address_index(): int;
+	public function get_address_index(): ?int;
 
 	/**
 	 * Save the index of the highest generated address.

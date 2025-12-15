@@ -26,12 +26,15 @@ readonly class Bitcoin_Wallet_Query extends WP_Post_Query_Abstract {
 	 * @return array<string,mixed> $map to:from
 	 */
 	protected function get_wp_post_fields(): array {
-		return array(
-			'post_title'   => $this->master_public_key,
-			'post_status'  => $this->status,
-			'post_excerpt' => $this->master_public_key,
-			'post_name'    => sanitize_title( $this->master_public_key ),
-		);
+		$wp_post_fields = array();
+
+		$this->master_public_key && $wp_post_fields['post_title']   = $this->master_public_key;
+		$this->master_public_key && $wp_post_fields['post_title']   = $this->master_public_key;
+		$this->status && $wp_post_fields['post_status']             = $this->status;
+		$this->master_public_key && $wp_post_fields['post_excerpt'] = $this->master_public_key;
+		$this->master_public_key && $wp_post_fields['post_name']    = sanitize_title( $this->master_public_key );
+
+		return $wp_post_fields;
 	}
 
 	/**
@@ -39,7 +42,8 @@ readonly class Bitcoin_Wallet_Query extends WP_Post_Query_Abstract {
 	 */
 	protected function get_meta_input(): array {
 		return array(
-			Bitcoin_Wallet_WP_Post_Interface::GATEWAY_IDS_META_KEY => $this->gateways,
+			Bitcoin_Wallet_WP_Post_Interface::GATEWAY_IDS_META_KEY => $this->gateway_refs,
+			Bitcoin_Wallet_WP_Post_Interface::LAST_DERIVED_ADDRESS_INDEX_META_KEY => $this->last_derived_address_index,
 		);
 	}
 
@@ -48,12 +52,13 @@ readonly class Bitcoin_Wallet_Query extends WP_Post_Query_Abstract {
 	 *
 	 * @param ?string                $master_public_key The Wallet's master public key.
 	 * @param ?Bitcoin_Wallet_Status $status Current status, e.g. new.
-	 * @param ?array                 $gateways List of gateways the Bitcoin_Wallet is being used by.
+	 * @param ?array<int|string>     $gateway_refs List of gateways the Bitcoin_Wallet is being used by.
 	 */
 	public function __construct(
 		public ?string $master_public_key = null,
 		public ?Bitcoin_Wallet_Status $status = null,
-		public ?array $gateways = null,
+		public ?array $gateway_refs = null,
+		public ?int $last_derived_address_index = null,
 	) {
 		parent::__construct();
 	}

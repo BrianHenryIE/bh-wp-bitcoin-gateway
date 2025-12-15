@@ -13,16 +13,13 @@ class Bitcoin_Wallet implements Bitcoin_Wallet_Interface {
 
 	/**
 	 * Constructor
-	 *
-	 * @param Bitcoin_Address[] $fresh_addresses
 	 */
 	public function __construct(
 		protected int $post_id,
-		protected Bitcoin_Wallet_Status $status,
 		protected string $xpub,
+		protected Bitcoin_Wallet_Status $status,
+		protected ?int $address_index, // null before any addresses have been generated.
 		protected ?string $balance,
-		protected array $fresh_addresses,
-		protected ?int $address_index,
 	) {
 	}
 
@@ -44,8 +41,6 @@ class Bitcoin_Wallet implements Bitcoin_Wallet_Interface {
 
 	/**
 	 * Return the xpub/ypub/zpub this wallet represents.
-	 *
-	 * @return string
 	 */
 	public function get_xpub(): string {
 		return $this->xpub;
@@ -64,30 +59,10 @@ class Bitcoin_Wallet implements Bitcoin_Wallet_Interface {
 	}
 
 	/**
-	 * Find addresses generated from this wallet which are unused and return them as `Bitcoin_Address` objects.
-	 *
-	 * TODO: Maybe this shouldn't be in here?
-	 *
-	 * @return Bitcoin_Address[]
-	 */
-	public function get_fresh_addresses(): array {
-
-		$bitcoin_address_factory    = new Bitcoin_Address_Factory();
-		$bitcoin_address_repository = new Bitcoin_Address_Repository( $bitcoin_address_factory );
-		return $bitcoin_address_repository->get_addresses(
-			new Bitcoin_Address_Query(
-				wallet_wp_post_parent_id: $this->post_id,
-				status: Bitcoin_Address_Status::UNUSED,
-			)
-		);
-	}
-
-	/**
 	 * Get the index of the last generated address, so generating new addresses can start higher.
 	 */
-	public function get_address_index(): int {
-		$index = get_post_meta( $this->post_id, Bitcoin_Wallet_WP_Post_Interface::LAST_DERIVED_ADDRESS_INDEX_META_KEY, true );
-		return is_numeric( $index ) ? intval( $index ) : 0; // Empty string '' will parse to 0, but `intval` doesn't accept just anything.
+	public function get_address_index(): ?int {
+		return $this->address_index;
 	}
 
 	/**
@@ -96,6 +71,12 @@ class Bitcoin_Wallet implements Bitcoin_Wallet_Interface {
 	 * @param int $index Nth address generated index.
 	 */
 	public function set_address_index( int $index ): void {
-		update_post_meta( $this->post_id, Bitcoin_Wallet_WP_Post_Interface::LAST_DERIVED_ADDRESS_INDEX_META_KEY, $index );
+
+		$this->address_index = $index;
+
+		$bitcoin_wallet_factory    = new Bitcoin_Wallet_Factory();
+		$bitcoin_wallet_repository = new Bitcoin_Wallet_Repository( $bitcoin_wallet_factory );
+
+		$bitcoin_wallet_repository->set_highest_address_index( $this, $index );
 	}
 }
