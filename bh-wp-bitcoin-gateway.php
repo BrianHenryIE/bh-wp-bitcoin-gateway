@@ -48,6 +48,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Activator;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Deactivator;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Logger\Logger;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Logger\Logger_Settings_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\WP_Logger\Logger_Settings_Trait;
 use Exception;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
@@ -90,8 +91,9 @@ $container->bind( Background_Jobs_Actions_Interface::class, Background_Jobs_Acti
 
 $container->bind( API_Background_Jobs_Interface::class, API::class );
 $container->bind( API_WooCommerce_Interface::class, API::class );
-
+$container->bind( API_Interface::class . '&' . API_WooCommerce_Interface::class, API::class );
 $container->bind( API_Interface::class, API::class );
+
 $container->bind( Settings_Interface::class, Settings::class );
 $container->bind( LoggerInterface::class, Logger::class );
 $container->bind( Logger_Settings_Interface::class, Settings::class );
@@ -120,6 +122,7 @@ $container->bind( Blockchain_API_Interface::class, Blockstream_Info_API::class )
 $container->bind( Generate_Address_API_Interface::class, Nimq_API::class );
 $container->bind( Exchange_Rate_API_Interface::class, Bitfinex_API::class );
 
+/** @var BH_WP_Bitcoin_Gateway $app */
 $app = $container->get( BH_WP_Bitcoin_Gateway::class );
 $app->register_hooks();
 
