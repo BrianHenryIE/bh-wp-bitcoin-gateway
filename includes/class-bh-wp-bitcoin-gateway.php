@@ -23,6 +23,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Blocks\Order_Confir
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Blocks\Order_Confirmation\Bitcoin_Order_Payment_Last_Checked_Block;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Blocks\Order_Confirmation\Bitcoin_Order_Payment_Status_Block;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Blocks\Order_Confirmation\Bitcoin_Order_Payment_Total_Block;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Checkout;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\HPOS;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Order;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Post_BH_Bitcoin_Address;
@@ -81,6 +82,7 @@ class BH_WP_Bitcoin_Gateway {
 		$this->define_template_hooks();
 
 		$this->define_payment_gateway_hooks();
+		$this->define_woocommerce_checkout_hooks();
 		$this->define_order_hooks();
 		$this->define_action_scheduler_hooks();
 
@@ -200,6 +202,17 @@ class BH_WP_Bitcoin_Gateway {
 		add_action( 'woocommerce_blocks_payment_method_type_registration', array( $payment_gateways, 'register_woocommerce_block_checkout_support' ) );
 
 		add_filter( 'woocommerce_available_payment_gateways', array( $payment_gateways, 'add_logger_to_gateways' ) );
+	}
+
+	/**
+	 * Always check for an unused address when opening the checkout.
+	 */
+	protected function define_woocommerce_checkout_hooks(): void {
+
+		/** @var Checkout $order */
+		$checkout = $this->container->get( Checkout::class );
+
+		add_action( 'woocommerce_before_checkout_form', array( $checkout, 'generate_one_address_for_payment' ) );
 	}
 
 	/**

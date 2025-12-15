@@ -207,6 +207,20 @@ class BH_WP_Bitcoin_Gateway_Unit_Test extends \Codeception\Test\Unit {
 	}
 
 	/**
+	 * @covers ::define_woocommerce_checkout_hooks
+	 */
+	public function test_define_woocommerce_checkout_hooks(): void {
+
+		\WP_Mock::expectActionAdded(
+			'woocommerce_before_checkout_form',
+			array( new AnyInstance( Checkout::class ), 'generate_one_address_for_payment' ),
+		);
+
+		$app = new BH_WP_Bitcoin_Gateway( $this->get_container() );
+		$app->register_hooks();
+	}
+
+	/**
 	 * @covers ::define_order_hooks
 	 */
 	public function test_define_order_hooks(): void {
