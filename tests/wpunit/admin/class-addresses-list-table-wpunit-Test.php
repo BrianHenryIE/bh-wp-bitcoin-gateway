@@ -70,13 +70,12 @@ class Addresses_List_Table_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTe
 		$bitcoin_address_factory    = new Bitcoin_Address_Factory();
 		$bitcoin_address_repository = new Bitcoin_Address_Repository( $bitcoin_address_factory );
 
-		$address_post_id = $bitcoin_address_repository->save_new(
-			new Bitcoin_Address_Query(
-				wallet_wp_post_parent_id: $wallet->get_post_id(),
-				xpub: $address,
-				derivation_path_sequence_index: $address_index
-			)
+		$bitcoin_address = $bitcoin_address_repository->save_new(
+			wallet: $wallet,
+			derivation_path_sequence_index: $address_index,
+			xpub: $address,
 		);
+		$address_post_id = $bitcoin_address->get_post_id();
 
 		$this->post = get_post( $address_post_id );
 
