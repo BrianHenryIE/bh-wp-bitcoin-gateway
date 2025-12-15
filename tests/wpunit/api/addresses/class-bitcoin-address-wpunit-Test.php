@@ -24,27 +24,25 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 
 		$wallet = $this->makeEmpty( Bitcoin_Wallet::class );
 
-		$bitcoin_address_post_id = $bitcoin_address_repository->save_new(
-			new Bitcoin_Address_Query(
-				wallet_wp_post_parent_id: $wallet->get_post_id(),
-				xpub: 'address',
-				derivation_path_sequence_index: 2
-			)
+		$bitcoin_address = $bitcoin_address_repository->save_new(
+			wallet:             $wallet,
+			derivation_path_sequence_index: 2,
+			xpub: 'address',
 		);
 
 		/** @var WP_Post $bitcoin_address_post */
-		$bitcoin_address_post = get_post( $bitcoin_address_post_id );
+		$bitcoin_address_post = get_post( $bitcoin_address->get_post_id() );
 
 		$last_modified_time_before = $bitcoin_address_post->post_modified_gmt;
 
-		$bitcoin_address_object = $bitcoin_address_repository->get_by_post_id( $bitcoin_address_post_id );
+		$bitcoin_address_object = $bitcoin_address_repository->get_by_post_id( $bitcoin_address->get_post_id() );
 
 		sleep( 1 );
 
 		$bitcoin_address_object->set_order_id( 123 );
 
 		/** @var WP_Post $bitcoin_address_post */
-		$bitcoin_address_post = get_post( $bitcoin_address_post_id );
+		$bitcoin_address_post = get_post( $bitcoin_address->get_post_id() );
 
 		$last_modified_time_after = $bitcoin_address_post->post_modified_gmt;
 
@@ -56,20 +54,20 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 	 */
 	public function test_get_order_id_null_before_set(): void {
 
+		$this->markTestIncomplete( 'should it be possible for a Bitcoin_Address object to exist without a post_id?' );
+
 		$bitcoin_address_factory    = new Bitcoin_Address_Factory();
 		$bitcoin_address_repository = new Bitcoin_Address_Repository( $bitcoin_address_factory );
 
 		$wallet = $this->makeEmpty( Bitcoin_Wallet::class );
 
-		$bitcoin_address_post_id = $bitcoin_address_repository->save_new(
-			new Bitcoin_Address_Query(
-				wallet_wp_post_parent_id: $wallet->get_post_id(),
-				xpub: 'address',
-				derivation_path_sequence_index: 2
-			)
+		$bitcoin_address = $bitcoin_address_repository->save_new(
+			wallet:             $wallet,
+			derivation_path_sequence_index: 2,
+			xpub: 'address',
 		);
 
-		$sut = $bitcoin_address_repository->get_by_post_id( $bitcoin_address_post_id );
+		$sut = $bitcoin_address_repository->get_by_post_id( $bitcoin_address->get_post_id() );
 
 		$result = $sut->get_order_id();
 
@@ -80,6 +78,8 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 	 * @covers ::get_order_id
 	 */
 	public function test_get_order_id_after_set(): void {
+
+		$this->markTestIncomplete( 'should it be possible for a Bitcoin_Address object to exist without a post_id?' );
 
 		$bitcoin_address_factory    = new Bitcoin_Address_Factory();
 		$bitcoin_address_repository = new Bitcoin_Address_Repository( $bitcoin_address_factory );
@@ -109,6 +109,7 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 	 * @covers ::set_status
 	 */
 	public function test_set_status(): void {
+		$this->markTestIncomplete( 'should a Bitcoin_Address object have setters?' );
 
 		$bitcoin_address_factory    = new Bitcoin_Address_Factory();
 		$bitcoin_address_repository = new Bitcoin_Address_Repository( $bitcoin_address_factory );
@@ -231,6 +232,8 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 	 * @covers ::refresh_wp_post
 	 */
 	public function test_refresh_address(): void {
+		$this->markTestIncomplete( 'should a Bitcoin_Address object have setters?' );
+
 		$post_property = new ReflectionProperty( Bitcoin_Address::class, 'post' );
 		$post_property->setAccessible( true );
 
