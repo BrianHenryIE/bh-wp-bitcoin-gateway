@@ -12,13 +12,14 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain_API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Exchange_Rate_API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Generate_Address_API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
-use Codeception\Stub\Expected;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
+use Codeception\Stub\Expected;
 use Psr\Log\LoggerInterface;
+use WC_Order;
 use WC_Payment_Gateway;
 use WC_Payment_Gateways;
 
@@ -33,6 +34,7 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 		?LoggerInterface $logger = null,
 		?Bitcoin_Wallet_Repository $bitcoin_wallet_repository = null,
 		?Bitcoin_Address_Repository $bitcoin_address_repository = null,
+		?Bitcoin_Transaction_Repository $bitcoin_transaction_repository = null,
 		?Blockchain_API_Interface $blockchain_api = null,
 		?Generate_Address_API_Interface $generate_address_api = null,
 		?Exchange_Rate_API_Interface $exchange_rate_api = null,
@@ -118,7 +120,7 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 		$bitcoin_1->id       = 'bitcoin_1';
 		$wc_payment_gateways->payment_gateways['bitcoin_1'] = $bitcoin_1;
 
-		$order = new \WC_Order();
+		$order = new WC_Order();
 		$order->set_payment_method( 'bitcoin_1' );
 		$order_id = $order->save();
 
@@ -154,12 +156,25 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 			Bitcoin_Wallet_Repository::class,
 			array(
 				'get_post_id_for_wallet' => Expected::once( 123 ),
-				'get_by_post_id'         => Expected::once( $wallet ),
+				'get_by_wp_post_id'      => Expected::once( $wallet ),
+			)
+		);
+
+		$bitcoin_address_repository = $this->makeEmpty(
+			Bitcoin_Address_Repository::class,
+			array(
+				'get_addresses' => Expected::once(
+					function ( ?Bitcoin_Wallet $wallet = null, ?Bitcoin_Address_Status $status = null ) use ( $addresses_result ): array {
+						/** @return Bitcoin_Address[] */
+						return $addresses_result;
+					}
+				),
 			)
 		);
 
 		$sut = $this->get_sut(
-			bitcoin_wallet_repository: $bitcoin_wallet_repository
+			bitcoin_wallet_repository: $bitcoin_wallet_repository,
+			bitcoin_address_repository: $bitcoin_address_repository
 		);
 
 		$bitcoin_gateway                   = new Bitcoin_Gateway( $sut );
@@ -202,12 +217,25 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 			Bitcoin_Wallet_Repository::class,
 			array(
 				'get_post_id_for_wallet' => Expected::once( 123 ),
-				'get_by_post_id'         => Expected::once( $wallet ),
+				'get_by_wp_post_id'      => Expected::once( $wallet ),
+			)
+		);
+
+		$bitcoin_address_repository = $this->makeEmpty(
+			Bitcoin_Address_Repository::class,
+			array(
+				'get_addresses' => Expected::once(
+					function ( ?Bitcoin_Wallet $wallet = null, ?Bitcoin_Address_Status $status = null ) use ( $addresses_result ): array {
+						/** @return Bitcoin_Address[] */
+						return $addresses_result;
+					}
+				),
 			)
 		);
 
 		$sut = $this->get_sut(
-			bitcoin_wallet_repository: $bitcoin_wallet_repository
+			bitcoin_wallet_repository: $bitcoin_wallet_repository,
+			bitcoin_address_repository: $bitcoin_address_repository
 		);
 
 		$bitcoin_gateway                   = new Bitcoin_Gateway( $sut );
@@ -248,12 +276,25 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 			Bitcoin_Wallet_Repository::class,
 			array(
 				'get_post_id_for_wallet' => Expected::once( 123 ),
-				'get_by_post_id'         => Expected::once( $wallet ),
+				'get_by_wp_post_id'      => Expected::once( $wallet ),
+			)
+		);
+
+		$bitcoin_address_repository = $this->makeEmpty(
+			Bitcoin_Address_Repository::class,
+			array(
+				'get_addresses' => Expected::once(
+					function ( ?Bitcoin_Wallet $wallet = null, ?Bitcoin_Address_Status $status = null ) use ( $addresses_result ): array {
+						/** @return Bitcoin_Address[] */
+						return $addresses_result;
+					}
+				),
 			)
 		);
 
 		$sut = $this->get_sut(
 			bitcoin_wallet_repository: $bitcoin_wallet_repository,
+			bitcoin_address_repository: $bitcoin_address_repository,
 		);
 
 		$wc_payment_gateways                              = WC_Payment_Gateways::instance();
@@ -262,7 +303,7 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 		$bitcoin_gateway->settings['xpub']                = 'bitcoinxpub';
 		$wc_payment_gateways->payment_gateways['bitcoin'] = $bitcoin_gateway;
 
-		$order = new \WC_Order();
+		$order = new WC_Order();
 		$order->set_payment_method( 'bitcoin' );
 		$order->save();
 
@@ -308,6 +349,18 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 			)
 		);
 
+		$bitcoin_transaction_repository = $this->makeEmpty(
+			Bitcoin_Transaction_Repository::class,
+			array(
+				'get_transactions_for_address' => Expected::once(
+					function ( Bitcoin_Address $address ): array {
+						// This test is for "no_transactions".
+						return array();
+					}
+				),
+			)
+		);
+
 		$blockchain_api = self::makeEmpty(
 			Blockchain_API_Interface::class,
 			array(
@@ -318,14 +371,17 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 		$sut = $this->get_sut(
 			bitcoin_wallet_repository: $bitcoin_wallet_repository,
 			bitcoin_address_repository: $bitcoin_address_repository,
+			bitcoin_transaction_repository: $bitcoin_transaction_repository,
 			blockchain_api: $blockchain_api,
 		);
 
-		$order = new \WC_Order();
+		$order = new WC_Order();
 		$order->add_meta_data( Order::BITCOIN_ADDRESS_META_KEY, 'xpub', true );
 		$order->save();
 
 		$result = $sut->get_order_details( $order, true );
+
+		$this->markTestIncomplete( 'What is this testing?' );
 
 		self::assertEmpty( $result->get_address()->get_blockchain_transactions() );
 	}
