@@ -163,10 +163,8 @@ trait API_WooCommerce_Trait {
 			return array();
 		}
 
-		$wallet_post_id = $this->bitcoin_wallet_repository->get_post_id_for_wallet( $gateway->get_xpub() )
+		$wallet = $this->bitcoin_wallet_repository->get_by_xpub( $gateway->get_xpub() )
 							?? $this->bitcoin_wallet_repository->save_new( $gateway->get_xpub(), $gateway->id );
-
-		$wallet = $this->bitcoin_wallet_repository->get_by_wp_post_id( $wallet_post_id );
 
 		return $this->bitcoin_address_repository->get_addresses(
 			wallet: $wallet,

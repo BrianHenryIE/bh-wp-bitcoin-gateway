@@ -155,8 +155,7 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 		$bitcoin_wallet_repository = $this->makeEmpty(
 			Bitcoin_Wallet_Repository::class,
 			array(
-				'get_post_id_for_wallet' => Expected::once( 123 ),
-				'get_by_wp_post_id'      => Expected::once( $wallet ),
+				'get_by_xpub' => Expected::once( $wallet ),
 			)
 		);
 
@@ -193,9 +192,6 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 	 */
 	public function test_is_fresh_address_available_for_gateway_true(): void {
 
-		$logger   = new ColorLogger();
-		$settings = $this->makeEmpty( Settings_Interface::class );
-
 		$addresses_result = array(
 			self::make( Bitcoin_Address::class ),
 			self::make(
@@ -216,8 +212,7 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 		$bitcoin_wallet_repository = $this->makeEmpty(
 			Bitcoin_Wallet_Repository::class,
 			array(
-				'get_post_id_for_wallet' => Expected::once( 123 ),
-				'get_by_wp_post_id'      => Expected::once( $wallet ),
+				'get_by_xpub' => Expected::once( $wallet ),
 			)
 		);
 
@@ -251,9 +246,6 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 	 */
 	public function test_get_fresh_address_for_order(): void {
 
-		$logger   = new ColorLogger();
-		$settings = $this->makeEmpty( Settings_Interface::class );
-
 		$addresses_result = array(
 			self::make(
 				Bitcoin_Address::class,
@@ -275,8 +267,7 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 		$bitcoin_wallet_repository = $this->makeEmpty(
 			Bitcoin_Wallet_Repository::class,
 			array(
-				'get_post_id_for_wallet' => Expected::once( 123 ),
-				'get_by_wp_post_id'      => Expected::once( $wallet ),
+				'get_by_xpub' => Expected::once( $wallet ),
 			)
 		);
 

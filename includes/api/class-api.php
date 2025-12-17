@@ -153,10 +153,8 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 	 */
 	public function generate_new_wallet( string $master_public_key, ?string $gateway_id = null ): Wallet_Generation_Result {
 
-		$post_id = $this->bitcoin_wallet_repository->get_post_id_for_wallet( $master_public_key )
+		$wallet = $this->bitcoin_wallet_repository->get_by_xpub( $master_public_key )
 			?? $this->bitcoin_wallet_repository->save_new( $master_public_key, $gateway_id );
-
-		$wallet = $this->bitcoin_wallet_repository->get_by_wp_post_id( $post_id );
 
 		$existing_fresh_addresses = $this->bitcoin_address_repository->get_addresses(
 			wallet: $wallet,
@@ -212,9 +210,10 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 			$gateway_master_public_key = $gateway->get_xpub();
 			$gateway_wallet_post_id    = $this->bitcoin_wallet_repository->get_post_id_for_wallet( $gateway_master_public_key );
 			if ( is_null( $gateway_wallet_post_id ) ) {
-				$gateway_wallet_post_id = $this->bitcoin_wallet_repository->save_new( $gateway_master_public_key, $gateway->id );
+				$wallet = $this->bitcoin_wallet_repository->save_new( $gateway_master_public_key, $gateway->id );
+			} else {
+				$wallet = $this->bitcoin_wallet_repository->get_by_wp_post_id( $gateway_wallet_post_id );
 			}
-			$wallet = $this->bitcoin_wallet_repository->get_by_wp_post_id( $gateway_wallet_post_id );
 
 			$results[] = $this->generate_new_addresses_for_wallet( $wallet );
 		}
