@@ -225,6 +225,8 @@ class BH_WP_Bitcoin_Gateway_Unit_Test extends \Codeception\Test\Unit {
 	 */
 	public function test_define_order_hooks(): void {
 
+		$this->markTestSkipped( 'addresses should be checked, rather than orders' );
+
 		\WP_Mock::expectActionAdded(
 			'woocommerce_order_status_changed',
 			array( new AnyInstance( Order::class ), 'schedule_check_for_transactions' ),
