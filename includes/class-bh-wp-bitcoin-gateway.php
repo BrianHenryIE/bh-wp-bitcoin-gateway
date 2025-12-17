@@ -221,9 +221,9 @@ class BH_WP_Bitcoin_Gateway {
 	protected function define_order_hooks(): void {
 
 		/** @var Order $order */
-		$order = $this->container->get( Order::class );
-
-		add_action( 'woocommerce_order_status_changed', array( $order, 'schedule_check_for_transactions' ), 10, 3 );
+		// $order = $this->container->get( Order::class );
+		//
+		// add_action( 'woocommerce_order_status_changed', array( $order, 'schedule_check_for_transactions' ), 10, 3 );
 	}
 
 	/**
