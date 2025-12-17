@@ -15,7 +15,6 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet_Repository;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
-use function Patchwork\CodeManipulation\Actions\Namespaces\collectNamespaceBoundaries;
 
 class Checkout implements LoggerAwareInterface {
 	use LoggerAwareTrait;
