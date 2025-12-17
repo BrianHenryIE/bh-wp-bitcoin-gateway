@@ -26,13 +26,19 @@ class Bitcoin_Wallet_Repository {
 			master_public_key: $xpub,
 		);
 
-		$all_wallets = get_posts( array( 'post_type' => Bitcoin_Wallet_WP_Post_Interface::POST_TYPE ) );
+		$all_wallets = get_posts(
+			array(
+				'post_type'   => Bitcoin_Wallet_WP_Post_Interface::POST_TYPE,
+				'post_status' => 'all',
+			)
+		);
 
 		// Only use query vars relevant to the query. This may be unnecessary.
-		$query_array = $args->to_query_array();
-		$query       = array_filter(
+		$query_array                = $args->to_query_array();
+		$query_array['post_status'] = 'all';
+		$query                      = array_filter(
 			$query_array,
-			fn( string $key ): bool => in_array( $key, array( 'post_title', 'post_type' ), true ),
+			fn( string $key ): bool => in_array( $key, array( 'post_title', 'post_type', 'post_status' ), true ),
 			ARRAY_FILTER_USE_KEY,
 		);
 
@@ -110,9 +116,14 @@ class Bitcoin_Wallet_Repository {
 	 * @return int The wp_posts ID.
 	 * @throws Exception When `wp_insert_post()` fails.
 	 */
-	public function save_new( string $master_public_key, ?string $gateway_id = null ): int {
+	public function save_new( string $master_public_key, ?string $gateway_id = null ): Bitcoin_Wallet {
 
 		// TODO: Validate xpub, throw exception.
+
+		$existing = $this->get_by_xpub( $master_public_key );
+		if ( $existing ) {
+			return $existing;
+		}
 
 		$args = new Bitcoin_Wallet_Query(
 			master_public_key: $master_public_key,
@@ -126,7 +137,7 @@ class Bitcoin_Wallet_Repository {
 			throw new Exception( 'Failed to save new wallet as wp_post' );
 		}
 
-		return $post_id;
+		return $this->get_by_wp_post_id( $post_id );
 	}
 
 	/**
