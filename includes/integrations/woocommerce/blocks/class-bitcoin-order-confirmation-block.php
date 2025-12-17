@@ -142,6 +142,9 @@ class Bitcoin_Order_Confirmation_Block {
 	}
 
 	protected function get_order(): ?WC_Order {
+		if ( ! function_exists( 'wc_get_order' ) ) {
+			return null; // TODO: Add breakpoint and make sure this isn't executing unless it is needed.
+		}
 		return wc_get_order(
 			$this->detect_order_id()
 		) ?: null;
