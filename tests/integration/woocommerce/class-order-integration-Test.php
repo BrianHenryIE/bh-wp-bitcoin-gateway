@@ -17,6 +17,8 @@ class Order_Integration_Test extends WPTestCase {
 	 */
 	public function test_order_payment_cancels_scheduled_task(): void {
 
+		$this->markTestSkipped('We no longer check orders\' payments directly.');
+
 		$order = new \WC_Order();
 		$order->set_payment_method( 'bitcoin_gateway' );
 		$order_id = $order->save();
