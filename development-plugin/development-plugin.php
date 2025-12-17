@@ -12,6 +12,10 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\Development_Plugin;
 use ActionScheduler;
 use ActionScheduler_Abstract_RecurringSchedule;
 use ActionScheduler_Action;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_WP_Post_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet_WP_Post_Interface;
 use Exception;
 use JsonException;
 use WP_Error;
@@ -29,6 +33,16 @@ if ( ! defined( 'WP_CLI' ) || ! WP_CLI ) {
 	$hostname = gethostname();
 	update_option( 'wp_env_cron_hostname', $hostname );
 }
+
+// $posts = get_posts(array('post_type' => Bitcoin_Wallet_WP_Post_Interface::POST_TYPE, 'post_status' => 'all'));
+// foreach( $posts as $post ) {
+// wp_delete_post( $post->ID, true );
+// }
+//
+// $posts = get_posts(array('post_type' => Bitcoin_Address_WP_Post_Interface::POST_TYPE, 'post_status' => 'all'));
+// foreach( $posts as $post ) {
+// wp_delete_post( $post->ID, true );
+// }
 
 /**
  * @see WP_Http::request()
