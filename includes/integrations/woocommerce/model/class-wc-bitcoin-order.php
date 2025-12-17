@@ -18,6 +18,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Bitcoin_Gateway;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Order;
 use DateTimeInterface;
+use Exception;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\NullLogger;
 use WC_Order;
@@ -67,15 +68,19 @@ class WC_Bitcoin_Order implements WC_Bitcoin_Order_Interface {
 
 		try {
 			/** @var ?string $bitcoin_address_xpub */
-			$bitcoin_address_xpub    = $wc_order->get_meta( Order::BITCOIN_ADDRESS_META_KEY );
+			$bitcoin_address_xpub = $wc_order->get_meta( Order::BITCOIN_ADDRESS_META_KEY );
+			if ( is_null( $bitcoin_address_xpub ) ) {
+				// If this were to happen, it should be possible to look up which address is associated with this order id.
+				throw new Exception( 'No Bitcoin address found for order.' );
+			}
 			$bitcoin_address_post_id = $bitcoin_address_repository->get_post_id_for_address( $bitcoin_address_xpub );
 			if ( is_null( $bitcoin_address_post_id ) ) {
-				throw new \Exception( 'Problem with order Bitcoin address.' );
+				throw new Exception( 'Problem with order Bitcoin address.' );
 			}
 			$this->address = $bitcoin_address_repository->get_by_post_id( $bitcoin_address_post_id );
-		} catch ( \Exception $exception ) {
+		} catch ( Exception $exception ) {
 			// $this->logger->warning( "`shop_order:{$order->get_id()}` has no Bitcoin address.", array( 'order_id' => $order->get_id() ) );
-			throw new \Exception( 'Problem with order Bitcoin address.' );
+			throw new Exception( 'Problem with order Bitcoin address.' );
 		}
 
 		$this->setLogger( new NullLogger() );
