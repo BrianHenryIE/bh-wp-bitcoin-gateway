@@ -5,33 +5,54 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 use BrianHenryIE\ColorLogger\ColorLogger;
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduler_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Repository;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet_Repository;
 use Codeception\Stub\Expected;
+use Psr\Log\LoggerInterface;
 
 /**
  * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Order
  */
 class Order_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 
+	protected function get_sut(
+		?API_WooCommerce_Interface $api = null,
+		?Bitcoin_Wallet_Repository $bitcoin_wallet_repository = null,
+		?Bitcoin_Address_Repository $bitcoin_address_repository = null,
+		?Background_Jobs_Scheduler_Interface $background_jobs_scheduler = null,
+		?LoggerInterface $logger = null,
+	): Order {
+		return new Order(
+			api: $api ?? $this->makeEmpty( API_WooCommerce_Interface::class ),
+			bitcoin_wallet_repository: $bitcoin_wallet_repository ?? $this->makeEmpty( Bitcoin_Wallet_Repository::class ),
+			bitcoin_address_repository: $bitcoin_address_repository ?? $this->makeEmpty( Bitcoin_Address_Repository::class ),
+			background_jobs_scheduler: $background_jobs_scheduler ?? $this->makeEmpty( Background_Jobs_Scheduler_Interface::class ),
+			logger: $logger ?? new ColorLogger(),
+		);
+	}
+
 	/**
 	 * @covers ::schedule_check_for_transactions
 	 */
 	public function test_schedule_check_for_transactions(): void {
 
-		$logger               = new ColorLogger();
-		$background_jobs_mock = $this->makeEmpty(
+		$background_jobs_scheduler_mock = $this->makeEmpty(
 			Background_Jobs_Scheduler_Interface::class,
 			array(
 				'schedule_check_assigned_bitcoin_address_for_transactions' => Expected::once(),
 			)
 		);
-		$api                  = $this->makeEmpty(
+		$api                            = $this->makeEmpty(
 			API_WooCommerce_Interface::class,
 			array(
 				'is_order_has_bitcoin_gateway' => Expected::once( true ),
 			)
 		);
 
-		$sut = new Order( $api, $background_jobs_mock, $logger );
+		$sut = $this->get_sut(
+			api: $api,
+			background_jobs_scheduler: $background_jobs_scheduler_mock,
+		);
 
 		$order    = new \WC_Order();
 		$order_id = $order->save();
@@ -44,16 +65,16 @@ class Order_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	 */
 	public function test_schedule_check_for_transactions_not_when_setting_to_other_status(): void {
 
-		$logger               = new ColorLogger();
-		$background_jobs_mock = $this->makeEmpty( Background_Jobs_Scheduler_Interface::class );
-		$api                  = $this->makeEmpty(
+		$api = $this->makeEmpty(
 			API_WooCommerce_Interface::class,
 			array(
 				'is_order_has_bitcoin_gateway' => Expected::never(),
 			)
 		);
 
-		$sut = new Order( $api, $background_jobs_mock, $logger );
+		$sut = $this->get_sut(
+			api: $api,
+		);
 
 		$order    = new \WC_Order();
 		$order_id = $order->save();
@@ -70,16 +91,16 @@ class Order_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	 */
 	public function test_schedule_check_for_transactions_not_when_not_bitcoin_gateway(): void {
 
-		$logger               = new ColorLogger();
-		$background_jobs_mock = $this->makeEmpty( Background_Jobs_Scheduler_Interface::class );
-		$api                  = $this->makeEmpty(
+		$api = $this->makeEmpty(
 			API_WooCommerce_Interface::class,
 			array(
 				'is_order_has_bitcoin_gateway' => Expected::once( false ),
 			)
 		);
 
-		$sut = new Order( $api, $background_jobs_mock, $logger );
+		$sut = $this->get_sut(
+			api: $api,
+		);
 
 		$order    = new \WC_Order();
 		$order_id = $order->save();
