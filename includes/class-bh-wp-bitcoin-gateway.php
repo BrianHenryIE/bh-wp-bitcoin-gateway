@@ -27,6 +27,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Checkout;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\HPOS;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Order;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Post_BH_Bitcoin_Address;
+use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Post_BH_Bitcoin_Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Post_BH_Bitcoin_Wallet;
 use BrianHenryIE\WP_Bitcoin_Gateway\Admin\Plugins_Page;
 use BrianHenryIE\WP_Bitcoin_Gateway\Frontend\AJAX;
@@ -148,6 +149,10 @@ class BH_WP_Bitcoin_Gateway {
 		$address = $this->container->get( Post_BH_Bitcoin_Address::class );
 		add_action( 'init', array( $address, 'register_address_post_type' ) );
 		add_action( 'parse_query', array( $address, 'add_post_statuses' ) );
+
+		/** @var Post_BH_Bitcoin_Transaction $transaction_post_type */
+		$transaction_post_type = $this->container->get( Post_BH_Bitcoin_Transaction::class );
+		add_action( 'init', array( $transaction_post_type, 'register_transaction_post_type' ) );
 	}
 
 	/**
