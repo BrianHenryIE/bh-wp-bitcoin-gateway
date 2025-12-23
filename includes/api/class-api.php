@@ -205,16 +205,9 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 		 */
 		$results = array();
 
-		// TODO: This should loop over wallets, not over gateways.
-		foreach ( $this->get_bitcoin_gateways() as $gateway ) {
-			$gateway_master_public_key = $gateway->get_xpub();
-			$gateway_wallet_post_id    = $this->bitcoin_wallet_repository->get_post_id_for_wallet( $gateway_master_public_key );
-			if ( is_null( $gateway_wallet_post_id ) ) {
-				$wallet = $this->bitcoin_wallet_repository->save_new( $gateway_master_public_key, $gateway->id );
-			} else {
-				$wallet = $this->bitcoin_wallet_repository->get_by_wp_post_id( $gateway_wallet_post_id );
-			}
+		$wallets = $this->bitcoin_wallet_repository->get_all();
 
+		foreach ( $wallets as $wallet ) {
 			$results[] = $this->generate_new_addresses_for_wallet( $wallet );
 		}
 

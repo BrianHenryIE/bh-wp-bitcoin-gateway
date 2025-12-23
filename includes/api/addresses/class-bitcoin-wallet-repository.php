@@ -24,19 +24,12 @@ class Bitcoin_Wallet_Repository {
 	public function get_by_xpub( string $xpub ): ?Bitcoin_Wallet {
 		$args = new Bitcoin_Wallet_Query(
 			master_public_key: $xpub,
-		);
-
-		$all_wallets = get_posts(
-			array(
-				'post_type'   => Bitcoin_Wallet_WP_Post_Interface::POST_TYPE,
-				'post_status' => 'all',
-			)
+			status: Bitcoin_Wallet_Status::ALL,
 		);
 
 		// Only use query vars relevant to the query. This may be unnecessary.
-		$query_array                = $args->to_query_array();
-		$query_array['post_status'] = 'all';
-		$query                      = array_filter(
+		$query_array = $args->to_query_array();
+		$query       = array_filter(
 			$query_array,
 			fn( string $key ): bool => in_array( $key, array( 'post_title', 'post_type', 'post_status' ), true ),
 			ARRAY_FILTER_USE_KEY,
@@ -64,6 +57,27 @@ class Bitcoin_Wallet_Repository {
 	public function get_by_wp_post_id( int $post_id ): Bitcoin_Wallet {
 
 		return $this->bitcoin_wallet_factory->get_by_wp_post_id( $post_id );
+	}
+
+	public function get_all( $status = Bitcoin_Wallet_Status::ALL ): array {
+		$args = new Bitcoin_Wallet_Query(
+			status: $status,
+		);
+
+		$query_array = $args->to_query_array();
+		$query       = array_filter(
+			$query_array,
+			fn( string $key ): bool => in_array( $key, array( 'post_type', 'post_status' ), true ),
+			ARRAY_FILTER_USE_KEY,
+		);
+
+		/** @var WP_Post[] $posts */
+		$posts = get_posts( $query );
+
+		return array_map(
+			fn( WP_Post $post ) => $this->bitcoin_wallet_factory->get_by_wp_post_id( $post->ID ),
+			$posts
+		);
 	}
 
 	/**
@@ -113,7 +127,7 @@ class Bitcoin_Wallet_Repository {
 	 * @param string  $master_public_key The xpub/ypub/zpub of the wallet.
 	 * @param ?string $gateway_id The WC_Payment_Gateway the wallet is being used with.
 	 *
-	 * @return int The wp_posts ID.
+	 * @return Bitcoin_Wallet The wp_posts saved wallet.
 	 * @throws Exception When `wp_insert_post()` fails.
 	 */
 	public function save_new( string $master_public_key, ?string $gateway_id = null ): Bitcoin_Wallet {
@@ -131,7 +145,8 @@ class Bitcoin_Wallet_Repository {
 			gateway_refs: $gateway_id ? array( $gateway_id ) : null,
 		);
 
-		$post_id = wp_insert_post( $args->to_query_array(), true );
+		$query_args_array = $args->to_query_array();
+		$post_id          = wp_insert_post( $query_args_array, true );
 
 		if ( is_wp_error( $post_id ) ) {
 			throw new Exception( 'Failed to save new wallet as wp_post' );
@@ -168,8 +183,10 @@ class Bitcoin_Wallet_Repository {
 			$args
 		);
 
-		if ( is_wp_error( $result ) ) {
-			throw new \RuntimeException( $result->get_error_message() );
+		if ( ! is_wp_error( $result ) ) {
+			return;
 		}
+
+		throw new \RuntimeException( $result->get_error_message() );
 	}
 }
