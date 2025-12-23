@@ -3,6 +3,8 @@
  * Plugin Name:  Try to load a plugin that is not inside the plugins' directory.
  *
  * MU plugins are loaded after `global $wp_plugin_paths` is set but before normal plugins are loaded.
+ *
+ * I'm currently setting `$arbitrary_plugins` in `/tests/bootstrap.php`.
  */
 
 function activate_plugin_at_arbitrary_path( string $plugin_file_path, ?string $plugin_basename = null ) {

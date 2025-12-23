@@ -28,5 +28,7 @@ $is_integration_test = array_reduce(
 );
 if ( $is_integration_test ) {
 	global $arbitrary_plugins;
-	$arbitrary_plugins = array( '/Users/brianhenry/Sites/bh-wp-bitcoin-gateway/bh-wp-bitcoin-gateway.php' );
+	$arbitrary_plugins = array(
+		dirname( __DIR__, 1 ) . '/bh-wp-bitcoin-gateway.php',
+	);
 }
