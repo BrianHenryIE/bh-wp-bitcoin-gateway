@@ -118,7 +118,7 @@ class Details_Formatter {
 		// e.g. there could be dynamic number of confirmations based on order total
 
 		return $this->format_money_to_bitcoin(
-			$this->order->get_address()->get_confirmed_balance( PHP_INT_MAX, 0 )
+			$this->order->get_address()->get_amount_received() ?? Money::of( 0, 'BTC' )
 		);
 	}
 
@@ -132,7 +132,7 @@ class Details_Formatter {
 			case $this->order->is_paid():
 				$result = __( 'Paid', 'bh-wp-bitcoin-gateway' );
 				break;
-			case ! empty( $this->order->get_address()->get_blockchain_transactions() ):
+			case $this->order->get_address()->get_amount_received()?->isGreaterThan( Money::of( 0, 'BTC' ) ):
 				$result = __( 'Partly Paid', 'bh-wp-bitcoin-gateway' );
 				break;
 			default:
