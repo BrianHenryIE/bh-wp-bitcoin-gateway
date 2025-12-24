@@ -41,9 +41,11 @@ readonly class Bitcoin_Wallet_Query extends WP_Post_Query_Abstract {
 	 * @return array<string,mixed>
 	 */
 	protected function get_meta_input(): array {
-		return array(
-			Bitcoin_Wallet_WP_Post_Interface::GATEWAY_IDS_META_KEY => $this->gateway_refs,
-			Bitcoin_Wallet_WP_Post_Interface::LAST_DERIVED_ADDRESS_INDEX_META_KEY => $this->last_derived_address_index,
+		return array_filter(
+			array(
+				Bitcoin_Wallet_WP_Post_Interface::GATEWAY_IDS_META_KEY => $this->gateway_refs,
+				Bitcoin_Wallet_WP_Post_Interface::LAST_DERIVED_ADDRESS_INDEX_META_KEY => $this->last_derived_address_index,
+			)
 		);
 	}
 
