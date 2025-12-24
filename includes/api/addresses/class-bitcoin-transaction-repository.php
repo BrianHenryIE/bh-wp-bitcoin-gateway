@@ -215,6 +215,8 @@ class Bitcoin_Transaction_Repository {
 			}
 		}
 
+		// todo empty $updated_transactions_post_ids return
+
 		$update_query = array(
 			'ID'         => $address_post_id,
 			'meta_input' => array(

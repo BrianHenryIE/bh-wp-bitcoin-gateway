@@ -1,5 +1,13 @@
 # Contributing
 
+```
+composer install;
+npm install;
+npx playwright install;
+npx wp-env start --xdebug;
+BASEURL=http://localhost:8888 npx playwright test --ui &;
+```
+
 ## Rough notes.
 
 List scripts:
@@ -24,6 +32,7 @@ composer test
 ### E2E testing with wp-env and Playwright
 
 ```bash
+# To install the latest Chromium etc.
 npx playwright install
 npx playwright test --config ./playwright.config.ts
 ```
@@ -70,3 +79,18 @@ wp config set WP_DEBUG_LOG "/var/www/html/wp-content/debug.log"
 
 Don't have xdebug enabled in IDE when starting wp-env.
 
+
+
+TODO: brianhenryie/bh-php-blockchain-info/src/BlockchainInfoApi.php:107
+
+```php
+$responseBody = (string) $response->getBody();
+
+if($responseBody === 'Rate limited') {
+    // What units is this?
+    $retry_after = $response->getHeader('retry-after');
+    throw new \Exception($responseBody);
+}
+
+return $this->mapper->mapToClassFromString($responseBody, RawAddress::class);
+```
