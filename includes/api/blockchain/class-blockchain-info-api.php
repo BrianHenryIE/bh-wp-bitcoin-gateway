@@ -60,6 +60,7 @@ class Blockchain_Info_Api implements Blockchain_API_Interface, LoggerAwareInterf
 			$value = Money::of( $this->api->getReceivedByAddress( $btc_address, $confirmed ), 'BTC' );
 			return $value->dividedBy( pow( 10, 8 ) ); // Convert from Satoshis to BTC.
 		} catch ( Exception $e ) {
+			// TODO: Look at set_exception_handler()|set_error_handler() to try need this only once in the class.
 			if ( $e->getMessage() === 'Rate Limited' ) {
 				throw new Rate_Limit_Exception( null );
 			}

@@ -16,7 +16,7 @@ use DateTimeZone;
 use Exception;
 
 /**
- * As an adapter, this class takes an object of another class, implement an interface, and its methods parse the given
+ * As an adapter, this class takes an object of another class, implements an interface, and its methods parse the given
  * object to return values adhering to the interface.
  */
 class Blockchain_Info_Api_Transaction_Adapter implements Transaction_Interface {

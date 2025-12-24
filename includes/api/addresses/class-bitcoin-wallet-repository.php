@@ -21,6 +21,11 @@ class Bitcoin_Wallet_Repository extends WP_Post_Repository_Abstract {
 	) {
 	}
 
+	/**
+	 * NB: post_name is 200 characters long. zpub is 111 characters.
+	 *
+	 * @param string $xpub The master public key of the wallet.
+	 */
 	public function get_by_xpub( string $xpub ): ?Bitcoin_Wallet {
 		$args = new Bitcoin_Wallet_Query(
 			master_public_key: $xpub,
@@ -55,7 +60,6 @@ class Bitcoin_Wallet_Repository extends WP_Post_Repository_Abstract {
 	 * @throws Exception When the post_type of the post returned for the given post_id is not a Bitcoin_Wallet.
 	 */
 	public function get_by_wp_post_id( int $post_id ): Bitcoin_Wallet {
-
 		return $this->bitcoin_wallet_factory->get_by_wp_post_id( $post_id );
 	}
 

@@ -17,8 +17,10 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Development_Plugin\Rest\Bitcoin;
 use BrianHenryIE\WP_Bitcoin_Gateway\Development_Plugin\Rest\Themes;
 use BrianHenryIE\WP_Bitcoin_Gateway\Development_Plugin\Rest\WooCommerce_Settings;
 
-// TODO check for stray requests: exchange rate query seems to be happening too frequently.
-// https://api-pub.bitfinex.com/v2/tickers?symbols=tBTCUSD
+/**
+ * TODO check for stray requests: exchange rate query seems to be happening too frequently.
+ * https://api-pub.bitfinex.com/v2/tickers?symbols=tBTCUSD
+ */
 
 if ( ! defined( 'WPINC' ) ) {
 	return;

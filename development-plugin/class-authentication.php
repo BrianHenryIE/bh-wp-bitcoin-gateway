@@ -41,10 +41,10 @@ class Authentication {
 		return $errors;
 	}
 
-    /**
-     * @hooked init
-     * @throws Exception
-     */
+	/**
+	 * @hooked init
+	 * @throws Exception
+	 */
 	public function login_as_any_user(): void {
 		if ( isset( $_GET['login_as_user'] ) ) {
 			$login_as_user = sanitize_text_field( $_GET['login_as_user'] );
