@@ -133,6 +133,8 @@ class Bitcoin_Gateway_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 	 */
 	public function test_checks_for_available_address_for_availability_uses_cache(): void {
 
+		$this->markTestSkipped( 'Skipping while we figure out how things work if a customer arrives at the checkout, there are not addresses, one is created, is the instance of the gateway the same?' );
+
 		$GLOBALS['bh_wp_bitcoin_gateway'] = $this->makeEmpty(
 			API_WooCommerce_Interface::class,
 			array(

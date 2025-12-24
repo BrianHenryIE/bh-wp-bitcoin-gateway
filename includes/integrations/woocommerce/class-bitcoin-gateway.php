@@ -343,9 +343,9 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 	 */
 	public function is_available() {
 
-		if ( ! is_null( $this->is_available_cache ) ) {
-			return $this->is_available_cache;
-		}
+		// if ( ! is_null( $this->is_available_cache ) ) {
+		// return $this->is_available_cache;
+		// }
 
 		if ( is_null( $this->api ) ) {
 			$this->is_available_cache = false;
@@ -458,7 +458,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 	 *
 	 * @return string
 	 */
-	public function get_xpub(): string {
+	public function get_xpub(): ?string {
 		// TODO: validate xpub format.
 		return $this->settings['xpub'];
 	}
