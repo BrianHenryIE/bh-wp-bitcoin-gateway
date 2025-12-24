@@ -175,8 +175,8 @@ class Bitcoin_Wallet_Repository {
 		Bitcoin_Wallet $wallet,
 		Bitcoin_Wallet_Query $query
 	): void {
-		$args            = $query->to_query_array();
-		$args['post_id'] = $wallet->get_post_id();
+		$args       = $query->to_query_array();
+		$args['ID'] = $wallet->get_post_id();
 
 		/** @var int|\WP_Error $result */
 		$result = wp_update_post(
