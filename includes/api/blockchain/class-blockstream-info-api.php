@@ -2,6 +2,11 @@
 /**
  * @see https://github.com/Blockstream/esplora/blob/master/API.md
  *
+ * {
+ * "error" : "Too Many Requests",
+ * "message" : "Blockstream Explorer API NOTICE: Your request rate exceeds the current limit. Starting July 15 2025, monthly unauthenticated usage will be capped at 500,000 requests/month and 700 requests/hour per IP. To maintain uninterrupted access, get your API key at: https://dashboard.blockstream.info"
+ * }
+ *
  * @package    brianhenryie/bh-wp-bitcoin-gateway
  */
 
@@ -118,6 +123,7 @@ class Blockstream_Info_API implements Blockchain_API_Interface, LoggerAwareInter
 	 * @return array<string, Transaction_Interface> Transactions keyed by txid.
 	 *
 	 * @throws JsonException
+	 * @throws Rate_Limit_Exception
 	 */
 	public function get_transactions_received( string $btc_address ): array {
 
@@ -130,6 +136,13 @@ class Blockstream_Info_API implements Blockchain_API_Interface, LoggerAwareInter
 		if ( is_wp_error( $request_response ) ) {
 			throw new Exception( $request_response->get_error_message() );
 		}
+		if ( 429 === $request_response['response']['code'] ) {
+			throw new Rate_Limit_Exception(
+				reset_time: null,
+				message: json_decode( $request_response['body'], true, 512, JSON_THROW_ON_ERROR )['message']
+			);
+		}
+
 		if ( 200 !== $request_response['response']['code'] ) {
 			throw new Exception( 'Unexpected response received.' );
 		}

@@ -377,6 +377,8 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 			// TODO: do_action on changes for logging.
 
 			return $transactions;
+		} catch ( Rate_Limit_Exception $_exception ) {
+			return $this->bitcoin_transaction_repository->get_transactions_for_address( $address ) ?? array();
 		} catch ( Exception $_exception ) {
 			// E.g. API is offline.
 			// TODO: log, rate limit, notify.

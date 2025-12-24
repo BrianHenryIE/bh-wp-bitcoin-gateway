@@ -56,8 +56,15 @@ class Blockchain_Info_Api implements Blockchain_API_Interface, LoggerAwareInterf
 	 * @throws Exception
 	 */
 	public function get_received_by_address( string $btc_address, bool $confirmed ): Money {
-		$value = Money::of( $this->api->getReceivedByAddress( $btc_address, $confirmed ), 'BTC' );
-		return $value->dividedBy( pow( 10, 8 ) ); // Convert from Satoshis to BTC.
+		try {
+			$value = Money::of( $this->api->getReceivedByAddress( $btc_address, $confirmed ), 'BTC' );
+			return $value->dividedBy( pow( 10, 8 ) ); // Convert from Satoshis to BTC.
+		} catch ( Exception $e ) {
+			if ( $e->getMessage() === 'Rate Limited' ) {
+				throw new Rate_Limit_Exception( null );
+			}
+			throw $e;
+		}
 	}
 
 	public function get_address_balance( string $btc_address, int $number_of_confirmations ): Address_Balance {
