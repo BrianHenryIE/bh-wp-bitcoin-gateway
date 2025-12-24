@@ -12,9 +12,10 @@ use DateTimeInterface;
 
 interface Transaction_Interface {
 
+	/**
+	 * Double SHA-256 hash of the serialized transaction data, byte-reversed (displayed in little-endian format).
+	 */
 	public function get_txid(): string;
-
-	public function get_hash(): string;
 
 	/**
 	 * "1" or "2".

@@ -28,7 +28,6 @@ class Bitcoin_Transaction implements Transaction_Interface {
 	 * @param int               $block_height
 	 * @param DateTimeInterface $block_time
 	 * @param string            $tx_id
-	 * @param string            $hash
 	 * @param int               $version
 	 * @param array             $v_in
 	 * @param array             $v_out
@@ -40,7 +39,6 @@ class Bitcoin_Transaction implements Transaction_Interface {
 		protected int $block_height,
 		protected DateTimeInterface $block_time,
 		protected string $tx_id,
-		protected string $hash,
 		protected int $version,
 		protected array $v_in,
 		protected array $v_out,
@@ -63,9 +61,6 @@ class Bitcoin_Transaction implements Transaction_Interface {
 		return $this->block_height;
 	}
 
-	public function get_hash(): string {
-		return $this->hash;
-	}
 
 	public function get_version(): int {
 		return $this->version;

@@ -57,7 +57,6 @@ class Bitcoin_Transaction_Factory {
 			block_height: get_post_meta( $post->ID, Bitcoin_Transaction_WP_Post_Interface::BLOCK_HEIGHT_META_KEY, true ),
 			block_time: get_post_meta( $post->ID, Bitcoin_Transaction_WP_Post_Interface::BLOCK_DATETIME_META_KEY, true ),
 			tx_id: $post->post_title,
-			hash: $hash,
 			version: $version,
 			v_in: $v_in,
 			v_out: $v_out,
