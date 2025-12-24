@@ -40,8 +40,10 @@ readonly class Bitcoin_Address_Query extends WP_Post_Query_Abstract {
 	 * @return array<string,mixed>
 	 */
 	protected function get_meta_input(): array {
-		return array(
-			Bitcoin_Address_WP_Post_Interface::DERIVATION_PATH_SEQUENCE_NUMBER_META_KEY => $this->derivation_path_sequence_index,
+		return array_filter(
+			array(
+				Bitcoin_Address_WP_Post_Interface::DERIVATION_PATH_SEQUENCE_NUMBER_META_KEY => $this->derivation_path_sequence_index,
+			)
 		);
 	}
 

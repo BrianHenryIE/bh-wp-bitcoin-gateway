@@ -365,6 +365,13 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 			// TODO: Maybe this shouldn't be public. Or at least, should refer to ids rather than post ids!
 			$this->bitcoin_transaction_repository->associate_transactions_post_ids_to_address( $transactions_post_ids, $address );
 
+			if ( $address->get_status() === Bitcoin_Address_Status::UNKNOWN ) {
+				$this->bitcoin_address_repository->set_status(
+					$address,
+					status: 0 === count( $updated_transactions ) ? Bitcoin_Address_Status::UNUSED : Bitcoin_Address_Status::USED
+				);
+			}
+
 			// TODO: run a check on the address to see has the amount been paid, then  update the address status/state.
 
 			// TODO: do_action on changes for logging.

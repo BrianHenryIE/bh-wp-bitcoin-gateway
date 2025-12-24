@@ -155,6 +155,12 @@ class Bitcoin_Address_Repository {
 		string $xpub,
 	): Bitcoin_Address {
 
+		// Unlikely, but was an issue for Wallets.
+		$existing_post_id = $this->get_post_id_for_address( $xpub );
+		if ( $existing_post_id ) {
+			return $this->bitcoin_address_factory->get_by_wp_post_id( $existing_post_id );
+		}
+
 		$query = new Bitcoin_Address_Query(
 			wallet_wp_post_parent_id: $wallet->get_post_id(),
 			status: Bitcoin_Address_Status::UNKNOWN,
@@ -204,5 +210,37 @@ class Bitcoin_Address_Repository {
 			},
 			$posts
 		);
+	}
+
+	public function set_status(
+		Bitcoin_Address $address,
+		Bitcoin_Address_Status $status
+	): void {
+
+		$this->update(
+			address: $address,
+			query: new Bitcoin_Address_Query(
+				status: $status,
+			)
+		);
+	}
+
+	protected function update(
+		Bitcoin_Address $address,
+		Bitcoin_Address_Query $query
+	): void {
+		$args       = $query->to_query_array();
+		$args['ID'] = $address->get_post_id();
+
+		/** @var int|\WP_Error $result */
+		$result = wp_update_post(
+			$args
+		);
+
+		if ( ! is_wp_error( $result ) ) {
+			return;
+		}
+
+		throw new \RuntimeException( $result->get_error_message() );
 	}
 }
