@@ -42,10 +42,13 @@ readonly class Bitcoin_Transaction_Query extends WP_Post_Query_Abstract {
 	 * @return array<string,mixed>
 	 */
 	protected function get_meta_input(): array {
-		return array(
-			Bitcoin_Transaction_WP_Post_Interface::BLOCK_HEIGHT_META_KEY   => $this->block_height,
-			Bitcoin_Transaction_WP_Post_Interface::BLOCK_DATETIME_META_KEY => $this->block_datetime,
-			Bitcoin_Transaction_WP_Post_Interface::VALUE_META_KEY          => $this->value,
+		return array_filter(
+			array(
+				Bitcoin_Transaction_WP_Post_Interface::BLOCK_HEIGHT_META_KEY   => $this->block_height,
+				Bitcoin_Transaction_WP_Post_Interface::BLOCK_DATETIME_META_KEY => $this->block_datetime,
+				Bitcoin_Transaction_WP_Post_Interface::VALUE_META_KEY          => $this->value,
+				Bitcoin_Transaction_WP_Post_Interface::BITCOIN_ADDRESSES_POST_IDS_META_KEY => $this->updated_transaction_meta_bitcoin_address_post_ids,
+			)
 		);
 	}
 
@@ -55,6 +58,7 @@ readonly class Bitcoin_Transaction_Query extends WP_Post_Query_Abstract {
 		public ?int $block_height = null,
 		public ?DateTimeInterface $block_datetime = null,  // TODO: don't use timestamps, use something legible.
 		public ?Money $value = null,
+		public ?array $updated_transaction_meta_bitcoin_address_post_ids = null,
 	) {
 		parent::__construct();
 	}

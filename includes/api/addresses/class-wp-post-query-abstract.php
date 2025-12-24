@@ -4,6 +4,7 @@
  * `get_post()` etc. queries.
  *
  * Enums are parsed to their backing value.
+ * Money uses {@see Money::jsonSerialize()} to store it as a readable JSON object.
  *
  * Extend this class to suit a specific post_type; use `::to_query_array()` in calls to `update_post()` etc.
  *
@@ -93,15 +94,29 @@ abstract readonly class WP_Post_Query_Abstract {
 			}
 		}
 
-		$wp_post_fields['meta_input'] = $this->get_meta_input();
-		$wp_post_fields['post_type']  = $this->post_type;
+		$wp_post_fields['post_type'] = $this->post_type;
 
-		$args = array_map(
-			fn( $value ) => $value instanceof BackedEnum ? $value->value : $value,
+		$mapper = function ( $value ) {
+			if ( $value instanceof BackedEnum ) {
+				return $value->value;
+			}
+			if ( $value instanceof \BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money ) {
+				return $value->jsonSerialize();
+			}
+				return $value;
+		};
+
+		$wp_post_fields['meta_input'] = array_map(
+			$mapper,
+			$this->get_meta_input()
+		);
+
+		$wp_post_fields = array_map(
+			$mapper,
 			// Remove empty values. TODO: should this check `null` and allow empty strings?
 			array_filter( $wp_post_fields )
 		);
 
-		return $args;
+		return $wp_post_fields;
 	}
 }

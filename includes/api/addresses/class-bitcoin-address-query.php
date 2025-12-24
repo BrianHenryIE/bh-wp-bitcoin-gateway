@@ -7,6 +7,7 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses;
 
+use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Post_BH_Bitcoin_Address;
 
 /**
@@ -43,6 +44,9 @@ readonly class Bitcoin_Address_Query extends WP_Post_Query_Abstract {
 		return array_filter(
 			array(
 				Bitcoin_Address_WP_Post_Interface::DERIVATION_PATH_SEQUENCE_NUMBER_META_KEY => $this->derivation_path_sequence_index,
+				Bitcoin_Address_WP_Post_Interface::TRANSACTIONS_META_KEY => $this->updated_transactions_post_ids,
+				Bitcoin_Address_WP_Post_Interface::ORDER_ID_META_KEY => $this->associated_order_id,
+				Bitcoin_Address_WP_Post_Interface::TARGET_AMOUNT_META_KEY => $this->target_amount,
 			)
 		);
 	}
@@ -56,6 +60,7 @@ readonly class Bitcoin_Address_Query extends WP_Post_Query_Abstract {
 	 * @param ?string                 $orderby Which field to order the results by.
 	 * @param ?string                 $order_direction Order the results ASC or DESC.
 	 * @param ?int                    $posts_per_page TODO: What's the difference between this and `numberposts`?
+	 * @param ?Money                  $target_amount The target amount of bitcoin to receive for the order the address is associated with. Saved in post_meta as `array{amount:string,currency:string}`.
 	 */
 	public function __construct(
 		public ?int $wallet_wp_post_parent_id = null,
@@ -66,6 +71,9 @@ readonly class Bitcoin_Address_Query extends WP_Post_Query_Abstract {
 		public ?string $orderby = null,
 		public ?string $order_direction = null,
 		public ?int $posts_per_page = null,
+		public ?array $updated_transactions_post_ids = null,
+		public ?int $associated_order_id = null,
+		public ?Money $target_amount = null,
 	) {
 		parent::__construct();
 	}

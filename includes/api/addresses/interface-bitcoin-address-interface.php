@@ -61,39 +61,10 @@ interface Bitcoin_Address_Interface {
 	public function get_status(): Bitcoin_Address_Status;
 
 	/**
-	 * Set the current status of the address.
-	 *
-	 * Valid statuses: unknown|unused|assigned|used.
-	 *
-	 * TODO: Throw an exception if an invalid status is set. Maybe in the `wp_insert_post_data` filter.
-	 * TODO: Maybe throw an exception if the update fails.
-	 *
-	 * @param Bitcoin_Address_Status $status Status to assign.
-	 */
-	public function set_status( Bitcoin_Address_Status $status ): void;
-
-	/**
 	 * Get the order id associated with this address, or null if none has ever been assigned.
 	 */
 	public function get_order_id(): ?int;
 
-	/**
-	 * Add order_id metadata to the bitcoin address and update the status to assigned.
-	 *
-	 * @param int $order_id The WooCommerce order id the address is being used for.
-	 */
-	public function set_order_id( int $order_id ): void;
-
-	/**
-	 * Associate the Bitcoin Address with an order's post_id, set the expected amount to be paid, change the status
-	 * to "assigned".
-	 *
-	 * @see Bitcoin_Address_Status::ASSIGNED
-	 *
-	 * @param int   $post_id The post_id (e.g. WooCommerce order id) that transactions to this address represent payment for.
-	 * @param Money $btc_total The target amount to be paid, after which the order should be updated.
-	 */
-	public function assign( int $post_id, Money $btc_total ): void;
 
 	/**
 	 * The received amount needed to consider the order "paid".

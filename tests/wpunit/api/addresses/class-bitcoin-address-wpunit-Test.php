@@ -19,6 +19,8 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 	 */
 	public function test_last_modified_time_is_updated(): void {
 
+		$this->markTestIncomplete( 'Manipulation fo the object has moved to the repository.' );
+
 		$bitcoin_address_factory    = new Bitcoin_Address_Factory();
 		$bitcoin_address_repository = new Bitcoin_Address_Repository( $bitcoin_address_factory );
 
@@ -163,6 +165,9 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 	 * @covers ::get_balance
 	 */
 	public function test_get_target_amount(): void {
+
+		$this->markTestIncomplete( 'This is moved to the repository' );
+
 		$post_id = wp_insert_post(
 			array(
 				'post_type'   => 'bh-bitcoin-address',

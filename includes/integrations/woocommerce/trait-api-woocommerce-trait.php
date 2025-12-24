@@ -133,7 +133,11 @@ trait API_WooCommerce_Trait {
 
 		$btc_address = array_shift( $btc_addresses );
 
-		$btc_address->assign( $order->get_id(), $btc_total );
+		$this->bitcoin_address_repository->assign_to_order(
+			address: $btc_address,
+			order_id: $order->get_id(),
+			btc_total: $btc_total
+		);
 
 		$order->add_meta_data( Order::BITCOIN_ADDRESS_META_KEY, $btc_address->get_raw_address() );
 		$order->save();

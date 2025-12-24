@@ -64,8 +64,6 @@ class Bitcoin_Address implements Bitcoin_Address_Interface {
 	// */
 	// protected ?int $order_id;
 
-	protected Bitcoin_Address_Repository $bitcoin_address_repository;
-
 	/**
 	 * Constructor
 	 *
@@ -89,9 +87,6 @@ class Bitcoin_Address implements Bitcoin_Address_Interface {
 		return $this->post->ID;
 	}
 
-	public function set_bitcoin_address_repository( Bitcoin_Address_Repository $bitcoin_address_repository ): void {
-		$this->bitcoin_address_repository = $bitcoin_address_repository;
-	}
 
 	/**
 	 * The post ID for the xpub|ypub|zpub wallet this address was derived for.
@@ -153,83 +148,10 @@ class Bitcoin_Address implements Bitcoin_Address_Interface {
 	}
 
 	/**
-	 * Set the current status of the address.
-	 *
-	 * Valid statuses: unknown|unused|assigned|used.
-	 *
-	 * TODO: Throw an exception if an invalid status is set. Maybe in the `wp_insert_post_data` filter.
-	 * TODO: Maybe throw an exception if the update fails.
-	 *
-	 * @param Bitcoin_Address_Status $status Status to assign.
-	 */
-	public function set_status( Bitcoin_Address_Status $status ): void {
-
-		$update = array(
-			'post_type'   => Bitcoin_Address_WP_Post_Interface::POST_TYPE,
-			'ID'          => $this->post->ID,
-			'post_status' => $status->value,
-		);
-
-		$this->wp_update_post( $update );
-		$this->status = $status;
-	}
-
-	/**
 	 * Get the order id associated with this address, or null if none has ever been assigned.
 	 */
 	public function get_order_id(): ?int {
 		return 0 === $this->order_id ? null : $this->order_id;
-	}
-
-	/**
-	 * Add order_id metadata to the bitcoin address and update the status to assigned.
-	 *
-	 * @param int $order_id The WooCommerce order id the address is being used for.
-	 */
-	public function set_order_id( int $order_id ): void {
-
-		$update = array(
-			'ID'         => $this->post->ID,
-			'meta_input' => array(
-				Bitcoin_Address_WP_Post_Interface::ORDER_ID_META_KEY => $order_id,
-			),
-		);
-
-		if ( Bitcoin_Address_Status::ASSIGNED !== $this->get_status() ) {
-			$update['post_status'] = Bitcoin_Address_Status::ASSIGNED->value;
-		}
-
-		$this->wp_update_post( $update );
-		$this->order_id = $order_id;
-	}
-
-	/**
-	 * Associate the Bitcoin Address with an order's post_id, set the expected amount to be paid, change the status
-	 * to "assigned".
-	 *
-	 * @see Bitcoin_Address_Status::ASSIGNED
-	 *
-	 * @param int   $post_id The post_id (e.g. WooCommerce order id) that transactions to this address represent payment for.
-	 * @param Money $btc_total The target amount to be paid, after which the order should be updated.
-	 */
-	public function assign( int $post_id, Money $btc_total ): void {
-		$this->set_order_id( $post_id );
-		$this->set_target_amount( $btc_total );
-		$this->set_status_assigned();
-	}
-
-	/**
-	 * Sets the Bitcoin Address's status to `assigned` if not already so.
-	 *
-	 * @see Bitcoin_Address_Status::ASSIGNED
-	 */
-	protected function set_status_assigned(): void {
-
-		if ( Bitcoin_Address_Status::ASSIGNED === $this->get_status() ) {
-			return;
-		}
-
-		$this->set_status( Bitcoin_Address_Status::ASSIGNED );
 	}
 
 	/**
@@ -245,28 +167,6 @@ class Bitcoin_Address implements Bitcoin_Address_Interface {
 		$this->post = get_post( $this->post->ID ) ?? ( function () {
 			throw new RuntimeException( 'get_post( ' . $this->post->ID . ' ) failed to refresh post.' );
 		} )();
-	}
-
-	/**
-	 * The target amount of bitcoin to receive for the order the address is associated with.
-	 *
-	 * Saved in post_meta as `array{amount:string,currency:string}`.
-	 *
-	 * @param Money $btc_total The amount of BitCoin received until this address's status should change to ~"complete"/"paid".
-	 *
-	 * @see self::TARGET_AMOUNT_META_KEY
-	 * @see Money::jsonSerialize()
-	 */
-	protected function set_target_amount( Money $btc_total ): void {
-		$update = array(
-			'ID'         => $this->post->ID,
-			'meta_input' => array(
-				Bitcoin_Address_WP_Post_Interface::TARGET_AMOUNT_META_KEY => $btc_total->jsonSerialize(),
-			),
-		);
-
-		$this->wp_update_post( $update );
-		$this->target_amount = $btc_total;
 	}
 
 	/**

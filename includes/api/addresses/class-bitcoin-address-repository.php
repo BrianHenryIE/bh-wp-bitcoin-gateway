@@ -7,6 +7,7 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses;
 
+use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use Exception;
 use WP_Post;
 use wpdb;
@@ -24,7 +25,7 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 	}
 
 	/**
-	 * Given a bitcoin master public key, get the WordPress post_id it is saved under.
+	 * Given a bitcoin public key, get the WordPress post_id it is saved under.
 	 *
 	 * @param string $address Xpub|ypub|zpub.
 	 *
@@ -185,62 +186,50 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 		return $this->bitcoin_address_factory->get_by_wp_post_id( $post_id );
 	}
 
-
 	/**
-	 * Find addresses generated from this wallet which are unused and return them as `Bitcoin_Address` objects.
+	 * Set the current status of the address.
 	 *
-	 * TODO: Maybe this shouldn't be in here?
+	 * Valid statuses: unknown|unused|assigned|used + ~WordPress built-in.
 	 *
-	 * @return Bitcoin_Address[]
+	 * TODO: Throw an exception if an invalid status is set.
+	 *
+	 * @param Bitcoin_Address_Status $status Status to assign.
 	 */
-	public function get_fresh_addresses(): array {
-		$posts = get_posts(
-			array(
-				// 'post_parent'    => $this->post->ID,
-												'post_type' => Bitcoin_Address_WP_Post_Interface::POST_TYPE,
-				'post_status'    => Bitcoin_Address_Status::UNUSED->value,
-				'orderby'        => 'ID',
-				'order'          => 'ASC',
-				'posts_per_page' => -1,
-			)
-		);
-		return array_map(
-			function ( WP_Post $post ) {
-				return $this->bitcoin_address_factory->get_by_wp_post( $post );
-			},
-			$posts
-		);
-	}
-
 	public function set_status(
 		Bitcoin_Address $address,
 		Bitcoin_Address_Status $status
 	): void {
 
 		$this->update(
-			address: $address,
+			$address,
 			query: new Bitcoin_Address_Query(
 				status: $status,
 			)
 		);
 	}
 
-	protected function update(
+	/**
+	 * Associate the Bitcoin Address with an order's post_id, set the expected amount to be paid, change the status
+	 * to "assigned".
+	 *
+	 * @see Bitcoin_Address_Status::ASSIGNED
+	 *
+	 * @param Bitcoin_Address $address
+	 * @param int             $order_id The post_id (e.g. WooCommerce order id) that transactions to this address represent payment for.
+	 * @param Money           $btc_total The target amount to be paid, after which the order should be updated.
+	 */
+	public function assign_to_order(
 		Bitcoin_Address $address,
-		Bitcoin_Address_Query $query
+		int $order_id,
+		Money $btc_total,
 	): void {
-		$args       = $query->to_query_array();
-		$args['ID'] = $address->get_post_id();
-
-		/** @var int|\WP_Error $result */
-		$result = wp_update_post(
-			$args
+		$this->update(
+			$address,
+			query: new Bitcoin_Address_Query(
+				status: Bitcoin_Address_Status::ASSIGNED,
+				associated_order_id: $order_id,
+				target_amount: $btc_total,
+			)
 		);
-
-		if ( ! is_wp_error( $result ) ) {
-			return;
-		}
-
-		throw new \RuntimeException( $result->get_error_message() );
 	}
 }
