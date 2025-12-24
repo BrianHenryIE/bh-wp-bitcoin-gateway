@@ -214,10 +214,10 @@ class BH_WP_Bitcoin_Gateway {
 	 */
 	protected function define_woocommerce_checkout_hooks(): void {
 
-		/** @var Checkout $order */
+		/** @var Checkout $checkout */
 		$checkout = $this->container->get( Checkout::class );
 
-		add_action( 'woocommerce_before_checkout_form', array( $checkout, 'generate_one_address_for_payment' ) );
+		add_action( 'woocommerce_checkout_init', array( $checkout, 'ensure_one_address_for_payment' ) );
 	}
 
 	/**
