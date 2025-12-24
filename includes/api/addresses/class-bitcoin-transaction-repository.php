@@ -23,7 +23,7 @@ use WP_Post;
  *
  * @phpstan-type WpUpdatePostArray array{ID?: int, post_author?: int, post_date?: string, post_date_gmt?: string, post_content?: string, post_content_filtered?: string, post_title?: string, post_excerpt?: string}
  */
-class Bitcoin_Transaction_Repository {
+class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 
 	public function __construct(
 		protected Bitcoin_Transaction_Factory $bitcoin_transaction_factory,
@@ -196,7 +196,6 @@ class Bitcoin_Transaction_Repository {
 	): void {
 
 		$address_post_id = $address->get_post_id();
-		unset( $address );
 
 		/** @var array<int,string> $existing_meta_transactions_post_ids */
 		$existing_meta_transactions_post_ids = get_post_meta( $address_post_id, Bitcoin_Address_WP_Post_Interface::TRANSACTIONS_META_KEY, true );
@@ -215,20 +214,16 @@ class Bitcoin_Transaction_Repository {
 			}
 		}
 
-		// todo empty $updated_transactions_post_ids return
-
-		$update_query = array(
-			'ID'         => $address_post_id,
-			'meta_input' => array(
-				Bitcoin_Address_WP_Post_Interface::TRANSACTIONS_META_KEY => $updated_transactions_post_ids,
-			),
-		);
-
-		$result = wp_update_post( $update_query );
-
-		if ( is_wp_error( $result ) ) {
-			throw new RuntimeException( $result->get_error_message() );
+		if ( empty( $updated_transactions_post_ids ) ) {
+			return;
 		}
+
+		$this->update(
+			object: $address,
+			query:new Bitcoin_Address_Query(
+				updated_transactions_post_ids: $updated_transactions_post_ids,
+			)
+		);
 	}
 
 	/**
@@ -269,15 +264,16 @@ class Bitcoin_Transaction_Repository {
 				$updated_transaction_meta_bitcoin_address_post_ids[ $bitcoin_address_post_id ] = $bitcoin_address_raw_address;
 				$new_transaction_meta_bitcoin_address_post_ids[ $bitcoin_address_post_id ]     = $bitcoin_address_raw_address;
 
-				$update_query = array(
-					'ID'         => $transaction_post_id,
-					'meta_input' => array(
-						Bitcoin_Transaction_WP_Post_Interface::BITCOIN_ADDRESSES_POST_IDS_META_KEY => $updated_transaction_meta_bitcoin_address_post_ids,
-					),
-				);
+				$transaction = $this->bitcoin_transaction_factory->get_by_wp_post_id( $transaction_post_id );
 
 				// TODO: How best to handle errors in the loop & return all the results.
-				$result = wp_update_post( $update_query );
+				$this->update(
+					object: $transaction,
+					query:  new Bitcoin_Transaction_Query(
+						updated_transaction_meta_bitcoin_address_post_ids: $updated_transaction_meta_bitcoin_address_post_ids
+					)
+				);
+
 			}
 		}
 	}

@@ -14,7 +14,7 @@ use wpdb;
 /**
  * @see Bitcoin_Wallet_WP_Post_Interface
  */
-class Bitcoin_Wallet_Repository {
+class Bitcoin_Wallet_Repository extends WP_Post_Repository_Abstract {
 
 	public function __construct(
 		protected Bitcoin_Wallet_Factory $bitcoin_wallet_factory,
@@ -81,47 +81,6 @@ class Bitcoin_Wallet_Repository {
 	}
 
 	/**
-	 * Given a post_id,
-	 *
-	 * NB: post_name is 200 characters long. zpub is 111 characters.
-	 *
-	 * @param string $xpub The master public key of the wallet.
-	 *
-	 * @return int|null The wp_posts ID when it exists, or null when absent.
-	 */
-	public function get_post_id_for_wallet( string $xpub ): ?int {
-
-		$post_id = wp_cache_get( $xpub, Bitcoin_Wallet_WP_Post_Interface::POST_TYPE );
-
-		if ( is_numeric( $post_id ) ) {
-			return (int) $post_id;
-		}
-
-		/**
-		 * The WordPress wpdb object for database operations.
-		 *
-		 * TODO: Can this be replaced with a `get_posts( array( 'post_name' => $xpub, 'post_type' => Bitcoin_Wallet_WP_Post_Interface::POST_TYPE, 'numberposts' => 1 ) )` call?
-		 *
-		 * @var wpdb $wpdb
-		 */
-		global $wpdb;
-		/**
-		 * phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
-		 *
-		 * @var int|bool $post_id
-		 * @phpstan-ignore-next-line
-		 */
-		$post_id = $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE post_name=%s", sanitize_title( $xpub ) ) );
-
-		if ( false !== $post_id ) {
-			$post_id = intval( $post_id );
-			wp_cache_add( $xpub, $post_id, Bitcoin_Wallet_WP_Post_Interface::POST_TYPE );
-		}
-
-		return $post_id ?: null;
-	}
-
-	/**
 	 * Create a new Bitcoin_Wallet WordPress post for the provided address and optionally specify the associated gateway.
 	 *
 	 * @param string  $master_public_key The xpub/ypub/zpub of the wallet.
@@ -169,24 +128,5 @@ class Bitcoin_Wallet_Repository {
 				last_derived_address_index: $index,
 			)
 		);
-	}
-
-	protected function update(
-		Bitcoin_Wallet $wallet,
-		Bitcoin_Wallet_Query $query
-	): void {
-		$args       = $query->to_query_array();
-		$args['ID'] = $wallet->get_post_id();
-
-		/** @var int|\WP_Error $result */
-		$result = wp_update_post(
-			$args
-		);
-
-		if ( ! is_wp_error( $result ) ) {
-			return;
-		}
-
-		throw new \RuntimeException( $result->get_error_message() );
 	}
 }

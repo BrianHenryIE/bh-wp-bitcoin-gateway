@@ -16,7 +16,7 @@ use wpdb;
  *
  * @phpstan-type WpUpdatePostArray array{ID?: int, post_author?: int, post_date?: string, post_date_gmt?: string, post_content?: string, post_content_filtered?: string, post_title?: string, post_excerpt?: string}
  */
-class Bitcoin_Address_Repository {
+class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 
 	public function __construct(
 		protected Bitcoin_Address_Factory $bitcoin_address_factory,
