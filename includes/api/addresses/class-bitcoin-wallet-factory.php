@@ -34,7 +34,7 @@ class Bitcoin_Wallet_Factory {
 
 		$bitcoin_wallet = new Bitcoin_Wallet(
 			post_id: $post->ID,
-			xpub: $post->post_excerpt,
+			xpub: $post->post_title,
 			status: Bitcoin_Wallet_Status::from( $post->post_status ),
 			address_index: $this->get_address_index( $post ),
 			balance: $this->get_balance( $post ),
