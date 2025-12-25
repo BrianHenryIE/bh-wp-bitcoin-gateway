@@ -13,8 +13,10 @@ use BrianHenryIE\ColorLogger\ColorLogger;
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Handler;
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduler_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Factory;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Transaction;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Transaction_Factory;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Transaction_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\API;
@@ -103,22 +105,6 @@ class Bitcoin_API_Contract_Test extends \lucatume\WPBrowser\TestCase\WPTestCase 
 	 */
 	public function test_save_transactions_received( ?Blockchain_API_Interface $blockchain_api ): void {
 
-		$bitcoin_transaction_mock = $this->make(
-			Bitcoin_Transaction::class,
-			array(
-				'get_post_id' => 123,
-			)
-		);
-
-		/** @var ?Bitcoin_Transaction_Repository $bitcoin_transaction_repository */
-		$bitcoin_transaction_repository = $this->make(
-			Bitcoin_Transaction_Repository::class,
-			array(
-				'save_new' => $bitcoin_transaction_mock,
-				'associate_transactions_post_ids_to_address' => null,
-			)
-		);
-
 		$raw_address = '3KKUGZk4yU9QfZZA9y9K5MkwBX7Rozaaum';
 
 		$address = $this->make(
@@ -129,9 +115,12 @@ class Bitcoin_API_Contract_Test extends \lucatume\WPBrowser\TestCase\WPTestCase 
 			)
 		);
 
-		$sut = $this->get_sut(
-			bitcoin_transaction_repository: $bitcoin_transaction_repository,
-			blockchain_api: $blockchain_api
+		$bitcoin_address_factory     = new Bitcoin_Address_Factory();
+		$bitcoin_transaction_factory = new Bitcoin_Transaction_Factory();
+		$sut                         = $this->get_sut(
+			bitcoin_address_repository: new Bitcoin_Address_Repository( $bitcoin_address_factory ),
+			bitcoin_transaction_repository: new Bitcoin_Transaction_Repository( $bitcoin_transaction_factory ),
+			blockchain_api: $blockchain_api,
 		);
 		/** @var Transaction_Interface[] $result */
 		$result = $sut->update_address_transactions( $address );
