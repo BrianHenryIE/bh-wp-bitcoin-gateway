@@ -1,11 +1,22 @@
 <?php
+/**
+ * Admin UI hooks to stop the WooCommerce setup wizard.
+ *
+ * @package brianhenryie/bh-wp-bitcoin-gateway
+ */
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Development_Plugin\Admin;
 
 use Automattic\WooCommerce\Internal\Admin\Onboarding\OnboardingProfile;
 
+/**
+ * Add simple filters.
+ */
 class WooCommerce {
 
+	/**
+	 * Add filters.
+	 */
 	public function register_hooks(): void {
 
 		/**

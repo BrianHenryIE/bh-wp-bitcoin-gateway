@@ -1,4 +1,9 @@
 <?php
+/**
+ * Search and delete functions for Action Scheduler.
+ *
+ * @package brianhenryie/bh-wp-bitcoin-gateway
+ */
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Development_Plugin\Rest;
 
@@ -11,8 +16,14 @@ use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
 
+/**
+ * Add REST endpoints to search and delete.
+ */
 class Action_Scheduler {
 
+	/**
+	 * Add hooks to register the REST endpoints.
+	 */
 	public function register_hooks(): void {
 		add_action( 'rest_api_init', array( $this, 'register_action_scheduler_search' ) );
 		add_action( 'rest_api_init', array( $this, 'register_action_scheduler_delete' ) );
@@ -81,7 +92,7 @@ class Action_Scheduler {
 				 * Might be nice to use @see ActionScheduler_ListTable::human_interval()
 				 */
 				'recurrence'     => $recurrence,
-				'scheduled_date' => $action->get_schedule()?->next(),
+				'scheduled_date' => $action->get_schedule()->next(),
 				// 'log'
 				'schedule'       => $action->get_schedule(),
 				'hook_priority'  => $action->get_priority(),

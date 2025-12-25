@@ -1,4 +1,9 @@
 <?php
+/**
+ * Some questionable convenience functions for authentication.
+ *
+ * @package brianhenryie/bh-wp-bitcoin-gateway
+ */
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Development_Plugin;
 
@@ -7,8 +12,15 @@ use WP_Error;
 use WP_REST_Server;
 use WP_User;
 
+/**
+ * Set all REST access to admin.
+ * Add `?login_as_user=`.
+ */
 class Authentication {
 
+	/**
+	 * Add actions/filters.
+	 */
 	public function register_hooks(): void {
 		/**
 		 * @see \Automattic\WooCommerce\StoreApi\Routes\V1\AbstractCartRoute::check_nonce()
@@ -27,12 +39,14 @@ class Authentication {
 	 */
 	public function set_rest_user_admin( $errors ): mixed {
 
+		if ( ! isset( $_SERVER['REQUEST_URI'] ) ) {
+			return $errors;
+		}
+
 		/**
 		 * Don't affect logged out behaviour for the store.
-		 * /wp-json/wc/store/v1/batch?_locale=site
-		 * /wp-json/wc/store/
 		 */
-		if ( str_starts_with( $_SERVER['REQUEST_URI'], '/wp-json/wc/store' ) ) {
+		if ( str_starts_with( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ), '/wp-json/wc/store' ) ) {
 			return $errors;
 		}
 
@@ -43,19 +57,21 @@ class Authentication {
 
 	/**
 	 * @hooked init
-	 * @throws Exception
+	 * @throws Exception When an invalid user is supplied.
 	 */
 	public function login_as_any_user(): void {
-		if ( isset( $_GET['login_as_user'] ) ) {
-			$login_as_user = sanitize_text_field( $_GET['login_as_user'] );
-			/** @var WP_User|false $wp_user */
-			$wp_user = get_user_by( 'slug', $login_as_user );
-			if ( ! $wp_user ) {
-				throw new Exception( 'Could not find user: ' . $login_as_user );
-			}
-			wp_set_current_user( $wp_user->ID );
-			wp_set_current_user( $wp_user->ID, $wp_user->user_login );
-			wp_set_auth_cookie( $wp_user->ID );
+		if ( ! isset( $_GET['login_as_user'] ) ) {
+			return;
 		}
+
+		$login_as_user = sanitize_text_field( wp_unslash( $_GET['login_as_user'] ) );
+		/** @var WP_User|false $wp_user */
+		$wp_user = get_user_by( 'slug', $login_as_user );
+		if ( ! $wp_user ) {
+			throw new Exception( 'Could not find user: ' . $login_as_user );
+		}
+		wp_set_current_user( $wp_user->ID );
+		wp_set_current_user( $wp_user->ID, $wp_user->user_login );
+		wp_set_auth_cookie( $wp_user->ID );
 	}
 }

@@ -6,6 +6,13 @@
  *
  * I'm currently setting `$arbitrary_plugins` in `/tests/bootstrap.php`.
  */
+
+/**
+ * `include`s the plugin file, and adds a filter so `option_active_plugins` shows it is active.
+ *
+ * @param string      $plugin_file_path
+ * @param string|null $plugin_basename
+ */
 function activate_plugin_at_arbitrary_path( string $plugin_file_path, ?string $plugin_basename = null ): void {
 	if ( ! file_exists( $plugin_file_path ) ) {
 		return;

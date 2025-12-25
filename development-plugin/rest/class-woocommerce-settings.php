@@ -1,8 +1,20 @@
 <?php
+/**
+ * Add additional settings (`woocommerce_checkout_page_id`) to  `/wp-json/wp/v2/settings`.
+ *
+ * @package brianhenryie/bh-wp-bitcoin-gateway
+ */
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Development_Plugin\Rest;
 
+/**
+ * A bit hacky – modify `global $wp_registered_settings` before it is used.
+ */
 class WooCommerce_Settings {
+
+	/**
+	 * Add hooks to register the REST endpoints.
+	 */
 	public function register_hooks(): void {
 		add_filter( 'rest_pre_dispatch', array( $this, 'show_settings_in_rest' ) );
 	}

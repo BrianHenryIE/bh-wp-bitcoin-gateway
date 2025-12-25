@@ -1,4 +1,9 @@
 <?php
+/**
+ * Some Bitcoin REST endpoints that will hopefully be refined and included/moved later.
+ *
+ * @package brianhenryie/bh-wp-bitcoin-gateway
+ */
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Development_Plugin\Rest;
 
@@ -8,7 +13,14 @@ use Exception;
 use WP_REST_Response;
 use WP_REST_Server;
 
+/**
+ * List wallets, delete wallets and addresses.
+ */
 class Bitcoin {
+
+	/**
+	 * Add hooks to register the REST endpoint/s.
+	 */
 	public function register_hooks(): void {
 		add_action( 'rest_api_init', array( $this, 'register_bitcoin_wallets_routes' ) );
 	}
@@ -82,15 +94,6 @@ class Bitcoin {
 			Bitcoin_Address_WP_Post_Interface::POST_TYPE => array(),
 		);
 
-		/**
-		 * For some reason, when mass-deleting, the checkout page was being deleted.
-		 *
-		 * `wc_get_page_id('checkout')`
-		 *
-		 * @see wc_get_page_id()
-		 */
-		$checkout_page_id = (int) get_option( 'woocommerce_checkout_page_id' );
-
 		$wallet_posts = get_posts(
 			array(
 				'post_type'   => Bitcoin_Wallet_WP_Post_Interface::POST_TYPE,
@@ -99,9 +102,6 @@ class Bitcoin {
 			)
 		);
 		foreach ( $wallet_posts as $post ) {
-			if ( $post->ID === $checkout_page_id ) {
-				throw new Exception( 'somehow the bitcoin wallet wp_post id is the checkout wp_post  id?' );
-			}
 			if ( wp_delete_post( $post->ID, true ) ) {
 				$deleted[ Bitcoin_Wallet_WP_Post_Interface::POST_TYPE ][] = $post->ID;
 			}
@@ -115,9 +115,6 @@ class Bitcoin {
 			)
 		);
 		foreach ( $address_posts as $post ) {
-			if ( $post->ID === $checkout_page_id ) {
-				throw new Exception( 'somehow the bitcoin address wp_post id is the checkout wp_post  id?' );
-			}
 			if ( wp_delete_post( $post->ID, true ) ) {
 				$deleted[ Bitcoin_Address_WP_Post_Interface::POST_TYPE ][] = $post->ID;
 			}
