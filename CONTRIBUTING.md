@@ -3,6 +3,7 @@
 ```
 composer install;
 npm install;
+npm run build;
 npx playwright install;
 npx wp-env start --xdebug;
 BASEURL=http://localhost:8888 npx playwright test --ui &;
