@@ -7,6 +7,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Han
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduler_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Repository;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Status;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Transaction_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet_Repository;
@@ -169,9 +170,17 @@ class API_Unit_Test extends \Codeception\Test\Unit {
 			)
 		);
 
+		$bitcoin_address_repository = self::makeEmpty(
+			Bitcoin_Address_Repository::class,
+			array(
+				'set_status' => Expected::once(),
+			)
+		);
+
 		$sut = $this->get_sut(
-			blockchain_api: $blockchain_api,
+			bitcoin_address_repository: $bitcoin_address_repository,
 			bitcoin_transaction_repository: $bitcoin_transaction_repository,
+			blockchain_api: $blockchain_api,
 		);
 
 		$address = self::make(
@@ -179,6 +188,7 @@ class API_Unit_Test extends \Codeception\Test\Unit {
 			array(
 				'get_raw_address'  => Expected::once( 'xpub' ),
 				'set_transactions' => Expected::once(),
+				'get_status'       => Expected::once( Bitcoin_Address_Status::UNKNOWN ),
 			)
 		);
 
