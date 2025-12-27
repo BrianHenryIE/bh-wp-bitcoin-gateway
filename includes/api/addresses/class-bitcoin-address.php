@@ -16,9 +16,6 @@ use RuntimeException;
 use InvalidArgumentException;
 use WP_Post;
 
-/**
- * @phpstan-type WpUpdatePostArray array{ID?: int, post_author?: int, post_date?: string, post_date_gmt?: string, post_content?: string, post_content_filtered?: string, post_title?: string, post_excerpt?: string}
- */
 class Bitcoin_Address implements Bitcoin_Address_Interface {
 
 	// **
@@ -152,38 +149,6 @@ class Bitcoin_Address implements Bitcoin_Address_Interface {
 	 */
 	public function get_order_id(): ?int {
 		return 0 === $this->order_id ? null : $this->order_id;
-	}
-
-	/**
-	 * After saving, reload the post.
-	 *
-	 * `wp_update_post()` just returns the post_id, so we fetch the post here separately.
-	 *
-	 * This should be pulled from cache.
-	 *
-	 * @throws RuntimeException In the unlikely event the exist post cannot be refreshed.
-	 */
-	protected function refresh_wp_post(): void {
-		$this->post = get_post( $this->post->ID ) ?? ( function () {
-			throw new RuntimeException( 'get_post( ' . $this->post->ID . ' ) failed to refresh post.' );
-		} )();
-	}
-
-	/**
-	 * Run `wp_update_post()`, after setting the post_id, throw exception on failure, refresh on success.
-	 *
-	 * @param WpUpdatePostArray $update The array for `wp_update_post()`.
-	 *
-	 * @throws RuntimeException When failing to save to the WordPress db.
-	 */
-	protected function wp_update_post( array $update ): void {
-		$update['ID'] = $this->post->ID;
-		/** @var int|\WP_Error $result */
-		$result = wp_update_post( $update );
-		if ( is_wp_error( $result ) ) {
-			throw new RuntimeException( $result->get_error_message() );
-		}
-		$this->refresh_wp_post();
 	}
 
 	/**
