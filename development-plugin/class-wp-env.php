@@ -24,7 +24,7 @@ class WP_Env {
 	}
 
 	/**
-	 * Add
+	 * Partly pulled from wp-graphql, where they generate a mu-plugin during wp-env boot script.
 	 */
 	public function register_hooks(): void {
 		add_filter( 'site_url', array( $this, 'wpenv_fix_url' ), 1, 2 );
@@ -90,6 +90,6 @@ class WP_Env {
 	 */
 	protected function get_internal_url( string $url ): string {
 		return preg_replace( '#(https?://(localhost|127.0.0.1)):\d{1,6}#', '$1', $url )
-			?? ( fn() => throw new Exception( 'The regex failed.' ) )();
+			?? ( fn() => throw new Exception( 'The `WP_Env::get_internal_url()` regex failed.' ) )();
 	}
 }
