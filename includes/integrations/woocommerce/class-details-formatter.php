@@ -143,7 +143,7 @@ class Details_Formatter {
 	}
 
 	/**
-	 * @return array{btc_total_formatted:string, btc_exchange_rate_formatted:string, order_status_before_formatted:string, order_status_formatted:string, btc_amount_received_formatted:string, last_checked_time_formatted:string}
+	 * @return array{btc_total_formatted:string, btc_exchange_rate_formatted:string, order_status_before_formatted:string, order_status_formatted:string|null, btc_amount_received_formatted:string, last_checked_time_formatted:string}
 	 */
 	public function to_array( bool $as_camel_case = false ): array {
 

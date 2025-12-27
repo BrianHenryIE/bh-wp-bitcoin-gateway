@@ -1,9 +1,12 @@
 <?php
 /**
- * Functions for background job for checking addresses, generating addresses, etc.
+ * Ensure:
+ * * the exchange rate is up-to-date
+ * * there are unused addresses available for orders
+ * * assigned addresses are checked for payments
  *
  * After new orders, wait five minutes and check for payments.
- * While the destination address is waiting for payment, continue to schedue new checks every ten minutes (nblock generation time)
+ * While the destination address is waiting for payment, continue to schedule new checks every ten minutes (nblock generation time)
  * Every hour, in case the previous check is not running correctly, check are there assigned Bitcoin addresses that we should check for transactions
  * Schedule background job to generate new addresses as needed (fall below threshold defined elsewhere)
  * After generating new addresses, check for existing transactions to ensure they are available to use

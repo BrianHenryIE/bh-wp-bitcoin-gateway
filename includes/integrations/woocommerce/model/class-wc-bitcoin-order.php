@@ -111,6 +111,8 @@ class WC_Bitcoin_Order implements WC_Bitcoin_Order_Interface {
 	}
 
 	/**
+	 * A proxy for the Bitcoin Address object's last checked time.
+	 *
 	 * Null when never changed
 	 */
 	public function get_last_checked_time(): ?DateTimeInterface {

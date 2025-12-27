@@ -44,6 +44,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduling_Interface;
 use DateInterval;
 use DateTimeImmutable;
 use Exception;
@@ -79,6 +80,17 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 		protected Background_Jobs_Scheduler_Interface $background_jobs_scheduler,
 	) {
 		$this->setLogger( $logger );
+	}
+
+	/**
+	 * Set the background jobs scheduler.
+	 *
+	 * This is not in the constructor to avoid an infinite loop/recursive dependency.
+	 *
+	 * @param Background_Jobs $background_jobs The background jobs scheduler.
+	 */
+	public function set_background_jobs( Background_Jobs $background_jobs ): void {
+		$this->background_jobs = $background_jobs;
 	}
 
 	/**
@@ -160,6 +172,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 			wallet: $wallet,
 			status: Bitcoin_Address_Status::UNUSED
 		);
+		// get_fresh_addresses()
 
 		$generated_addresses = array();
 
@@ -253,7 +266,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 
 		if ( $generate_count > 0 ) {
 			// Check the new addresses for transactions etc.
-			$this->check_new_addresses_for_transactions();
+			$this->check_addresses_for_transactions( $generated_addresses );
 
 			// Schedule more generation after it determines how many unused addresses are available.
 			$fresh_addresses = $this->bitcoin_address_repository->get_addresses(
@@ -340,6 +353,8 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 	/**
 	 * Remotely check/fetch the latest data for an address.
 	 *
+	 * TODO: return an object show the initial and final state in a way the changes made can be logged. E.g. was it ever checked before?
+	 *
 	 * @param Bitcoin_Address $address The address object to query.
 	 *
 	 * @return array<string, Transaction_Interface|Bitcoin_Transaction>
@@ -375,6 +390,8 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 			// TODO: run a check on the address to see has the amount been paid, then  update the address status/state.
 
 			// TODO: do_action on changes for logging.
+
+			// TODO: Check are any previous transactions no longer present!!! (unlikely?)
 
 			return $transactions;
 		} catch ( Rate_Limit_Exception $_exception ) {

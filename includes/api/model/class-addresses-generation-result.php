@@ -27,7 +27,7 @@ class Addresses_Generation_Result {
 	 *
 	 * @param Bitcoin_Wallet    $wallet The wallet that the new addresses were generated for.
 	 * @param Bitcoin_Address[] $new_addresses The newly generated addresses.
-	 * @param int               $address_index The new highest wallet address index.
+	 * @param ?int              $address_index The new highest wallet address index.
 	 */
 	public function __construct(
 		public Bitcoin_Wallet $wallet,

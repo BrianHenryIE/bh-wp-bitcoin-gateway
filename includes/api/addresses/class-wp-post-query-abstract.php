@@ -80,6 +80,8 @@ abstract readonly class WP_Post_Query_Abstract {
 	}
 
 	/**
+	 * TODO: need a convention for excluding fields that the caller knows aren't important/helpful.
+	 *
 	 * @return WpUpdatePostArray|array<string, mixed>
 	 * @throws InvalidArgumentException When an unknown field is used.
 	 */

@@ -1,5 +1,6 @@
 <?php
 /**
+ * Vector-in/Value-in
  *
  * @see https://developer.bitcoin.org/reference/transactions.html
  *

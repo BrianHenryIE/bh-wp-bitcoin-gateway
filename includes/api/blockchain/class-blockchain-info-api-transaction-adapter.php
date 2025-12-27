@@ -17,7 +17,7 @@ use Exception;
 
 /**
  * As an adapter, this class takes an object of another class, implements an interface, and its methods parse the given
- * object to return values adhering to the interface.
+ * object to return values adhering to the interface. Distinct from a static method on a factory, this is "lazy".
  */
 class Blockchain_Info_Api_Transaction_Adapter implements Transaction_Interface {
 
