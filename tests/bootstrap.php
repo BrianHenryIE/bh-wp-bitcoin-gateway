@@ -3,7 +3,8 @@
  * @package           brianhenryie/bh-wp-bitcoin-gateway
  */
 
-$GLOBALS['project_root_dir']   = $project_root_dir  = dirname( __DIR__, 1 );
+/** @var string $project_root_dir */
+$GLOBALS['project_root_dir']   = $project_root_dir  = codecept_root_dir();
 $GLOBALS['plugin_root_dir']    = $plugin_root_dir   = $project_root_dir;
 $GLOBALS['plugin_slug']        = $plugin_slug       = basename( $project_root_dir );
 $GLOBALS['plugin_file_php']    = $plugin_file_php   = $plugin_slug . '.php';
@@ -16,13 +17,13 @@ $GLOBALS['wordpress_root_dir'] = $project_root_dir . '/wordpress';
 $env_secret_fullpath = realpath( __DIR__ . '/../.env.secret' );
 if ( file_exists( $env_secret_fullpath ) ) {
 
-	$dotenv = Dotenv\Dotenv::createImmutable( codecept_root_dir(), '.env.secret' );
+	$dotenv = Dotenv\Dotenv::createImmutable( $project_root_dir, '.env.secret' );
 	$dotenv->load();
 }
 
 
 $is_integration_test = array_reduce(
-	$_SERVER['argv'],
+	(array) $_SERVER['argv'],
 	fn( $carry, $arg ) => $carry || 'integration' === $arg,
 	false
 );
