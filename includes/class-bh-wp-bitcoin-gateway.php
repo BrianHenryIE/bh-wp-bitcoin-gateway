@@ -221,18 +221,7 @@ class BH_WP_Bitcoin_Gateway {
 	}
 
 	/**
-	 * Handle order status changes.
-	 */
-	protected function define_order_hooks(): void {
-
-		/** @var Order $order */
-		// $order = $this->container->get( Order::class );
-		//
-		// add_action( 'woocommerce_order_status_changed', array( $order, 'schedule_check_for_transactions' ), 10, 3 );
-	}
-
-	/**
-	 * Hook into the Thank You page to display payment instructions / status.
+	 * Hook into the "Thank You" page to display payment instructions / status.
 	 */
 	protected function define_thank_you_hooks(): void {
 
