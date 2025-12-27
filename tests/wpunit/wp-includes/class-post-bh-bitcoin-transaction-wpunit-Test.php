@@ -3,6 +3,7 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
+use WP_Post_Type;
 
 /**
  * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Post_BH_Bitcoin_Transaction
@@ -11,6 +12,7 @@ class Post_BH_Bitcoin_Transaction_WPUnit_Test extends \lucatume\WPBrowser\TestCa
 	protected function setUp(): void {
 		parent::setUp();
 
+		/** @var array<string, WP_Post_Type> $wp_post_types */
 		global $wp_post_types;
 		unset( $wp_post_types['bh-bitcoin-tx'] );
 	}
