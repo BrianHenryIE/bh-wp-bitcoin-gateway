@@ -11,6 +11,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Status;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
+use BrianHenryIE\WP_Bitcoin_Gateway\Development_Plugin\WP_Env;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order_Interface;
 use DateTimeImmutable;
@@ -229,52 +230,15 @@ trait API_WooCommerce_Trait {
 
 		$time_now = new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) );
 
+		$bitcoin_address = $bitcoin_order->get_address();
+
+		$update_result = $this->update_address_transactions( $bitcoin_address );
+
 		$order_transactions_before = $this->bitcoin_transaction_repository->get_transactions_for_address( $bitcoin_order->get_address() );
 
-		if ( is_null( $order_transactions_before ) ) {
-			$this->logger->debug( 'Refresh order: Checking for the first time' );
-			$order_transactions_before = array();
-		}
-
-		/** @var array<string, Transaction_Interface> $address_transactions_current */
-		$address_transactions_current = $this->update_address_transactions( $bitcoin_order->get_address() );
-
-		// TODO: Check are any previous transactions no longer present!!!
-
-		// Filter to transactions that occurred after the order was placed.
-		$order_transactions_current = array();
-		foreach ( $address_transactions_current as $txid => $transaction ) {
-			// TODO: maybe use block height at order creation rather than date?
-			// TODO: be careful with timezones.
-			if ( $transaction->get_block_time() > $bitcoin_order->get_date_created() ) {
-				$order_transactions_current[ $txid ] = $transaction;
-			}
-		}
-
-		$order_transactions_current_mempool = array_filter(
-			$address_transactions_current,
-			function ( Transaction_Interface $transaction ): bool {
-				return is_null( $transaction->get_block_height() );
-			}
-		);
-
-		$order_transactions_current_blockchain = array_filter(
-			$address_transactions_current,
-			function ( Transaction_Interface $transaction ): bool {
-				return ! is_null( $transaction->get_block_height() );
-			}
-		);
-
-		$gateway = $bitcoin_order->get_gateway();
-
-		if ( ! $gateway ) {
-			return false;
-		}
-
-		// TODO: allow customising.
-		$required_confirmations = 3;
-
 		$confirmed_value_current = $bitcoin_order->get_address()->get_amount_received();
+
+		$order_transactions_current = $update_result;
 
 		// Filter to transactions that have just been seen, so we can record them in notes.
 		$new_order_transactions = array();
@@ -303,6 +267,12 @@ trait API_WooCommerce_Trait {
 			);
 
 			$bitcoin_order->add_order_note( $note );
+		}
+
+		$gateway = $bitcoin_order->get_gateway();
+
+		if ( ! $gateway ) {
+			return false;
 		}
 
 		if ( ! $bitcoin_order->is_paid() && ! is_null( $confirmed_value_current ) && ! $confirmed_value_current->isZero() ) {
