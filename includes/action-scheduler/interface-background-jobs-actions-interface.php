@@ -10,12 +10,22 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler;
 interface Background_Jobs_Actions_Interface {
 
 	/**
+	 *
+	 */
+	const string UPDATE_EXCHANGE_RATE_HOOK = 'bh_wp_bitcoin_gateway_update_exchange_rate';
+
+	/**
 	 * Generating new addresses is math-heavy so we do it in a background task.
 	 */
 	const string GENERATE_NEW_ADDRESSES_HOOK = 'bh_wp_bitcoin_gateway_generate_new_addresses';
 
 	/**
 	 * After generating a new address, we need to determine if it is unused.
+	 */
+	// const string CHECK_GENERATED_ADDRESSES_TRANSACTIONS_HOOK = 'bh_wp_bitcoin_gateway_check_generated_addresses_transactions';
+
+	/**
+	 * Every hour we should check the address that will be used next to ensure it is still unused.
 	 */
 	const string CHECK_NEW_ADDRESSES_TRANSACTIONS_HOOK = 'bh_wp_bitcoin_gateway_check_new_addresses_transactions';
 
@@ -37,6 +47,11 @@ interface Background_Jobs_Actions_Interface {
 	 * @see self::GENERATE_NEW_ADDRESSES_HOOK
 	 */
 	public function generate_new_addresses(): void;
+
+	/**
+	 * @see self::CHECK_GENERATED_ADDRESSES_TRANSACTIONS_HOOK
+	 */
+	// public function check_generated_addresses_for_transactions(): void;
 
 	/**
 	 * @see self::CHECK_NEW_ADDRESSES_TRANSACTIONS_HOOK

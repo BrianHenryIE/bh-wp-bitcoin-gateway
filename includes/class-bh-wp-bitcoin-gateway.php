@@ -14,7 +14,6 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduling_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Admin\Register_List_Tables;
 use BrianHenryIE\WP_Bitcoin_Gateway\Frontend\Blocks\Bitcoin_Image_Block;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\Woo_Cancel_Abandoned_Order\Woo_Cancel_Abandoned_Order;
@@ -24,9 +23,11 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Blocks\Order_Confir
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Blocks\Order_Confirmation\Bitcoin_Order_Payment_Last_Checked_Block;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Blocks\Order_Confirmation\Bitcoin_Order_Payment_Status_Block;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Blocks\Order_Confirmation\Bitcoin_Order_Payment_Total_Block;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Checkout;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\HPOS;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Order;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Post_BH_Bitcoin_Address;
+use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Post_BH_Bitcoin_Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Post_BH_Bitcoin_Wallet;
 use BrianHenryIE\WP_Bitcoin_Gateway\Admin\Plugins_Page;
 use BrianHenryIE\WP_Bitcoin_Gateway\Frontend\AJAX;
@@ -82,6 +83,7 @@ class BH_WP_Bitcoin_Gateway {
 		$this->define_template_hooks();
 
 		$this->define_payment_gateway_hooks();
+		$this->define_woocommerce_checkout_hooks();
 		$this->define_order_hooks();
 		$this->define_action_scheduler_hooks();
 
@@ -147,6 +149,10 @@ class BH_WP_Bitcoin_Gateway {
 		$address = $this->container->get( Post_BH_Bitcoin_Address::class );
 		add_action( 'init', array( $address, 'register_address_post_type' ) );
 		add_action( 'parse_query', array( $address, 'add_post_statuses' ) );
+
+		/** @var Post_BH_Bitcoin_Transaction $transaction_post_type */
+		$transaction_post_type = $this->container->get( Post_BH_Bitcoin_Transaction::class );
+		add_action( 'init', array( $transaction_post_type, 'register_transaction_post_type' ) );
 	}
 
 	/**
@@ -204,18 +210,18 @@ class BH_WP_Bitcoin_Gateway {
 	}
 
 	/**
-	 * Handle order status changes.
+	 * Always check for an unused address when opening the checkout.
 	 */
-	protected function define_order_hooks(): void {
+	protected function define_woocommerce_checkout_hooks(): void {
 
-		/** @var Order $order */
-		$order = $this->container->get( Order::class );
+		/** @var Checkout $checkout */
+		$checkout = $this->container->get( Checkout::class );
 
-		add_action( 'woocommerce_order_status_changed', array( $order, 'schedule_check_for_transactions' ), 10, 3 );
+		add_action( 'woocommerce_checkout_init', array( $checkout, 'ensure_one_address_for_payment' ) );
 	}
 
 	/**
-	 * Hook into the Thank You page to display payment instructions / status.
+	 * Hook into the "Thank You" page to display payment instructions / status.
 	 */
 	protected function define_thank_you_hooks(): void {
 
@@ -280,14 +286,14 @@ class BH_WP_Bitcoin_Gateway {
 	 */
 	protected function define_action_scheduler_hooks(): void {
 
-		/** @var Background_Jobs_Actions_Interface&Background_Jobs_Scheduling_Interface $background_jobs */
-		$background_jobs = $this->container->get( Background_Jobs_Actions_Interface::class );
+		/** @var Background_Jobs_Actions_Interface $background_jobs_actions_handler */
+		$background_jobs_actions_handler = $this->container->get( Background_Jobs_Actions_Interface::class );
 
-		add_action( Background_Jobs_Actions_Interface::GENERATE_NEW_ADDRESSES_HOOK, array( $background_jobs, 'generate_new_addresses' ) );
-		add_action( Background_Jobs_Actions_Interface::CHECK_NEW_ADDRESSES_TRANSACTIONS_HOOK, array( $background_jobs, 'check_new_addresses_for_transactions' ) );
-		add_action( Background_Jobs_Actions_Interface::CHECK_ASSIGNED_ADDRESSES_TRANSACTIONS_HOOK, array( $background_jobs, 'check_assigned_addresses_for_transactions' ) );
-		add_action( Background_Jobs_Actions_Interface::CHECK_FOR_ASSIGNED_ADDRESSES_HOOK, array( $background_jobs, 'schedule_check_for_assigned_addresses_repeating_action' ) );
-		add_action( 'action_scheduler_run_recurring_actions_schedule_hook', array( $background_jobs, 'ensure_schedule_repeating_actions' ) );
+		add_action( Background_Jobs_Actions_Interface::GENERATE_NEW_ADDRESSES_HOOK, array( $background_jobs_actions_handler, 'generate_new_addresses' ) );
+		add_action( Background_Jobs_Actions_Interface::CHECK_NEW_ADDRESSES_TRANSACTIONS_HOOK, array( $background_jobs_actions_handler, 'check_new_addresses_for_transactions' ) );
+		add_action( Background_Jobs_Actions_Interface::CHECK_ASSIGNED_ADDRESSES_TRANSACTIONS_HOOK, array( $background_jobs_actions_handler, 'check_assigned_addresses_for_transactions' ) );
+		add_action( Background_Jobs_Actions_Interface::CHECK_FOR_ASSIGNED_ADDRESSES_HOOK, array( $background_jobs_actions_handler, 'schedule_check_for_assigned_addresses_repeating_action' ) );
+		add_action( 'action_scheduler_run_recurring_actions_schedule_hook', array( $background_jobs_actions_handler, 'ensure_schedule_repeating_actions' ) );
 	}
 
 	/**

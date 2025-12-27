@@ -15,6 +15,10 @@ class Nimq_API_Unit_Test extends \Codeception\Test\Unit {
 	 */
 	public function test_generate_addresses_xpub_1(): void {
 
+		if ( ! is_string( $_ENV['XPUB'] ) || ! is_string( $_ENV['XPUB_DERIVED_1'] ) ) {
+			$this->markTestSkipped( '.env.secret is probably not configured' );
+		}
+
 		$logger = new ColorLogger();
 
 		$sut = new Nimq_API( $logger );
@@ -31,6 +35,10 @@ class Nimq_API_Unit_Test extends \Codeception\Test\Unit {
 	 * @covers ::__construct
 	 */
 	public function test_generate_addresses_xpub_10(): void {
+
+		if ( ! is_string( $_ENV['XPUB'] ) || ! is_string( $_ENV['XPUB_DERIVED_10'] ) ) {
+			$this->markTestSkipped( '.env.secret is probably not configured' );
+		}
 
 		$logger = new ColorLogger();
 
@@ -49,6 +57,10 @@ class Nimq_API_Unit_Test extends \Codeception\Test\Unit {
 	 */
 	public function test_generate_addresses_zpub_1(): void {
 
+		if ( ! is_string( $_ENV['ZPUB'] ) || ! is_string( $_ENV['ZPUB_DERIVED_1'] ) ) {
+			$this->markTestSkipped( '.env.secret is probably not configured' );
+		}
+
 		$logger = new ColorLogger();
 
 		$sut = new Nimq_API( $logger );
@@ -66,6 +78,10 @@ class Nimq_API_Unit_Test extends \Codeception\Test\Unit {
 	 * @covers ::__construct
 	 */
 	public function test_generate_addresses_zpub_10(): void {
+
+		if ( ! is_string( $_ENV['ZPUB'] ) || ! is_string( $_ENV['ZPUB_DERIVED_10'] ) ) {
+			$this->markTestSkipped( '.env.secret is probably not configured' );
+		}
 
 		$logger = new ColorLogger();
 

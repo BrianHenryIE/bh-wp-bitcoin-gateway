@@ -1,99 +1,69 @@
 <?php
 /**
- * Save new Bitcoin wallets in WordPress, and fetch them via xpub or post id.
+ * Custom post type in WordPress, keyed with GUID of the wallet.
+ *
+ * TODO: Update the wp_post last modified time when updating metadata.
  *
  * @package    brianhenryie/bh-wp-bitcoin-gateway
  */
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses;
 
+use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use Exception;
-use wpdb;
+use InvalidArgumentException;
+use WP_Post;
 
-/**
- * Factory for wallets, saved in wp_posts.
- */
 class Bitcoin_Wallet_Factory {
 
 	/**
-	 * Given a post_id,
+	 * @param int $post_id The WordPress post id this wallet is stored under.
 	 *
-	 * NB: post_name is 200 characters long. zpub is 111 characters.
-	 *
-	 * @param string $xpub The master public key of the wallet.
-	 *
-	 * @return int|null The wp_posts ID when it exists, or null when absent.
+	 * @throws Exception When the supplied post_id is not a post of this type.
 	 */
-	public function get_post_id_for_wallet( string $xpub ): ?int {
-
-		$post_id = wp_cache_get( $xpub, Bitcoin_Wallet::POST_TYPE );
-
-		if ( false !== $post_id ) {
-			return (int) $post_id;
+	public function get_by_wp_post_id( int $post_id ): Bitcoin_Wallet {
+		$post = get_post( $post_id );
+		if ( ! ( $post instanceof WP_Post ) || Bitcoin_Wallet_WP_Post_Interface::POST_TYPE !== $post->post_type ) {
+			throw new InvalidArgumentException( 'post_id ' . $post_id . ' is not a ' . Bitcoin_Wallet_WP_Post_Interface::POST_TYPE . ' post object' );
 		}
 
-		/**
-		 * The WordPress wpdb object for database operations.
-		 *
-		 * TODO: Can this be replaced with a `get_posts( array( 'post_name' => $xpub, 'post_type' => Bitcoin_Wallet::POST_TYPE, 'numberposts' => 1 ) )` call?
-		 *
-		 * @var wpdb $wpdb
-		 */
-		global $wpdb;
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
-		// @phpstan-ignore-next-line
-		$post_id = $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE post_name=%s", sanitize_title( $xpub ) ) );
-
-		if ( ! is_null( $post_id ) ) {
-			$post_id = intval( $post_id );
-			wp_cache_add( $xpub, $post_id, Bitcoin_Wallet::POST_TYPE );
-		}
-
-		return $post_id;
+		return $this->get_by_wp_post( $post );
 	}
 
-	/**
-	 * Create a new Bitcoin_Wallet WordPress post for the provided address and optionally specify the associated gateway.
-	 *
-	 * @param string  $master_public_key The xpub/ypub/zpub of the wallet.
-	 * @param ?string $gateway_id The WC_Payment_Gateway the wallet is being used with.
-	 *
-	 * @return int The wp_posts ID.
-	 * @throws Exception When `wp_insert_post()` fails.
-	 */
-	public function save_new( string $master_public_key, ?string $gateway_id = null ): int {
+	public function get_by_wp_post( WP_Post $post ): Bitcoin_Wallet {
 
-		// TODO: Validate xpub, throw exception.
-
-		$args = array();
-
-		$args['post_title']   = $master_public_key;
-		$args['post_status']  = ! is_null( $gateway_id ) ? 'active' : 'inactive';
-		$args['post_excerpt'] = $master_public_key;
-		$args['post_name']    = sanitize_title( $master_public_key ); // An indexed column.
-		$args['post_type']    = Bitcoin_Wallet::POST_TYPE;
-		$args['meta_input']   = array(
-			Bitcoin_Wallet::GATEWAY_IDS_META_KEY => array( $gateway_id ),
+		$bitcoin_wallet = new Bitcoin_Wallet(
+			post_id: $post->ID,
+			xpub: $post->post_title,
+			status: Bitcoin_Wallet_Status::from( $post->post_status ),
+			address_index: $this->get_address_index( $post ),
+			balance: $this->get_balance( $post ),
 		);
 
-		$post_id = wp_insert_post( $args, true );
+		// $bitcoin_wallet->set_bitcoin_address_repository( $this->bitcoin_address_repository );
 
-		if ( is_wp_error( $post_id ) ) {
-			throw new Exception( 'Failed to save new wallet as wp_post' );
-		}
-
-		return $post_id;
+		return $bitcoin_wallet;
 	}
 
 	/**
-	 * Given the id of the wp_posts row storing the bitcoin wallet, return the typed Bitcoin_Wallet object.
+	 * Get the current balance of this wallet, or null if it has never been checked.
 	 *
-	 * @param int $post_id WordPress wp_posts ID.
-	 *
-	 * @return Bitcoin_Wallet
-	 * @throws Exception When the post_type of the post returned for the given post_id is not a Bitcoin_Wallet.
+	 * Must iterate across all addresses and sum them.
 	 */
-	public function get_by_post_id( int $post_id ): Bitcoin_Wallet {
-		return new Bitcoin_Wallet( $post_id );
+	protected function get_balance( WP_Post $post ): ?Money {
+		$balance = get_post_meta( $post->ID, Bitcoin_Wallet_WP_Post_Interface::BALANCE_META_KEY, true );
+		if ( is_array( $balance ) && isset( $balance['amount'], $balance['currency'] ) ) {
+			/** @var array{amount:string, currency:string} $balance  */
+			return Money::of( ...$balance );
+		}
+		return null;
+	}
+
+	/**
+	 * Get the index of the last generated address, so generating new addresses can start higher.
+	 */
+	protected function get_address_index( WP_Post $post ): ?int {
+		$index = get_post_meta( $post->ID, Bitcoin_Wallet_WP_Post_Interface::LAST_DERIVED_ADDRESS_INDEX_META_KEY, true );
+		return is_numeric( $index ) ? intval( $index ) : null; // Empty string '' will parse to 0.
 	}
 }

@@ -9,7 +9,7 @@ use Throwable;
 class Rate_Limit_Exception extends Exception {
 
 	public function __construct(
-		protected DateTimeInterface $reset_time,
+		protected ?DateTimeInterface $reset_time = null,
 		string $message = '',
 		int $code = 0,
 		?Throwable $previous = null
@@ -17,7 +17,7 @@ class Rate_Limit_Exception extends Exception {
 		parent::__construct( $message, $code, $previous );
 	}
 
-	public function get_reset_time(): DateTimeInterface {
+	public function get_reset_time(): ?DateTimeInterface {
 		return $this->reset_time;
 	}
 }

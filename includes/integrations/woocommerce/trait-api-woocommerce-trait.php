@@ -1,11 +1,17 @@
 <?php
+/**
+ * @package brianhenryie/bh-wp-bitcoin-gateway
+ */
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
+use ActionScheduler;
+use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Handler;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Status;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
+use BrianHenryIE\WP_Bitcoin_Gateway\Development_Plugin\WP_Env;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order_Interface;
 use DateTimeImmutable;
@@ -112,6 +118,7 @@ trait API_WooCommerce_Trait {
 	 * @used-by Bitcoin_Gateway::process_payment()
 	 *
 	 * @param WC_Order $order The order that will use the address.
+	 * @param Money    $btc_total The required value of Bitcoin after which this order will be considered paid.
 	 *
 	 * @return Bitcoin_Address
 	 * @throws Exception
@@ -127,7 +134,11 @@ trait API_WooCommerce_Trait {
 
 		$btc_address = array_shift( $btc_addresses );
 
-		$btc_address->assign( $order->get_id(), $btc_total );
+		$this->bitcoin_address_repository->assign_to_order(
+			address: $btc_address,
+			order_id: $order->get_id(),
+			btc_total: $btc_total
+		);
 
 		$order->add_meta_data( Order::BITCOIN_ADDRESS_META_KEY, $btc_address->get_raw_address() );
 		$order->save();
@@ -157,12 +168,13 @@ trait API_WooCommerce_Trait {
 			return array();
 		}
 
-		$wallet_post_id = $this->bitcoin_wallet_factory->get_post_id_for_wallet( $gateway->get_xpub() )
-							?? $this->bitcoin_wallet_factory->save_new( $gateway->get_xpub(), $gateway->id );
+		$wallet = $this->bitcoin_wallet_repository->get_by_xpub( $gateway->get_xpub() )
+							?? $this->bitcoin_wallet_repository->save_new( $gateway->get_xpub(), $gateway->id );
 
-		$wallet = $this->bitcoin_wallet_factory->get_by_post_id( $wallet_post_id );
-
-		return $wallet->get_fresh_addresses();
+		return $this->bitcoin_address_repository->get_addresses(
+			wallet: $wallet,
+			status: Bitcoin_Address_Status::UNUSED,
+		);
 	}
 
 	/**
@@ -208,6 +220,8 @@ trait API_WooCommerce_Trait {
 	 *
 	 * TODO: mempool.
 	 *
+	 * @param WC_Bitcoin_Order_Interface $bitcoin_order
+	 *
 	 * @throws Exception
 	 */
 	protected function refresh_order( WC_Bitcoin_Order_Interface $bitcoin_order ): bool {
@@ -216,72 +230,15 @@ trait API_WooCommerce_Trait {
 
 		$time_now = new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) );
 
-		$order_transactions_before = $bitcoin_order->get_address()->get_blockchain_transactions();
+		$bitcoin_address = $bitcoin_order->get_address();
 
-		if ( is_null( $order_transactions_before ) ) {
-			$this->logger->debug( 'Refresh order: Checking for the first time' );
-			$order_transactions_before = array();
-		}
+		$update_result = $this->update_address_transactions( $bitcoin_address );
 
-		/** @var array<string, Transaction_Interface> $address_transactions_current */
-		$address_transactions_current = $this->update_address_transactions( $bitcoin_order->get_address() );
+		$order_transactions_before = $this->bitcoin_transaction_repository->get_transactions_for_address( $bitcoin_order->get_address() );
 
-		// TODO: Check are any previous transactions no longer present!!!
+		$confirmed_value_current = $bitcoin_order->get_address()->get_amount_received();
 
-		// Filter to transactions that occurred after the order was placed.
-		$order_transactions_current = array();
-		foreach ( $address_transactions_current as $txid => $transaction ) {
-			// TODO: maybe use block height at order creation rather than date?
-			// TODO: be careful with timezones.
-			if ( $transaction->get_time() > $bitcoin_order->get_date_created() ) {
-				$order_transactions_current[ $txid ] = $transaction;
-			}
-		}
-
-		$order_transactions_current_mempool = array_filter(
-			$address_transactions_current,
-			function ( Transaction_Interface $transaction ): bool {
-				return is_null( $transaction->get_block_height() );
-			}
-		);
-
-		$order_transactions_current_blockchain = array_filter(
-			$address_transactions_current,
-			function ( Transaction_Interface $transaction ): bool {
-				return ! is_null( $transaction->get_block_height() );
-			}
-		);
-
-		$gateway = $bitcoin_order->get_gateway();
-
-		if ( ! $gateway ) {
-			return false;
-		}
-
-		// TODO: allow customising.
-		$required_confirmations = 3;
-
-		try {
-			$blockchain_height = $this->blockchain_api->get_blockchain_height();
-		} catch ( Exception $_e ) {
-			// TODO: log, notify, rate limit.
-			return false;
-		}
-
-		$raw_address = $bitcoin_order->get_address()->get_raw_address();
-
-		$confirmed_value_current = $bitcoin_order->get_address()->get_confirmed_balance( $blockchain_height, $required_confirmations );
-
-		$unconfirmed_value_current = array_reduce(
-			$order_transactions_current_blockchain,
-			function ( Money $carry, Transaction_Interface $transaction ) use ( $blockchain_height, $required_confirmations, $raw_address ) {
-				if ( $blockchain_height - ( $transaction->get_block_height() ?? $blockchain_height ) > $required_confirmations ) {
-					return $carry;
-				}
-				return $carry->plus( $transaction->get_value( $raw_address ) );
-			},
-			Money::of( 0, 'BTC' )
-		);
+		$order_transactions_current = $update_result;
 
 		// Filter to transactions that have just been seen, so we can record them in notes.
 		$new_order_transactions = array();
@@ -310,6 +267,12 @@ trait API_WooCommerce_Trait {
 			);
 
 			$bitcoin_order->add_order_note( $note );
+		}
+
+		$gateway = $bitcoin_order->get_gateway();
+
+		if ( ! $gateway ) {
+			return false;
 		}
 
 		if ( ! $bitcoin_order->is_paid() && ! is_null( $confirmed_value_current ) && ! $confirmed_value_current->isZero() ) {
@@ -347,9 +310,11 @@ trait API_WooCommerce_Trait {
 	 * @param bool     $refresh Should saved order details be returned or remote APIs be queried.
 	 *
 	 * @return array<string, mixed>
-	 * @throws Exception
+	 *
 	 * @uses \BrianHenryIE\WP_Bitcoin_Gateway\API_Interface::get_order_details()
 	 * @see  Details_Formatter
+	 *
+	 * @throws Exception
 	 */
 	public function get_formatted_order_details( WC_Order $order, bool $refresh = true ): array {
 
@@ -364,7 +329,7 @@ trait API_WooCommerce_Trait {
 		$result['btc_total']           = $order_details->get_btc_total_price();
 		$result['btc_exchange_rate']   = $order_details->get_btc_exchange_rate();
 		$result['btc_address']         = $order_details->get_address()->get_raw_address();
-		$result['transactions']        = $order_details->get_address()->get_blockchain_transactions();
+		$result['transactions']        = $this->get_saved_transactions( $order_details->get_address() );
 		$result['btc_amount_received'] = $order_details->get_address()->get_amount_received() ?? 'unknown';
 
 		// Objects.

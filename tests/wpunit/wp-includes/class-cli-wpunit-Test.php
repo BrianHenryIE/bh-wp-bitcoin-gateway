@@ -3,6 +3,7 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Query;
 use Codeception\Stub\Expected;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Repository;
@@ -32,7 +33,13 @@ class CLI_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 		$factory = new Bitcoin_Address_Repository();
 		$wallet  = $this->makeEmpty( Bitcoin_Wallet::class );
 
-		$post_id = (string) $factory->save_new( 'mockaddress', 0, $wallet );
+		$post_id = (string) $factory->save_new(
+			new Bitcoin_Address_Query(
+				wallet_wp_post_parent_id: $wallet->get_post_id(),
+				xpub: 'mockaddress',
+				derivation_path_sequence_index: 0
+			)
+		);
 
 		$sut = new CLI( $api, $settings, $logger );
 

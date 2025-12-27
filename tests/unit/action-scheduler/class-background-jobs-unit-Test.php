@@ -10,7 +10,7 @@ use Codeception\Stub\Expected;
 use WP_Mock;
 
 /**
- * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs
+ * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Handler
  */
 class Background_Jobs_Unit_Test extends \Codeception\Test\Unit {
 
@@ -42,11 +42,12 @@ class Background_Jobs_Unit_Test extends \Codeception\Test\Unit {
 			)
 		);
 		$bitcoin_address_repository = $this->makeEmpty( Bitcoin_Address_Repository::class );
+		$background_jobs_scheduling = $this->makeEmpty( Background_Jobs_Scheduler_Interface::class );
 
 		/** @var API_Background_Jobs_Interface $sut */
-		$sut = new Background_Jobs( $api, $bitcoin_address_repository, $logger );
+		$sut = new Background_Jobs_Actions_Handler( $api, $bitcoin_address_repository, $background_jobs_scheduling, $logger );
 
-		/** @see Background_Jobs::generate_new_addresses() */
+		/** @see Background_Jobs_Actions_Handler::generate_new_addresses() */
 		$sut->generate_new_addresses();
 	}
 
@@ -61,22 +62,23 @@ class Background_Jobs_Unit_Test extends \Codeception\Test\Unit {
 			array(
 				'check_new_addresses_for_transactions' => Expected::once(
 					function () {
-						return new Check_Assigned_Addresses_For_Transactions_Result();
+						return new Check_Assigned_Addresses_For_Transactions_Result( 1 );
 					}
 				),
 			)
 		);
 		$bitcoin_address_repository = $this->makeEmpty( Bitcoin_Address_Repository::class );
+		$background_jobs_scheduling = $this->makeEmpty( Background_Jobs_Scheduler_Interface::class );
 
 		/** @var API_Background_Jobs_Interface $sut */
-		$sut = new Background_Jobs( $api, $bitcoin_address_repository, $logger );
+		$sut = new Background_Jobs_Actions_Handler( $api, $bitcoin_address_repository, $background_jobs_scheduling, $logger );
 
-		/** @see Background_Jobs::check_new_addresses_for_transactions() */
+		/** @see Background_Jobs_Actions_Handler::check_new_addresses_for_transactions() */
 		$sut->check_new_addresses_for_transactions();
 
 		$this->assertTrue( $logger->hasDebugRecords() );
 
-		$this->markTestIncomplete( 'Assert the function logs a summary of the result.' );
+		// $this->markTestIncomplete( 'Assert the function logs a summary of the result.' );
 	}
 
 	/**
@@ -88,23 +90,23 @@ class Background_Jobs_Unit_Test extends \Codeception\Test\Unit {
 		$api                        = $this->makeEmpty(
 			API_Background_Jobs_Interface::class,
 			array(
-				'check_assigned_addresses_for_transactions' => Expected::once(
+				'check_assigned_addresses_for_payment' => Expected::once(
 					function () {
-						return new Check_Assigned_Addresses_For_Transactions_Result();
+						return new Check_Assigned_Addresses_For_Transactions_Result( 2 );
 					}
 				),
 			)
 		);
 		$bitcoin_address_repository = $this->makeEmpty( Bitcoin_Address_Repository::class );
+		$background_jobs_scheduling = $this->makeEmpty( Background_Jobs_Scheduler_Interface::class );
 
-		/** @var API_Background_Jobs_Interface $sut */
-		$sut = new Background_Jobs( $api, $bitcoin_address_repository, $logger );
+		$sut = new Background_Jobs_Actions_Handler( $api, $bitcoin_address_repository, $background_jobs_scheduling, $logger );
 
-		/** @see Background_Jobs::check_assigned_addresses_for_transactions() */
+		/** @see Background_Jobs_Actions_Handler::check_assigned_addresses_for_transactions() */
 		$sut->check_assigned_addresses_for_transactions();
 
 		$this->assertTrue( $logger->hasInfoRecords() );
 
-		$this->markTestIncomplete( 'Assert the function logs a summary of the result.' );
+		// $this->markTestIncomplete( 'Assert the function logs a summary of the result.' );
 	}
 }

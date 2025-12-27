@@ -25,7 +25,9 @@
     <exclude-pattern>/vendor-prefixed/*</exclude-pattern>
     <exclude-pattern>/vendor/*</exclude-pattern>
     <exclude-pattern>/wordpress/</exclude-pattern>
-    <exclude-pattern>/wp-content/</exclude-pattern>
+    <exclude-pattern>/wp-content/plugins</exclude-pattern>
+    <exclude-pattern>/wp-content/themes</exclude-pattern>
+    <exclude-pattern>/wp-content/uploads</exclude-pattern>
     <exclude-pattern>/phpstanbootstrap.php</exclude-pattern>
 
     <!-- Do not require the object type in the comment, presuming it is strongly typed -->
@@ -140,6 +142,9 @@
     </rule>
     <!-- Allow development functions in the development plugin -->
     <rule ref="WordPress.PHP.DevelopmentFunctions.error_log_print_r">
+        <exclude-pattern>*/development-plugin/*</exclude-pattern>
+    </rule>
+    <rule ref="WordPress.Security.NonceVerification.Recommended">
         <exclude-pattern>*/development-plugin/*</exclude-pattern>
     </rule>
 

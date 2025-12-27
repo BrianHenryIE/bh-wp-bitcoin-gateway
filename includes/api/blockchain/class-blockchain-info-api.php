@@ -15,6 +15,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain_API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Address_Balance;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\BlockchainInfo\BlockchainInfoApi;
+use BrianHenryIE\WP_Bitcoin_Gateway\BlockchainInfo\Model\Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use Exception;
 use Psr\Log\LoggerAwareInterface;
@@ -55,8 +56,16 @@ class Blockchain_Info_Api implements Blockchain_API_Interface, LoggerAwareInterf
 	 * @throws Exception
 	 */
 	public function get_received_by_address( string $btc_address, bool $confirmed ): Money {
-		$value = Money::of( $this->api->getReceivedByAddress( $btc_address, $confirmed ), 'BTC' );
-		return $value->dividedBy( pow( 10, 8 ) ); // Convert from Satoshis to BTC.
+		try {
+			$value = Money::of( $this->api->getReceivedByAddress( $btc_address, $confirmed ), 'BTC' );
+			return $value->dividedBy( pow( 10, 8 ) ); // Convert from Satoshis to BTC.
+		} catch ( Exception $e ) {
+			// TODO: Look at set_exception_handler()|set_error_handler() to try need this only once in the class.
+			if ( $e->getMessage() === 'Rate Limited' ) {
+				throw new Rate_Limit_Exception( null );
+			}
+			throw $e;
+		}
 	}
 
 	public function get_address_balance( string $btc_address, int $number_of_confirmations ): Address_Balance {
@@ -74,25 +83,16 @@ class Blockchain_Info_Api implements Blockchain_API_Interface, LoggerAwareInterf
 	/**
 	 * @param string $btc_address
 	 *
-	 * @return array<string, Transaction_Interface>
+	 * @return Transaction_Interface[]
 	 * @throws Exception
 	 */
 	public function get_transactions_received( string $btc_address ): array {
 		$raw_address = $this->api->getRawAddr( $btc_address );
 
-		$transactions = array_map(
-			fn( $blockchain_transaction ) => new Blockchain_Info_Api_Transaction( $blockchain_transaction ),
+		return array_map(
+			fn( Transaction $blockchain_transaction ) => new Blockchain_Info_Api_Transaction_Adapter( $blockchain_transaction ),
 			$raw_address->getTxs()
 		);
-
-		// Return the array keyed by id.
-		$keyed_transactions = array();
-		foreach ( $transactions as $transaction ) {
-			$txid                        = (string) $transaction->get_txid();
-			$keyed_transactions[ $txid ] = $transaction;
-		}
-
-		return $keyed_transactions;
 	}
 
 	/**

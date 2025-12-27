@@ -2,6 +2,11 @@
 /**
  * @see https://github.com/Blockstream/esplora/blob/master/API.md
  *
+ * {
+ * "error" : "Too Many Requests",
+ * "message" : "Blockstream Explorer API NOTICE: Your request rate exceeds the current limit. Starting July 15 2025, monthly unauthenticated usage will be capped at 500,000 requests/month and 700 requests/hour per IP. To maintain uninterrupted access, get your API key at: https://dashboard.blockstream.info"
+ * }
+ *
  * @package    brianhenryie/bh-wp-bitcoin-gateway
  */
 
@@ -18,6 +23,11 @@ use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 
 /**
+ * TODO: Complete the transaction in/out array shapes.
+ *
+ * @phpstan-type BlockStreamApiTransactionVInArray array{}
+ * @phpstan-type BlockStreamApiTransactionVOutArray array{}
+ * @phpstan-type BlockStreamApiTransactionArray array{txid:string, version:int, locktime:int, vin:BlockStreamApiTransactionVInArray, vout:BlockStreamApiTransactionVOutArray, size:int, weight:int, fee:int, status:array{confirmed:bool, block_height:int, block_hash:string, block_time:int}}
  * @phpstan-type Stats array{funded_txo_count:int, funded_txo_sum:int, spent_txo_count:int, spent_txo_sum:int, tx_count:int}
  */
 class Blockstream_Info_API implements Blockchain_API_Interface, LoggerAwareInterface {
@@ -113,6 +123,7 @@ class Blockstream_Info_API implements Blockchain_API_Interface, LoggerAwareInter
 	 * @return array<string, Transaction_Interface> Transactions keyed by txid.
 	 *
 	 * @throws JsonException
+	 * @throws Rate_Limit_Exception
 	 */
 	public function get_transactions_received( string $btc_address ): array {
 
@@ -125,10 +136,20 @@ class Blockstream_Info_API implements Blockchain_API_Interface, LoggerAwareInter
 		if ( is_wp_error( $request_response ) ) {
 			throw new Exception( $request_response->get_error_message() );
 		}
+		if ( 429 === $request_response['response']['code'] ) {
+			throw new Rate_Limit_Exception(
+				reset_time: null,
+				message: json_decode( $request_response['body'], true, 512, JSON_THROW_ON_ERROR )['message']
+			);
+		}
+
 		if ( 200 !== $request_response['response']['code'] ) {
 			throw new Exception( 'Unexpected response received.' );
 		}
 
+		/**
+		 * @var BlockStreamApiTransactionArray[] $blockstream_transactions
+		 */
 		$blockstream_transactions = json_decode( $request_response['body'], true, 512, JSON_THROW_ON_ERROR );
 
 		/**
@@ -139,7 +160,7 @@ class Blockstream_Info_API implements Blockchain_API_Interface, LoggerAwareInter
 		 * @var Transaction_Interface[] $transactions
 		 */
 		$transactions = array_map(
-			fn( array $blockstream_transaction ) => new BlockStream_Info_API_Transaction( $blockstream_transaction ),
+			fn( array $blockstream_transaction ) => new BlockStream_Info_API_Transaction_Adapter( $blockstream_transaction ),
 			$blockstream_transactions
 		);
 

@@ -7,8 +7,11 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Admin;
 
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet_Factory;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet_WP_Post_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet;
+use InvalidArgumentException;
 use WP_Post;
 use WP_Post_Type;
 use WP_Posts_List_Table;
@@ -64,6 +67,7 @@ class Wallets_List_Table extends WP_Posts_List_Table {
 	public function get_columns() {
 		$columns = parent::get_columns();
 
+		/** @var array<string,string> $new_columns */
 		$new_columns = array();
 		foreach ( $columns as $key => $column ) {
 
@@ -86,24 +90,13 @@ class Wallets_List_Table extends WP_Posts_List_Table {
 	}
 
 	/**
-	 * Cache each Bitcoin_Wallet object between calls to each `print_{$column}()`.
-	 *
-	 * @var array<int, Bitcoin_Wallet>
-	 */
-	protected array $wallets_cache = array();
-
-	/**
-	 * Fill or retrieve from the above cache of Wallet objects.
-	 *
 	 * @param WP_Post $post The post object for the current row.
 	 *
-	 * @throws \Exception When the post is not a `bh-bitcoin-wallet` post type.
+	 * @throws InvalidArgumentException When the post is not a `bh-bitcoin-wallet` post type.
 	 */
-	protected function get_cached_bitcoin_wallet_object( WP_Post $post ): Bitcoin_Wallet {
-		if ( ! isset( $this->wallets_cache[ $post->ID ] ) ) {
-			$this->wallets_cache[ $post->ID ] = new Bitcoin_Wallet( $post->ID );
-		}
-		return $this->wallets_cache[ $post->ID ];
+	protected function get_bitcoin_wallet_object( WP_Post $post ): Bitcoin_Wallet {
+		$bitcoin_wallet_factory = new Bitcoin_Wallet_Factory();
+		return $bitcoin_wallet_factory->get_by_wp_post( $post );
 	}
 
 	/**
@@ -117,9 +110,9 @@ class Wallets_List_Table extends WP_Posts_List_Table {
 	 * @param WP_Post $post The post this row is being rendered for.
 	 */
 	public function column_status( WP_Post $post ): void {
-		$bitcoin_wallet = $this->get_cached_bitcoin_wallet_object( $post );
+		$bitcoin_wallet = $this->get_bitcoin_wallet_object( $post );
 
-		echo esc_html( $bitcoin_wallet->get_status() );
+		echo esc_html( $bitcoin_wallet->get_status()->value );
 	}
 
 	/**
@@ -132,7 +125,7 @@ class Wallets_List_Table extends WP_Posts_List_Table {
 	 * @param WP_Post $post The post this row is being rendered for.
 	 */
 	public function column_balance( WP_Post $post ): void {
-		$bitcoin_wallet = $this->get_cached_bitcoin_wallet_object( $post );
+		$bitcoin_wallet = $this->get_bitcoin_wallet_object( $post );
 
 		echo esc_html( $bitcoin_wallet->get_balance() ?? 'unknown' );
 	}
@@ -152,7 +145,7 @@ class Wallets_List_Table extends WP_Posts_List_Table {
 	 */
 	public function edit_row_actions( array $actions, WP_Post $post ): array {
 
-		if ( Bitcoin_Wallet::POST_TYPE !== $post->post_type ) {
+		if ( Bitcoin_Wallet_WP_Post_Interface::POST_TYPE !== $post->post_type ) {
 			return $actions;
 		}
 

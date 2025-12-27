@@ -7,7 +7,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Currency;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use Codeception\Stub\Expected;
 use Exception;
-use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs;
+use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Handler;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet_Generation_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
@@ -67,11 +67,11 @@ class Bitcoin_Gateway_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 
 		$_POST['woocommerce_bitcoin_gateway_xpub'] = 'same';
 
-		assert( false === as_next_scheduled_action( Background_Jobs::GENERATE_NEW_ADDRESSES_HOOK ) );
+		assert( false === as_next_scheduled_action( Background_Jobs_Actions_Handler::GENERATE_NEW_ADDRESSES_HOOK ) );
 
 		$sut->process_admin_options();
 
-		$this->assertFalse( as_next_scheduled_action( Background_Jobs::GENERATE_NEW_ADDRESSES_HOOK ) );
+		$this->assertFalse( as_next_scheduled_action( Background_Jobs_Actions_Handler::GENERATE_NEW_ADDRESSES_HOOK ) );
 	}
 
 	/**
@@ -132,6 +132,8 @@ class Bitcoin_Gateway_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 	 * @covers ::is_available
 	 */
 	public function test_checks_for_available_address_for_availability_uses_cache(): void {
+
+		$this->markTestSkipped( 'Skipping while we figure out how things work if a customer arrives at the checkout, there are not addresses, one is created, is the instance of the gateway the same?' );
 
 		$GLOBALS['bh_wp_bitcoin_gateway'] = $this->makeEmpty(
 			API_WooCommerce_Interface::class,

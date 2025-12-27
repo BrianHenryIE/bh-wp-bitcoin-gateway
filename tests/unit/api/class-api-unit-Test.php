@@ -3,15 +3,20 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
-use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs;
+use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Handler;
+use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduler_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Repository;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet_Factory;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Status;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Transaction;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Transaction_Repository;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Currency;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
 use Codeception\Stub\Expected;
+use Psr\Log\LoggerInterface;
 
 /**
  * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\API\API
@@ -28,21 +33,106 @@ class API_Unit_Test extends \Codeception\Test\Unit {
 		\WP_Mock::tearDown();
 	}
 
+	protected function get_sut(
+		?Settings_Interface $settings = null,
+		?LoggerInterface $logger = null,
+		?Bitcoin_Wallet_Repository $bitcoin_wallet_repository = null,
+		?Bitcoin_Address_Repository $bitcoin_address_repository = null,
+		?Bitcoin_Transaction_Repository $bitcoin_transaction_repository = null,
+		?Blockchain_API_Interface $blockchain_api = null,
+		?Generate_Address_API_Interface $generate_address_api = null,
+		?Exchange_Rate_API_Interface $exchange_rate_api = null,
+		?Background_Jobs_Scheduler_Interface $background_jobs_scheduling = null,
+	): API {
+		$sut = new API(
+			settings: $settings ?? $this->makeEmpty( Settings_Interface::class ),
+			logger: $logger ?? new ColorLogger(),
+			bitcoin_wallet_repository: $bitcoin_wallet_repository ?? $this->make( Bitcoin_Wallet_Repository::class ),
+			bitcoin_address_repository: $bitcoin_address_repository ?? $this->make( Bitcoin_Address_Repository::class ),
+			bitcoin_transaction_repository: $bitcoin_transaction_repository ?? $this->make( Bitcoin_Transaction_Repository::class ),
+			blockchain_api: $blockchain_api ?? $this->makeEmpty( Blockchain_API_Interface::class ),
+			generate_address_api: $generate_address_api ?? $this->makeEmpty( Generate_Address_API_Interface::class ),
+			exchange_rate_api: $exchange_rate_api ?? $this->makeEmpty( Exchange_Rate_API_Interface::class ),
+			background_jobs_scheduler: $background_jobs_scheduling ?? $this->makeEmpty( Background_Jobs_Scheduler_Interface::class )
+		);
+		return $sut;
+	}
+
+	/**
+	 * @covers ::check_new_addresses_for_transactions
+	 * @covers ::check_addresses_for_transactions
+	 * @covers ::update_address_transactions
+	 */
+	public function test_check_new_addresses_for_transactions(): void {
+
+		$address = $this->makeEmpty(
+			Bitcoin_Address::class,
+			array(
+				'get_raw_address' => 'abcedf',
+			)
+		);
+
+		$addresses = array(
+			$address,
+		);
+
+		$updated_transaction = $this->makeEmpty(
+			Transaction_Interface::class,
+			array(
+				'get_block_time'   => new \DateTimeImmutable( 'now' ),
+				'get_block_height' => 123,
+			)
+		);
+
+		$updated_transactions = array(
+			$updated_transaction,
+		);
+
+		$blockchain_api_mock = $this->makeEmpty(
+			Blockchain_API_Interface::class,
+			array(
+				'get_transactions_received' => Expected::once( $updated_transactions ),
+			)
+		);
+
+		$bitcoin_address_repository_mock = $this->makeEmpty(
+			Bitcoin_Address_Repository::class,
+			array(
+				'get_unknown_bitcoin_addresses' => Expected::once( $addresses ),
+			)
+		);
+
+		$bitcoin_transaction_mock = $this->makeEmpty(
+			Bitcoin_Transaction::class,
+		);
+
+		$bitcoin_transaction_repository_mock = $this->makeEmpty(
+			Bitcoin_Transaction_Repository::class,
+			array(
+				'save_new' => Expected::once( $bitcoin_transaction_mock ),
+			)
+		);
+
+		$sut = $this->get_sut(
+			bitcoin_address_repository: $bitcoin_address_repository_mock,
+			bitcoin_transaction_repository: $bitcoin_transaction_repository_mock,
+			blockchain_api: $blockchain_api_mock,
+		);
+
+		$result = $sut->check_new_addresses_for_transactions();
+	}
+
 	/**
 	 * @covers ::update_address_transactions
 	 */
 	public function test_update_address_transactions(): void {
 
-		$logger   = new ColorLogger();
-		$settings = $this->makeEmpty( Settings_Interface::class );
-
-		$bitcoin_wallet_factory     = $this->makeEmpty( Bitcoin_Wallet_Factory::class );
-		$bitcoin_address_repository = $this->makeEmpty( Bitcoin_Address_Repository::class );
-
 		$transaction = self::makeEmpty(
 			Transaction_Interface::class,
 			array(
-				'get_txid' => 'transaction',
+				'get_txid'         => 'transaction_from_api',
+				'get_block_height' => 123,
+				'get_block_time'   => new \DateTimeImmutable( 'now' ),
 			)
 		);
 
@@ -58,25 +148,54 @@ class API_Unit_Test extends \Codeception\Test\Unit {
 			)
 		);
 
-		$generate_address_api = $this->makeEmpty( Generate_Address_API_Interface::class );
-		$exchange_rate_api    = $this->makeEmpty( Exchange_Rate_API_Interface::class );
+		$bitcoin_transaction = $this->makeEmpty(
+			Bitcoin_Transaction::class,
+			array(
+				'get_txid'    => 'transaction_from_wp_post',
+				'get_post_id' => 567,
+			)
+		);
 
-		$background_jobs = $this->makeEmpty( Background_Jobs::class );
+		$bitcoin_transaction_repository = self::makeEmpty(
+			Bitcoin_Transaction_Repository::class,
+			array(
+				'save_new' => Expected::once(
+					function (
+						Transaction_Interface $transaction,
+						Bitcoin_Address $address,
+					) use ( $bitcoin_transaction ): Bitcoin_Transaction {
+						return $bitcoin_transaction;
+					}
+				),
+			)
+		);
 
-		$sut = new API( $settings, $logger, $bitcoin_wallet_factory, $bitcoin_address_repository, $blockchain_api, $generate_address_api, $exchange_rate_api, $background_jobs );
+		$bitcoin_address_repository = self::makeEmpty(
+			Bitcoin_Address_Repository::class,
+			array(
+				'set_status' => Expected::once(),
+			)
+		);
+
+		$sut = $this->get_sut(
+			bitcoin_address_repository: $bitcoin_address_repository,
+			bitcoin_transaction_repository: $bitcoin_transaction_repository,
+			blockchain_api: $blockchain_api,
+		);
 
 		$address = self::make(
 			Bitcoin_Address::class,
 			array(
 				'get_raw_address'  => Expected::once( 'xpub' ),
 				'set_transactions' => Expected::once(),
+				'get_status'       => Expected::once( Bitcoin_Address_Status::UNKNOWN ),
 			)
 		);
 
 		$result       = $sut->update_address_transactions( $address );
 		$result_first = array_shift( $result );
 
-		$this->assertEquals( 'transaction', $result_first?->get_txid() );
+		$this->assertEquals( 'transaction_from_wp_post', $result_first?->get_txid() );
 	}
 
 	/**
@@ -84,16 +203,8 @@ class API_Unit_Test extends \Codeception\Test\Unit {
 	 */
 	public function test_get_exchange_rate_already_stored(): void {
 
-		$logger                     = new ColorLogger();
-		$settings                   = $this->makeEmpty( Settings_Interface::class );
-		$bitcoin_wallet_factory     = $this->makeEmpty( Bitcoin_Wallet_Factory::class );
-		$bitcoin_address_repository = $this->makeEmpty( Bitcoin_Address_Repository::class );
-		$blockchain_api             = $this->makeEmpty( Blockchain_API_Interface::class );
-		$generate_address_api       = $this->makeEmpty( Generate_Address_API_Interface::class );
-		$exchange_rate_api          = $this->makeEmpty( Exchange_Rate_API_Interface::class );
-		$background_jobs            = $this->makeEmpty( Background_Jobs::class );
+		$sut = $this->get_sut();
 
-		$sut = new API( $settings, $logger, $bitcoin_wallet_factory, $bitcoin_address_repository, $blockchain_api, $generate_address_api, $exchange_rate_api, $background_jobs );
 		\WP_Mock::userFunction(
 			'get_transient',
 			array(
@@ -120,13 +231,7 @@ class API_Unit_Test extends \Codeception\Test\Unit {
 	 */
 	public function test_get_exchange_rate_not_already_stored(): void {
 
-		$logger                     = new ColorLogger();
-		$settings                   = $this->makeEmpty( Settings_Interface::class );
-		$bitcoin_wallet_factory     = $this->makeEmpty( Bitcoin_Wallet_Factory::class );
-		$bitcoin_address_repository = $this->makeEmpty( Bitcoin_Address_Repository::class );
-		$blockchain_api             = $this->makeEmpty( Blockchain_API_Interface::class );
-		$generate_address           = $this->makeEmpty( Generate_Address_API_Interface::class );
-		$exchange_rate_api          = $this->makeEmpty(
+		$exchange_rate_api = $this->makeEmpty(
 			Exchange_Rate_API_Interface::class,
 			array(
 				'get_exchange_rate' => Expected::once(
@@ -138,9 +243,9 @@ class API_Unit_Test extends \Codeception\Test\Unit {
 			)
 		);
 
-		$background_jobs = $this->makeEmpty( Background_Jobs::class );
-
-		$sut = new API( $settings, $logger, $bitcoin_wallet_factory, $bitcoin_address_repository, $blockchain_api, $generate_address, $exchange_rate_api, $background_jobs );
+		$sut = $this->get_sut(
+			exchange_rate_api: $exchange_rate_api,
+		);
 
 		\WP_Mock::userFunction(
 			'get_transient',

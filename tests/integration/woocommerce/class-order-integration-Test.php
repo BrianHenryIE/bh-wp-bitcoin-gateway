@@ -2,7 +2,7 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
-use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs;
+use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Handler;
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Interface;
 use lucatume\WPBrowser\TestCase\WPTestCase;
 
@@ -16,6 +16,8 @@ class Order_Integration_Test extends WPTestCase {
 	 * passed without modifying anything.
 	 */
 	public function test_order_payment_cancels_scheduled_task(): void {
+
+		$this->markTestSkipped( 'We no longer check orders\' payments directly.' );
 
 		$order = new \WC_Order();
 		$order->set_payment_method( 'bitcoin_gateway' );
@@ -31,6 +33,8 @@ class Order_Integration_Test extends WPTestCase {
 
 		$order->payment_complete();
 		$order->save();
+
+		// TODO: mark address as used.... its xpub has been shared with a customer.
 
 		$this->assertFalse( as_has_scheduled_action( $hook, $args ) );
 	}

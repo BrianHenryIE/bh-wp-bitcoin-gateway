@@ -7,6 +7,8 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet_Factory;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Currency;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\UnknownCurrencyException;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
@@ -190,6 +192,11 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 		$is_processed = parent::process_admin_options();
 		$xpub_after   = $this->get_xpub();
 
+		$bitcoin_wallet_factory    = new Bitcoin_Wallet_Factory();
+		$bitcoin_wallet_repository = new Bitcoin_Wallet_Repository( $bitcoin_wallet_factory );
+
+		$wallet = $bitcoin_wallet_repository->get_by_xpub( $xpub_after );
+
 		if ( $xpub_before !== $xpub_after && ! empty( $xpub_after ) ) {
 			$gateway_name = $this->get_method_title() === $this->get_method_description() ? $this->get_method_title() : $this->get_method_title() . ' (' . $this->get_method_description() . ')';
 			$this->logger->info(
@@ -200,14 +207,14 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 					'xpub_after'  => $xpub_after,
 				)
 			);
-
-			if ( ! is_null( $this->api ) ) {
-				$generate_wallet_result = $this->api->generate_new_wallet( $xpub_after, $this->id );
-				$this->api->generate_new_addresses_for_wallet( $generate_wallet_result->get_wallet(), 2 );
-			}
-
-			// TODO: maybe mark the previous xpub's wallet as "inactive". (although it could be in use in another instance of the gateway).
 		}
+
+		if ( ! $wallet && ! is_null( $this->api ) ) {
+			$generate_wallet_result = $this->api->generate_new_wallet( $xpub_after, $this->id );
+			$this->api->generate_new_addresses_for_wallet( $generate_wallet_result->get_wallet(), 2 );
+		}
+
+		// TODO: maybe mark the previous xpub's wallet as "inactive". (although it could be in use in another instance of the gateway).
 
 		return $is_processed;
 	}
@@ -336,9 +343,9 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 	 */
 	public function is_available() {
 
-		if ( ! is_null( $this->is_available_cache ) ) {
-			return $this->is_available_cache;
-		}
+		// if ( ! is_null( $this->is_available_cache ) ) {
+		// return $this->is_available_cache;
+		// }
 
 		if ( is_null( $this->api ) ) {
 			$this->is_available_cache = false;
@@ -451,7 +458,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 	 *
 	 * @return string
 	 */
-	public function get_xpub(): string {
+	public function get_xpub(): ?string {
 		// TODO: validate xpub format.
 		return $this->settings['xpub'];
 	}
