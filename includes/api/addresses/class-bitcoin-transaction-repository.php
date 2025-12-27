@@ -219,7 +219,7 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 		}
 
 		$this->update(
-			object: $address,
+			model: $address,
 			query:new Bitcoin_Address_Query(
 				updated_transactions_post_ids: $updated_transactions_post_ids,
 			)
@@ -268,7 +268,7 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 
 				// TODO: How best to handle errors in the loop & return all the results.
 				$this->update(
-					object: $transaction,
+					model: $transaction,
 					query:  new Bitcoin_Transaction_Query(
 						updated_transaction_meta_bitcoin_address_post_ids: $updated_transaction_meta_bitcoin_address_post_ids
 					)

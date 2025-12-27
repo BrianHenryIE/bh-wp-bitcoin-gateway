@@ -127,8 +127,8 @@ class Bitcoin_Wallet_Repository extends WP_Post_Repository_Abstract {
 	public function set_highest_address_index( Bitcoin_Wallet $wallet, int $index ): void {
 
 		$this->update(
-			$wallet,
-			new Bitcoin_Wallet_Query(
+			model: $wallet,
+			query: new Bitcoin_Wallet_Query(
 				last_derived_address_index: $index,
 			)
 		);

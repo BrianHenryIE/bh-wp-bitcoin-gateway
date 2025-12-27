@@ -201,7 +201,7 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 	): void {
 
 		$this->update(
-			$address,
+			model: $address,
 			query: new Bitcoin_Address_Query(
 				status: $status,
 			)
@@ -224,7 +224,7 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 		Money $btc_total,
 	): void {
 		$this->update(
-			$address,
+			model: $address,
 			query: new Bitcoin_Address_Query(
 				status: Bitcoin_Address_Status::ASSIGNED,
 				associated_order_id: $order_id,
