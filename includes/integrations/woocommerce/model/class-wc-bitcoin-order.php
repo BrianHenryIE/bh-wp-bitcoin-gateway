@@ -133,7 +133,15 @@ class WC_Bitcoin_Order implements WC_Bitcoin_Order_Interface {
 	 * in the order does not match an existing gateway, => return null.
 	 */
 	public function get_gateway(): ?Bitcoin_Gateway {
-		return WC_Payment_Gateways::instance()->payment_gateways[ $this->wc_order->get_payment_method() ] ?? null;
+		if ( ! isset( WC_Payment_Gateways::instance()->payment_gateways[ $this->wc_order->get_payment_method() ] ) ) {
+			return null;
+		}
+
+		if ( ! ( WC_Payment_Gateways::instance()->payment_gateways[ $this->wc_order->get_payment_method() ] instanceof Bitcoin_Gateway ) ) {
+			return null;
+		}
+
+		return WC_Payment_Gateways::instance()->payment_gateways[ $this->wc_order->get_payment_method() ];
 	}
 
 	/**
