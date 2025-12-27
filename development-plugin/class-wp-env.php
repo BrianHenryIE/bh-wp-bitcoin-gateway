@@ -40,7 +40,7 @@ class WP_Env {
 	 */
 	protected function record_hostname(): void {
 
-		if ( defined( 'WP_CLI' ) && true === constant( 'WP_CLI' ) ) {
+		if ( defined( 'WP_CLI' ) && ( true === constant( 'WP_CLI' ) ) ) {
 			return;
 		}
 
@@ -59,13 +59,14 @@ class WP_Env {
 	 * @see get_site_url()
 	 * @see cron.php:957
 	 *
-	 * @param string $url The full URL.
-	 * @param string $path The URL path.
+	 * @param string $url   The full URL.
+	 * @param string $_path The URL path.
 	 *
-	 * @throws Exception
+	 * @throws Exception If an error occurs running `preg_replace()` on the URL.
 	 */
-	public function wpenv_fix_url( string $url, string $path = '' ): string {
+	public function wpenv_fix_url( string $url, string $_path = '' ): string {
 
+		// TODO: Check are we about to replace the URL first before doing this work.
 		$internal_url = $this->get_internal_url( $url );
 
 		if ( ( isset( $_SERVER['REQUEST_URI'] ) && 'wp-cron.php' === $_SERVER['REQUEST_URI'] ) || wp_doing_cron() ) {
