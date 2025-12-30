@@ -95,3 +95,12 @@ if($responseBody === 'Rate limited') {
 
 return $this->mapper->mapToClassFromString($responseBody, RawAddress::class);
 ```
+
+
+Bitcoin APIs / Cost / Rate Limits:
+
+* [SoChain](https://chain.so/api/) (Block.io) was free when first working on this, now paid 
+* BlockChain.info – "Please limit your queries to a maximum of 1 every 10 seconds"
+* BlockStream.info – "500,000 requests/month and 700 requests/hour per IP"
+* [BlockCypher.com](https://www.blockcypher.com/pricing.html) appears to have a free tier after registration
+* Docker: `bitcoind` + `electrumx` + `btc-rpc-explorer` for self-hosted queryable Bitcoin blockchain
