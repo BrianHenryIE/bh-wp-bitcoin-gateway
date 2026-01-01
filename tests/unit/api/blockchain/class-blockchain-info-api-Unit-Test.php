@@ -3,6 +3,7 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\BlockchainInfo\BlockchainInfoApi;
 use BrianHenryIE\WP_Bitcoin_Gateway\BlockchainInfo\Model\RawAddress;
 use Codeception\Stub\Expected;
@@ -343,9 +344,21 @@ class Blockchain_Info_API_Unit_Test extends \Codeception\Test\Unit {
 
 		$result = $sut->get_transactions_received( $address );
 
+		/** @var Transaction_Interface $first */
 		$first = array_shift( $result );
 
-		$this->assertEquals( '0.00002613', (string) $first?->get_value( $address )->getAmount() );
-		// $this->assertEquals( '0.00047971', (string) $first->get_value( $address )->getAmount() );
+		// From the dummy data: first transaction has value 2613 satoshis = 0.00002613 BTC
+		$expected_amount = '0.00002613';
+
+		// Get the value from vouts that match our address
+		$actual_amount = null;
+		foreach ( $first->get_v_out() as $vout ) {
+			if ( in_array( $address, $vout->scriptPubKey->addresses, true ) ) {
+				$actual_amount = (string) $vout->value->getAmount();
+				break;
+			}
+		}
+
+		$this->assertEquals( $expected_amount, $actual_amount );
 	}
 }
