@@ -83,17 +83,6 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 	}
 
 	/**
-	 * Set the background jobs scheduler.
-	 *
-	 * This is not in the constructor to avoid an infinite loop/recursive dependency.
-	 *
-	 * @param Background_Jobs $background_jobs The background jobs scheduler.
-	 */
-	public function set_background_jobs( Background_Jobs $background_jobs ): void {
-		$this->background_jobs = $background_jobs;
-	}
-
-	/**
 	 * Return the cached exchange rate, or fetch it.
 	 * Cache for one hour.
 	 *
