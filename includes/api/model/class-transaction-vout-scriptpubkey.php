@@ -13,8 +13,9 @@ readonly class Transaction_VOut_ScriptPubKey {
 	public function __construct(
 		public string $asm, // ": "OP_DUP OP_HASH160 89abcdefabbaabbaabbaabbaabbaabbaabbaabba OP_EQUALVERIFY OP_CHECKSIG",
 		public string $hex, // ": "76a91489abcdefabbaabbaabbaabbaabbaabbaabbaabba88ac",
-		public int $reqSigs, // ": 1,
+		public ?int $reqSigs, // ": 1,
 		public string $type, // ": "pubkeyhash",
+		// Should this be singular or an array?
 		public array $addresses, // ": [
 		// "1DYzJKHt8VzFYHRWxQv5FMjB8wmqvfmEu9"
 		// ]

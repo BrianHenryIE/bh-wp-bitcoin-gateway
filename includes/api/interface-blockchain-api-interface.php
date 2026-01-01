@@ -21,7 +21,7 @@ interface Blockchain_API_Interface {
 	 * @param string $btc_address The payment address to check.
 	 * @param bool   $confirmed
 	 */
-	public function get_received_by_address( string $btc_address, bool $confirmed ): Money;
+	// public function get_received_by_address( string $btc_address, bool $confirmed ): Money;
 
 	/**
 	 * The current balance of the address.
@@ -29,7 +29,7 @@ interface Blockchain_API_Interface {
 	 * @param string $btc_address The payment address to check.
 	 * @param int    $number_of_confirmations
 	 */
-	public function get_address_balance( string $btc_address, int $number_of_confirmations ): Address_Balance;
+	// public function get_address_balance( string $btc_address, int $number_of_confirmations ): Address_Balance;
 
 	/**
 	 * Query the Blockchain API for the transactions received at this address.
