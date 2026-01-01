@@ -32,7 +32,7 @@ class Addresses_Generation_Result {
 	public function __construct(
 		public Bitcoin_Wallet $wallet,
 		public array $new_addresses,
-		public int $address_index,
+		public ?int $address_index = null,
 	) {
 	}
 }
