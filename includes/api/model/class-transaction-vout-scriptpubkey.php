@@ -10,6 +10,9 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Model;
 
 readonly class Transaction_VOut_ScriptPubKey {
 
+	/**
+	 * @param string[] $addresses
+	 */
 	public function __construct(
 		public string $asm, // ": "OP_DUP OP_HASH160 89abcdefabbaabbaabbaabbaabbaabbaabbaabba OP_EQUALVERIFY OP_CHECKSIG",
 		public string $hex, // ": "76a91489abcdefabbaabbaabbaabbaabbaabbaabbaabba88ac",
