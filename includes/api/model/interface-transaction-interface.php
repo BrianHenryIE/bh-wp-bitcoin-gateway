@@ -23,11 +23,6 @@ interface Transaction_Interface {
 	public function get_version(): int;
 
 	/**
-	 * Used to filter transactions to only those between the time the order was placed, and paid.
-	 */
-	public function get_block_time(): DateTimeInterface;
-
-	/**
 	 * @return Transaction_VIn[]
 	 */
 	public function get_v_in(): array;
@@ -41,4 +36,9 @@ interface Transaction_Interface {
 	 * Returns null for mempool.
 	 */
 	public function get_block_height(): ?int;
+
+	/**
+	 * Used to filter transactions to only those between the time the order was placed, and paid.
+	 */
+	public function get_block_time(): DateTimeInterface;
 }

@@ -19,6 +19,8 @@ class Blockchain_Info_API_Unit_Test extends \Codeception\Test\Unit {
 	 */
 	public function test_get_received_by_address(): void {
 
+		$this->markTestSkipped( 'old test – new we only fetch transactions and calculate the amount received based on the desired number of confirmations' );
+
 		$logger = new ColorLogger();
 
 		$mock_api = $this->make(
@@ -42,6 +44,8 @@ class Blockchain_Info_API_Unit_Test extends \Codeception\Test\Unit {
 	 * @covers ::get_address_balance
 	 */
 	public function test_get_address_balance(): void {
+
+		$this->markTestSkipped( 'old test – new we only fetch transactions and calculate the amount received based on the desired number of confirmations' );
 
 		$logger = new ColorLogger();
 

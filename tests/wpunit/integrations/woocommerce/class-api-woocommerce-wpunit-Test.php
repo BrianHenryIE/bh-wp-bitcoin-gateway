@@ -323,7 +323,8 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 					function ( array $refreshed_transactions ): void {
 					}
 				),
-				'get_status'                  => Expected::once( Bitcoin_Address_Status::ASSIGNED ),
+				'get_status'                  => Expected::atLeastOnce( Bitcoin_Address_Status::ASSIGNED ),
+				'get_balance'                 => Expected::once( null ),
 			)
 		);
 

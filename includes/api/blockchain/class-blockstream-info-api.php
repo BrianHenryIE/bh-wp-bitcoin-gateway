@@ -13,9 +13,7 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain_API_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Address_Balance;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use Exception;
 use JsonException;
 use Psr\Log\LoggerAwareInterface;
@@ -36,85 +34,10 @@ class Blockstream_Info_API implements Blockchain_API_Interface, LoggerAwareInter
 	/**
 	 * Constructor
 	 */
-	public function __construct( LoggerInterface $logger ) {
-		$this->logger = $logger;
-	}
-
-	/**
-	 *
-	 * @return array{address:string, chain_stats:Stats, mempool_stats:Stats}
-	 */
-	protected function get_address_data( string $btc_address ): array {
-		$address_info_url = 'https://blockstream.info/api/address/' . $btc_address;
-
-		$this->logger->debug( 'URL: ' . $address_info_url );
-
-		$request_response = wp_remote_get( $address_info_url );
-
-		if ( is_wp_error( $request_response ) || 200 !== $request_response['response']['code'] ) {
-			throw new Exception();
-		}
-
-		$address_info = json_decode( $request_response['body'], true );
-
-		return $address_info;
-	}
-
-	/**
-	 * @see Blockchain_API_Interface::get_address_balance()
-	 *
-	 * @param string $btc_address
-	 * @param int    $number_of_confirmations
-	 *
-	 * @return Address_Balance
-	 * @throws Exception
-	 */
-	public function get_address_balance( string $btc_address, int $number_of_confirmations ): Address_Balance {
-
-		if ( 1 !== $number_of_confirmations ) {
-			error_log( __CLASS__ . ' ' . __FUNCTION__ . ' using 1 for number of confirmations.' );
-
-			// Maybe `number_of_confirmations` should be block_height and the client can decide is that enough.
-		}
-
-		$address_info = $this->get_address_data( $btc_address );
-
-		$confirmed_balance = Money::of( $address_info['chain_stats']['funded_txo_sum'], 'BTC' )
-									->minus(
-										Money::of( $address_info['chain_stats']['spent_txo_sum'], 'BTC' )
-									)->dividedBy( 100_000_000 );
-		$this->logger->debug( 'Confirmed balance: ' . number_format( $confirmed_balance->getAmount()->toFloat(), 8 ), array( 'address_info' => $address_info ) );
-
-		$unconfirmed_balance = Money::of( $address_info['mempool_stats']['funded_txo_sum'], 'BTC' )->minus( Money::of( $address_info['mempool_stats']['spent_txo_sum'], 'BTC' ) )->dividedBy( 100_000_000 );
-		$this->logger->debug( 'Unconfirmed balance: ' . number_format( $unconfirmed_balance->getAmount()->toFloat(), 8 ), array( 'address_info' => $address_info ) );
-
-		return new Blockchain_Address_Balance(
-			$number_of_confirmations,
-			$unconfirmed_balance,
-			$confirmed_balance,
-		);
-	}
-
-	/**
-	 * The total amount in BTC received at this address.
-	 *
-	 * @param string $btc_address The Bitcoin address.
-	 *
-	 * @throws Exception
-	 */
-	public function get_received_by_address( string $btc_address, bool $confirmed ): Money {
-
-		$address_info = $this->get_address_data( $btc_address );
-
-		if ( $confirmed ) {
-			$calc = Money::of( $address_info['chain_stats']['funded_txo_sum'], 'BTC' )
-						->dividedBy( 100_000_000 );
-		} else {
-			$calc = Money::of( $address_info['chain_stats']['funded_txo_sum'], 'BTC' )
-					->plus( Money::of( $address_info['mempool_stats']['funded_txo_sum'], 'BTC' ) )
-					->dividedBy( 100_000_000 );
-		}
-		return $calc;
+	public function __construct(
+		LoggerInterface $logger
+	) {
+		$this->setLogger( $logger );
 	}
 
 	/**
