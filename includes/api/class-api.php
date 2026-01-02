@@ -251,7 +251,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 
 		} while ( $generated_addresses_count < $generate_count );
 
-		$wallet->set_address_index( $address_index );
+		$this->bitcoin_wallet_repository->set_highest_address_index( $wallet, $address_index );
 
 		if ( $generate_count > 0 ) {
 			// Check the new addresses for transactions etc.

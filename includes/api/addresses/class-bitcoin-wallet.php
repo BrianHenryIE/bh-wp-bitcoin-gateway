@@ -64,19 +64,4 @@ class Bitcoin_Wallet implements Bitcoin_Wallet_Interface {
 	public function get_address_index(): ?int {
 		return $this->address_index;
 	}
-
-	/**
-	 * Save the index of the highest generated address.
-	 *
-	 * @param int $index Nth address generated index.
-	 */
-	public function set_address_index( int $index ): void {
-
-		$this->address_index = $index;
-
-		$bitcoin_wallet_factory    = new Bitcoin_Wallet_Factory();
-		$bitcoin_wallet_repository = new Bitcoin_Wallet_Repository( $bitcoin_wallet_factory );
-
-		$bitcoin_wallet_repository->set_highest_address_index( $this, $index );
-	}
 }
