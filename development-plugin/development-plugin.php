@@ -15,6 +15,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Development_Plugin\Admin\WooCommerce_Order;
 use BrianHenryIE\WP_Bitcoin_Gateway\Development_Plugin\Rest\Action_Scheduler;
 use BrianHenryIE\WP_Bitcoin_Gateway\Development_Plugin\Rest\Bitcoin;
 use BrianHenryIE\WP_Bitcoin_Gateway\Development_Plugin\Rest\Themes;
+use BrianHenryIE\WP_Bitcoin_Gateway\Development_Plugin\Ajax\WooCommerce_Customer;
 use BrianHenryIE\WP_Bitcoin_Gateway\Development_Plugin\Rest\WooCommerce_Settings;
 
 /**
@@ -49,4 +50,5 @@ new WooCommerce_Order()->register_hooks();
 new Action_Scheduler()->register_hooks();
 new Bitcoin()->register_hooks();
 new Themes()->register_hooks();
+new WooCommerce_Customer()->register_hooks();
 new WooCommerce_Settings()->register_hooks();
