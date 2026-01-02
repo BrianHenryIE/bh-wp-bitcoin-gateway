@@ -193,6 +193,7 @@
     "wpackagist-plugin/woo-nimiq-gateway": ">=3.4",
     "wpackagist-plugin/woocommerce": "*",
     "wpackagist-plugin/wordpress-importer": ">=0.8.1",
+    "wpackagist-plugin/wp-crontrol": "*",
     "wpackagist-plugin/wp-mail-logging": ">=1.10",
     "wpackagist-theme/storefront": "*",
     "wpackagist-theme/twentytwenty": "*",
