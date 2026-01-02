@@ -44,6 +44,12 @@ interface Background_Jobs_Actions_Interface {
 	const string CHECK_FOR_ASSIGNED_ADDRESSES_HOOK = 'bh_wp_bitcoin_gateway_check_for_new_addresses_needing_scheduling';
 
 	/**
+	 * @see self::CHECK_FOR_ASSIGNED_ADDRESSES_HOOK
+	 * @hooked action_scheduler_init
+	 */
+	public function ensure_schedule_repeating_actions(): void;
+
+	/**
 	 * @see self::GENERATE_NEW_ADDRESSES_HOOK
 	 */
 	public function generate_new_addresses(): void;
@@ -62,10 +68,4 @@ interface Background_Jobs_Actions_Interface {
 	 * @see self::CHECK_ASSIGNED_ADDRESSES_TRANSACTIONS_HOOK
 	 */
 	public function check_assigned_addresses_for_transactions(): void;
-
-	/**
-	 * @see self::CHECK_FOR_ASSIGNED_ADDRESSES_HOOK
-	 * @hooked action_scheduler_init
-	 */
-	public function ensure_schedule_repeating_actions(): void;
 }
