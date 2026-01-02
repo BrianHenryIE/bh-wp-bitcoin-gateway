@@ -66,8 +66,6 @@ class Bitcoin_Address_Factory {
 			} )(),
 		);
 
-		// $bitcoin_address->set_bitcoin_address_repository( $this->bitcoin_address_repository );
-
 		return $bitcoin_address;
 	}
 }

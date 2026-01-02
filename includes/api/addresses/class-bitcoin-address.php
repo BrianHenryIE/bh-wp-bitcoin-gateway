@@ -75,6 +75,7 @@ class Bitcoin_Address implements Bitcoin_Address_Interface {
 		protected ?int $derivation_path_sequence_number,
 		protected string $raw_address,
 		protected ?Money $target_amount,
+//		protected ?int $required_confirmations,
 		protected ?Money $balance,
 		protected ?int $order_id,
 	) {
