@@ -70,12 +70,11 @@ class WP_Env {
 	public function wpenv_fix_url( string $url, string $path = '' ): string {
 
 		switch ( true ) {
-			case $path === 'wp-cron.php':
+			case 'wp-cron.php' === $path:
 			case ( isset( $_SERVER['REQUEST_URI'] ) && 'wp-cron.php' === $_SERVER['REQUEST_URI'] ):
 			case wp_doing_cron():
 			case defined( 'WP_CLI' ) && ( true === constant( 'WP_CLI' ) ):
 			case ! isset( $_SERVER['HTTP_USER_AGENT'] ):
-				// TODO: Check are we about to replace the URL first before doing this work.
 				return $this->get_internal_url( $url );
 			default:
 				return $url;
@@ -94,7 +93,10 @@ class WP_Env {
 		if ( ! is_string( $internal_hostname ) ) {
 			$internal_hostname = 'localhost';
 		}
-		return preg_replace( '#(https?://)(localhost|127.0.0.1):\d{1,6}#', '$1' . $internal_hostname, $url )
-			?? ( fn() => throw new Exception( 'The `WP_Env::get_internal_url()` regex failed: ' . preg_last_error_msg() ) )();
+		return preg_replace(
+			pattern: '#(https?://)(localhost|127.0.0.1):\d{1,6}#',
+			replacement: '$1' . preg_quote( $internal_hostname, '#' ),
+			subject: $url
+		) ?? ( fn() => throw new Exception( 'The `WP_Env::get_internal_url()` regex failed: ' . preg_last_error_msg() ) )();
 	}
 }
