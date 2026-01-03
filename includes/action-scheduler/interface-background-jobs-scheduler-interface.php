@@ -13,11 +13,13 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler;
 
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet;
 use DateTimeInterface;
 
 interface Background_Jobs_Scheduler_Interface {
 	public function schedule_recurring_ensure_unused_addresses(): void;
-	public function schedule_single_ensure_unused_addresses(): void;
+
+	public function schedule_single_ensure_unused_addresses( Bitcoin_Wallet $wallet ): void;
 
 	public function schedule_single_check_assigned_addresses_for_transactions( ?DateTimeInterface $date_time = null ): void;
 

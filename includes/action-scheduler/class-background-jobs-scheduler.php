@@ -20,6 +20,7 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Repository;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet;
 use DateTimeImmutable;
 use DateTimeInterface;
 use Psr\Log\LoggerAwareTrait;
@@ -45,9 +46,11 @@ class Background_Jobs_Scheduler implements Background_Jobs_Scheduler_Interface {
 	}
 
 	/**
+	 * This is hooked to Action Scheduler's repeating action and schedules the ensure_unused_addresses job for
+	 * once/hour. To schedule it to run immediately, use the below method schedule_single...
 	 *
-	 *
-	 * @used-by Background_Jobs_Actions_Interface::ensure_schedule_repeating_actions()
+	 * @see self::schedule_single_ensure_unused_addresses()
+	 * @used-by Background_Jobs_Actions_Interface::add_action_scheduler_repeating_actions()
 	 */
 	public function schedule_recurring_ensure_unused_addresses(): void {
 		if ( as_has_scheduled_action( hook: Background_Jobs_Actions_Interface::RECURRING_ENSURE_UNUSED_ADDRESSES_HOOK ) ) {
@@ -72,23 +75,56 @@ class Background_Jobs_Scheduler implements Background_Jobs_Scheduler_Interface {
 		$this->logger->info( 'Background_Jobs schedule_ensure_unused_addresses hourly job added.' );
 	}
 
-	public function schedule_single_ensure_unused_addresses(): void {
-		if ( as_has_scheduled_action( Background_Jobs_Actions_Interface::SINGLE_ENSURE_UNUSED_ADDRESSES_HOOK )
-			&& ! doing_action( Background_Jobs_Actions_Interface::SINGLE_ENSURE_UNUSED_ADDRESSES_HOOK ) ) {
+	/**
+	 * Schedule and immediate background job to check/generate unused addresses for the wallet.
+	 *
+	 * When a new wallet is made, this is immediately called to schedule a job to ensure there is one payable address
+	 * ready. TODO: When an address is assigned, this is called to queue up the next one.
+	 *
+	 * Functions using `API::generate_new_addresses_for_wallet()` elsewhere can decide to synchronously call the API
+	 * to check are addresses unused, if that's the case, this would exit quickly anyway.
+	 *
+	 * @see Background_Jobs_Actions_Handler::single_ensure_unused_addresses()
+	 *
+	 * @used-by API::generate_new_addresses_for_wallet()
+	 *
+	 * @param Bitcoin_Wallet $wallet The wallet that may need payment addresses generated.
+	 */
+	public function schedule_single_ensure_unused_addresses( Bitcoin_Wallet $wallet ): void {
+		if ( as_has_scheduled_action(
+			hook: Background_Jobs_Actions_Interface::SINGLE_ENSURE_UNUSED_ADDRESSES_HOOK,
+			args: array(
+				'wallet_post_id' => $wallet->get_post_id(),
+			)
+		)
+		) {
+			// This will probably never happen, but in case this were called from a loop by mistake.
+			$this->logger->debug(
+				'Background_Jobs schedule_single_ensure_unused_addresses unexpectedly already scheduled for {wallet_id} {wallet_xpub}.',
+				array(
+					'wallet_id'   => $wallet->get_post_id(),
+					'wallet_xpub' => $wallet->get_xpub(),
+				)
+			);
 			return;
 		}
 
 		$date_time = new DateTimeImmutable( 'now' );
-		as_schedule_single_action(
+		$action_id = as_schedule_single_action(
 			timestamp: $date_time->getTimestamp(),
 			hook: Background_Jobs_Actions_Interface::SINGLE_ENSURE_UNUSED_ADDRESSES_HOOK,
+			args: array(
+				'wallet_post_id' => $wallet->get_post_id(),
+			)
 		);
 	}
 
 	/**
 	 * Schedule the next check for transactions for assigned addresses.
 	 *
-	 * @used-by Background_Jobs_Actions_Interface::ensure_schedule_repeating_actions()
+	 * @hooked
+	 *
+	 * @used-by Background_Jobs_Actions_Interface::add_action_scheduler_repeating_actions()
 	 * TODO: When a new order is placed, let's schedule a check (in ten minutes).
 	 *
 	 * @param ?DateTimeInterface $date_time In ten minutes for a regular check (time to generate a new block), or use the rate limit reset time.

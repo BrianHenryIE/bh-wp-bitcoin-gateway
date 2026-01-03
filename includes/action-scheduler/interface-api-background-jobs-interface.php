@@ -40,5 +40,30 @@ interface API_Background_Jobs_Interface {
 	 */
 	public function check_assigned_addresses_for_payment(): Check_Assigned_Addresses_For_Transactions_Result;
 
+	/**
+	 * Make sure each wallet has payment addresses generated and that they have no previous transactions.
+	 *
+	 * This is used hourly to check the next prepared addresses have also not been sent transactions (used) for any
+	 * reason outside WordPress.
+	 *
+	 * @see Background_Jobs_Actions_Handler::ensure_unused_addresses()
+	 * @see Background_Jobs_Scheduler::schedule_recurring_ensure_unused_addresses()
+	 *
+	 * TODO: change the return type to an object that communicates did we run into rate limiting or other handled exceptions.
+	 *
+	 * @param int $required_count How many unused addresses to make available. TODO This runs hourly and on checkout load and on place-order, so there should always be addresses available without slowing down customers before placing their order.
+	 *
+	 * @return array<string, Ensure_Unused_Addresses_Result> array<wallet_xpub: Ensure_Unused_Addresses_Result>
+	 */
 	public function ensure_unused_addresses( int $required_count = 2 ): array;
+
+	/**
+	 * Fetch the wallet's unused addresses from the db, check they still have no transactions, if they do, mark those
+	 * as used and generate new addresses until we find one without transactions.
+	 *
+	 * @param Bitcoin_Wallet $wallet
+	 * @param int $required_count
+	 * @return Ensure_Unused_Addresses_Result
+	 */
+	public function ensure_unused_addresses_for_wallet( Bitcoin_Wallet $wallet, int $required_count = 2 ): Ensure_Unused_Addresses_Result;
 }

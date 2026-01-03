@@ -88,9 +88,6 @@ class Background_Jobs_Scheduler_WPUnit_Test extends WPTestCase {
 		$logger->hasDebug( 'Background_Jobs schedule_ensure_unused_addresses failed.' );
 	}
 
-
-
-
 	/**
 	 * @covers ::schedule_generate_new_addresses
 	 */

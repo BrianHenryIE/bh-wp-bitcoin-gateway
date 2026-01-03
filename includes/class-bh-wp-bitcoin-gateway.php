@@ -288,8 +288,13 @@ class BH_WP_Bitcoin_Gateway {
 		/** @var Background_Jobs_Actions_Interface $background_jobs_actions_handler */
 		$background_jobs_actions_handler = $this->container->get( Background_Jobs_Actions_Interface::class );
 
-		add_action( 'action_scheduler_run_recurring_actions_schedule_hook', array( $background_jobs_actions_handler, 'ensure_schedule_repeating_actions' ) );
+		add_action( 'action_scheduler_run_recurring_actions_schedule_hook', array( $background_jobs_actions_handler, 'add_action_scheduler_repeating_actions' ) );
+
+		add_action( Background_Jobs_Actions_Interface::RECURRING_ENSURE_UNUSED_ADDRESSES_HOOK, array( $background_jobs_actions_handler, 'ensure_unused_addresses' ) );
+		add_action( Background_Jobs_Actions_Interface::SINGLE_ENSURE_UNUSED_ADDRESSES_HOOK, array( $background_jobs_actions_handler, 'single_ensure_unused_addresses' ) );
+
 		add_action( Background_Jobs_Actions_Interface::GENERATE_NEW_ADDRESSES_HOOK, array( $background_jobs_actions_handler, 'generate_new_addresses' ) );
+
 		add_action( Background_Jobs_Actions_Interface::CHECK_NEW_ADDRESSES_TRANSACTIONS_HOOK, array( $background_jobs_actions_handler, 'check_new_addresses_for_transactions' ) );
 		add_action( Background_Jobs_Actions_Interface::CHECK_ASSIGNED_ADDRESSES_TRANSACTIONS_HOOK, array( $background_jobs_actions_handler, 'check_assigned_addresses_for_transactions' ) );
 	}

@@ -241,11 +241,14 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 		$assumed_existing_unused_addresses = array();
 		/** @var array<int, array<Bitcoin_Address>> $actual_unused_addresses_by_wallet Wallet post id:Bitcoin_Address[] */
 		$actual_unused_addresses_by_wallet = array();
+		/** @var array<int, array<Bitcoin_Address>> $unexpectedly_used_addresses_by_wallet Wallet post id:Bitcoin_Address[] */
+		$unexpectedly_used_addresses_by_wallet = array();
 		/** @var array<int, array<Bitcoin_Address>> $new_addresses_by_wallet Wallet post id:Bitcoin_Address[] */
 		$new_addresses_by_wallet = array();
 		foreach ( $wallets as $wallet ) {
 			$assumed_existing_unused_addresses[ $wallet->get_post_id() ] = array();
 			$actual_unused_addresses_by_wallet[ $wallet->get_post_id() ] = array();
+			$unexpectedly_used_addresses_by_wallet[ $wallet->get_post_id() ] = array();
 			$new_addresses_by_wallet[ $wallet->get_post_id() ]           = array();
 		}
 
@@ -266,6 +269,9 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 			$address_transactions_result = $this->update_address_transactions( $address );
 			if ( empty( $address_transactions_result->address->get_tx_ids() ) ) {
 				$actual_unused_addresses_by_wallet[ $address_wallet_id ][] = $address;
+			} else {
+				$unexpectedly_used_addresses_by_wallet[ $address_wallet_id ][] = $address;
+				// TODO: log more.
 			}
 		}
 
@@ -307,6 +313,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 				wallet: $wallet,
 				assumed_existing_unused_addresses: $assumed_existing_unused_addresses[ $wallet->get_post_id() ],
 				actual_existing_unused_addresses: $actual_unused_addresses_by_wallet[ $wallet->get_post_id() ],
+				unexpectedly_used_addresses_by_wallet: $unexpectedly_used_addresses_by_wallet[ $wallet->get_post_id() ],
 				new_unused_addresses: $new_addresses_by_wallet[ $wallet->get_post_id() ],
 			);
 		}
@@ -367,7 +374,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 		/**
 		 * @see self::check_addresses_for_transactions()
 		 */
-		$this->background_jobs_scheduler->schedule_single_ensure_unused_addresses();
+		$this->background_jobs_scheduler->schedule_single_ensure_unused_addresses( $wallet );
 
 		// TODO: Should probably refresh wallet here... TODO: make sure to record any changes (previous address index etc) in the result object.
 

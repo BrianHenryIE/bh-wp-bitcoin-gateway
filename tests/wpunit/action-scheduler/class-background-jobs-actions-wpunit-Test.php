@@ -4,6 +4,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Repository;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain\Rate_Limit_Exception;
 use Codeception\Stub\Expected;
 use DateInterval;
@@ -16,28 +17,35 @@ use lucatume\WPBrowser\TestCase\WPTestCase;
 class Background_Jobs_Actions_WPUnit_Test extends WPTestCase {
 
 	/**
-	 * @covers ::ensure_schedule_repeating_actions
+	 * @covers ::add_action_scheduler_repeating_actions
 	 */
-	public function test_ensure_schedule_repeating_actions(): void {
+	public function test_add_action_scheduler_repeating_actions(): void {
 
 		$logger                     = new ColorLogger();
 		$api                        = $this->makeEmpty( API_Background_Jobs_Interface::class );
 		$bitcoin_address_repository = $this->makeEmpty( Bitcoin_Address_Repository::class );
+		$bitcoin_wallet_repository  = $this->makeEmpty( Bitcoin_Wallet_Repository::class );
 		$background_jobs_scheduler  = $this->makeEmpty(
 			Background_Jobs_Scheduler_Interface::class,
 			array(
-				'schedule_ensure_unused_addresses' => Expected::once(),
+				'schedule_recurring_ensure_unused_addresses' => Expected::once(),
 				'schedule_single_check_assigned_addresses_for_transactions' => Expected::once(),
 			)
 		);
 
 		/** @var Background_Jobs_Actions_Interface $sut */
-		$sut = new Background_Jobs_Actions_Handler( $api, $bitcoin_address_repository, $background_jobs_scheduler, $logger );
+		$sut = new Background_Jobs_Actions_Handler(
+			api: $api,
+			bitcoin_address_repository: $bitcoin_address_repository,
+			bitcoin_wallet_repository: $bitcoin_wallet_repository,
+			background_jobs_scheduler: $background_jobs_scheduler,
+			logger: $logger
+		);
 
 		/**
-		 * @see Background_Jobs_Actions_Handler::ensure_schedule_repeating_actions()
+		 * @see Background_Jobs_Actions_Handler::add_action_scheduler_repeating_actions()
 		 */
-		$sut->ensure_schedule_repeating_actions();
+		$sut->add_action_scheduler_repeating_actions();
 	}
 
 	/**
@@ -56,6 +64,7 @@ class Background_Jobs_Actions_WPUnit_Test extends WPTestCase {
 			)
 		);
 		$bitcoin_address_repository = $this->makeEmpty( Bitcoin_Address_Repository::class );
+		$bitcoin_wallet_repository  = $this->makeEmpty( Bitcoin_Wallet_Repository::class );
 		$background_jobs_scheduler  = $this->makeEmpty(
 			Background_Jobs_Scheduler_Interface::class,
 			array(
@@ -64,7 +73,13 @@ class Background_Jobs_Actions_WPUnit_Test extends WPTestCase {
 		);
 
 		/** @var Background_Jobs_Actions_Interface $sut */
-		$sut = new Background_Jobs_Actions_Handler( $api, $bitcoin_address_repository, $background_jobs_scheduler, $logger );
+		$sut = new Background_Jobs_Actions_Handler(
+			api: $api,
+			bitcoin_address_repository: $bitcoin_address_repository,
+			bitcoin_wallet_repository: $bitcoin_wallet_repository,
+			background_jobs_scheduler: $background_jobs_scheduler,
+			logger: $logger
+		);
 
 		/** @see Background_Jobs_Actions_Handler::check_new_addresses_for_transactions() */
 		$sut->check_new_addresses_for_transactions();
@@ -86,8 +101,8 @@ class Background_Jobs_Actions_WPUnit_Test extends WPTestCase {
 			)
 		);
 		$bitcoin_address_repository = $this->makeEmpty( Bitcoin_Address_Repository::class );
-
-		$background_jobs_scheduler = $this->makeEmpty(
+		$bitcoin_wallet_repository  = $this->makeEmpty( Bitcoin_Wallet_Repository::class );
+		$background_jobs_scheduler  = $this->makeEmpty(
 			Background_Jobs_Scheduler_Interface::class,
 			array(
 				'schedule_check_assigned_addresses_for_transactions' => Expected::once(),
@@ -96,7 +111,13 @@ class Background_Jobs_Actions_WPUnit_Test extends WPTestCase {
 		);
 
 		/** @var Background_Jobs_Actions_Interface $sut */
-		$sut = new Background_Jobs_Actions_Handler( $api, $bitcoin_address_repository, $background_jobs_scheduler, $logger );
+		$sut = new Background_Jobs_Actions_Handler(
+			api: $api,
+			bitcoin_address_repository: $bitcoin_address_repository,
+			bitcoin_wallet_repository: $bitcoin_wallet_repository,
+			background_jobs_scheduler: $background_jobs_scheduler,
+			logger: $logger
+		);
 
 		/** @see Background_Jobs_Actions_Handler::check_assigned_addresses_for_transactions() */
 		$sut->check_assigned_addresses_for_transactions();
