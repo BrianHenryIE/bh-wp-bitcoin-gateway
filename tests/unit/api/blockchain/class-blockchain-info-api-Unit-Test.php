@@ -15,7 +15,6 @@ use JsonMapper\JsonMapperFactory;
 class Blockchain_Info_API_Unit_Test extends \Codeception\Test\Unit {
 
 	/**
-	 * @covers ::get_received_by_address
 	 * @covers ::__construct
 	 */
 	public function test_get_received_by_address(): void {
@@ -42,7 +41,6 @@ class Blockchain_Info_API_Unit_Test extends \Codeception\Test\Unit {
 	}
 
 	/**
-	 * @covers ::get_address_balance
 	 */
 	public function test_get_address_balance(): void {
 

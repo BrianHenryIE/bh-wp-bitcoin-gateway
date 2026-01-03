@@ -10,7 +10,6 @@ use BrianHenryIE\ColorLogger\ColorLogger;
 class Blockstream_Info_API_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 
 	/**
-	 * @covers ::get_address_balance
 	 * @covers ::__construct
 	 */
 	public function test_get_balance(): void {
@@ -63,7 +62,6 @@ class Blockstream_Info_API_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTe
 	}
 
 	/**
-	 * @covers ::get_received_by_address
 	 */
 	public function test_get_received_by_address(): void {
 		$this->markTestSkipped( 'old test – new we only fetch transactions and elsewhere calculate the amount received based on the desired number of confirmations' );

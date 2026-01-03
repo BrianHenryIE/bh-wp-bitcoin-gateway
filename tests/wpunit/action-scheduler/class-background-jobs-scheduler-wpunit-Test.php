@@ -6,14 +6,13 @@ use ActionScheduler_Abstract_Schedule;
 use ActionScheduler_Action;
 use BrianHenryIE\ColorLogger\ColorLogger;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Repository;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain\Rate_Limit_Exception;
 use Codeception\Stub\Expected;
 use DateInterval;
 use DateTimeImmutable;
 use lucatume\WPBrowser\TestCase\WPTestCase;
 
 /**
- * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Handler
+ * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduler
  */
 class Background_Jobs_Scheduler_WPUnit_Test extends WPTestCase {
 
@@ -26,7 +25,7 @@ class Background_Jobs_Scheduler_WPUnit_Test extends WPTestCase {
 	}
 
 	/**
-	 * @covers ::schedule_ensure_unused_addresses
+	 * @covers ::schedule_recurring_ensure_unused_addresses
 	 */
 	public function test_schedule_ensure_unused_addresses(): void {
 		$logger                     = new ColorLogger();
@@ -45,7 +44,7 @@ class Background_Jobs_Scheduler_WPUnit_Test extends WPTestCase {
 	}
 
 	/**
-	 * @covers ::schedule_ensure_unused_addresses
+	 * @covers ::schedule_recurring_ensure_unused_addresses
 	 */
 	public function test_schedule_ensure_unused_addresses_already_scheduled(): void {
 		$logger                     = new ColorLogger();
@@ -69,7 +68,7 @@ class Background_Jobs_Scheduler_WPUnit_Test extends WPTestCase {
 	}
 
 	/**
-	 * @covers ::schedule_ensure_unused_addresses
+	 * @covers ::schedule_recurring_ensure_unused_addresses
 	 */
 	public function test_schedule_ensure_unused_addresses_failure(): void {
 		$logger                     = new ColorLogger();
@@ -188,8 +187,7 @@ class Background_Jobs_Scheduler_WPUnit_Test extends WPTestCase {
 	}
 
 	/**
-	 * @covers ::schedule_check_assigned_bitcoin_address_for_transactions
-	 * @covers ::schedule_check_assigned_addresses_for_transactions
+	 * @covers ::schedule_single_check_assigned_addresses_for_transactions
 	 */
 	public function test_schedule_check_newly_assigned_bitcoin_address_for_transactions(): void {
 

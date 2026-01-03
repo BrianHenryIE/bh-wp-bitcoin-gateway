@@ -14,8 +14,6 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 	/**
 	 * When using `update_post_meta()` the last modified time of the post does not change. This
 	 * is a test to see will it update if we use `update_post( array( 'meta_input' => array() )` instead.
-	 *
-	 * @covers ::set_order_id
 	 */
 	public function test_last_modified_time_is_updated(): void {
 
@@ -108,7 +106,6 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 	}
 
 	/**
-	 * @covers ::set_status
 	 */
 	public function test_set_status(): void {
 		$this->markTestIncomplete( 'should a Bitcoin_Address object have setters?' );
@@ -233,8 +230,6 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 	/**
 	 * Test the immediately invoked function which throws an exception does not run until the null coalesce operator
 	 * evaluates the left hand side.
-	 *
-	 * @covers ::refresh_wp_post
 	 */
 	public function test_refresh_address(): void {
 		$this->markTestIncomplete( 'should a Bitcoin_Address object have setters?' );
