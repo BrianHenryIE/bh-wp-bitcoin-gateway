@@ -211,7 +211,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 
 		if ( ! $wallet && ! is_null( $this->api ) ) {
 			$generate_wallet_result = $this->api->generate_new_wallet( $xpub_after, $this->id );
-			$this->api->generate_new_addresses_for_wallet( $generate_wallet_result->get_wallet(), 2 );
+			$this->api->ensure_unused_addresses_for_wallet( $generate_wallet_result->get_wallet(), 1 );
 		}
 
 		// TODO: maybe mark the previous xpub's wallet as "inactive". (although it could be in use in another instance of the gateway).
