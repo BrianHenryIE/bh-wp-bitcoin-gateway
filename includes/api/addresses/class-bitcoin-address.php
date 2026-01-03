@@ -16,6 +16,9 @@ use RuntimeException;
 use InvalidArgumentException;
 use WP_Post;
 
+/**
+ * TODO: Should we rename this to payment address?
+ */
 class Bitcoin_Address implements Bitcoin_Address_Interface {
 
 	// **
@@ -64,7 +67,7 @@ class Bitcoin_Address implements Bitcoin_Address_Interface {
 	/**
 	 * Constructor
 	 *
-	 * @param WP_Post $post The wp_post the Bitcoin address detail is stored as.
+	 * @param array<int,string>|null $tx_ids post_id:tx_id.
 	 *
 	 * @throws InvalidArgumentException When the supplied post_id is not a post of this type.
 	 */
@@ -72,13 +75,13 @@ class Bitcoin_Address implements Bitcoin_Address_Interface {
 		protected int $post_id,
 		protected int $wallet_parent_post_id,
 		protected string $raw_address,
-		protected ?int $derivation_path_sequence_number,
-		protected Bitcoin_Address_Status $status,
-		protected ?Money $target_amount,
+		protected ?int $derivation_path_sequence_number = null,
+		protected Bitcoin_Address_Status $status = Bitcoin_Address_Status::UNKNOWN,
+		protected ?Money $target_amount = null,
 		// protected ?int $required_confirmations,
-		protected ?int $order_id,
-		protected ?array $tx_ids,
-		protected ?Money $balance,
+		protected ?int $order_id = null,
+		protected ?array $tx_ids = null,
+		protected ?Money $balance = null,
 	) {
 	}
 
@@ -161,7 +164,7 @@ class Bitcoin_Address implements Bitcoin_Address_Interface {
 	}
 
 	/**
-	 * @return array<int, string> <post_id, tx_id> or null if it has never been checked.
+	 * @return null|array<int, string> <post_id, tx_id> or null if it has never been checked.
 	 */
 	public function get_tx_ids(): ?array {
 		return $this->tx_ids;

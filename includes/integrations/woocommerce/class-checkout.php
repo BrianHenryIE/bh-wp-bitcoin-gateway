@@ -65,15 +65,7 @@ class Checkout implements LoggerAwareInterface {
 				continue;
 			}
 
-			$unused_addresses = $this->bitcoin_address_repository->get_addresses( $wallet, Bitcoin_Address_Status::UNUSED );
-
-			if ( count( $unused_addresses ) > 0 ) {
-				continue;
-			}
-
-			$result = $this->api->generate_new_addresses_for_wallet( $wallet, 1 );
-
-			// TODO Start background job to generate 10.
+			$result = $this->api->ensure_unused_addresses_for_wallet( $wallet, 1 );
 		}
 	}
 }

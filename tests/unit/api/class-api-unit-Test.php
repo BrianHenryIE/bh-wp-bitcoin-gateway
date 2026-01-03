@@ -189,11 +189,15 @@ class API_Unit_Test extends \Codeception\Test\Unit {
 				'get_raw_address'  => Expected::once( 'xpub' ),
 				'set_transactions' => Expected::once(),
 				'get_status'       => Expected::once( Bitcoin_Address_Status::UNKNOWN ),
+				'get_tx_ids'       => Expected::once( array() ),
 			)
 		);
 
-		$result       = $sut->update_address_transactions( $address );
-		$result_first = array_shift( $result );
+		$result           = $sut->update_address_transactions( $address );
+		$new_transactions = $result->get_new_transactions();
+		$result_first     = array_shift(
+			$new_transactions
+		);
 
 		$this->assertEquals( 'transaction_from_wp_post', $result_first?->get_txid() );
 	}

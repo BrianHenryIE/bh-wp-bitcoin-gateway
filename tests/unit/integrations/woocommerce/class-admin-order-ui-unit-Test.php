@@ -5,6 +5,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 use BrianHenryIE\ColorLogger\ColorLogger;
 use Codeception\Stub\Expected;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
+use WP_Mock;
 
 /**
  * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Admin_Order_UI
@@ -13,14 +14,15 @@ class Admin_Order_UI_Unit_Test extends \Codeception\Test\Unit {
 
 	protected function setUp(): void {
 		parent::setUp();
-		\WP_Mock::setUp();
+		WP_Mock::setUp();
+
+		WP_Mock::passthruFunction( 'absint' );
 	}
 
 	protected function tearDown(): void {
 		parent::tearDown();
-		\WP_Mock::tearDown();
+		WP_Mock::tearDown();
 	}
-
 
 	/**
 	 * @covers ::register_address_transactions_meta_box
@@ -39,10 +41,11 @@ class Admin_Order_UI_Unit_Test extends \Codeception\Test\Unit {
 		$order_post->ID = 123;
 
 		$GLOBALS['post'] = $order_post;
+		$_GET['post']    = $order_post->ID;
 
 		$sut = new Admin_Order_UI( $api, $logger );
 
-		\WP_Mock::userFunction(
+		WP_Mock::userFunction(
 			'add_meta_box',
 			array(
 				'times' => 1,
@@ -77,10 +80,11 @@ class Admin_Order_UI_Unit_Test extends \Codeception\Test\Unit {
 		$order_post->ID = 123;
 
 		$GLOBALS['post'] = $order_post;
+		$_GET['post']    = $order_post->ID;
 
 		$sut = new Admin_Order_UI( $api, $logger );
 
-		\WP_Mock::userFunction(
+		WP_Mock::userFunction(
 			'add_meta_box',
 			array(
 				'times' => 0,

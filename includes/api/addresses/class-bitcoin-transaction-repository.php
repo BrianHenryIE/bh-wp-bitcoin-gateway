@@ -75,7 +75,7 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 	 * @see Addresses_List_Table::column_transactions_count() When displaying all addresses.
 	 * @used-by API::get_saved_transactions() When displaying all addresses.
 	 *
-	 * @return ?Bitcoin_Transaction[] Where null suggests there was nothing saved before, and an empty array suggests it has been checked but no transactions had been seen.
+	 * @return null|array<int, Bitcoin_Transaction> Post_id:transaction object; where null suggests there was nothing saved before, and an empty array suggests it has been checked but no transactions had been seen.
 	 * @throws Exception
 	 */
 	public function get_transactions_for_address(
@@ -87,10 +87,12 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 			return null;
 		}
 
-		return array_map(
-			fn( $address_post_id ) => $this->get_by_post_id( $address_post_id ),
-			$transaction_post_ids
-		);
+		$transaction_by_post_ids = array();
+		foreach ( $transaction_post_ids as $transaction_post_id ) {
+			$transaction_by_post_ids[ $transaction_post_id ] = $this->get_by_post_id( $transaction_post_id );
+		}
+
+		return $transaction_by_post_ids;
 	}
 
 	/**

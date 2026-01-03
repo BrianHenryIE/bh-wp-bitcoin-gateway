@@ -116,9 +116,12 @@ class WC_Bitcoin_Order implements WC_Bitcoin_Order_Interface {
 	 * Null when never changed
 	 */
 	public function get_last_checked_time(): ?DateTimeInterface {
+		if ( is_null( $this->address->get_tx_ids() ) ) {
+			return null;
+		}
+		/** @var DateTimeInterface|mixed $last_checked_time */
 		$last_checked_time = $this->wc_order->get_meta( Order::LAST_CHECKED_META_KEY );
-		$last_checked_time = empty( $last_checked_time ) ? null : $last_checked_time;
-		return $last_checked_time;
+		return $last_checked_time instanceof DateTimeInterface ? $last_checked_time : null;
 	}
 
 	public function set_last_checked_time( DateTimeInterface $last_checked_time ): void {
