@@ -63,6 +63,9 @@ class Bitcoin_Wallet_Repository extends WP_Post_Repository_Abstract {
 		return $this->bitcoin_wallet_factory->get_by_wp_post_id( $post_id );
 	}
 
+	/**
+	 * @return Bitcoin_Wallet[]
+	 */
 	public function get_all( $status = Bitcoin_Wallet_Status::ALL ): array {
 		$args = new Bitcoin_Wallet_Query(
 			status: $status,
