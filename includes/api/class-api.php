@@ -246,10 +246,10 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 		/** @var array<int, array<Bitcoin_Address>> $new_addresses_by_wallet Wallet post id:Bitcoin_Address[] */
 		$new_addresses_by_wallet = array();
 		foreach ( $wallets as $wallet ) {
-			$assumed_existing_unused_addresses[ $wallet->get_post_id() ] = array();
-			$actual_unused_addresses_by_wallet[ $wallet->get_post_id() ] = array();
+			$assumed_existing_unused_addresses[ $wallet->get_post_id() ]     = array();
+			$actual_unused_addresses_by_wallet[ $wallet->get_post_id() ]     = array();
 			$unexpectedly_used_addresses_by_wallet[ $wallet->get_post_id() ] = array();
-			$new_addresses_by_wallet[ $wallet->get_post_id() ]           = array();
+			$new_addresses_by_wallet[ $wallet->get_post_id() ]               = array();
 		}
 
 		// Sort by last updated (checked) and get two per wallet.

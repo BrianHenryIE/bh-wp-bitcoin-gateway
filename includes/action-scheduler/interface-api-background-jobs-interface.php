@@ -62,7 +62,7 @@ interface API_Background_Jobs_Interface {
 	 * as used and generate new addresses until we find one without transactions.
 	 *
 	 * @param Bitcoin_Wallet $wallet
-	 * @param int $required_count
+	 * @param int            $required_count
 	 * @return Ensure_Unused_Addresses_Result
 	 */
 	public function ensure_unused_addresses_for_wallet( Bitcoin_Wallet $wallet, int $required_count = 2 ): Ensure_Unused_Addresses_Result;
