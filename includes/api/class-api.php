@@ -45,6 +45,8 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Bitcoin_Gateway;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Checkout;
 use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
 use DateInterval;
 use DateTimeImmutable;
@@ -163,8 +165,6 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 
 		$this->ensure_unused_addresses_for_wallet( $wallet );
 
-		// get_fresh_addresses()
-
 		$generated_addresses = array();
 
 		$fresh_addresses = $this->bitcoin_address_repository->get_addresses(
@@ -219,40 +219,61 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 	}
 
 	/**
+	 * Check that there are two addresses generated and unused for every wallet (or specific wallet/number).
+	 *
+	 * Payment addresses may be used outside WordPress and if we were to reuse those addresses, confirming the payment
+	 * can't be done confidently. (TODO: still only consider transactions made after the address is assigned to an order).
+	 *
 	 * @used-by Background_Jobs_Actions_Interface::ensure_unused_addresses()
 	 *
+	 * @param int              $required_count The number of addresses to be sure have not been used yet. There is no real point checking more than 2, especially if using free APIs with low rate limits.
+	 * @param Bitcoin_Wallet[] $wallets The Bitcoin Wallets to check. When on a recurring schedule, check all; when at checkout using a specific wallet, only check that one.
+	 *
 	 * @return array<string, Ensure_Unused_Addresses_Result> array<wallet_xpub: Ensure_Unused_Addresses_Result>
+	 *
+	 * @throws Rate_Limit_Exception TODO: I think this should be caught before here, the job rescheduled and that fact recorded in function response (Ensure_Unused_Addresses_Result probably isn't enough, so).
 	 */
 	public function ensure_unused_addresses( int $required_count = 2, array $wallets = array() ): array {
-		// $this->bitcoin_wallet_repository->get_all(Bitcoin_Wallet_Status::ACTIVE);
+		// TODO: write a test to see is wallet status being used correctly, then add filter: `Bitcoin_Wallet_Status::ACTIVE`.
 		$wallets = ! empty( $wallets ) ? $wallets : $this->bitcoin_wallet_repository->get_all();
 
-		/** @var array<string, Ensure_Unused_Addresses_Result> $result_by_wallet */
-		$result_by_wallet = array();
-
-		$unused_addresses_by_wallet = array();
+		/** @var array<int, array<Bitcoin_Address>> $assumed_existing_unused_addresses Wallet post id:Bitcoin_Address[] */
+		$assumed_existing_unused_addresses = array();
+		/** @var array<int, array<Bitcoin_Address>> $actual_unused_addresses_by_wallet Wallet post id:Bitcoin_Address[] */
+		$actual_unused_addresses_by_wallet = array();
+		/** @var array<int, array<Bitcoin_Address>> $new_addresses_by_wallet Wallet post id:Bitcoin_Address[] */
+		$new_addresses_by_wallet = array();
 		foreach ( $wallets as $wallet ) {
-			$unused_addresses_by_wallet[ $wallet->get_post_id() ] = array();
-			$result_by_wallet[ $wallet->get_xpub() ]              = array();
+			$assumed_existing_unused_addresses[ $wallet->get_post_id() ] = array();
+			$actual_unused_addresses_by_wallet[ $wallet->get_post_id() ] = array();
+			$new_addresses_by_wallet[ $wallet->get_post_id() ]           = array();
 		}
 
 		// Sort by last updated (checked) and get two per wallet.
-		// TODO: use modified time and assume any that were checked in the past ten minutes are still valid (since no new block has been completed)
+		// TODO: check the modified time and assume any that were checked in the past ten minutes are still valid (since no new block has been completed since).
 		$unused_addresses = $this->bitcoin_address_repository->get_unused_bitcoin_addresses();
+
 		foreach ( $unused_addresses as $address ) {
 			$address_wallet_id = $address->get_wallet_parent_post_id();
-			if ( count( $unused_addresses_by_wallet[ $address_wallet_id ] ) >= $required_count ) {
+			if ( count( $actual_unused_addresses_by_wallet[ $address_wallet_id ] ) >= $required_count ) {
 				continue;
 			}
+
+			// TODO: Should we index by anything?
+			$assumed_existing_unused_addresses[ $address_wallet_id ][] = $address;
 
 			// TODO: handle rate limits.
 			$address_transactions_result = $this->update_address_transactions( $address );
 			if ( empty( $address_transactions_result->address->get_tx_ids() ) ) {
-				$unused_addresses_by_wallet[ $address_wallet_id ] = $address;
+				$actual_unused_addresses_by_wallet[ $address_wallet_id ][] = $address;
 			}
 		}
 
-		$all_wallets_have_enough_addresses = function ( array $unused_addresses_by_wallet, int $required_count ): bool {
+		/**
+		 * @param array<int, array<Bitcoin_Address>> $unused_addresses_by_wallet
+		 * @param int $required_count
+		 */
+		$all_wallets_have_enough_addresses_fn = function ( array $unused_addresses_by_wallet, int $required_count ): bool {
 			return array_reduce(
 				$unused_addresses_by_wallet,
 				function ( bool $carry, array $addresses ) use ( $required_count ) {
@@ -264,22 +285,43 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 
 		// This could loop hundreds of time, e.g. you add a wallet that has been in use elsewhere and it has
 		// to check each used address until it finds an unused one.
-		while ( ! $all_wallets_have_enough_addresses( $unused_addresses_by_wallet, $required_count ) ) {
+		while ( ! $all_wallets_have_enough_addresses_fn( $actual_unused_addresses_by_wallet, $required_count ) ) {
 			foreach ( $wallets as $wallet ) {
-				if ( count( $unused_addresses_by_wallet[ $wallet->get_post_id() ] ) < $required_count ) {
+				if ( count( $actual_unused_addresses_by_wallet[ $wallet->get_post_id() ] ) < $required_count ) {
 					$address_generation_result   = $this->generate_new_addresses_for_wallet( $wallet, 1 );
 					$new_address                 = array_first( $address_generation_result->new_addresses );
 					$address_transactions_result = $this->update_address_transactions( $new_address );
 					if ( empty( $address_transactions_result->address->get_tx_ids() ) ) {
-						$unused_addresses_by_wallet[ $wallet->get_post_id() ][] = $new_address;
+						$actual_unused_addresses_by_wallet[ $wallet->get_post_id() ][] = $new_address;
+						$new_addresses_by_wallet[ $wallet->get_post_id() ][]           = $new_address;
 					}
 				}
 			}
 		}
 
+		/** @var array<string, Ensure_Unused_Addresses_Result> $result_by_wallet */
+		$result_by_wallet = array();
+
+		foreach ( $wallets as $wallet ) {
+			$result_by_wallet[ $wallet->get_xpub() ] = new Ensure_Unused_Addresses_Result(
+				wallet: $wallet,
+				assumed_existing_unused_addresses: $assumed_existing_unused_addresses[ $wallet->get_post_id() ],
+				actual_existing_unused_addresses: $actual_unused_addresses_by_wallet[ $wallet->get_post_id() ],
+				new_unused_addresses: $new_addresses_by_wallet[ $wallet->get_post_id() ],
+			);
+		}
+
 		return $result_by_wallet;
 	}
 
+	/**
+	 *
+	 * @used-by Checkout::ensure_one_address_for_payment()
+	 * @see Bitcoin_Gateway::process_payment()
+	 *
+	 * @param Bitcoin_Wallet $wallet
+	 * @param int            $required_count
+	 */
 	public function ensure_unused_addresses_for_wallet( Bitcoin_Wallet $wallet, int $required_count = 2 ): Ensure_Unused_Addresses_Result {
 		return $this->ensure_unused_addresses( $required_count, array( $wallet ) )[ $wallet->get_xpub() ];
 	}
@@ -294,6 +336,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 
 		$address_index = $wallet->get_address_index();
 
+		/** @var non-empty-array<Bitcoin_Address> $generated_addresses */
 		$generated_addresses       = array();
 		$generated_addresses_count = 0;
 
@@ -325,6 +368,8 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 		 * @see self::check_addresses_for_transactions()
 		 */
 		$this->background_jobs_scheduler->schedule_single_ensure_unused_addresses();
+
+		// TODO: Should probably refresh wallet here... TODO: make sure to record any changes (previous address index etc) in the result object.
 
 		return new Addresses_Generation_Result(
 			wallet: $wallet,
@@ -405,64 +450,60 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 	 *
 	 * @param Bitcoin_Address $address The address object to query.
 	 *
-	 * @return array<string, Transaction_Interface|Bitcoin_Transaction>
-	 *
 	 * @throws Rate_Limit_Exception
 	 */
 	public function update_address_transactions( Bitcoin_Address $address ): Update_Address_Transactions_Result {
-
-		// TODO: sort by last updated
-
+		// TODO: sort by last updated.
 		// TODO: retry on rate limit.
-		/** @var Bitcoin_Transaction[] $transactions */
-		$transactions = array();
-		try {
-			$transactions_by_post_ids = array();
-			$updated_transactions     = $this->blockchain_api->get_transactions_received( btc_address: $address->get_raw_address() );
-			foreach ( $updated_transactions as $transaction ) {
-				$saved_transaction = $this->bitcoin_transaction_repository->save_new(
-					$transaction,
-					$address
-				);
-				$transactions[]    = $saved_transaction;
-				$transactions_by_post_ids[ $saved_transaction->get_post_id() ] = $saved_transaction->get_txid();
-			}
-			/**
-			 * Save an array of post_id:tx_id to the address object for quick reference, e.g. before/after checks.
-			 */
-			$this->bitcoin_transaction_repository->associate_transactions_post_ids_to_address( $transactions_by_post_ids, $address );
 
-			if ( $address->get_status() === Bitcoin_Address_Status::UNKNOWN ) {
-				$this->bitcoin_address_repository->set_status(
-					$address,
-					status: 0 === count( $updated_transactions ) ? Bitcoin_Address_Status::UNUSED : Bitcoin_Address_Status::USED
-				);
-			}
+		/** @var array<int, Bitcoin_Transaction> $transactions_by_post_ids */
+		$transactions_by_post_ids = array();
 
-			// TODO: run a check on the address to see has the amount been paid, then  update the address status/state.
+		/** @var array<int, string> $tx_ids_by_post_ids */
+		$tx_ids_by_post_ids = array();
 
-			// TODO: do_action on changes for logging.
+		$updated_transactions = $this->blockchain_api->get_transactions_received( btc_address: $address->get_raw_address() );
 
-			// TODO: Check are any previous transactions no longer present!!! (unlikely?)
-
-			return new Update_Address_Transactions_Result(
-				address: $this->bitcoin_address_repository->get_by_post_id( $address->get_post_id() ),
-				known_tx_ids_before: $address->get_tx_ids(),
-				new_transactions: $transactions,
+		foreach ( $updated_transactions as $transaction ) {
+			$saved_transaction                                       = $this->bitcoin_transaction_repository->save_new(
+				$transaction,
+				$address
 			);
-		} catch ( Rate_Limit_Exception $_exception ) {
-			return $this->bitcoin_transaction_repository->get_transactions_for_address( $address ) ?? array();
-		} catch ( Exception $_exception ) {
-			// E.g. API is offline.
-			// TODO: log, rate limit, notify.
-			// TODO: is empty array ok here?
-			return $this->bitcoin_transaction_repository->get_transactions_for_address( $address ) ?? array();
+			$tx_ids_by_post_ids[ $saved_transaction->get_post_id() ] = $saved_transaction->get_txid();
+			$transactions_by_post_ids[ $saved_transaction->get_post_id() ] = $saved_transaction;
 		}
+
+		/**
+		 * Save an array of post_id:tx_id to the address object for quick reference, e.g. before/after checks.
+		 */
+		$this->bitcoin_transaction_repository->associate_transactions_post_ids_to_address( $tx_ids_by_post_ids, $address );
+		// TODO: refresh. make sure to record changes for the result object.
+		// $address = $this->bitcoin_address_repository->refresh($address);
+
+		if ( $address->get_status() === Bitcoin_Address_Status::UNKNOWN ) {
+			$this->bitcoin_address_repository->set_status(
+				$address,
+				status: ( 0 === count( $updated_transactions ) ) ? Bitcoin_Address_Status::UNUSED : Bitcoin_Address_Status::USED
+			);
+		}
+
+		// TODO: run a check on the address to see has the amount been paid, then  update the address status/state.
+
+		// TODO: do_action on changes for logging.
+
+		// TODO: Check are any previous transactions no longer present!!! (unlikely?).
+
+		return new Update_Address_Transactions_Result(
+			address: $this->bitcoin_address_repository->refresh( $address ),
+			known_tx_ids_before: $address->get_tx_ids(),
+			all_transactions: $transactions_by_post_ids,
+		);
+
+		// Throws when e.g. API is offline.
+		// TODO: log, rate limit, notify.
 	}
 
 	/**
-	 * TODO: The return value should be a structured summary that can be used in a log message.
-	 *
 	 * @see Background_Jobs_Actions_Interface::check_assigned_addresses_for_transactions()
 	 * @used-by Background_Jobs_Actions_Handler::check_assigned_addresses_for_transactions()
 	 */
@@ -483,7 +524,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 			raw_address: $bitcoin_address->get_raw_address(),
 			blockchain_height: 123,
 			required_confirmations: 3,
-			transactions: $updated_transactions
+			transactions: $updated_transactions->all_transactions
 		);
 
 		$target_amount = $bitcoin_address->get_target_amount();
@@ -567,6 +608,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 		$value_including_fee = array_reduce(
 			$transaction->get_v_out(),
 			function ( Money $carry, Transaction_VOut $out ) use ( $to_address ) {
+				// phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
 				if ( in_array( $to_address, $out->scriptPubKey->addresses, true ) ) {
 					return $carry->plus( $out->value );
 				}
