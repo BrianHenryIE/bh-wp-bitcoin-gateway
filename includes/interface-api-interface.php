@@ -94,8 +94,6 @@ interface API_Interface {
 	 * @used-by CLI::check_transactions()
 	 *
 	 * @param Bitcoin_Address $address Address object for existing saved address (i.e. this doesn't work for arbitrary addresses).
-	 *
-	 * @return array{address:Bitcoin_Address, transactions:array<string, Transaction_Interface>, updated:bool, updates:array{new_transactions:array<string, array<Transaction_Interface>>, new_confirmations:array<string, array<Transaction_Interface>>}, previous_transactions:array<string, array<Transaction_Interface>>|null}
 	 */
 	public function update_address_transactions( Bitcoin_Address $address ): Update_Address_Transactions_Result;
 

@@ -11,6 +11,11 @@ use BrianHenryIE\WP_Bitcoin_Gateway\BtcRpcExplorer\Model\TXSummary;
 use BrianHenryIE\WP_Bitcoin_Gateway\BtcRpcExplorer\Model\VOut;
 use DateTimeInterface;
 
+/**
+ * Adapter that accepts a `BtcRpcExplorer\Model\TXSummary` and provides `API\Model\Transaction_Interface`.
+ *
+ * phpcs:disable WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
+ */
 class Btc_Rpc_Explorer_Api_Transaction_Adapter implements Transaction_Interface {
 
 	public function __construct(

@@ -19,7 +19,7 @@ use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 
 /**
- * Adapter to apply `Blockchain_API_Interface` to `BtcRpcExplorerApi`.
+ * Adapter to use `BtcRpcExplorerApi` as `Blockchain_API_Interface`.
  *
  * phpcs:disable WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
  */
