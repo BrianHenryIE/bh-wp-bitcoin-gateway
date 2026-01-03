@@ -53,6 +53,7 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 			tx_id: $tx_id,
 		);
 
+		/** @var WP_Post[] $wp_posts */
 		$wp_posts = get_posts( $query->to_query_array() );
 
 		if ( empty( $wp_posts ) ) {
@@ -60,8 +61,7 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 		}
 
 		if ( count( $wp_posts ) === 1 ) {
-			$post = array_pop( $wp_posts );
-			return $post;
+			return array_first( $wp_posts );
 		}
 
 		throw new RuntimeException( 'Unexpectedly found more than one post for txid: ' . $tx_id );
