@@ -2,13 +2,17 @@
 /**
  * Functions for background job for checking addresses, generating addresses, etc.
  *
- * After new orders, wait five minutes and check for payments.
- * While the destination address is waiting for payment, continue to schedue new checks every ten minutes (nblock generation time)
- * Every hour, in case the previous check is not running correctly, check are there assigned Bitcoin addresses that we should check for transactions
- * Schedule background job to generate new addresses as needed (fall below threshold defined elsewhere)
- * After generating new addresses, check for existing transactions to ensure they are available to use
+ * Every hour Action Scheduler's `action_scheduler_run_recurring_actions_schedule_hook` runs. We hook into this to
+ * register our own recurring hourly job, and schedule a single job to check assigned addresses.
  *
- * TODO we need to always be checking the next address that might be assigned to ensure it is still unused.
+ * The hourly job ensures there is always two addresses that are unused. I.e. previously generated
+ * addresses may have been used outside WordPress and it is difficult to use transaction data to confirm payment when
+ * transactions may not be for the purpose of the order.
+ *
+ * The single job checks for payments and TODO: the action reschedules itself if there are still unpaid addresses to check.
+ * This job may already be scheduled when an address is assigned to an order, or from its own self-rescheduling.
+ *
+ * TODO: If we see a wallet being used outside WordPress should we suggest setting up an exclusive wallet?
  *
  * @package    brianhenryie/bh-wp-bitcoin-gateway
  */
@@ -16,7 +20,6 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Repository;
-use DateInterval;
 use DateTimeImmutable;
 use DateTimeInterface;
 use Psr\Log\LoggerAwareTrait;
@@ -42,6 +45,75 @@ class Background_Jobs_Scheduler implements Background_Jobs_Scheduler_Interface {
 	}
 
 	/**
+	 *
+	 *
+	 * @used-by Background_Jobs_Actions_Interface::ensure_schedule_repeating_actions()
+	 */
+	public function schedule_recurring_ensure_unused_addresses(): void {
+		if ( as_has_scheduled_action( hook: Background_Jobs_Actions_Interface::RECURRING_ENSURE_UNUSED_ADDRESSES_HOOK ) ) {
+			$this->logger->debug(
+				message: 'Background_Jobs schedule_ensure_unused_addresses already scheduled.',
+			);
+			return;
+		}
+
+		$result = as_schedule_recurring_action(
+			timestamp: time(),
+			interval_in_seconds: constant( 'HOUR_IN_SECONDS' ),
+			hook: Background_Jobs_Actions_Interface::RECURRING_ENSURE_UNUSED_ADDRESSES_HOOK,
+			unique: true,
+		);
+
+		if ( 0 === $result ) {
+			$this->logger->error( 'Background_Jobs schedule_ensure_unused_addresses failed.' );
+			return;
+		}
+
+		$this->logger->info( 'Background_Jobs schedule_ensure_unused_addresses hourly job added.' );
+	}
+
+	public function schedule_single_ensure_unused_addresses(): void {
+		if ( as_has_scheduled_action( Background_Jobs_Actions_Interface::SINGLE_ENSURE_UNUSED_ADDRESSES_HOOK )
+			&& ! doing_action( Background_Jobs_Actions_Interface::SINGLE_ENSURE_UNUSED_ADDRESSES_HOOK ) ) {
+			return;
+		}
+
+		$date_time = new DateTimeImmutable( 'now' );
+		as_schedule_single_action(
+			timestamp: $date_time->getTimestamp(),
+			hook: Background_Jobs_Actions_Interface::SINGLE_ENSURE_UNUSED_ADDRESSES_HOOK,
+		);
+	}
+
+	/**
+	 * Schedule the next check for transactions for assigned addresses.
+	 *
+	 * @used-by Background_Jobs_Actions_Interface::ensure_schedule_repeating_actions()
+	 * TODO: When a new order is placed, let's schedule a check (in ten minutes).
+	 *
+	 * @param ?DateTimeInterface $date_time In ten minutes for a regular check (time to generate a new block), or use the rate limit reset time.
+	 * e.g. `new DateTimeImmutable( 'now' )->add( new DateInterval( 'PT15M' ) )`.
+	 */
+	public function schedule_single_check_assigned_addresses_for_transactions(
+		?DateTimeInterface $date_time = null
+	): void {
+		if ( as_has_scheduled_action( Background_Jobs_Actions_Interface::CHECK_ASSIGNED_ADDRESSES_TRANSACTIONS_HOOK )
+			&& ! doing_action( Background_Jobs_Actions_Interface::CHECK_ASSIGNED_ADDRESSES_TRANSACTIONS_HOOK ) ) {
+			return;
+		}
+
+		if ( ! $this->bitcoin_address_repository->has_assigned_bitcoin_addresses() ) {
+			return;
+		}
+
+		$date_time = $date_time ?? new DateTimeImmutable( 'now' );
+		as_schedule_single_action(
+			timestamp: $date_time->getTimestamp(),
+			hook: Background_Jobs_Actions_Interface::CHECK_ASSIGNED_ADDRESSES_TRANSACTIONS_HOOK,
+		);
+	}
+
+	/**
 	 * Schedule a background job to generate new addresses.
 	 */
 	public function schedule_generate_new_addresses(): void {
@@ -57,6 +129,8 @@ class Background_Jobs_Scheduler implements Background_Jobs_Scheduler_Interface {
 	/**
 	 * Schedule a background job to check newly generated addresses to see do they have existing transactions.
 	 * We will use unused addresses for orders and then consider all transactions seen as related to that order.
+	 *
+	 * This is a background job so when we hit a rate limit we can re-run later to complete.
 	 *
 	 * @see self::CHECK_NEW_ADDRESSES_TRANSACTIONS_HOOK
 	 *
@@ -88,68 +162,6 @@ class Background_Jobs_Scheduler implements Background_Jobs_Scheduler_Interface {
 			context: array(
 				'datetime' => $datetime->format( 'Y-m-d H:i:s' ),
 			)
-		);
-	}
-
-	/**
-	 * When a new order is placed, let's schedule a check.
-	 *
-	 * We need time for the customer to pay plus time for the block to be verified.
-	 * If there's already a job scheduled for existing assigned orders, we'll leave it alone (its scheduled time should be under 10 minutes, or another new order under 15)
-	 * Otherwise we'll schedule it for 15 minutes out.
-	 *
-	 * Generally, 'newly assigned address' = 'new_order'.
-	 */
-	public function schedule_check_assigned_bitcoin_address_for_transactions(): void {
-		if ( as_has_scheduled_action( Background_Jobs_Actions_Interface::CHECK_ASSIGNED_ADDRESSES_TRANSACTIONS_HOOK )
-			&& ! doing_action( Background_Jobs_Actions_Interface::CHECK_ASSIGNED_ADDRESSES_TRANSACTIONS_HOOK ) ) {
-			return;
-		}
-		$this->schedule_check_assigned_addresses_for_transactions(
-			new DateTimeImmutable( 'now' )->add( new DateInterval( 'PT15M' ) )
-		);
-		// $this->logger->debug( "New order created, `shop_order:{$order_id}`, scheduling background job to check for payments" );
-	}
-
-	/**
-	 * Schedule the next check for transactions for assigned addresses.
-	 *
-	 * @param ?DateTimeInterface $date_time In ten minutes for a regular check (time to generate a new block), or use the rate limit reset time.
-	 */
-	public function schedule_check_assigned_addresses_for_transactions(
-		?DateTimeInterface $date_time = null
-	): void {
-		if ( as_has_scheduled_action( Background_Jobs_Actions_Interface::CHECK_ASSIGNED_ADDRESSES_TRANSACTIONS_HOOK )
-			&& ! doing_action( Background_Jobs_Actions_Interface::CHECK_ASSIGNED_ADDRESSES_TRANSACTIONS_HOOK ) ) {
-			return;
-		}
-
-		$date_time = $date_time ?? new DateTimeImmutable( 'now' );
-		as_schedule_single_action(
-			timestamp: $date_time->getTimestamp(),
-			hook: Background_Jobs_Actions_Interface::CHECK_ASSIGNED_ADDRESSES_TRANSACTIONS_HOOK,
-		);
-	}
-
-	/**
-	 * This is really just a failsafe in case the actual check gets unscheduled.
-	 * This should do nothing/return early when there are no assigned addresses.
-	 * New orders should have already scheduled a check with {@see self::schedule_check_assigned_bitcoin_address_for_transactions()}
-	 *
-	 * @hooked {@see self::CHECK_FOR_ASSIGNED_ADDRESSES_HOOK}
-	 * @see self::CHECK_ASSIGNED_ADDRESSES_TRANSACTIONS_HOOK
-	 */
-	public function schedule_check_for_assigned_addresses_repeating_action(): void {
-		if ( as_has_scheduled_action( Background_Jobs_Actions_Interface::CHECK_ASSIGNED_ADDRESSES_TRANSACTIONS_HOOK ) ) {
-			return;
-		}
-
-		if ( ! $this->bitcoin_address_repository->has_assigned_bitcoin_addresses() ) {
-			return;
-		}
-
-		$this->schedule_check_assigned_addresses_for_transactions(
-			new DateTimeImmutable( 'now' )
 		);
 	}
 }

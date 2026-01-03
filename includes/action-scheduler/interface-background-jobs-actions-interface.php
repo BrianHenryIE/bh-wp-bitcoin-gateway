@@ -19,6 +19,10 @@ interface Background_Jobs_Actions_Interface {
 	 */
 	const string GENERATE_NEW_ADDRESSES_HOOK = 'bh_wp_bitcoin_gateway_generate_new_addresses';
 
+	const string RECURRING_ENSURE_UNUSED_ADDRESSES_HOOK = 'bh_wp_bitcoin_gateway_recurring_ensure_unused_addresses';
+
+	const string SINGLE_ENSURE_UNUSED_ADDRESSES_HOOK = 'bh_wp_bitcoin_gateway_single_ensure_unused_addresses';
+
 	/**
 	 * After generating a new address, we need to determine if it is unused.
 	 */

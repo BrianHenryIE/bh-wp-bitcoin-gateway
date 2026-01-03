@@ -23,10 +23,13 @@ class Background_Jobs_Actions_WPUnit_Test extends WPTestCase {
 		$logger                     = new ColorLogger();
 		$api                        = $this->makeEmpty( API_Background_Jobs_Interface::class );
 		$bitcoin_address_repository = $this->makeEmpty( Bitcoin_Address_Repository::class );
-		$background_jobs_scheduler  = $this->makeEmpty( Background_Jobs_Scheduler_Interface::class );
-
-		as_unschedule_all_actions( Background_Jobs_Actions_Interface::CHECK_FOR_ASSIGNED_ADDRESSES_HOOK );
-		assert( false === as_has_scheduled_action( Background_Jobs_Actions_Interface::CHECK_FOR_ASSIGNED_ADDRESSES_HOOK ) );
+		$background_jobs_scheduler  = $this->makeEmpty(
+			Background_Jobs_Scheduler_Interface::class,
+			array(
+				'schedule_ensure_unused_addresses' => Expected::once(),
+				'schedule_single_check_assigned_addresses_for_transactions' => Expected::once(),
+			)
+		);
 
 		/** @var Background_Jobs_Actions_Interface $sut */
 		$sut = new Background_Jobs_Actions_Handler( $api, $bitcoin_address_repository, $background_jobs_scheduler, $logger );
@@ -35,10 +38,7 @@ class Background_Jobs_Actions_WPUnit_Test extends WPTestCase {
 		 * @see Background_Jobs_Actions_Handler::ensure_schedule_repeating_actions()
 		 */
 		$sut->ensure_schedule_repeating_actions();
-
-		$this->assertTrue( as_has_scheduled_action( Background_Jobs_Actions_Interface::CHECK_FOR_ASSIGNED_ADDRESSES_HOOK ) );
 	}
-
 
 	/**
 	 * @covers ::check_new_addresses_for_transactions

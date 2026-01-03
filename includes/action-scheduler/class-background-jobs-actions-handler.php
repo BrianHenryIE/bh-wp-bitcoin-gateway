@@ -20,10 +20,8 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain\Rate_Limit_Exception;
-use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Bitcoin_Gateway;
 use DateInterval;
 use DateTimeImmutable;
-use DateTimeInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 
@@ -48,6 +46,36 @@ class Background_Jobs_Actions_Handler implements Background_Jobs_Actions_Interfa
 		LoggerInterface $logger
 	) {
 		$this->setLogger( $logger );
+	}
+
+	/**
+	 * Using Action Scheduler's "schedule" hook, set up our own repeating jobs.
+	 *
+	 * @hooked action_scheduler_run_recurring_actions_schedule_hook
+	 * @see \ActionScheduler_RecurringActionScheduler
+	 *
+	 * @used-by BH_WP_Bitcoin_Gateway::define_action_scheduler_hooks()
+	 * @see Background_Jobs_Scheduler_Interface::schedule_check_for_assigned_addresses_repeating_action()
+	 *
+	 * @see https://crontab.guru/every-1-hour
+	 * @see https://github.com/woocommerce/action-scheduler/issues/749
+	 */
+	public function ensure_schedule_repeating_actions(): void {
+		$this->background_jobs_scheduler->schedule_recurring_ensure_unused_addresses();
+		$this->background_jobs_scheduler->schedule_single_check_assigned_addresses_for_transactions();
+	}
+
+	/**
+	 * TODO: add the add_action code!
+	 *
+	 * @hooked self::ENSURE_UNUSED_ADDRESSES_HOOK
+	 */
+	public function ensure_unused_addresses(): void {
+
+		$this->logger->debug( 'Starting ensure_unused_addresses() background job.' );
+
+		// TODO: return a meaningful result and log it.
+		$result = $this->api->ensure_unused_adddresses();
 	}
 
 	/**
@@ -108,7 +136,7 @@ class Background_Jobs_Actions_Handler implements Background_Jobs_Actions_Interfa
 			$result = $this->api->check_assigned_addresses_for_payment();
 
 		} catch ( Rate_Limit_Exception $rate_limit_exception ) {
-			$this->background_jobs_scheduler->schedule_check_assigned_addresses_for_transactions(
+			$this->background_jobs_scheduler->schedule_single_check_assigned_addresses_for_transactions(
 				$rate_limit_exception->get_reset_time()
 			);
 		}
@@ -116,32 +144,9 @@ class Background_Jobs_Actions_Handler implements Background_Jobs_Actions_Interfa
 		// If we are still waiting for payments, schedule another check in ten minutes.
 		// TODO: Is this better placed in API class?
 		if ( $this->bitcoin_address_repository->has_assigned_bitcoin_addresses() ) {
-			$this->background_jobs_scheduler->schedule_check_assigned_addresses_for_transactions(
+			$this->background_jobs_scheduler->schedule_single_check_assigned_addresses_for_transactions(
 				new DateTimeImmutable( 'now' )->add( new DateInterval( 'PT10M' ) )
 			);
 		}
-	}
-
-	/**
-	 * On every request, ensure we have the hourly check scheduled.
-	 *
-	 * @hooked action_scheduler_run_recurring_actions_schedule_hook
-	 * @see \ActionScheduler_RecurringActionScheduler
-	 *
-	 * @used-by BH_WP_Bitcoin_Gateway::define_action_scheduler_hooks()
-	 * @see self::schedule_check_for_assigned_addresses_repeating_action()
-	 *
-	 * @see https://crontab.guru/every-1-hour
-	 * @see https://github.com/woocommerce/action-scheduler/issues/749
-	 */
-	public function ensure_schedule_repeating_actions(): void {
-		// TODO: what is the precise behaviour of unique here? If it already exists, it should not change the existing one.
-		// TODO: add warning log if thus makes a difference, it shows that the other scheduling was not working correctly.
-		as_schedule_cron_action(
-			timestamp: time(),
-			schedule: '0 * * * *',
-			hook: self::CHECK_FOR_ASSIGNED_ADDRESSES_HOOK,
-			unique: true,
-		);
 	}
 }
