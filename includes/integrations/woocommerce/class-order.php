@@ -12,7 +12,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
  */
 interface Order {
 
-	const string BITCOIN_ADDRESS_META_KEY = 'bh_wp_bitcoin_gateway_address';
+	const string BITCOIN_ADDRESS_META_KEY = 'bh_wp_bitcoin_gateway_payment_address';
 
 	const string EXCHANGE_RATE_AT_TIME_OF_PURCHASE_META_KEY = 'bh_wp_bitcoin_gateway_exchange_rate_at_time_of_purchase';
 
