@@ -1,11 +1,15 @@
 <?php
 /**
  * @see https://github.com/Blockstream/esplora/blob/master/API.md
+ * @see https://dashboard.blockstream.info
  *
  * {
  * "error" : "Too Many Requests",
  * "message" : "Blockstream Explorer API NOTICE: Your request rate exceeds the current limit. Starting July 15 2025, monthly unauthenticated usage will be capped at 500,000 requests/month and 700 requests/hour per IP. To maintain uninterrupted access, get your API key at: https://dashboard.blockstream.info"
  * }
+ *
+ * @see https://github.com/Blockstream/esplora/issues/519
+ * @see https://github.com/Blockstream/esplora/issues/449
  *
  * @package    brianhenryie/bh-wp-bitcoin-gateway
  */
