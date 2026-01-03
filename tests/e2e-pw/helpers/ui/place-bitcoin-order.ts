@@ -24,15 +24,15 @@ async function selectBitcoinPaymentMethod( page: Page ) {
 export async function placeBitcoinOrder( page: Page ): Promise< number > {
 	await logout( page );
 
-	// Set the billing+shipping details via API.
-	await setDefaultCustomerAddresses(page);
-
 	// Go to shop
 	await page.goto( '/shop/' );
 
 	// Add simple product to cart
 	await page.click( `text="${ testConfig.products.simple.name }"` );
 	await page.click( '.single_add_to_cart_button' );
+
+	// Set the billing+shipping details via API.
+	await setDefaultCustomerAddresses(page);
 
 	// Go to checkout
 	await page.goto( '/checkout/' );
