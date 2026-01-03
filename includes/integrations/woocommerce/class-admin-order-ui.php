@@ -7,6 +7,7 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
+use Automattic\WooCommerce\Utilities\OrderUtil;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 use WC_Order;
@@ -34,6 +35,34 @@ class Admin_Order_UI {
 	}
 
 	/**
+	 * The admin order page before WooCommerce HPOS is a standard WP_List_Table for the registered post type,
+	 * at `wp-admin/edit.php?post_type=wc_order&...`. HPOS is enabled by default for new sites since October 2023
+	 * and uses
+	 *
+	 * @see https://developer.woocommerce.com/2023/10/10/woocommerce-8-2-0-released/
+	 */
+	protected function is_hpos_enabled(): bool {
+		return class_exists( OrderUtil::class )
+			&& method_exists( OrderUtil::class, 'custom_orders_table_usage_is_enabled' )
+			&& OrderUtil::custom_orders_table_usage_is_enabled();
+	}
+
+	/**
+	 * Get the id (presume order id) from the URL.
+	 */
+	protected function get_order_id(): ?int {
+		if ( isset( $_GET['id'] ) ) {
+			return absint( $_GET['id'] );
+		}
+
+		if ( isset( $_GET['post'] ) ) {
+			return absint( $_GET['post'] );
+		}
+
+		return null;
+	}
+
+	/**
 	 * Register the Bitcoin order details metabox on shop_order admin edit view.
 	 *
 	 * @hooked add_meta_boxes
@@ -42,24 +71,7 @@ class Admin_Order_UI {
 	 */
 	public function register_address_transactions_meta_box(): void {
 
-		$order_id = null;
-
-		/** @var ?WP_Post $post */
-		global $post;
-
-		/** @var ?string $pagenow */
-		global $pagenow; // admin.php
-
-		/** @var ?string $plugin_page */
-		global $plugin_page; // wc-orders
-
-		if ( ( $post instanceof WP_Post ) && 'shop_order' === $post->post_type ) {
-			$order_id = $post->ID;
-		}
-
-		if ( 'admin.php' === $pagenow && 'wc-orders' === $plugin_page ) {
-			$order_id = absint( $_GET['id'] );
-		}
+		$order_id = $this->get_order_id();
 
 		if ( is_null( $order_id ) ) {
 			return;
@@ -69,19 +81,26 @@ class Admin_Order_UI {
 			return;
 		}
 
-		// woocommerce_page_wc-orders
+		/**
+		 * Get the correct `screen` name/id for the meta box.
+		 *
+		 * WooCommerce with HPOS no longer uses the standard WordPress `wp-admin/edit.php?...` page.
+		 *
+		 * @see OrderUtil::custom_orders_table_usage_is_enabled()
+		 *
+		 * @var string $screen 'woocommerce_page_wc-orders'|'shop_order'.
+		 */
 		$screen = function_exists( 'wc_get_page_screen_id' )
 			? wc_get_page_screen_id( 'shop-order' )
 			: 'shop_order';
 
-		// This still didn't work for HPOS.
 		add_meta_box(
 			'bh-wp-bitcoin-gateway',
 			'Bitcoin', // TODO: translate.
 			array( $this, 'print_address_transactions_metabox' ),
-			$screen, // shop_order or woocommerce_page_wc depending on hpos
-			// 'normal',
-			// 'core'
+			$screen,
+			'normal',
+			'core'
 		);
 	}
 
