@@ -101,6 +101,8 @@ class Background_Jobs_Actions_WPUnit_Test extends WPTestCase {
 		/** @see Background_Jobs_Actions_Handler::check_assigned_addresses_for_transactions() */
 		$sut->check_assigned_addresses_for_transactions();
 
+		$this->markTestIncomplete( 'I think the rate-limit rescheduling should be done in the API class.' );
+
 		// assert( false === as_has_scheduled_action( Background_Jobs_Actions_Interface::CHECK_ASSIGNED_ADDRESSES_TRANSACTIONS_HOOK ) );
 		// $this->assertTrue( as_has_scheduled_action( Background_Jobs_Actions_Interface::CHECK_ASSIGNED_ADDRESSES_TRANSACTIONS_HOOK ) );
 	}

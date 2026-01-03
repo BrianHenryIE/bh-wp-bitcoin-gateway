@@ -75,7 +75,7 @@ class Background_Jobs_Actions_Handler implements Background_Jobs_Actions_Interfa
 		$this->logger->debug( 'Starting ensure_unused_addresses() background job.' );
 
 		// TODO: return a meaningful result and log it.
-		$result = $this->api->ensure_unused_adddresses();
+		$result = $this->api->ensure_unused_addresses();
 	}
 
 	/**
