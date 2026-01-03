@@ -72,6 +72,10 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 		return $this->bitcoin_address_factory->get_by_wp_post_id( $post_id );
 	}
 
+	public function refresh( Bitcoin_Address $address ): Bitcoin_Address {
+		return $this->bitcoin_address_factory->get_by_wp_post_id( $address->get_post_id() );
+	}
+
 	/**
 	 * @return Bitcoin_Address[]
 	 */
@@ -211,6 +215,7 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 	 *
 	 * TODO: Throw an exception if an invalid status is set.
 	 *
+	 * @param Bitcoin_Address        $address The address to update.
 	 * @param Bitcoin_Address_Status $status Status to assign.
 	 */
 	public function set_status(
