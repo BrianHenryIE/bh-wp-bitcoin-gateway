@@ -85,6 +85,24 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 	}
 
 	/**
+	 * Gets previously saved addresses which have at least once been checked and see to be unused.
+	 *
+	 * It may be the case that they have been used in the meantime.
+	 *
+	 * @return Bitcoin_Address[]
+	 */
+	public function get_unused_bitcoin_addresses(): array {
+		return $this->get_addresses_query(
+			new Bitcoin_Address_Query(
+				status: Bitcoin_Address_Status::UNUSED,
+				numberposts: 200,
+				orderby: 'post_modified',
+				order_direction: 'ASC',
+			)
+		);
+	}
+
+	/**
 	 * Check do we have at least 1 assigned address, i.e. an address waiting for transactions.
 	 *
 	 * Across all wallets.
