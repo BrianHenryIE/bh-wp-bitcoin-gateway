@@ -211,6 +211,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 
 		if ( ! $wallet && ! is_null( $this->api ) ) {
 			$generate_wallet_result = $this->api->generate_new_wallet( $xpub_after, $this->id );
+			// TODO: use a background task here?
 			$this->api->ensure_unused_addresses_for_wallet( $generate_wallet_result->get_wallet(), 1 );
 		}
 
