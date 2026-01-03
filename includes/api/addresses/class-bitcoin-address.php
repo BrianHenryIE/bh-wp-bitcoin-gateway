@@ -69,20 +69,21 @@ class Bitcoin_Address implements Bitcoin_Address_Interface {
 	 * @throws InvalidArgumentException When the supplied post_id is not a post of this type.
 	 */
 	public function __construct(
-		protected WP_Post $post,
+		protected int $post_id,
 		protected int $wallet_parent_post_id,
-		protected Bitcoin_Address_Status $status,
-		protected ?int $derivation_path_sequence_number,
 		protected string $raw_address,
+		protected ?int $derivation_path_sequence_number,
+		protected Bitcoin_Address_Status $status,
 		protected ?Money $target_amount,
-//		protected ?int $required_confirmations,
-		protected ?Money $balance,
+		// protected ?int $required_confirmations,
 		protected ?int $order_id,
+		protected ?array $tx_ids,
+		protected ?Money $balance,
 	) {
 	}
 
 	public function get_post_id(): int {
-		return $this->post->ID;
+		return $this->post_id;
 	}
 
 
@@ -157,5 +158,12 @@ class Bitcoin_Address implements Bitcoin_Address_Interface {
 	 */
 	public function get_target_amount(): ?Money {
 		return $this->target_amount;
+	}
+
+	/**
+	 * @return array<int, string> <post_id, tx_id> or null if it has never been checked.
+	 */
+	public function get_tx_ids(): ?array {
+		return $this->tx_ids;
 	}
 }

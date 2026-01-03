@@ -40,29 +40,34 @@ class Bitcoin_Address_Factory {
 	public function get_by_wp_post( WP_Post $post ): Bitcoin_Address {
 
 		$bitcoin_address = new Bitcoin_Address(
-			post: $post,
+			post_id: $post->ID,
 			wallet_parent_post_id: $post->post_parent,
-			status: Bitcoin_Address_Status::from( $post->post_status ),
+			raw_address: $post->post_excerpt,
 			derivation_path_sequence_number: ( function () use ( $post ) {
 				/** @var array|bool|float|int|resource|string|null|mixed $meta_value */
 				$meta_value = get_post_meta( $post->ID, Bitcoin_Address_WP_Post_Interface::DERIVATION_PATH_SEQUENCE_NUMBER_META_KEY, true );
 				return is_numeric( $meta_value ) ? intval( $meta_value ) : null;
 			} )(),
-			raw_address: $post->post_excerpt,
+			status: Bitcoin_Address_Status::from( $post->post_status ),
 			target_amount: ( function () use ( $post ): ?Money {
 				/** @var MoneySerializedArray|array{} $target_amount_meta */
 				$target_amount_meta = array_filter( (array) get_post_meta( $post->ID, Bitcoin_Address_WP_Post_Interface::TARGET_AMOUNT_META_KEY, true ) );
 				return empty( $target_amount_meta ) ? null : Money::of( ...$target_amount_meta );
 			} )(),
-			balance: ( function () use ( $post ): ?Money {
-				/** @var MoneySerializedArray|array{} $balance_meta */
-				$balance_meta = array_filter( (array) get_post_meta( $post->ID, Bitcoin_Address_WP_Post_Interface::BALANCE_META_KEY, true ) );
-				return empty( $balance_meta ) ? null : Money::of( ...$balance_meta );
-			} )(),
 			order_id: ( function () use ( $post ): ?int {
 				/** @var array|bool|float|int|resource|string|null|mixed $order_id_meta */
 				$order_id_meta = get_post_meta( $post->ID, Bitcoin_Address_WP_Post_Interface::ORDER_ID_META_KEY, true );
 				return is_numeric( $order_id_meta ) ? intval( $order_id_meta ) : null;
+			} )(),
+			tx_ids: ( function () use ( $post ): ?array {
+				/** @var array|null|mixed $tx_ids_meta */
+				$tx_ids_meta = get_post_meta( $post->ID, Bitcoin_Address_WP_Post_Interface::TRANSACTIONS_META_KEY, true );
+				return is_array( $tx_ids_meta ) ? $tx_ids_meta : null;
+			} )(),
+			balance: ( function () use ( $post ): ?Money {
+				/** @var MoneySerializedArray|array{} $balance_meta */
+				$balance_meta = array_filter( (array) get_post_meta( $post->ID, Bitcoin_Address_WP_Post_Interface::BALANCE_META_KEY, true ) );
+				return empty( $balance_meta ) ? null : Money::of( ...$balance_meta );
 			} )(),
 		);
 
