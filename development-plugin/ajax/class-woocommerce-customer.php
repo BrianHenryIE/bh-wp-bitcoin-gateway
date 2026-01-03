@@ -1,6 +1,6 @@
 <?php
 /**
- * REST endpoint to set WooCommerce customer billing and shipping data in the session.
+ * AJAX endpoint to set WooCommerce customer billing and shipping data in the session.
  *
  * @package brianhenryie/bh-wp-bitcoin-gateway
  */
@@ -32,7 +32,7 @@ class WooCommerce_Customer {
 	 * @return array
 	 */
 	public function add_nonce_to_woocommerce_params( $params ): array {
-		if(!is_array($params)) {
+		if ( ! is_array( $params ) ) {
 			$params = array();
 		}
 		$params['e2e_set_customer_data_nonce'] = wp_create_nonce( 'e2e-set-customer-data' );
