@@ -20,7 +20,6 @@ class Admin_Order_UI {
 
 	const TEMPLATE_NAME = 'admin/single-order-ui-bitcoin-details-metabox.php';
 
-
 	/**
 	 * Constructor
 	 *
@@ -43,26 +42,46 @@ class Admin_Order_UI {
 	 */
 	public function register_address_transactions_meta_box(): void {
 
-		/** @var WP_Post $post */
+		$order_id = null;
+
+		/** @var ?WP_Post $post */
 		global $post;
 
-		if ( 'shop_order' !== $post->post_type ) {
-			return;
+		/** @var ?string $pagenow */
+		global $pagenow; // admin.php
+
+		/** @var ?string $plugin_page */
+		global $plugin_page; // wc-orders
+
+		if ( ( $post instanceof WP_Post ) && 'shop_order' === $post->post_type ) {
+			$order_id = $post->ID;
 		}
 
-		$order_id = $post->ID;
+		if ( 'admin.php' === $pagenow && 'wc-orders' === $plugin_page ) {
+			$order_id = absint( $_GET['id'] );
+		}
+
+		if ( is_null( $order_id ) ) {
+			return;
+		}
 
 		if ( ! $this->api->is_order_has_bitcoin_gateway( $order_id ) ) {
 			return;
 		}
 
+		// woocommerce_page_wc-orders
+		$screen = function_exists( 'wc_get_page_screen_id' )
+			? wc_get_page_screen_id( 'shop-order' )
+			: 'shop_order';
+
+		// This still didn't work for HPOS.
 		add_meta_box(
 			'bh-wp-bitcoin-gateway',
-			'Bitcoin',
+			'Bitcoin', // TODO: translate.
 			array( $this, 'print_address_transactions_metabox' ),
-			'shop_order',
-			'normal',
-			'core'
+			$screen, // shop_order or woocommerce_page_wc depending on hpos
+			// 'normal',
+			// 'core'
 		);
 	}
 
@@ -74,22 +93,22 @@ class Admin_Order_UI {
 	 *
 	 * @see Admin_Order_UI::register_address_transactions_meta_box();
 	 *
-	 * @param WP_Post $post The post this edit page is running for.
+	 * @param WP_Post|WC_Order $post The post this edit page is running for.
 	 */
-	public function print_address_transactions_metabox( WP_Post $post ): void {
-
-		$order_id = $post->ID;
-
-		if ( ! $this->api->is_order_has_bitcoin_gateway( $order_id ) ) {
-			return;
-		}
+	public function print_address_transactions_metabox( $post ): void {
 
 		/**
 		 * This is almost sure to be a valid order object, since this only runs on the order page.
 		 *
 		 * @var WC_Order $order
 		 */
-		$order = wc_get_order( $order_id );
+		$order = $post instanceof WP_Post ? wc_get_order( $post->ID ) : $post;
+
+		$order_id = $order->get_id();
+
+		if ( ! $this->api->is_order_has_bitcoin_gateway( $order_id ) ) {
+			return;
+		}
 
 		// Once the order has been paid, no longer poll for new transactions, unless manually pressing refresh.
 		$refresh = ! $order->is_paid();

@@ -14,6 +14,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\Development_Plugin\WP_Env;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order_Interface;
+use DateInterval;
 use DateTimeImmutable;
 use DateTimeZone;
 use Exception;
@@ -152,6 +153,11 @@ trait API_WooCommerce_Trait {
 			)
 		);
 
+		// Now that the address is assigned, schedule a job to check it for payment transactions.
+		$this->background_jobs_scheduler->schedule_single_check_assigned_addresses_for_transactions(
+			date_time: new DateTimeImmutable( 'now' )->add( new DateInterval( 'PT15M' ) )
+		);
+
 		return $btc_address;
 	}
 
@@ -252,9 +258,9 @@ trait API_WooCommerce_Trait {
 
 		// Add a note saying "one new transactions seen, unconfirmed total =, confirmed total = ...".
 		$note = '';
-		if ( ! empty( $new_order_transactions ) ) {
+		if ( ! empty( $update_result->new_transactions ) ) {
 			$updated = true;
-			$note   .= $transaction_formatter->get_order_note( $new_order_transactions );
+			$note   .= $transaction_formatter->get_order_note( $update_result->new_transactions );
 		}
 
 		if ( ! empty( $note ) ) {

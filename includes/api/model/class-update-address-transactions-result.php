@@ -18,7 +18,7 @@ class Update_Address_Transactions_Result {
 	 */
 	public function __construct(
 		public Bitcoin_Address $address,
-		public array $known_tx_ids_before,
+		public ?array $known_tx_ids_before,
 		public array $new_transactions,
 	) {
 	}

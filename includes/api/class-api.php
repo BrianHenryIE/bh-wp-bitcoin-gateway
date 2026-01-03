@@ -447,7 +447,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 
 			return new Update_Address_Transactions_Result(
 				address: $this->bitcoin_address_repository->get_by_post_id( $address->get_post_id() ),
-				// known_tx_ids_before: $address->get_tx_ids(),
+				known_tx_ids_before: $address->get_tx_ids(),
 				new_transactions: $transactions,
 			);
 		} catch ( Rate_Limit_Exception $_exception ) {
