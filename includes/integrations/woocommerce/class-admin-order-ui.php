@@ -42,9 +42,7 @@ class Admin_Order_UI {
 	 * @see https://developer.woocommerce.com/2023/10/10/woocommerce-8-2-0-released/
 	 */
 	protected function is_hpos_enabled(): bool {
-		return class_exists( OrderUtil::class )
-			&& method_exists( OrderUtil::class, 'custom_orders_table_usage_is_enabled' )
-			&& OrderUtil::custom_orders_table_usage_is_enabled();
+		return class_exists( OrderUtil::class ) && OrderUtil::custom_orders_table_usage_is_enabled();
 	}
 
 	/**

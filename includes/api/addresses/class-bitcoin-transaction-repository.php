@@ -109,6 +109,11 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 			return null;
 		}
 
+		if ( !is_string( $saved_post_meta ) ) {
+			// TODO: throw an exception – data corrupt.
+			return null;
+		}
+
 		/** @var array<int, string> $saved_meta_array <post_id : transaction id>. */
 		$saved_meta_array = json_decode( json: $saved_post_meta, associative: true, flags: JSON_THROW_ON_ERROR );
 
@@ -143,7 +148,7 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 				throw new Exception( 'WordPress failed to save new transaction.' );
 			}
 
-			return get_post( $new_post_id ); // @phpstan-ignore return.type Default returns an object.
+			return get_post( $new_post_id ); // @phpstan-ignore return.type
 		}
 
 		return $transaction_post;
@@ -164,22 +169,20 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 
 		$transaction_post = $this->save_post( $transaction );
 
-		$this->associate_transaction_post_id_and_address( $transaction_post->ID, $address );
+		$this->associate_transaction_post_id_and_address( array( $transaction_post->ID => $transaction->get_txid() ), $address );
 
 		return $this->get_by_post_id( $transaction_post->ID );
 	}
 
 	/**
-	 * @param int             $transaction_post_id
-	 * @param Bitcoin_Address $address
-	 *
-	 * @return void
+	 * @param array<int,string> $transaction_post_id_and_txid post_id:tx_id.
+	 * @param Bitcoin_Address   $address
 	 */
 	protected function associate_transaction_post_id_and_address(
-		int $transaction_post_id,
+		array $transaction_post_id_and_txid,
 		Bitcoin_Address $address,
 	): void {
-		$this->associate_transactions_post_ids_to_address( array( $transaction_post_id ), $address );
+		$this->associate_transactions_post_ids_to_address( $transaction_post_id_and_txid, $address );
 	}
 
 	/**
@@ -199,7 +202,10 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 
 		$address_post_id = $address->get_post_id();
 
-		/** @var array<int,string> $existing_meta_transactions_post_ids */
+		/**
+		 * @see Bitcoin_Address::get_tx_ids() Should we use this?!
+		 * @var array<int,string> $existing_meta_transactions_post_ids
+		 */
 		$existing_meta_transactions_post_ids = get_post_meta( $address_post_id, Bitcoin_Address_WP_Post_Interface::TRANSACTIONS_META_KEY, true );
 
 		if ( empty( $existing_meta_transactions_post_ids ) ) {

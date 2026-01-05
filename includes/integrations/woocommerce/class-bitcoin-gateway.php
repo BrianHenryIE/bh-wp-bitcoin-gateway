@@ -195,7 +195,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 		$bitcoin_wallet_factory    = new Bitcoin_Wallet_Factory();
 		$bitcoin_wallet_repository = new Bitcoin_Wallet_Repository( $bitcoin_wallet_factory );
 
-		$wallet = $bitcoin_wallet_repository->get_by_xpub( $xpub_after );
+		$wallet = $xpub_after && $bitcoin_wallet_repository->get_by_xpub( $xpub_after );
 
 		if ( $xpub_before !== $xpub_after && ! empty( $xpub_after ) ) {
 			$gateway_name = $this->get_method_title() === $this->get_method_description() ? $this->get_method_title() : $this->get_method_title() . ' (' . $this->get_method_description() . ')';
