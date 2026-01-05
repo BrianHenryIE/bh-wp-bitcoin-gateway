@@ -49,7 +49,7 @@ class Bitcoin_Wallet_Repository extends WP_Post_Repository_Abstract {
 		if ( 1 === count( $posts ) ) {
 			return $this->bitcoin_wallet_factory->get_by_wp_post( $posts[0] );
 		}
-		throw new Exception( 'TWO results found. Only one expected' );
+		throw new Exception( count( $posts ) . ' Bitcoin_Wallets found, only one expected, for ' . $xpub );
 	}
 
 	/**

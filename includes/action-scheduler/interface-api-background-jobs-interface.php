@@ -61,9 +61,8 @@ interface API_Background_Jobs_Interface {
 	 * Fetch the wallet's unused addresses from the db, check they still have no transactions, if they do, mark those
 	 * as used and generate new addresses until we find one without transactions.
 	 *
-	 * @param Bitcoin_Wallet $wallet
-	 * @param int            $required_count
-	 * @return Ensure_Unused_Addresses_Result
+	 * @param Bitcoin_Wallet $wallet  The wallet to check / find unused addresses for.
+	 * @param int            $required_count The number of available addresses we should have.
 	 */
 	public function ensure_unused_addresses_for_wallet( Bitcoin_Wallet $wallet, int $required_count = 2 ): Ensure_Unused_Addresses_Result;
 }

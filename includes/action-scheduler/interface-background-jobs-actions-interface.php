@@ -39,8 +39,16 @@ interface Background_Jobs_Actions_Interface {
 	 */
 	public function add_action_scheduler_repeating_actions(): void;
 
+	/**
+	 * Handler for recurring job to check we have addresses ready for new orders.
+	 */
 	public function ensure_unused_addresses(): void;
 
+	/**
+	 * Handler for one-off checks for available addresses (called after an address has been used).
+	 *
+	 * @param int $wallet_post_id Id of the wallet to check.
+	 */
 	public function single_ensure_unused_addresses( int $wallet_post_id ): void;
 
 	/**

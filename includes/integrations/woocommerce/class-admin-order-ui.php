@@ -49,6 +49,11 @@ class Admin_Order_UI {
 
 	/**
 	 * Get the id (presume order id) from the URL.
+	 *
+	 * @example `wp-admin/admin.php?page=wc-orders&action=edit&id=123` returns 123.
+	 * @example `wp-admin/edit.php?post_type=wc-order&post=321` returns 321.
+	 *
+	 * phpcs:disable WordPress.Security.NonceVerification.Recommended
 	 */
 	protected function get_order_id(): ?int {
 		if ( isset( $_GET['id'] ) ) {

@@ -55,7 +55,7 @@ class Btc_Rpc_Explorer_Api_Transaction_Adapter implements Transaction_Interface 
 			fn( VOut $v_out ) => new Transaction_VOut(
 				value: Money::of( $v_out->value, 'BTC' ),
 				n: $v_out->n,
-				scriptPubKey: new Transaction_VOut_ScriptPubKey(
+				script_pub_key: new Transaction_VOut_ScriptPubKey(
 					asm: $v_out->scriptPubKey->asm,
 					hex: $v_out->scriptPubKey->hex,
 					reqSigs: null,

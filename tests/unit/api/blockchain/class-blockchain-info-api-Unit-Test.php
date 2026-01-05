@@ -351,7 +351,7 @@ class Blockchain_Info_API_Unit_Test extends \Codeception\Test\Unit {
 		// Get the value from vouts that match our address
 		$actual_amount = null;
 		foreach ( $first->get_v_out() as $vout ) {
-			if ( in_array( $address, $vout->scriptPubKey->addresses, true ) ) {
+			if ( in_array( $address, $vout->script_pub_key->addresses, true ) ) {
 				$actual_amount = (string) $vout->value->getAmount();
 				break;
 			}

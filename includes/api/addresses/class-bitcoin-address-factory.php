@@ -33,8 +33,6 @@ class Bitcoin_Address_Factory {
 	/**
 	 * Takes a WP_Post and gets the values (primitives?) to create a Bitcoin_Address.
 	 *
-	 * TODO: Transactions.
-	 *
 	 * @param WP_Post $post The backing WP_Post for this Bitcoin_Address.
 	 */
 	public function get_by_wp_post( WP_Post $post ): Bitcoin_Address {

@@ -143,7 +143,7 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 				throw new Exception( 'WordPress failed to save new transaction.' );
 			}
 
-			return get_post( $new_post_id );
+			return get_post( $new_post_id ); // @phpstan-ignore return.type Default returns an object.
 		}
 
 		return $transaction_post;

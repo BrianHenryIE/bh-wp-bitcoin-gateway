@@ -86,7 +86,7 @@ class Blockchain_Info_Api_Transaction_Adapter implements Transaction_Interface {
 					// scriptPubKey: $out->getScript(),
 					// scriptPubKey: $out->getSpendingOutpoints(),
 					// a914c15f1ad5162b35d8ddb3cf46009326d36252237187
-					scriptPubKey: new Transaction_VOut_ScriptPubKey(
+					script_pub_key: new Transaction_VOut_ScriptPubKey(
 						asm: 'OP_DUP OP_HASH160 89abcdefabbaabbaabbaabbaabbaabbaabbaabba OP_EQUALVERIFY OP_CHECKSIG',
 						hex: '76a91489abcdefabbaabbaabbaabbaabbaabbaabbaabba88ac',
 						reqSigs: 1,
