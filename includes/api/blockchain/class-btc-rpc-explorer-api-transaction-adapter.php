@@ -5,7 +5,6 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_VIn;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_VOut;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_VOut_ScriptPubKey;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\BtcRpcExplorer\Model\TXSummary;
 use BrianHenryIE\WP_Bitcoin_Gateway\BtcRpcExplorer\Model\VOut;
@@ -53,15 +52,8 @@ class Btc_Rpc_Explorer_Api_Transaction_Adapter implements Transaction_Interface 
 	public function get_v_out(): array {
 		return array_map(
 			fn( VOut $v_out ) => new Transaction_VOut(
-				value: Money::of( $v_out->value, 'BTC' ),
-				n: $v_out->n,
-				script_pub_key: new Transaction_VOut_ScriptPubKey(
-					asm: $v_out->scriptPubKey->asm,
-					hex: $v_out->scriptPubKey->hex,
-					reqSigs: null,
-					type: $v_out->scriptPubKey->type,
-					addresses: array( $v_out->scriptPubKey->address ),
-				)
+				value: Money::of( $v_out->value / 100000000, 'BTC' ),
+				scriptpubkey_address: $v_out->scriptPubKey->address,
 			),
 			$this->transaction->vOut
 		);

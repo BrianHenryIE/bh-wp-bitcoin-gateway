@@ -615,7 +615,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 		$value_including_fee = array_reduce(
 			$transaction->get_v_out(),
 			function ( Money $carry, Transaction_VOut $out ) use ( $to_address ) {
-				if ( in_array( $to_address, $out->script_pub_key->addresses, true ) ) {
+				if ( $to_address === $out->scriptpubkey_address ) {
 					return $carry->plus( $out->value );
 				}
 				return $carry;

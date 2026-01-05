@@ -5,7 +5,6 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_VIn;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_VOut;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_VOut_ScriptPubKey;
 use BrianHenryIE\WP_Bitcoin_Gateway\BlockchainInfo\Model\Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\BlockchainInfo\Model\TransactionInput;
 use BrianHenryIE\WP_Bitcoin_Gateway\BlockchainInfo\Model\TransactionOut;
@@ -61,41 +60,30 @@ class Blockchain_Info_Api_Transaction_Adapter implements Transaction_Interface {
 	}
 
 	protected function map_t_in( TransactionInput $transaction_input ): Transaction_VIn {
-		// TODO.
-		return new Transaction_VIn();
+		return new Transaction_VIn(
+			sequence: $transaction_input->getSequence(),
+			scriptsig: $transaction_input->getScript(),
+			address: $transaction_input->getPrevOut()->getAddr(),
+			prevout_scriptpubkey: $transaction_input->getPrevOut()->getScript(),
+			value: Money::of( $transaction_input->getPrevOut()->getValue() / 100000000, 'BTC' ),
+			prev_out_n: $transaction_input->getPrevOut()->getN(),
+		);
 	}
 
 	/**
 	 * @return Transaction_VOut[]
 	 */
 	public function get_v_out(): array {
-
 		return array_map(
-			function ( TransactionOut $out ): Transaction_VOut {
-					// TODO:
-				$a            = $out->getSpendingOutpoints();
-				$b            = array_pop( $a );
-				$scriptPubKey = $out->getScript();
-				return new Transaction_VOut(
-					// type: int 0
-					// spent bool true
-					// TODO: choose correct divided by...
-					value: Money::of( $out->getValue(), 'BTC' )->dividedBy( 100_000_000 ),
-					n: $out->getN(),
-					// TODO:
-					// scriptPubKey: $out->getScript(),
-					// scriptPubKey: $out->getSpendingOutpoints(),
-					// a914c15f1ad5162b35d8ddb3cf46009326d36252237187
-					script_pub_key: new Transaction_VOut_ScriptPubKey(
-						asm: 'OP_DUP OP_HASH160 89abcdefabbaabbaabbaabbaabbaabbaabbaabba OP_EQUALVERIFY OP_CHECKSIG',
-						hex: '76a91489abcdefabbaabbaabbaabbaabbaabbaabbaabba88ac',
-						reqSigs: 1,
-						type: 'pubkeyhash',
-						addresses: array(),
-					),
-				);
-			},
+			array( $this, 'map_v_out' ),
 			$this->transaction->getOut()
+		);
+	}
+
+	protected function map_v_out( TransactionOut $out ): Transaction_VOut {
+		return new Transaction_VOut(
+			value: Money::of( $out->getValue(), 'BTC' )->dividedBy( 100_000_000 ),
+			scriptpubkey_address: $out->getAddr(),
 		);
 	}
 }

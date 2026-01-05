@@ -342,7 +342,7 @@ class Blockchain_Info_API_Unit_Test extends \Codeception\Test\Unit {
 
 		$result = $sut->get_transactions_received( $address );
 
-		/** @var Transaction_Interface $first */
+		/** @var Blockchain_Info_Api_Transaction_Adapter&Transaction_Interface $first */
 		$first = array_shift( $result );
 
 		// From the dummy data: first transaction has value 2613 satoshis = 0.00002613 BTC
@@ -351,7 +351,7 @@ class Blockchain_Info_API_Unit_Test extends \Codeception\Test\Unit {
 		// Get the value from vouts that match our address
 		$actual_amount = null;
 		foreach ( $first->get_v_out() as $vout ) {
-			if ( in_array( $address, $vout->script_pub_key->addresses, true ) ) {
+			if ( $address === $vout->scriptpubkey_address ) {
 				$actual_amount = (string) $vout->value->getAmount();
 				break;
 			}
