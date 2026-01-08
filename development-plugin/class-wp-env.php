@@ -2,6 +2,9 @@
 /**
  * Fix for cron jobs not working in wp-env.
  *
+ * Without this, `wp cron test` returns:
+ * `Error: WP-Cron spawn failed with error: cURL error 7: Failed to connect to localhost port 8888 after 0 ms: Could not connect to server`.
+ *
  * @see https://github.com/WordPress/gutenberg/issues/20569
  *
  * @package brianhenryie/bh-wp-bitcoin-gateway
@@ -59,38 +62,41 @@ class WP_Env {
 	 * @see get_site_url()
 	 * @see cron.php:957
 	 *
-	 * @param string $url   The full URL.
-	 * @param string $_path The URL path.
+	 * @param string $url  The full URL.
+	 * @param string $path The URL path.
 	 *
 	 * @throws Exception If an error occurs running `preg_replace()` on the URL.
 	 */
-	public function wpenv_fix_url( string $url, string $_path = '' ): string {
+	public function wpenv_fix_url( string $url, string $path = '' ): string {
 
-		// TODO: Check are we about to replace the URL first before doing this work.
-		$internal_url = $this->get_internal_url( $url );
-
-		if ( ( isset( $_SERVER['REQUEST_URI'] ) && 'wp-cron.php' === $_SERVER['REQUEST_URI'] ) || wp_doing_cron() ) {
-			$url_for_cron_hostname = 'http://' . get_option( 'wp_env_cron_hostname' ) . '/wp-cron.php';
-			return $internal_url;
+		switch ( true ) {
+			case 'wp-cron.php' === $path:
+			case ( isset( $_SERVER['REQUEST_URI'] ) && 'wp-cron.php' === $_SERVER['REQUEST_URI'] ):
+			case wp_doing_cron():
+			case defined( 'WP_CLI' ) && ( true === constant( 'WP_CLI' ) ):
+			case ! isset( $_SERVER['HTTP_USER_AGENT'] ):
+				return $this->get_internal_url( $url );
+			default:
+				return $url;
 		}
-
-		if ( defined( 'WP_CLI' ) && ( true === constant( 'WP_CLI' ) ) ) {
-			$url_for_cron_hostname = 'http://' . get_option( 'wp_env_cron_hostname' );
-			return $internal_url;
-		}
-
-		return $url;
 	}
 
 	/**
-	 * Given a `localhost` or `127.0.0.1` URL, strip the port.
+	 * Given a `localhost` or `127.0.0.1` URL, strip the port and use the internal hostname.
 	 *
 	 * @param string $url Whatever URL is about to be used.
 	 *
 	 * @throws Exception If the regex were to (unlikely) fail.
 	 */
 	protected function get_internal_url( string $url ): string {
-		return preg_replace( '#(https?://(localhost|127.0.0.1)):\d{1,6}#', '$1', $url )
-			?? ( fn() => throw new Exception( 'The `WP_Env::get_internal_url()` regex failed.' ) )();
+		$internal_hostname = get_option( 'wp_env_cron_hostname' );
+		if ( ! is_string( $internal_hostname ) ) {
+			$internal_hostname = 'localhost';
+		}
+		return preg_replace(
+			pattern: '#(https?://)(localhost|127.0.0.1):\d{1,6}#',
+			replacement: '${1}' . preg_quote( $internal_hostname, '#' ),
+			subject: $url
+		) ?? ( fn() => throw new Exception( 'The `WP_Env::get_internal_url()` regex failed: ' . preg_last_error_msg() ) )();
 	}
 }

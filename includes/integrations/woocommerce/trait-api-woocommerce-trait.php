@@ -5,15 +5,13 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
-use ActionScheduler;
-use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Handler;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Status;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
-use BrianHenryIE\WP_Bitcoin_Gateway\Development_Plugin\WP_Env;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order_Interface;
+use DateInterval;
 use DateTimeImmutable;
 use DateTimeZone;
 use Exception;
@@ -152,6 +150,11 @@ trait API_WooCommerce_Trait {
 			)
 		);
 
+		// Now that the address is assigned, schedule a job to check it for payment transactions.
+		$this->background_jobs_scheduler->schedule_single_check_assigned_addresses_for_transactions(
+			date_time: new DateTimeImmutable( 'now' )->add( new DateInterval( 'PT15M' ) )
+		);
+
 		return $btc_address;
 	}
 
@@ -171,6 +174,8 @@ trait API_WooCommerce_Trait {
 		$wallet = $this->bitcoin_wallet_repository->get_by_xpub( $gateway->get_xpub() )
 							?? $this->bitcoin_wallet_repository->save_new( $gateway->get_xpub(), $gateway->id );
 
+		$this->ensure_unused_addresses_for_wallet( $wallet, 1 );
+
 		return $this->bitcoin_address_repository->get_addresses(
 			wallet: $wallet,
 			status: Bitcoin_Address_Status::UNUSED,
@@ -178,7 +183,7 @@ trait API_WooCommerce_Trait {
 	}
 
 	/**
-	 * Check do we have at least one address already generated and ready to use.
+	 * Check do we have at least one address already generated and ready to use. Does not generate addresses.
 	 *
 	 * @param Bitcoin_Gateway $gateway The gateway id the address is for.
 	 *
@@ -188,8 +193,13 @@ trait API_WooCommerce_Trait {
 	 * @throws Exception
 	 */
 	public function is_fresh_address_available_for_gateway( Bitcoin_Gateway $gateway ): bool {
-		// TODO: cache this.
-		return count( $this->get_fresh_addresses_for_gateway( $gateway ) ) > 0;
+
+		$wallet           = $this->bitcoin_wallet_repository->get_by_xpub( $gateway->get_xpub() );
+		$unused_addresses = $this->bitcoin_address_repository->get_unused_bitcoin_addresses( $wallet );
+
+		// TODO: maybe schedule a job to find an unused address.
+
+		return count( $unused_addresses ) > 0;
 	}
 
 	/**
@@ -232,29 +242,20 @@ trait API_WooCommerce_Trait {
 
 		$bitcoin_address = $bitcoin_order->get_address();
 
-		$update_result = $this->update_address_transactions( $bitcoin_address );
-
-		$order_transactions_before = $this->bitcoin_transaction_repository->get_transactions_for_address( $bitcoin_order->get_address() );
+		$update_address_transactions_result = $this->update_address_transactions( $bitcoin_address );
 
 		$confirmed_value_current = $bitcoin_order->get_address()->get_amount_received();
 
-		$order_transactions_current = $update_result;
-
 		// Filter to transactions that have just been seen, so we can record them in notes.
-		$new_order_transactions = array();
-		foreach ( $order_transactions_current as $txid => $transaction ) {
-			if ( ! isset( $order_transactions_before[ $txid ] ) ) {
-				$new_order_transactions[ $txid ] = $transaction;
-			}
-		}
+		$new_order_transactions = $update_address_transactions_result->get_new_transactions();
 
 		$transaction_formatter = new Transaction_Formatter();
 
 		// Add a note saying "one new transactions seen, unconfirmed total =, confirmed total = ...".
 		$note = '';
-		if ( ! empty( $new_order_transactions ) ) {
+		if ( ! empty( $update_address_transactions_result->get_new_transactions() ) ) {
 			$updated = true;
-			$note   .= $transaction_formatter->get_order_note( $new_order_transactions );
+			$note   .= $transaction_formatter->get_order_note( $update_address_transactions_result->get_new_transactions() );
 		}
 
 		if ( ! empty( $note ) ) {
@@ -262,7 +263,7 @@ trait API_WooCommerce_Trait {
 				$note,
 				array(
 					'order_id' => $bitcoin_order->get_id(),
-					'updates'  => $order_transactions_current,
+					'updates'  => $new_order_transactions,
 				)
 			);
 
@@ -281,7 +282,13 @@ trait API_WooCommerce_Trait {
 			$minimum_payment = $expected->multipliedBy( ( 100 - $price_margin ) / 100 );
 
 			if ( $confirmed_value_current->isGreaterThan( $minimum_payment ) ) {
-				$bitcoin_order->payment_complete( $order_transactions_current[ array_key_last( $order_transactions_current ) ]->get_txid() );
+				/**
+				 * We know there must be at least one transaction if we've summed them to the required amount!
+				 *
+				 * @var Transaction_Interface $last_transaction
+				 */
+				$last_transaction = array_last( $update_address_transactions_result->all_transactions );
+				$bitcoin_order->payment_complete( $last_transaction->get_txid() );
 				$this->logger->info( "`shop_order:{$bitcoin_order->get_id()}` has been marked paid.", array( 'order_id' => $bitcoin_order->get_id() ) );
 
 				$updated = true;

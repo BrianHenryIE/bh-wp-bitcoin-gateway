@@ -195,7 +195,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 		$bitcoin_wallet_factory    = new Bitcoin_Wallet_Factory();
 		$bitcoin_wallet_repository = new Bitcoin_Wallet_Repository( $bitcoin_wallet_factory );
 
-		$wallet = $bitcoin_wallet_repository->get_by_xpub( $xpub_after );
+		$wallet = $xpub_after && $bitcoin_wallet_repository->get_by_xpub( $xpub_after );
 
 		if ( $xpub_before !== $xpub_after && ! empty( $xpub_after ) ) {
 			$gateway_name = $this->get_method_title() === $this->get_method_description() ? $this->get_method_title() : $this->get_method_title() . ' (' . $this->get_method_description() . ')';
@@ -211,7 +211,8 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 
 		if ( ! $wallet && ! is_null( $this->api ) ) {
 			$generate_wallet_result = $this->api->generate_new_wallet( $xpub_after, $this->id );
-			$this->api->generate_new_addresses_for_wallet( $generate_wallet_result->get_wallet(), 2 );
+			// TODO: use a background task here?
+			$this->api->ensure_unused_addresses_for_wallet( $generate_wallet_result->get_wallet(), 1 );
 		}
 
 		// TODO: maybe mark the previous xpub's wallet as "inactive". (although it could be in use in another instance of the gateway).

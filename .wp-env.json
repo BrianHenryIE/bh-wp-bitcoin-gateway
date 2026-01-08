@@ -31,6 +31,7 @@
     "wp-content/plugins/woo-nimiq-gateway": "./wp-content/plugins/woo-nimiq-gateway",
     "wp-content/plugins/woocommerce": "./wp-content/plugins/woocommerce",
     "wp-content/plugins/wordpress-importer": "./wp-content/plugins/wordpress-importer",
+    "wp-content/plugins/wp-crontrol": "./wp-content/plugins/wp-crontrol",
     "wp-content/plugins/wp-mail-logging": "./wp-content/plugins/wp-mail-logging"
   },
   "phpVersion": "8.4"

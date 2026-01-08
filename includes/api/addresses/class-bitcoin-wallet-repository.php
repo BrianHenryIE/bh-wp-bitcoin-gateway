@@ -8,6 +8,7 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses;
 
 use Exception;
+use InvalidArgumentException;
 use WP_Post;
 use wpdb;
 
@@ -48,7 +49,7 @@ class Bitcoin_Wallet_Repository extends WP_Post_Repository_Abstract {
 		if ( 1 === count( $posts ) ) {
 			return $this->bitcoin_wallet_factory->get_by_wp_post( $posts[0] );
 		}
-		throw new Exception( 'TWO results found. Only one expected' );
+		throw new Exception( count( $posts ) . ' Bitcoin_Wallets found, only one expected, for ' . $xpub );
 	}
 
 	/**
@@ -63,6 +64,12 @@ class Bitcoin_Wallet_Repository extends WP_Post_Repository_Abstract {
 		return $this->bitcoin_wallet_factory->get_by_wp_post_id( $post_id );
 	}
 
+	/**
+	 *
+	 * @param Bitcoin_Wallet_Status $status Filter by Bitcoin_Wallet_Status – 'active'|'inactive'.
+	 *
+	 * @return Bitcoin_Wallet[]
+	 */
 	public function get_all( $status = Bitcoin_Wallet_Status::ALL ): array {
 		$args = new Bitcoin_Wallet_Query(
 			status: $status,
@@ -79,7 +86,7 @@ class Bitcoin_Wallet_Repository extends WP_Post_Repository_Abstract {
 		$posts = get_posts( $query );
 
 		return array_map(
-			fn( WP_Post $post ) => $this->bitcoin_wallet_factory->get_by_wp_post_id( $post->ID ),
+			fn( WP_Post $post ) => $this->bitcoin_wallet_factory->get_by_wp_post( $post ),
 			$posts
 		);
 	}

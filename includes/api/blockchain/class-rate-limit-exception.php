@@ -1,4 +1,13 @@
 <?php
+/**
+ * @see https://github.com/ietf-wg-httpapi/ratelimit-headers
+ * @see https://datatracker.ietf.org/doc/draft-ietf-httpapi-ratelimit-headers/
+ *
+ * 'X-RateLimit-Limit'
+ * 'X-RateLimit-Remaining'
+ *
+ * @package brianhenryie/bh-wp-bitcoin-gateway
+ */
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain;
 

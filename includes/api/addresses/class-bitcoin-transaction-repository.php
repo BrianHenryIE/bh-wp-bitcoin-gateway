@@ -11,6 +11,8 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses;
 
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Check_Assigned_Addresses_For_Transactions_Result;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Transactions\Bitcoin_Transaction_Query;
 use Exception;
@@ -53,6 +55,7 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 			tx_id: $tx_id,
 		);
 
+		/** @var WP_Post[] $wp_posts */
 		$wp_posts = get_posts( $query->to_query_array() );
 
 		if ( empty( $wp_posts ) ) {
@@ -60,8 +63,7 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 		}
 
 		if ( count( $wp_posts ) === 1 ) {
-			$post = array_pop( $wp_posts );
-			return $post;
+			return array_first( $wp_posts );
 		}
 
 		throw new RuntimeException( 'Unexpectedly found more than one post for txid: ' . $tx_id );
@@ -75,7 +77,7 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 	 * @see Addresses_List_Table::column_transactions_count() When displaying all addresses.
 	 * @used-by API::get_saved_transactions() When displaying all addresses.
 	 *
-	 * @return ?Bitcoin_Transaction[] Where null suggests there was nothing saved before, and an empty array suggests it has been checked but no transactions had been seen.
+	 * @return null|array<int, Bitcoin_Transaction> Post_id:transaction object; where null suggests there was nothing saved before, and an empty array suggests it has been checked but no transactions had been seen.
 	 * @throws Exception
 	 */
 	public function get_transactions_for_address(
@@ -87,10 +89,12 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 			return null;
 		}
 
-		return array_map(
-			fn( $address_post_id ) => $this->get_by_post_id( $address_post_id ),
-			$transaction_post_ids
-		);
+		$transaction_by_post_ids = array();
+		foreach ( $transaction_post_ids as $transaction_post_id ) {
+			$transaction_by_post_ids[ $transaction_post_id ] = $this->get_by_post_id( $transaction_post_id );
+		}
+
+		return $transaction_by_post_ids;
 	}
 
 	/**
@@ -107,6 +111,11 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 			return null;
 		}
 
+		if ( ! is_string( $saved_post_meta ) ) {
+			// TODO: throw an exception – data corrupt.
+			return null;
+		}
+
 		/** @var array<int, string> $saved_meta_array <post_id : transaction id>. */
 		$saved_meta_array = json_decode( json: $saved_post_meta, associative: true, flags: JSON_THROW_ON_ERROR );
 
@@ -119,14 +128,15 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 	 * @throws RuntimeException
 	 */
 	protected function save_post(
-		Transaction_Interface $transaction,
+		Transaction $transaction,
 	): WP_Post {
-
 		$transaction_post = $this->get_post_by_transaction_id( $transaction->get_txid() );
+		// What if the transaction already exists? Potentially it is from a chain that has been discarded. When else might it be updated?
+		// (we will in a moment update a transaction's wp_post's meta to connect post ids for the relevant address)
 
 		if ( ! $transaction_post ) {
 			$insert_query = new Bitcoin_Transaction_Query(
-				tx_id: $transaction->get_txid(),
+				transaction_object: $transaction,
 				block_height: $transaction->get_block_height(),
 				block_datetime: $transaction->get_block_time(),
 			);
@@ -141,7 +151,7 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 				throw new Exception( 'WordPress failed to save new transaction.' );
 			}
 
-			return get_post( $new_post_id );
+			return get_post( $new_post_id ); // @phpstan-ignore return.type
 		}
 
 		return $transaction_post;
@@ -150,34 +160,34 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 	/**
 	 * Wrapper on wp_insert_post(), sets the address as the post_title, post_excerpt and post_name.
 	 *
-	 * @param Transaction_Interface $transaction
+	 * @param Transaction $transaction A transaction from an API.
 	 *
 	 * @throws Exception When WordPress fails to create the wp_post.
 	 * @throws JsonException
 	 */
 	public function save_new(
-		Transaction_Interface $transaction,
+		Transaction $transaction,
 		Bitcoin_Address $address,
 	): Bitcoin_Transaction {
 
 		$transaction_post = $this->save_post( $transaction );
 
-		$this->associate_transaction_post_id_and_address( $transaction_post->ID, $address );
+		$this->associate_transaction_post_id_and_address( array( $transaction_post->ID => $transaction->get_txid() ), $address );
 
-		return $this->get_by_post_id( $transaction_post->ID );
+		// Using wp_post->ID here so it refreshes rather than just maps.
+		return $this->bitcoin_transaction_factory->get_by_wp_post_id( $transaction_post->ID );
 	}
 
 	/**
-	 * @param int             $transaction_post_id
-	 * @param Bitcoin_Address $address
-	 *
-	 * @return void
+	 * @param array<int,string> $transaction_post_id_and_txid post_id:tx_id.
+	 * @param Bitcoin_Address   $address
 	 */
 	protected function associate_transaction_post_id_and_address(
-		int $transaction_post_id,
+		array $transaction_post_id_and_txid,
 		Bitcoin_Address $address,
 	): void {
-		$this->associate_transactions_post_ids_to_address( array( $transaction_post_id ), $address );
+		$this->associate_transactions_post_ids_to_address( $transaction_post_id_and_txid, $address );
+		$this->associate_bitcoin_address_post_ids_to_transaction( $address, $transaction_post_id_and_txid );
 	}
 
 	/**
@@ -197,7 +207,10 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 
 		$address_post_id = $address->get_post_id();
 
-		/** @var array<int,string> $existing_meta_transactions_post_ids */
+		/**
+		 * @see Bitcoin_Address::get_tx_ids() Should we use this?!
+		 * @var array<int,string> $existing_meta_transactions_post_ids
+		 */
 		$existing_meta_transactions_post_ids = get_post_meta( $address_post_id, Bitcoin_Address_WP_Post_Interface::TRANSACTIONS_META_KEY, true );
 
 		if ( empty( $existing_meta_transactions_post_ids ) ) {
@@ -234,7 +247,7 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 	 *
 	 * @return void TODO: return something meaningful.
 	 */
-	protected function associate_address_post_id_to_transactions_posts(
+	protected function associate_bitcoin_address_post_ids_to_transaction(
 		Bitcoin_Address $bitcoin_address,
 		array $transactions_post_ids,
 	): void {

@@ -130,26 +130,37 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 		$this->assertTrue( $result );
 	}
 
-
 	/**
 	 * @covers ::get_fresh_addresses_for_gateway
 	 */
 	public function test_get_fresh_addresses_for_gateway(): void {
 
+		$address = $this->make(
+			Bitcoin_Address::class,
+			array(
+				'get_post_id'     => 123,
+				'get_raw_address' => 'success',
+				'get_status'      => Expected::once( fn() => Bitcoin_Address_Status::ASSIGNED ),
+				'get_tx_ids'      => array(),
+			)
+		);
+
 		$addresses_result = array(
-			self::make( Bitcoin_Address::class ),
 			self::make(
 				Bitcoin_Address::class,
 				array(
-					'get_raw_address' => 'success',
+					'get_status' => Bitcoin_Address_Status::ASSIGNED,
 				)
 			),
+			$address,
 		);
 
 		$wallet = self::make(
 			Bitcoin_Wallet::class,
 			array(
-				'get_fresh_addresses' => Expected::once( $addresses_result ),
+				'get_post_id'       => 321,
+				'get_address_index' => 111,
+				'get_xpub'          => 'xpub12345',
 			)
 		);
 
@@ -169,6 +180,8 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 						return $addresses_result;
 					}
 				),
+				'save_new'      => Expected::once( $address ),
+				'refresh'       => $address,
 			)
 		);
 
@@ -193,12 +206,24 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 	 */
 	public function test_is_fresh_address_available_for_gateway_true(): void {
 
+		$address = $this->make(
+			Bitcoin_Address::class,
+			array(
+				'get_post_id'     => 123,
+				'get_raw_address' => 'success',
+				'get_status'      => Expected::once( fn() => Bitcoin_Address_Status::ASSIGNED ),
+				'get_tx_ids'      => array(),
+			)
+		);
+
 		$addresses_result = array(
-			self::make( Bitcoin_Address::class ),
+			$address,
 			self::make(
 				Bitcoin_Address::class,
 				array(
+					'get_post_id'     => 123,
 					'get_raw_address' => 'success',
+					'get_status'      => Bitcoin_Address_Status::ASSIGNED,
 				)
 			),
 		);
@@ -206,7 +231,9 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 		$wallet = self::make(
 			Bitcoin_Wallet::class,
 			array(
-				'get_fresh_addresses' => Expected::once( $addresses_result ),
+				'get_post_id'       => 321,
+				'get_address_index' => 111,
+				'get_xpub'          => 'xpub12345',
 			)
 		);
 
@@ -226,6 +253,7 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 						return $addresses_result;
 					}
 				),
+				'save_new'      => Expected::once( $address ),
 			)
 		);
 
@@ -247,21 +275,27 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 	 */
 	public function test_get_fresh_address_for_order(): void {
 
+		$address = self::make(
+			Bitcoin_Address::class,
+			array(
+				'get_post_id'     => 123,
+				'get_raw_address' => 'success',
+				'get_status'      => Expected::once( fn() => Bitcoin_Address_Status::ASSIGNED ),
+				'get_tx_ids'      => array(),
+			)
+		);
+
 		$addresses_result = array(
-			self::make(
-				Bitcoin_Address::class,
-				array(
-					'get_raw_address' => 'success',
-					'assign'          => Expected::once(),
-				)
-			),
+			$address,
 			self::make( Bitcoin_Address::class ),
 		);
 
 		$wallet = self::make(
 			Bitcoin_Wallet::class,
 			array(
-				'get_fresh_addresses' => Expected::once( $addresses_result ),
+				'get_post_id'       => 321,
+				'get_address_index' => 111,
+				'get_xpub'          => 'xpub12345',
 			)
 		);
 
@@ -275,18 +309,29 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 		$bitcoin_address_repository = $this->makeEmpty(
 			Bitcoin_Address_Repository::class,
 			array(
-				'get_addresses' => Expected::once(
+				'get_unused_bitcoin_addresses' => Expected::once( fn()=> array() ),
+				'get_addresses'                => Expected::once(
 					function ( ?Bitcoin_Wallet $wallet = null, ?Bitcoin_Address_Status $status = null ) use ( $addresses_result ): array {
 						/** @return Bitcoin_Address[] */
 						return $addresses_result;
 					}
 				),
+				'save_new'                     => Expected::once( $address ),
+				'refresh'                      => $address,
+			)
+		);
+
+		$generate_address_api = $this->makeEmpty(
+			Generate_Address_API_Interface::class,
+			array(
+				'generate_address' => Expected::once( 'xpub123new456' ),
 			)
 		);
 
 		$sut = $this->get_sut(
 			bitcoin_wallet_repository: $bitcoin_wallet_repository,
 			bitcoin_address_repository: $bitcoin_address_repository,
+			generate_address_api: $generate_address_api,
 		);
 
 		$wc_payment_gateways                              = WC_Payment_Gateways::instance();
@@ -313,17 +358,13 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 	 */
 	public function test_get_order_details_no_transactions(): void {
 
-		$address = self::make(
+		$address = $this->make(
 			Bitcoin_Address::class,
 			array(
-				'get_raw_address'             => Expected::exactly( 1, 'xpub' ),
-				// First time checking an address, this is null.
-				'get_blockchain_transactions' => Expected::exactly( 2, null ),
-				'set_transactions'            => Expected::once(
-					function ( array $refreshed_transactions ): void {
-					}
-				),
-				'get_status'                  => Expected::once( Bitcoin_Address_Status::ASSIGNED ),
+				'get_raw_address' => Expected::exactly( 1, 'xpub' ),
+				'get_status'      => Expected::atLeastOnce( Bitcoin_Address_Status::ASSIGNED ),
+				'get_tx_ids'      => Expected::once( array() ),
+				'get_balance'     => Expected::once( null ),
 			)
 		);
 

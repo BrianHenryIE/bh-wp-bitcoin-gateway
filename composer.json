@@ -49,8 +49,12 @@
       "type": "composer",
       "url": "https://wpackagist.org"
     },
-    "brianhenryie/brianhenryie/bh-php-blockchain-info": {
+    "brianhenryie/bh-php-blockchain-info": {
       "url": "https://github.com/BrianHenryIE/bh-php-blockchain-info",
+      "type": "git"
+    },
+    "brianhenryie/bh-php-btc-rpc-explorer-api-client": {
+      "url": "https://github.com/BrianHenryIE/bh-php-btc-rpc-explorer-api-client",
       "type": "git"
     },
     "bitwasp/bitcoin-php": {
@@ -141,6 +145,7 @@
     "alleyinteractive/wordpress-autoloader": "^1.1",
     "art4/requests-psr18-adapter": "^1.0",
     "brianhenryie/bh-php-blockchain-info": "dev-main",
+    "brianhenryie/bh-php-btc-rpc-explorer-api-client": "dev-main",
     "brianhenryie/bh-wp-logger": "*",
     "brick/money": "^0.10.3",
     "chillerlan/php-qrcode": "^5.0.3",
@@ -188,6 +193,7 @@
     "wpackagist-plugin/woo-nimiq-gateway": ">=3.4",
     "wpackagist-plugin/woocommerce": "*",
     "wpackagist-plugin/wordpress-importer": ">=0.8.1",
+    "wpackagist-plugin/wp-crontrol": "*",
     "wpackagist-plugin/wp-mail-logging": ">=1.10",
     "wpackagist-theme/storefront": "*",
     "wpackagist-theme/twentytwenty": "*",

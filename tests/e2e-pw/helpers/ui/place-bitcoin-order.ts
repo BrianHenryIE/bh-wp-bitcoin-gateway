@@ -8,8 +8,9 @@ import { Page, expect } from '@playwright/test';
  */
 import { testConfig } from '../../config/test-config';
 
-import { fillBilling, selectPaymentGateway } from './checkout';
+import { selectPaymentGateway } from './checkout';
 import { logout } from './login';
+import { setDefaultCustomerAddresses } from "../rest/wc-cart";
 
 async function selectBitcoinPaymentMethod( page: Page ) {
 	await selectPaymentGateway( page, 'bitcoin_gateway' );
@@ -30,19 +31,16 @@ export async function placeBitcoinOrder( page: Page ): Promise< number > {
 	await page.click( `text="${ testConfig.products.simple.name }"` );
 	await page.click( '.single_add_to_cart_button' );
 
+	// Set the billing+shipping details via API.
+	await setDefaultCustomerAddresses(page);
+
 	// Go to checkout
 	await page.goto( '/checkout/' );
-
-	// Fill billing details
-	await fillBilling( page );
 
 	await selectBitcoinPaymentMethod( page );
 
 	// Place order
-	// await page.click(''Place Order');
 	await page.getByText( 'Place Order' ).click();
-	// await page.locator('.wc-block-components-checkout-place-order-button').isEnabled();
-	// await page.click('.wc-block-components-checkout-place-order-button');
 
 	// Wait for order received page
 	await page.waitForSelector( 'text=Order received' );

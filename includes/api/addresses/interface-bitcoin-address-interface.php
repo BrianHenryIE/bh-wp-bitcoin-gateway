@@ -70,4 +70,9 @@ interface Bitcoin_Address_Interface {
 	 * The received amount needed to consider the order "paid".
 	 */
 	public function get_target_amount(): ?Money;
+
+	/**
+	 * @return ?array<int, string> <post_id, tx_id>
+	 */
+	public function get_tx_ids(): ?array;
 }

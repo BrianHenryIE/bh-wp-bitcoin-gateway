@@ -7,6 +7,7 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
+use Automattic\WooCommerce\Utilities\OrderUtil;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 use WC_Order;
@@ -19,7 +20,6 @@ class Admin_Order_UI {
 	use LoggerAwareTrait;
 
 	const TEMPLATE_NAME = 'admin/single-order-ui-bitcoin-details-metabox.php';
-
 
 	/**
 	 * Constructor
@@ -35,6 +35,37 @@ class Admin_Order_UI {
 	}
 
 	/**
+	 * The admin order page before WooCommerce HPOS is a standard WP_List_Table for the registered post type,
+	 * at `wp-admin/edit.php?post_type=wc_order&...`. HPOS is enabled by default for new sites since October 2023
+	 * and uses
+	 *
+	 * @see https://developer.woocommerce.com/2023/10/10/woocommerce-8-2-0-released/
+	 */
+	protected function is_hpos_enabled(): bool {
+		return class_exists( OrderUtil::class ) && OrderUtil::custom_orders_table_usage_is_enabled();
+	}
+
+	/**
+	 * Get the id (presume order id) from the URL.
+	 *
+	 * @example `wp-admin/admin.php?page=wc-orders&action=edit&id=123` returns 123.
+	 * @example `wp-admin/edit.php?post_type=wc-order&post=321` returns 321.
+	 *
+	 * phpcs:disable WordPress.Security.NonceVerification.Recommended
+	 */
+	protected function get_order_id(): ?int {
+		if ( isset( $_GET['id'] ) ) {
+			return absint( $_GET['id'] );
+		}
+
+		if ( isset( $_GET['post'] ) ) {
+			return absint( $_GET['post'] );
+		}
+
+		return null;
+	}
+
+	/**
 	 * Register the Bitcoin order details metabox on shop_order admin edit view.
 	 *
 	 * @hooked add_meta_boxes
@@ -43,24 +74,34 @@ class Admin_Order_UI {
 	 */
 	public function register_address_transactions_meta_box(): void {
 
-		/** @var WP_Post $post */
-		global $post;
+		$order_id = $this->get_order_id();
 
-		if ( 'shop_order' !== $post->post_type ) {
+		if ( is_null( $order_id ) ) {
 			return;
 		}
-
-		$order_id = $post->ID;
 
 		if ( ! $this->api->is_order_has_bitcoin_gateway( $order_id ) ) {
 			return;
 		}
 
+		/**
+		 * Get the correct `screen` name/id for the meta box.
+		 *
+		 * WooCommerce with HPOS no longer uses the standard WordPress `wp-admin/edit.php?...` page.
+		 *
+		 * @see OrderUtil::custom_orders_table_usage_is_enabled()
+		 *
+		 * @var string $screen 'woocommerce_page_wc-orders'|'shop_order'.
+		 */
+		$screen = function_exists( 'wc_get_page_screen_id' )
+			? wc_get_page_screen_id( 'shop-order' )
+			: 'shop_order';
+
 		add_meta_box(
 			'bh-wp-bitcoin-gateway',
-			'Bitcoin',
+			'Bitcoin', // TODO: translate.
 			array( $this, 'print_address_transactions_metabox' ),
-			'shop_order',
+			$screen,
 			'normal',
 			'core'
 		);
@@ -74,22 +115,22 @@ class Admin_Order_UI {
 	 *
 	 * @see Admin_Order_UI::register_address_transactions_meta_box();
 	 *
-	 * @param WP_Post $post The post this edit page is running for.
+	 * @param WP_Post|WC_Order $post The post this edit page is running for.
 	 */
-	public function print_address_transactions_metabox( WP_Post $post ): void {
-
-		$order_id = $post->ID;
-
-		if ( ! $this->api->is_order_has_bitcoin_gateway( $order_id ) ) {
-			return;
-		}
+	public function print_address_transactions_metabox( $post ): void {
 
 		/**
 		 * This is almost sure to be a valid order object, since this only runs on the order page.
 		 *
 		 * @var WC_Order $order
 		 */
-		$order = wc_get_order( $order_id );
+		$order = $post instanceof WP_Post ? wc_get_order( $post->ID ) : $post;
+
+		$order_id = $order->get_id();
+
+		if ( ! $this->api->is_order_has_bitcoin_gateway( $order_id ) ) {
+			return;
+		}
 
 		// Once the order has been paid, no longer poll for new transactions, unless manually pressing refresh.
 		$refresh = ! $order->is_paid();

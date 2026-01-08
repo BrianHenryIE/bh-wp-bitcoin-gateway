@@ -1,5 +1,7 @@
 <?php
 /**
+ * Transaction is stored as a json array in post-content, deserialized using JsonMapper.
+ *
  * Meta keys used when saving Bitcoin_Transaction as a WP_Post.
  *
  * @package brianhenryie/bh-wp-bitcoin-gateway
@@ -18,11 +20,6 @@ interface Bitcoin_Transaction_WP_Post_Interface {
 	const string POST_TYPE = 'bh-bitcoin-tx';
 
 	const string BLOCK_HEIGHT_META_KEY = 'bitcoin_transaction_block_height';
-
-	/**
-	 * TODO: What is "value" here? Does "value" only make sense in context of a specific Bitcoin_Address?
-	 */
-	const string VALUE_META_KEY = 'value';
 
 	const string BLOCK_DATETIME_META_KEY = 'blockchain_datetime';
 

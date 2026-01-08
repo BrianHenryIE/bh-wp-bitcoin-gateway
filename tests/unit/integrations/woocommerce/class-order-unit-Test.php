@@ -26,6 +26,6 @@ class Order_Unit_Test extends \Codeception\Test\Unit {
 	 * TODO: Find a better meta key.
 	 */
 	public function test_verify_const(): void {
-		$this->assertEquals( 'bh_wp_bitcoin_gateway_address', Order::BITCOIN_ADDRESS_META_KEY );
+		$this->assertEquals( 'bh_wp_bitcoin_gateway_payment_address', Order::BITCOIN_ADDRESS_META_KEY );
 	}
 }

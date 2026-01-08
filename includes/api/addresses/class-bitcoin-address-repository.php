@@ -33,19 +33,6 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 	 */
 	public function get_post_id_for_address( string $address ): ?int {
 
-		$post_id = wp_cache_get( $address, Bitcoin_Address_WP_Post_Interface::POST_TYPE );
-
-		if ( is_numeric( $post_id ) ) {
-			return (int) $post_id;
-		}
-
-		/**
-		 * WordPress database object.
-		 *
-		 * TODO: Can this be replaced with a `get_posts()` call?
-		 *
-		 * @var wpdb $wpdb
-		 */
 		global $wpdb;
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
 		// @phpstan-ignore-next-line
@@ -58,6 +45,26 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 		}
 
 		return null;
+
+		// TODO: why does this not work?!
+
+		$posts = get_posts(
+			array(
+				'post_type'   => Bitcoin_Address_WP_Post_Interface::POST_TYPE,
+				'post_status' => 'any',
+				'post_title'  => $address, // post_name is slug which is indexed.
+			)
+		);
+
+		if ( empty( $posts ) ) {
+			return null;
+		}
+
+		if ( count( $posts ) > 1 ) {
+			throw new Exception( 'more than one wp_post found for bitcoin address ' . $address );
+		}
+
+		return $posts[0]->ID;
 	}
 
 	/**
@@ -72,6 +79,10 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 		return $this->bitcoin_address_factory->get_by_wp_post_id( $post_id );
 	}
 
+	public function refresh( Bitcoin_Address $address ): Bitcoin_Address {
+		return $this->bitcoin_address_factory->get_by_wp_post_id( $address->get_post_id() );
+	}
+
 	/**
 	 * @return Bitcoin_Address[]
 	 */
@@ -80,6 +91,25 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 			new Bitcoin_Address_Query(
 				status: Bitcoin_Address_Status::ASSIGNED,
 				numberposts: 200,
+			)
+		);
+	}
+
+	/**
+	 * Gets previously saved addresses which have at least once been checked and see to be unused.
+	 *
+	 * It may be the case that they have been used in the meantime.
+	 *
+	 * @return Bitcoin_Address[]
+	 */
+	public function get_unused_bitcoin_addresses( ?Bitcoin_Wallet $wallet = null ): array {
+		return $this->get_addresses_query(
+			new Bitcoin_Address_Query(
+				wallet_wp_post_parent_id: $wallet?->get_post_id(),
+				status: Bitcoin_Address_Status::UNUSED,
+				numberposts: 200,
+				orderby: 'post_modified',
+				order_direction: 'ASC',
 			)
 		);
 	}
@@ -193,6 +223,7 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 	 *
 	 * TODO: Throw an exception if an invalid status is set.
 	 *
+	 * @param Bitcoin_Address        $address The address to update.
 	 * @param Bitcoin_Address_Status $status Status to assign.
 	 */
 	public function set_status(

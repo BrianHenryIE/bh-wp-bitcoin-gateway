@@ -26,16 +26,10 @@ class Bitcoin_Gateway_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 		$GLOBALS['bh_wp_bitcoin_gateway'] = $this->makeEmpty(
 			API_WooCommerce_Interface::class,
 			array(
-				'generate_new_wallet'               => Expected::once(
+				'generate_new_wallet' => Expected::once(
 					function ( string $xpub_after, ?string $gateway_id = null ) {
 						$mock_wallet = \Codeception\Stub::makeEmpty( Bitcoin_Wallet::class );
 						return new Wallet_Generation_Result( $mock_wallet, array(), array() );
-					}
-				),
-				'generate_new_addresses_for_wallet' => Expected::once(
-					function ( $wallet, int $generate_count ): Addresses_Generation_Result {
-						assert( 2 === $generate_count );
-						return $this->createMock( Addresses_Generation_Result::class );
 					}
 				),
 			)
@@ -50,7 +44,6 @@ class Bitcoin_Gateway_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 
 		$sut->process_admin_options();
 	}
-
 
 	/**
 	 * @covers ::process_admin_options

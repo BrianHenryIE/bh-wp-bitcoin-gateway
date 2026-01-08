@@ -10,7 +10,9 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Addresses_Generation_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Check_Assigned_Addresses_For_Transactions_Result;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Ensure_Unused_Addresses_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Update_Address_Transactions_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet_Generation_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Currency;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
@@ -75,15 +77,25 @@ interface API_Interface {
 	public function generate_new_addresses_for_wallet( Bitcoin_Wallet $wallet, int $generate_count = 20 ): Addresses_Generation_Result;
 
 	/**
+	 * Like {@see self::generate_new_addresses_for_wallet()} but stops when the number specified is reached, distinct
+	 * from always adding that many more.
+	 *
+	 * @param int $required_count Ensure there are this many unused addresses for the wallet; default to one.
+	 *
+	 * @return array<string, Ensure_Unused_Addresses_Result>
+	 */
+	public function ensure_unused_addresses( int $required_count = 2 ): array;
+
+	public function ensure_unused_addresses_for_wallet( Bitcoin_Wallet $wallet, int $required_count = 2 ): Ensure_Unused_Addresses_Result;
+
+	/**
 	 * Get transactions for an address object, with number of confirmations for each, and show which are new or updated.
 	 *
 	 * @used-by CLI::check_transactions()
 	 *
 	 * @param Bitcoin_Address $address Address object for existing saved address (i.e. this doesn't work for arbitrary addresses).
-	 *
-	 * @return array{address:Bitcoin_Address, transactions:array<string, Transaction_Interface>, updated:bool, updates:array{new_transactions:array<string, array<Transaction_Interface>>, new_confirmations:array<string, array<Transaction_Interface>>}, previous_transactions:array<string, array<Transaction_Interface>>|null}
 	 */
-	public function update_address_transactions( Bitcoin_Address $address ): array;
+	public function update_address_transactions( Bitcoin_Address $address ): Update_Address_Transactions_Result;
 
 	/**
 	 * Validate addresses have not been used before by checking for transactions.

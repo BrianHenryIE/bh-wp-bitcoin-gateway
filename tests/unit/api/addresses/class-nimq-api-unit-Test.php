@@ -15,7 +15,7 @@ class Nimq_API_Unit_Test extends \Codeception\Test\Unit {
 	 */
 	public function test_generate_addresses_xpub_1(): void {
 
-		if ( ! is_string( $_ENV['XPUB'] ) || ! is_string( $_ENV['XPUB_DERIVED_1'] ) ) {
+		if ( ! isset( $_ENV['XPUB'], $_ENV['XPUB_DERIVED_1'] ) || ! is_string( $_ENV['XPUB'] ) || ! is_string( $_ENV['XPUB_DERIVED_1'] ) ) {
 			$this->markTestSkipped( '.env.secret is probably not configured' );
 		}
 
@@ -36,7 +36,7 @@ class Nimq_API_Unit_Test extends \Codeception\Test\Unit {
 	 */
 	public function test_generate_addresses_xpub_10(): void {
 
-		if ( ! is_string( $_ENV['XPUB'] ) || ! is_string( $_ENV['XPUB_DERIVED_10'] ) ) {
+		if ( ! isset( $_ENV['XPUB'], $_ENV['XPUB_DERIVED_10'] ) || ! is_string( $_ENV['XPUB'] ) || ! is_string( $_ENV['XPUB_DERIVED_10'] ) ) {
 			$this->markTestSkipped( '.env.secret is probably not configured' );
 		}
 
@@ -57,7 +57,7 @@ class Nimq_API_Unit_Test extends \Codeception\Test\Unit {
 	 */
 	public function test_generate_addresses_zpub_1(): void {
 
-		if ( ! is_string( $_ENV['ZPUB'] ) || ! is_string( $_ENV['ZPUB_DERIVED_1'] ) ) {
+		if ( ! isset( $_ENV['ZPUB'], $_ENV['ZPUB_DERIVED_1'] ) || ! is_string( $_ENV['ZPUB'] ) || ! is_string( $_ENV['ZPUB_DERIVED_1'] ) ) {
 			$this->markTestSkipped( '.env.secret is probably not configured' );
 		}
 
@@ -79,7 +79,7 @@ class Nimq_API_Unit_Test extends \Codeception\Test\Unit {
 	 */
 	public function test_generate_addresses_zpub_10(): void {
 
-		if ( ! is_string( $_ENV['ZPUB'] ) || ! is_string( $_ENV['ZPUB_DERIVED_10'] ) ) {
+		if ( ! isset( $_ENV['ZPUB'], $_ENV['ZPUB_DERIVED_10'] ) || ! is_string( $_ENV['ZPUB'] ) || ! is_string( $_ENV['ZPUB_DERIVED_10'] ) ) {
 			$this->markTestSkipped( '.env.secret is probably not configured' );
 		}
 

@@ -3,10 +3,13 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\BlockchainInfo\BlockchainInfoApi;
 use BrianHenryIE\WP_Bitcoin_Gateway\BlockchainInfo\Model\RawAddress;
+use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\Enums\TextNotation;
+use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\JsonMapperFactory;
+use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\Middleware\CaseConversion;
 use Codeception\Stub\Expected;
-use JsonMapper\JsonMapperFactory;
 
 /**
  * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain\Blockchain_Info_API
@@ -14,10 +17,11 @@ use JsonMapper\JsonMapperFactory;
 class Blockchain_Info_API_Unit_Test extends \Codeception\Test\Unit {
 
 	/**
-	 * @covers ::get_received_by_address
 	 * @covers ::__construct
 	 */
 	public function test_get_received_by_address(): void {
+
+		$this->markTestSkipped( 'old test – new we only fetch transactions and calculate the amount received based on the desired number of confirmations' );
 
 		$logger = new ColorLogger();
 
@@ -39,9 +43,10 @@ class Blockchain_Info_API_Unit_Test extends \Codeception\Test\Unit {
 	}
 
 	/**
-	 * @covers ::get_address_balance
 	 */
 	public function test_get_address_balance(): void {
+
+		$this->markTestSkipped( 'old test – new we only fetch transactions and calculate the amount received based on the desired number of confirmations' );
 
 		$logger = new ColorLogger();
 
@@ -73,8 +78,8 @@ class Blockchain_Info_API_Unit_Test extends \Codeception\Test\Unit {
 
 		$logger = new ColorLogger();
 
-		$mapper = ( new JsonMapperFactory() )->bestFit();
-		// $mapper->push( new CaseConversion( TextNotation::UNDERSCORE(), TextNotation::CAMEL_CASE() ) );
+		$mapper = new JsonMapperFactory()->bestFit();
+		$mapper->push( new CaseConversion( TextNotation::UNDERSCORE(), TextNotation::CAMEL_CASE() ) );
 		$body        = json_encode(
 			(object) array(
 				'hash160'        => '05bf3a3aea6335a3949c0a351ff3afcba884e125',
@@ -339,9 +344,21 @@ class Blockchain_Info_API_Unit_Test extends \Codeception\Test\Unit {
 
 		$result = $sut->get_transactions_received( $address );
 
+		/** @var Blockchain_Info_Api_Transaction_Adapter&Transaction_Interface $first */
 		$first = array_shift( $result );
 
-		$this->assertEquals( '0.00002613', (string) $first?->get_value( $address )->getAmount() );
-		// $this->assertEquals( '0.00047971', (string) $first->get_value( $address )->getAmount() );
+		// From the dummy data: first transaction has value 2613 satoshis = 0.00002613 BTC
+		$expected_amount = '0.00002613';
+
+		// Get the value from vouts that match our address
+		$actual_amount = null;
+		foreach ( $first->get_v_out() as $vout ) {
+			if ( $address === $vout->scriptpubkey_address ) {
+				$actual_amount = (string) $vout->value->getAmount();
+				break;
+			}
+		}
+
+		$this->assertEquals( $expected_amount, $actual_amount );
 	}
 }

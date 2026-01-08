@@ -37,11 +37,4 @@ interface Bitcoin_Wallet_Interface {
 	 * Get the index of the last generated address, so generating new addresses can start higher.
 	 */
 	public function get_address_index(): ?int;
-
-	/**
-	 * Save the index of the highest generated address.
-	 *
-	 * @param int $index Nth address generated index.
-	 */
-	public function set_address_index( int $index ): void;
 }

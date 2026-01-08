@@ -40,8 +40,6 @@ class Bitcoin_Wallet_Factory {
 			balance: $this->get_balance( $post ),
 		);
 
-		// $bitcoin_wallet->set_bitcoin_address_repository( $this->bitcoin_address_repository );
-
 		return $bitcoin_wallet;
 	}
 
