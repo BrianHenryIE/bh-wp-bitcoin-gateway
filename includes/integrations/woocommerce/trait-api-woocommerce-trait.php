@@ -183,7 +183,7 @@ trait API_WooCommerce_Trait {
 	}
 
 	/**
-	 * Check do we have at least one address already generated and ready to use.
+	 * Check do we have at least one address already generated and ready to use. Does not generate addresses.
 	 *
 	 * @param Bitcoin_Gateway $gateway The gateway id the address is for.
 	 *
@@ -193,8 +193,13 @@ trait API_WooCommerce_Trait {
 	 * @throws Exception
 	 */
 	public function is_fresh_address_available_for_gateway( Bitcoin_Gateway $gateway ): bool {
-		// TODO: cache this.
-		return count( $this->get_fresh_addresses_for_gateway( $gateway ) ) > 0;
+
+		$wallet           = $this->bitcoin_wallet_repository->get_by_xpub( $gateway->get_xpub() );
+		$unused_addresses = $this->bitcoin_address_repository->get_unused_bitcoin_addresses( $wallet );
+
+		// TODO: maybe schedule a job to find an unused address.
+
+		return count( $unused_addresses ) > 0;
 	}
 
 	/**
