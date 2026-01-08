@@ -354,6 +354,9 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 			$new_address_string = $this->generate_address_api->generate_address( $wallet->get_xpub(), $address_index );
 
 			if ( ! is_null( $this->bitcoin_address_repository->get_post_id_for_address( $new_address_string ) ) ) {
+				// Although inefficient to run this inside the loop, overall, searching past the known index could cause a PHP timeout.
+				// (emphasizing that this should be run as a scheduled task)
+				$this->bitcoin_wallet_repository->set_highest_address_index( $wallet, $address_index );
 				continue;
 			}
 
