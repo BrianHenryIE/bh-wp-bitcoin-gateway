@@ -37,6 +37,9 @@ class Bitcoin_Address_Factory {
 	 */
 	public function get_by_wp_post( WP_Post $post ): Bitcoin_Address {
 
+		/** @var array<array|bool|float|int|resource|string|null|mixed> $all_post_meta */
+		// TODO: $all_post_meta = get_post_meta( $post->ID );
+
 		$bitcoin_address = new Bitcoin_Address(
 			post_id: $post->ID,
 			wallet_parent_post_id: $post->post_parent,

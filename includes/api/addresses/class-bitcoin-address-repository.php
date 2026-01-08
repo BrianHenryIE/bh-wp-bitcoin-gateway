@@ -33,19 +33,6 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 	 */
 	public function get_post_id_for_address( string $address ): ?int {
 
-		$post_id = wp_cache_get( $address, Bitcoin_Address_WP_Post_Interface::POST_TYPE );
-
-		if ( is_numeric( $post_id ) ) {
-			return (int) $post_id;
-		}
-
-		/**
-		 * WordPress database object.
-		 *
-		 * TODO: Can this be replaced with a `get_posts()` call?
-		 *
-		 * @var wpdb $wpdb
-		 */
 		global $wpdb;
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
 		// @phpstan-ignore-next-line
@@ -58,6 +45,26 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 		}
 
 		return null;
+
+		// TODO: why does this not work?!
+
+		$posts = get_posts(
+			array(
+				'post_type'   => Bitcoin_Address_WP_Post_Interface::POST_TYPE,
+				'post_status' => 'any',
+				'post_title'  => $address, // post_name is slug which is indexed.
+			)
+		);
+
+		if ( empty( $posts ) ) {
+			return null;
+		}
+
+		if ( count( $posts ) > 1 ) {
+			throw new Exception( 'more than one wp_post found for bitcoin address ' . $address );
+		}
+
+		return $posts[0]->ID;
 	}
 
 	/**
@@ -95,9 +102,10 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 	 *
 	 * @return Bitcoin_Address[]
 	 */
-	public function get_unused_bitcoin_addresses(): array {
+	public function get_unused_bitcoin_addresses( ?Bitcoin_Wallet $wallet = null ): array {
 		return $this->get_addresses_query(
 			new Bitcoin_Address_Query(
+				wallet_wp_post_parent_id: $wallet?->get_post_id(),
 				status: Bitcoin_Address_Status::UNUSED,
 				numberposts: 200,
 				orderby: 'post_modified',
