@@ -6,7 +6,7 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain\Rate_Limit_Exception;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction;
 
 interface Blockchain_API_Interface {
 
@@ -22,7 +22,7 @@ interface Blockchain_API_Interface {
 	 *
 	 * @param string $btc_address The payment address to check.
 	 *
-	 * @return array<string, Transaction_Interface> Txid, data.
+	 * @return array<string, Transaction> Txid, data.
 	 *
 	 * @throws Rate_Limit_Exception
 	 */

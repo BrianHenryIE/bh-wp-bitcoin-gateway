@@ -21,6 +21,9 @@ use WP_Mock;
 
 class Transaction_Adapters_Unit_Test extends \Codeception\Test\Unit {
 
+	/**
+	 * @return array<array{0:class-string, 1:string, 2:string}>
+	 */
 	public static function all_adapters_match_data_provider(): array {
 
 		return array(
@@ -42,9 +45,9 @@ class Transaction_Adapters_Unit_Test extends \Codeception\Test\Unit {
 	 *
 	 * @dataProvider all_adapters_match_data_provider
 	 *
-	 * @param string $adapter_class The `Transaction_Interface` adapter for the API.
-	 * @param string $transaction_class The class (or "array") to map the `$json` to.
-	 * @param string $json HTTP API response JSON.
+	 * @param string              $adapter_class The `Transaction_Interface` adapter for the API.
+	 * @param class-string|string $transaction_class The class (or "array") to map the `$json` to.
+	 * @param string              $json HTTP API response JSON.
 	 */
 	public function test_all_adapters_match( string $adapter_class, string $transaction_class, string $json ): void {
 
@@ -55,23 +58,25 @@ class Transaction_Adapters_Unit_Test extends \Codeception\Test\Unit {
 		if ( 'array' === $transaction_class ) {
 			$transaction = json_decode( $json, true );
 		} else {
-			$factoryRegistry = new FactoryRegistry();
-			$mapper          = JsonMapperBuilder::new()->withPropertyMapper( new PropertyMapper( $factoryRegistry ) )->withAttributesMiddleware()->withDocBlockAnnotationsMiddleware()->withTypedPropertiesMiddleware()->withNamespaceResolverMiddleware()->withObjectConstructorMiddleware( $factoryRegistry )->build();
+			$factory_registry = new FactoryRegistry();
+			$mapper           = JsonMapperBuilder::new()->withPropertyMapper( new PropertyMapper( $factory_registry ) )->withAttributesMiddleware()->withDocBlockAnnotationsMiddleware()->withTypedPropertiesMiddleware()->withNamespaceResolverMiddleware()->withObjectConstructorMiddleware( $factory_registry )->build();
 			$mapper->push( new CaseConversion( TextNotation::UNDERSCORE(), TextNotation::CAMEL_CASE() ) );
 			$mapper->push( new AssociativeArrayMiddleware() );
 			$transaction = $mapper->mapToClassFromString( $json, $transaction_class );
 		}
 
-		/** @var Transaction_Interface $sut */
-		$sut = new $adapter_class( $transaction );
+		/** @var Blockchain_Info_Api_Transaction_Adapter|BlockStream_Info_API_Transaction_Adapter $sut */
+		$sut = new $adapter_class();
+		/** @var Transaction_Interface $result */
+		$result = $sut->adapt( $transaction );
 
-		$this->assertEquals( '44032b210862cb2bdf549ac95c7d1a40e7fc2f81b42948047f818029a7f95c3b', $sut->get_txid() );
-		$this->assertEquals( 689299, $sut->get_block_height() );
-		$this->assertEquals( new DateTimeImmutable()->setDate( 2021, 07, 01 )->setTime( 10, 25, 02 ), $sut->get_block_time() );
-		$this->assertEquals( 1, $sut->get_version() );
+		$this->assertEquals( '44032b210862cb2bdf549ac95c7d1a40e7fc2f81b42948047f818029a7f95c3b', $result->get_txid() );
+		$this->assertEquals( 689299, $result->get_block_height() );
+		$this->assertEquals( new DateTimeImmutable()->setDate( 2021, 07, 01 )->setTime( 10, 25, 02 ), $result->get_block_time() );
+		$this->assertEquals( 1, $result->get_version() );
 
-		$this->assertCount( 2, $sut->get_v_in() );
-		$v_in = $sut->get_v_in()[0];
+		$this->assertCount( 2, $result->get_v_in() );
+		$v_in = $result->get_v_in()[0];
 		$this->assertEquals( 4294967295, $v_in->sequence );
 		$this->assertEquals( '2200204db0a225378ec24fde1ebf5f8f423893448aa9d1fae079b5d741f07795c9a798', $v_in->scriptsig );
 		$this->assertEquals( '3KKUGZk4yU9QfZZA9y9K5MkwBX7Rozaaum', $v_in->address );
@@ -79,12 +84,9 @@ class Transaction_Adapters_Unit_Test extends \Codeception\Test\Unit {
 		$this->assertEquals( Money::of( 0.0027, 'BTC' ), $v_in->value );
 		$this->assertEquals( 1, $v_in->prev_out_n );
 
-
-		$this->assertCount( 2, $sut->get_v_out() );
-		$v_out = $sut->get_v_out()[0];
+		$this->assertCount( 2, $result->get_v_out() );
+		$v_out = $result->get_v_out()[0];
 		$this->assertEquals( Money::of( 0.00396122, 'BTC' ), $v_out->value );
 		$this->assertEquals( '1H9jHs2V9Qbt1CmohUm2xGn58C3ukRSG9D', $v_out->scriptpubkey_address );
-
 	}
-
 }

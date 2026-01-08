@@ -56,9 +56,11 @@ class Blockchain_Info_Api implements Blockchain_API_Interface, LoggerAwareInterf
 	public function get_transactions_received( string $btc_address ): array {
 		$raw_address = $this->api->getRawAddr( $btc_address );
 
+		$adapter = new Blockchain_Info_Api_Transaction_Adapter();
+
 		// TODO: check this returns the array indexed by the txid.
 		return array_map(
-			fn( Transaction $blockchain_transaction ) => new Blockchain_Info_Api_Transaction_Adapter( $blockchain_transaction ),
+			fn( Transaction $blockchain_transaction ) => $adapter->adapt( $blockchain_transaction ),
 			$raw_address->getTxs()
 		);
 	}

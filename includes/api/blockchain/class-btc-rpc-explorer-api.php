@@ -65,8 +65,10 @@ class Btc_Rpc_Explorer_Api implements Blockchain_API_Interface, LoggerAwareInter
 			$address_summary->txHistory->txIds
 		);
 
+		$adapter = new Btc_Rpc_Explorer_Api_Transaction_Adapter();
+
 		return array_map(
-			fn( TXSummary $transaction ) => new Btc_Rpc_Explorer_Api_Transaction_Adapter(
+			fn( TXSummary $transaction ) => $adapter->adapt(
 				transaction: $transaction,
 				block_height: $address_summary->txHistory->blockHeightsByTxId[ $transaction->txId ]
 			),

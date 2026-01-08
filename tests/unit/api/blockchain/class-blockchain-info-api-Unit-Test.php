@@ -6,8 +6,10 @@ use BrianHenryIE\ColorLogger\ColorLogger;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\BlockchainInfo\BlockchainInfoApi;
 use BrianHenryIE\WP_Bitcoin_Gateway\BlockchainInfo\Model\RawAddress;
+use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\Enums\TextNotation;
+use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\JsonMapperFactory;
+use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\Middleware\CaseConversion;
 use Codeception\Stub\Expected;
-use JsonMapper\JsonMapperFactory;
 
 /**
  * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain\Blockchain_Info_API
@@ -76,8 +78,8 @@ class Blockchain_Info_API_Unit_Test extends \Codeception\Test\Unit {
 
 		$logger = new ColorLogger();
 
-		$mapper = ( new JsonMapperFactory() )->bestFit();
-		// $mapper->push( new CaseConversion( TextNotation::UNDERSCORE(), TextNotation::CAMEL_CASE() ) );
+		$mapper = new JsonMapperFactory()->bestFit();
+		$mapper->push( new CaseConversion( TextNotation::UNDERSCORE(), TextNotation::CAMEL_CASE() ) );
 		$body        = json_encode(
 			(object) array(
 				'hash160'        => '05bf3a3aea6335a3949c0a351ff3afcba884e125',

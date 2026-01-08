@@ -58,7 +58,7 @@ class Bitcoin_Address_Factory {
 				return is_numeric( $order_id_meta ) ? intval( $order_id_meta ) : null;
 			} )(),
 			tx_ids: ( function () use ( $post ): ?array {
-				/** @var array|null|mixed $tx_ids_meta */
+				/** @var array<int,string>|null|mixed $tx_ids_meta */
 				$tx_ids_meta = get_post_meta( $post->ID, Bitcoin_Address_WP_Post_Interface::TRANSACTIONS_META_KEY, true );
 				return is_array( $tx_ids_meta ) ? $tx_ids_meta : null;
 			} )(),

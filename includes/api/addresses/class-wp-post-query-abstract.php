@@ -67,6 +67,7 @@ abstract readonly class WP_Post_Query_Abstract {
 		return array(
 			'post_type',
 			'post_name',
+			'post_content',
 			'post_excerpt',
 			'post_title',
 			'post_status',
@@ -118,6 +119,8 @@ abstract readonly class WP_Post_Query_Abstract {
 			// Remove empty values. TODO: should this check `null` and allow empty strings?
 			array_filter( $wp_post_fields )
 		);
+
+		// TODO: if DateTimeInterface serialize as something legible.
 
 		return $wp_post_fields;
 	}

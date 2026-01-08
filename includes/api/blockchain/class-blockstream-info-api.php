@@ -81,6 +81,8 @@ class Blockstream_Info_API implements Blockchain_API_Interface, LoggerAwareInter
 		 */
 		$blockstream_transactions = json_decode( $request_response['body'], true, 512, JSON_THROW_ON_ERROR );
 
+		$adapter = new BlockStream_Info_API_Transaction_Adapter();
+
 		/**
 		 * `block_time` is in unix-time.
 		 *
@@ -89,7 +91,7 @@ class Blockstream_Info_API implements Blockchain_API_Interface, LoggerAwareInter
 		 * @var Transaction_Interface[] $transactions
 		 */
 		$transactions = array_map(
-			fn( array $blockstream_transaction ) => new BlockStream_Info_API_Transaction_Adapter( $blockstream_transaction ),
+			fn( array $blockstream_transaction ) => $adapter->adapt( $blockstream_transaction ),
 			$blockstream_transactions
 		);
 

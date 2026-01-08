@@ -11,6 +11,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Status;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Transaction_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet_Repository;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Currency;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
@@ -76,8 +77,8 @@ class API_Unit_Test extends \Codeception\Test\Unit {
 			$address,
 		);
 
-		$updated_transaction = $this->makeEmpty(
-			Transaction_Interface::class,
+		$updated_transaction = $this->make(
+			Transaction::class,
 			array(
 				'get_block_time'   => new \DateTimeImmutable( 'now' ),
 				'get_block_height' => 123,
@@ -127,8 +128,8 @@ class API_Unit_Test extends \Codeception\Test\Unit {
 	 */
 	public function test_update_address_transactions(): void {
 
-		$transaction = self::makeEmpty(
-			Transaction_Interface::class,
+		$transaction = self::make(
+			Transaction::class,
 			array(
 				'get_txid'         => 'transaction_from_api',
 				'get_block_height' => 123,
@@ -148,7 +149,7 @@ class API_Unit_Test extends \Codeception\Test\Unit {
 			)
 		);
 
-		$bitcoin_transaction = $this->makeEmpty(
+		$bitcoin_transaction = $this->make(
 			Bitcoin_Transaction::class,
 			array(
 				'get_txid'    => 'transaction_from_wp_post',
