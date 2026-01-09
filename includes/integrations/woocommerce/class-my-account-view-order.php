@@ -21,23 +21,19 @@ use WC_Order;
 class My_Account_View_Order {
 	use LoggerAwareTrait;
 
-	/**
-	 * Check is it a Bitcoin order.
-	 * Get the order details.
-	 */
-	protected API_Interface $api;
-
-	const TEMPLATE_NAME = 'myaccount/view-order-bitcoin-instructions-status.php';
+	const string TEMPLATE_NAME = 'myaccount/view-order-bitcoin-instructions-status.php';
 
 	/**
 	 * Constructor
 	 *
-	 * @param API_Interface   $api The main plugin functions.
-	 * @param LoggerInterface $logger A PSR logger.
+	 * @param API_WooCommerce_Interface $api Check is it a Bitcoin order; get the order details.
+	 * @param LoggerInterface           $logger A PSR logger.
 	 */
-	public function __construct( API_Interface $api, LoggerInterface $logger ) {
+	public function __construct(
+		protected API_WooCommerce_Interface $api,
+		LoggerInterface $logger
+	) {
 		$this->setLogger( $logger );
-		$this->api = $api;
 	}
 
 	/**

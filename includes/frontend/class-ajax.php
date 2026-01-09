@@ -2,6 +2,8 @@
 /**
  * AJAX endpoint for fetching order information.
  *
+ * TODO: Move this to /integrations/woocommerce.
+ *
  * Used on Thank You and my-account screens to query for transaction updates.
  *
  * @package    brianhenryie/bh-wp-bitcoin-gateway
@@ -10,6 +12,7 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Frontend;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 
@@ -20,21 +23,16 @@ class AJAX {
 	use LoggerAwareTrait;
 
 	/**
-	 * Main class to get order information.
-	 *
-	 * @uses API_Interface::get_formatted_order_details()
-	 */
-	protected API_Interface $api;
-
-	/**
 	 * Constructor
 	 *
-	 * @param API_Interface   $api The main plugin functions.
+	 * @param API_WooCommerce_Interface   $api The main plugin functions, to get order information.
 	 * @param LoggerInterface $logger A PSR logger.
 	 */
-	public function __construct( API_Interface $api, LoggerInterface $logger ) {
+	public function __construct(
+		protected API_WooCommerce_Interface $api,
+		LoggerInterface $logger
+	) {
 		$this->setLogger( $logger );
-		$this->api = $api;
 	}
 
 	/**
