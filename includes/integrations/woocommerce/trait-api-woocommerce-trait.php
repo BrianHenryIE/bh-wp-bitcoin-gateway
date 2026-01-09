@@ -196,6 +196,10 @@ trait API_WooCommerce_Trait {
 	 */
 	public function is_fresh_address_available_for_gateway( Bitcoin_Gateway $gateway ): bool {
 
+		if ( is_null( $gateway->get_xpub() ) ) {
+			return false;
+		}
+
 		$wallet           = $this->bitcoin_wallet_repository->get_by_xpub( $gateway->get_xpub() );
 		$unused_addresses = $this->bitcoin_address_repository->get_unused_bitcoin_addresses( $wallet );
 
