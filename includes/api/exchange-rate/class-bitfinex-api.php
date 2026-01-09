@@ -5,6 +5,8 @@
  *
  * @see https://api-pub.bitfinex.com/v2/conf/pub:list:pair:exchange
  *
+ * Obviously, this should be spun into its own Composer package and use JsonMapper.
+ *
  * @package    brianhenryie/bh-wp-bitcoin-gateway
  */
 
@@ -45,7 +47,10 @@ class Bitfinex_API implements Exchange_Rate_API_Interface {
 			throw new BH_WP_Bitcoin_Gateway_Exception();
 		}
 
-		$reponse_body = json_decode( $request_response['body'], true );
+		/**
+		 * @var array{0:array{0:string,1:int,2:float,3:int,4:float,5:int,6:float,7:int,8:float,9:int,10:int}} $response_body
+		 */
+		$response_body = json_decode( $request_response['body'], true );
 
 		// Multiple rates can be queried at the same time.
 
@@ -62,7 +67,7 @@ class Bitfinex_API implements Exchange_Rate_API_Interface {
 		 * HIGH                  float  Daily high,
 		 * LOW                   float  Daily low
 		 */
-		$trading_pair_response = $reponse_body[0];
+		$trading_pair_response = $response_body[0];
 
 		$exchange_rate = $trading_pair_response[7];
 
