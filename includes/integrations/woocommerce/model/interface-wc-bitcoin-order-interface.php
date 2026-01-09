@@ -29,4 +29,6 @@ interface WC_Bitcoin_Order_Interface {
 	public function set_amount_received( Money $updated_confirmed_value ): void;
 
 	public function set_last_checked_time( DateTimeInterface $last_checked_time ): void;
+
+	public function get_last_checked_time(): ?DateTimeInterface;
 }
