@@ -6,9 +6,11 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Math\BigNumber;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order_Interface;
 use WC_Order;
@@ -88,14 +90,13 @@ interface API_WooCommerce_Interface extends API_Interface {
 	 */
 	public function get_fresh_addresses_for_gateway( Bitcoin_Gateway $gateway ): array;
 
-
 	/**
 	 * Returns the array from `get_order_details()` with additional keys for printing in HTML/email.
 	 *
 	 * @param WC_Order $order The WooCommerce order.
 	 * @param bool     $refresh Should an API request be made to check for new transactions, or just use existing data.
 	 *
-	 * @return array<string, Transaction_Interface>
+	 * @return array<string, string|null|Money|BigNumber|array<Bitcoin_Transaction>>
 	 * @throws BH_WP_Bitcoin_Gateway_Exception When the order has no Bitcoin address.
 	 */
 	public function get_formatted_order_details( WC_Order $order, bool $refresh = true ): array;

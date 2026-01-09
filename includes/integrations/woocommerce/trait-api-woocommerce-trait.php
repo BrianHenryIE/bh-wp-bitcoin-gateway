@@ -7,8 +7,10 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Status;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Math\BigNumber;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order_Interface;
@@ -322,10 +324,10 @@ trait API_WooCommerce_Trait {
 	 * @param WC_Order $order The WooCommerce order object to update.
 	 * @param bool     $refresh Should saved order details be returned or remote APIs be queried.
 	 *
-	 * @return array<string, mixed>
-	 *
 	 * @uses \BrianHenryIE\WP_Bitcoin_Gateway\API_Interface::get_order_details()
 	 * @see  Details_Formatter
+	 *
+	 * @return array<string, string|null|Money|BigNumber|array<Bitcoin_Transaction>>
 	 *
 	 * @throws BH_WP_Bitcoin_Gateway_Exception
 	 */
