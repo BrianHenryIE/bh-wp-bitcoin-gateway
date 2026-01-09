@@ -23,20 +23,16 @@ class Email {
 	const TEMPLATE_NAME = 'emails/email-bitcoin-instructions-status.php';
 
 	/**
-	 * Check is the order a bitcoin order.
-	 * Get the order details.
-	 */
-	protected API_Interface $api;
-
-	/**
 	 * Constructor
 	 *
-	 * @param API_Interface   $api The main plugin functions.
-	 * @param LoggerInterface $logger A PSR logger.
+	 * @param API_WooCommerce_Interface $api The main plugin functions.
+	 * @param LoggerInterface           $logger A PSR logger.
 	 */
-	public function __construct( API_Interface $api, LoggerInterface $logger ) {
+	public function __construct(
+		protected API_WooCommerce_Interface $api,
+		LoggerInterface $logger
+	) {
 		$this->setLogger( $logger );
-		$this->api = $api;
 	}
 
 	/**
