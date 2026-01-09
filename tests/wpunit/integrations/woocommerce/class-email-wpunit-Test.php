@@ -3,8 +3,8 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\API;
 use Codeception\Stub\Expected;
-use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use WC_Order;
 
 /**
@@ -62,8 +62,8 @@ class Email_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	public function test_print_instructions_admin_return_early(): void {
 
 		$logger = new ColorLogger();
-		$api    = $this->makeEmpty(
-			API_Interface::class,
+		$api    = $this->make(
+			API::class,
 			array( 'is_bitcoin_gateway' => Expected::never() )
 		);
 
