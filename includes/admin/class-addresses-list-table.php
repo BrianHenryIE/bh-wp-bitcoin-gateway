@@ -17,6 +17,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Bitcoin_Gateway;
+use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Post_BH_Bitcoin_Address;
 use Exception;
 use WP_Post;
 
@@ -54,7 +55,16 @@ class Addresses_List_Table extends \WP_Posts_List_Table {
 		 * @var \WP_Post_Type $post_type_object
 		 */
 		$post_type_object = get_post_type_object( $post_type_name );
-		$this->api        = $post_type_object->plugin_objects['api'];
+
+		/**
+		 * TODO: we should be using the `wp_list_table_class_name` filter to pass this object.
+		 *
+		 * @see Post_BH_Bitcoin_Address::$plugin_objects
+		 *
+		 * @var API_Interface&API_WooCommerce_Interface $api
+		 */
+		$api       = $post_type_object->plugin_objects['api'];
+		$this->api = $api;
 
 		add_filter( 'post_row_actions', array( $this, 'edit_row_actions' ), 10, 2 );
 	}
