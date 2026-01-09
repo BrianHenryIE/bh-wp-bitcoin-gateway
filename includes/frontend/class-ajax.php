@@ -25,8 +25,8 @@ class AJAX {
 	/**
 	 * Constructor
 	 *
-	 * @param API_WooCommerce_Interface   $api The main plugin functions, to get order information.
-	 * @param LoggerInterface $logger A PSR logger.
+	 * @param API_WooCommerce_Interface $api The main plugin functions, to get order information.
+	 * @param LoggerInterface           $logger A PSR logger.
 	 */
 	public function __construct(
 		protected API_WooCommerce_Interface $api,

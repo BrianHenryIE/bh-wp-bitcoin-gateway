@@ -58,7 +58,7 @@ class Admin_Order_UI {
 			return absint( $_GET['id'] );
 		}
 
-		if ( isset( $_GET['post'] ) && is_numeric($_GET['post'] ) ) {
+		if ( isset( $_GET['post'] ) && is_numeric( $_GET['post'] ) ) {
 			return absint( $_GET['post'] );
 		}
 

@@ -183,7 +183,7 @@ class CLI extends WP_CLI_Command {
 
 			$result = $this->api->update_address_transactions( $bitcoin_address );
 
-			$is_updated = empty( $result->get_new_transactions());
+			$is_updated = empty( $result->get_new_transactions() );
 
 			// TODO: Check for WooCommerce active.
 
@@ -193,7 +193,7 @@ class CLI extends WP_CLI_Command {
 			);
 
 			if ( $is_updated ) {
-				$formatted['new_transactions']  = $result->get_new_transactions();
+				$formatted['new_transactions'] = $result->get_new_transactions();
 			}
 
 			$formatted['balance'] = $result->address->get_balance();

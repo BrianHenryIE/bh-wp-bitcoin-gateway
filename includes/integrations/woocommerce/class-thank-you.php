@@ -26,8 +26,8 @@ class Thank_You {
 	/**
 	 * Constructor
 	 *
-	 * @param API_WooCommerce_Interface   $api The main plugin functions.
-	 * @param LoggerInterface $logger A PSR logger.
+	 * @param API_WooCommerce_Interface $api The main plugin functions.
+	 * @param LoggerInterface           $logger A PSR logger.
 	 */
 	public function __construct(
 		protected API_WooCommerce_Interface $api,

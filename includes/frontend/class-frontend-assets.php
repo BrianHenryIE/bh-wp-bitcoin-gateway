@@ -25,9 +25,9 @@ class Frontend_Assets {
 	/**
 	 * Constructor
 	 *
-	 * @param API_WooCommerce_Interface      $api Check is the order a Bitcoin order; get the order details.
-	 * @param Settings_Interface $settings Get the plugin version for caching.
-	 * @param LoggerInterface    $logger A PSR logger.
+	 * @param API_WooCommerce_Interface $api Check is the order a Bitcoin order; get the order details.
+	 * @param Settings_Interface        $settings Get the plugin version for caching.
+	 * @param LoggerInterface           $logger A PSR logger.
 	 */
 	public function __construct(
 		protected API_WooCommerce_Interface $api,
