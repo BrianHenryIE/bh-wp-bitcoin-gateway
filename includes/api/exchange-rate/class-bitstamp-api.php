@@ -57,6 +57,10 @@ class Bitstamp_API implements Exchange_Rate_API_Interface {
 		 * ask       Lowest sell order.
 		 * timestamp Unix timestamp date and time.
 		 * open      First price of the day.
+		 *
+		 * // TODO: is `last` correct?
+		 *
+		 * @var array{timestamp:string, open:string, high:string, low:string, last:string, volume:string, vwap:string, bid:string, ask:string, side:string, open_24:string, percent_change_24:string, market_type:string} $response
 		 */
 		$response = json_decode( $request_response['body'], true );
 
