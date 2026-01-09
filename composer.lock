@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e3a2ed762e90f4d3742e467aadcfeb32",
+    "content-hash": "c2b2ee44a8c5c347f50c0d691e6d271b",
     "packages": [
         {
             "name": "alleyinteractive/wordpress-autoloader",
@@ -1441,16 +1441,16 @@
         },
         {
             "name": "nimiq/xpub",
-            "version": "1.4.2",
+            "version": "1.4.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/nimiq/php-xpub.git",
-                "reference": "31b7401db0c39c1cd8142345332a9aba8d36d74d"
+                "reference": "059835214c9f81595c41939500a59d5385fd2ff0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/nimiq/php-xpub/zipball/31b7401db0c39c1cd8142345332a9aba8d36d74d",
-                "reference": "31b7401db0c39c1cd8142345332a9aba8d36d74d",
+                "url": "https://api.github.com/repos/nimiq/php-xpub/zipball/059835214c9f81595c41939500a59d5385fd2ff0",
+                "reference": "059835214c9f81595c41939500a59d5385fd2ff0",
                 "shasum": ""
             },
             "require": {
@@ -1490,9 +1490,9 @@
             ],
             "support": {
                 "issues": "https://github.com/nimiq/php-xpub/issues",
-                "source": "https://github.com/nimiq/php-xpub/tree/1.4.2"
+                "source": "https://github.com/nimiq/php-xpub/tree/1.4.3"
             },
-            "time": "2025-12-17T08:29:01+00:00"
+            "time": "2026-01-05T10:52:50+00:00"
         },
         {
             "name": "paragonie/constant_time_encoding",
@@ -14608,6 +14608,24 @@
             },
             "type": "wordpress-plugin",
             "homepage": "https://wordpress.org/plugins/log-http-requests/"
+        },
+        {
+            "name": "wpackagist-plugin/query-monitor",
+            "version": "3.20.2",
+            "source": {
+                "type": "svn",
+                "url": "https://plugins.svn.wordpress.org/query-monitor/",
+                "reference": "tags/3.20.2"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://downloads.wordpress.org/plugin/query-monitor.3.20.2.zip"
+            },
+            "require": {
+                "composer/installers": "^1.0 || ^2.0"
+            },
+            "type": "wordpress-plugin",
+            "homepage": "https://wordpress.org/plugins/query-monitor/"
         },
         {
             "name": "wpackagist-plugin/woo-cancel-abandoned-order",
