@@ -57,6 +57,7 @@ trait API_WooCommerce_Trait {
 	 * @return array<string, Bitcoin_Gateway>
 	 */
 	public function get_bitcoin_gateways(): array {
+		// The second check here is because on the first page load after deleting a plugin, it is still in the active plugins list.
 		if ( ! is_plugin_active( 'woocommerce/woocommerce.php' ) || ! class_exists( WC_Payment_Gateways::class ) ) {
 			return array();
 		}
