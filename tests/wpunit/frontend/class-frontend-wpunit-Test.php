@@ -3,6 +3,7 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Frontend;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\API;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
 use Codeception\Stub\Expected;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
@@ -73,8 +74,8 @@ class Frontend_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 				'get_plugin_version' => Expected::never(),
 			)
 		);
-		$api      = $this->makeEmpty(
-			API_Interface::class,
+		$api      = $this->make(
+			API::class,
 			array( 'is_order_has_bitcoin_gateway' => Expected::never() )
 		);
 

@@ -3,6 +3,7 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Frontend;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\API;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
 use Codeception\Stub\Expected;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
@@ -94,7 +95,7 @@ class Frontend_Unit_Test extends \Codeception\Test\Unit {
 	public function test_enqueue_styles_not_on_other_pages(): void {
 
 		$logger   = new ColorLogger();
-		$api      = $this->makeEmpty( API_Interface::class );
+		$api      = $this->make( API::class );
 		$settings = $this->makeEmpty(
 			Settings_Interface::class,
 			array(
