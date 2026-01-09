@@ -50,7 +50,7 @@ class AJAX {
 			wp_send_json_error( array( 'message' => 'Bad/no nonce.' ), 400 );
 		}
 
-		if ( ! isset( $_POST['order_id'] ) ) {
+		if ( ! isset( $_POST['order_id'] ) || ! is_numeric( $_POST['order_id'] ) ) {
 			wp_send_json_error( array( 'message' => 'No order id provided.' ), 400 );
 		}
 
@@ -59,13 +59,11 @@ class AJAX {
 		$order = wc_get_order( $order_id );
 
 		if ( ! ( $order instanceof \WC_Order ) ) {
-			wp_send_json_error( array( 'message' => 'Invalid order id' ), 400 );
+			wp_send_json_error( array( 'message' => 'Invalid order id: ' . $order_id ), 400 );
 		}
 
 		// TODO: Include the order key in the AJAX request.
-		// if( $order->get_customer_id() !== get_current_user_id() && ! $order->key_is_valid( $key ) ) {
-		// wp_send_json_error( 'Not permitted', 401 );
-		// }
+		// Check `$order->get_customer_id() !== get_current_user_id()` and `$order->key_is_valid( $key )`.
 
 		$result = $this->api->get_formatted_order_details( $order, true );
 
