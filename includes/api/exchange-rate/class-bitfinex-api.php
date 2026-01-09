@@ -14,7 +14,6 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Exchange_Rate_API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Currency;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
-use Exception;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 
@@ -28,7 +27,7 @@ class Bitfinex_API implements Exchange_Rate_API_Interface {
 	/**
 	 * Fetch the current exchange from a remote API.
 	 *
-	 * @throws BH_WP_Bitcoin_Gateway_Exception when the request fails
+	 * @throws BH_WP_Bitcoin_Gateway_Exception when the request fails.
 	 */
 	public function get_exchange_rate( Currency $currency ): Money {
 
@@ -39,8 +38,7 @@ class Bitfinex_API implements Exchange_Rate_API_Interface {
 		$request_response = wp_remote_get( $url );
 
 		if ( is_wp_error( $request_response ) ) {
-			$error_message = $request_response->errors[ array_key_first( $request_response->errors ) ][0];
-			throw new BH_WP_Bitcoin_Gateway_Exception( $error_message );
+			throw new BH_WP_Bitcoin_Gateway_Exception( $request_response->get_error_message() );
 		}
 
 		if ( 200 !== $request_response['response']['code'] ) {
