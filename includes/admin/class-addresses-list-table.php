@@ -57,7 +57,6 @@ class Addresses_List_Table extends \WP_Posts_List_Table {
 		$post_type_object = get_post_type_object( $post_type_name );
 
 		/**
-		 * TODO: we should be using the `wp_list_table_class_name` filter to pass this object.
 		 *
 		 * @see Post_BH_Bitcoin_Address::$plugin_objects
 		 *
