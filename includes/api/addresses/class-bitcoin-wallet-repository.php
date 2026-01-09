@@ -59,7 +59,7 @@ class Bitcoin_Wallet_Repository extends WP_Post_Repository_Abstract {
 	 * @param int $post_id WordPress wp_posts ID.
 	 *
 	 * @return Bitcoin_Wallet
-	 * @throws Exception When the post_type of the post returned for the given post_id is not a Bitcoin_Wallet.
+	 * @throws BH_WP_Bitcoin_Gateway_Exception When the post_type of the post returned for the given post_id is not a Bitcoin_Wallet.
 	 */
 	public function get_by_wp_post_id( int $post_id ): Bitcoin_Wallet {
 		return $this->bitcoin_wallet_factory->get_by_wp_post_id( $post_id );
@@ -99,7 +99,7 @@ class Bitcoin_Wallet_Repository extends WP_Post_Repository_Abstract {
 	 * @param ?string $gateway_id The WC_Payment_Gateway the wallet is being used with.
 	 *
 	 * @return Bitcoin_Wallet The wp_posts saved wallet.
-	 * @throws Exception When `wp_insert_post()` fails.
+	 * @throws BH_WP_Bitcoin_Gateway_Exception When `wp_insert_post()` fails.
 	 */
 	public function save_new( string $master_public_key, ?string $gateway_id = null ): Bitcoin_Wallet {
 

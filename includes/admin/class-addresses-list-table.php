@@ -105,7 +105,7 @@ class Addresses_List_Table extends \WP_Posts_List_Table {
 	 * @param WP_Post $post The post the address information is stored under.
 	 *
 	 * @return Bitcoin_Address
-	 * @throws Exception When the post/post id does not match a bh-bitcoin-address cpt.
+	 * @throws BH_WP_Bitcoin_Gateway_Exception When the post/post id does not match a bh-bitcoin-address cpt.
 	 */
 	protected function get_bitcoin_address_object( WP_Post $post ): Bitcoin_Address {
 		$bitcoin_address_factory = new Bitcoin_Address_Factory();

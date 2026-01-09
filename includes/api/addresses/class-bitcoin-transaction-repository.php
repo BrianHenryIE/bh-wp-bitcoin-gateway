@@ -38,7 +38,7 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 	 *
 	 * @param int $post_id WordPress wp_posts ID.
 	 *
-	 * @throws Exception When the post_type of the post returned for the given post_id is not a Bitcoin_Transaction.
+	 * @throws BH_WP_Bitcoin_Gateway_Exception When the post_type of the post returned for the given post_id is not a Bitcoin_Transaction.
 	 */
 	public function get_by_post_id( int $post_id ): Bitcoin_Transaction {
 		return $this->bitcoin_transaction_factory->get_by_wp_post_id( $post_id );
@@ -79,7 +79,7 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 	 * @used-by API::get_saved_transactions() When displaying all addresses.
 	 *
 	 * @return null|array<int, Bitcoin_Transaction> Post_id:transaction object; where null suggests there was nothing saved before, and an empty array suggests it has been checked but no transactions had been seen.
-	 * @throws Exception
+	 * @throws BH_WP_Bitcoin_Gateway_Exception
 	 */
 	public function get_transactions_for_address(
 		Bitcoin_Address $address,
@@ -163,7 +163,7 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 	 *
 	 * @param Transaction $transaction A transaction from an API.
 	 *
-	 * @throws Exception When WordPress fails to create the wp_post.
+	 * @throws BH_WP_Bitcoin_Gateway_Exception When WordPress fails to create the wp_post.
 	 * @throws JsonException
 	 */
 	public function save_new(

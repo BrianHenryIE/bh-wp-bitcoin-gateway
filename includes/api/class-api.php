@@ -94,7 +94,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 	 *
 	 * @param Currency $currency
 	 *
-	 * @throws Exception
+	 * @throws BH_WP_Bitcoin_Gateway_Exception
 	 */
 	public function get_exchange_rate( Currency $currency ): ?Money {
 		$transient_name = 'bh_wp_bitcoin_gateway_exchange_rate_' . $currency->getCurrencyCode();
@@ -152,7 +152,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 	 * @param string  $master_public_key Xpub/ypub/zpub string.
 	 * @param ?string $gateway_id
 	 *
-	 * @throws Exception
+	 * @throws BH_WP_Bitcoin_Gateway_Exception
 	 */
 	public function generate_new_wallet( string $master_public_key, ?string $gateway_id = null ): Wallet_Generation_Result {
 
@@ -338,7 +338,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 	 * @param Bitcoin_Wallet $wallet
 	 * @param int            $generate_count // TODO:  20 is the standard lookahead for wallets. cite.
 	 *
-	 * @throws Exception When no wallet object is found for the master public key (xpub) string.
+	 * @throws BH_WP_Bitcoin_Gateway_Exception When no wallet object is found for the master public key (xpub) string.
 	 */
 	public function generate_new_addresses_for_wallet( Bitcoin_Wallet $wallet, int $generate_count = 2 ): Addresses_Generation_Result {
 

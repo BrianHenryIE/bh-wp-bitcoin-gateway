@@ -28,7 +28,7 @@ class Bitfinex_API implements Exchange_Rate_API_Interface {
 	/**
 	 * Fetch the current exchange from a remote API.
 	 *
-	 * @throws Exception when the request fails
+	 * @throws BH_WP_Bitcoin_Gateway_Exception when the request fails
 	 */
 	public function get_exchange_rate( Currency $currency ): Money {
 

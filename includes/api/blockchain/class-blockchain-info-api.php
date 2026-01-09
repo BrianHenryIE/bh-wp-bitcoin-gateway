@@ -51,7 +51,7 @@ class Blockchain_Info_Api implements Blockchain_API_Interface, LoggerAwareInterf
 	 * @param string $btc_address
 	 *
 	 * @return Transaction_Interface[]
-	 * @throws Exception
+	 * @throws BH_WP_Bitcoin_Gateway_Exception
 	 */
 	public function get_transactions_received( string $btc_address ): array {
 		$raw_address = $this->api->getRawAddr( $btc_address );
@@ -66,7 +66,7 @@ class Blockchain_Info_Api implements Blockchain_API_Interface, LoggerAwareInterf
 	}
 
 	/**
-	 * @throws Exception
+	 * @throws BH_WP_Bitcoin_Gateway_Exception
 	 */
 	public function get_blockchain_height(): int {
 

@@ -74,7 +74,7 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 	 * @param int $post_id WordPress wp_posts ID.
 	 *
 	 * @return Bitcoin_Address
-	 * @throws Exception When the post_type of the post returned for the given post_id is not a Bitcoin_Address.
+	 * @throws BH_WP_Bitcoin_Gateway_Exception When the post_type of the post returned for the given post_id is not a Bitcoin_Address.
 	 */
 	public function get_by_post_id( int $post_id ): Bitcoin_Address {
 		return $this->bitcoin_address_factory->get_by_wp_post_id( $post_id );
@@ -179,7 +179,7 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 	/**
 	 * Wrapper on wp_insert_post(), sets the address as the post_title, post_excerpt and post_name.
 	 *
-	 * @throws Exception When WordPress fails to create the wp_post.
+	 * @throws BH_WP_Bitcoin_Gateway_Exception When WordPress fails to create the wp_post.
 	 */
 	public function save_new(
 		Bitcoin_Wallet $wallet,

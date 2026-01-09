@@ -106,7 +106,7 @@ class Blockstream_Info_API implements Blockchain_API_Interface, LoggerAwareInter
 
 	/**
 	 * @return int
-	 * @throws Exception
+	 * @throws BH_WP_Bitcoin_Gateway_Exception
 	 */
 	public function get_blockchain_height(): int {
 		$blocks_url_bs    = 'https://blockstream.info/api/blocks/tip/height';

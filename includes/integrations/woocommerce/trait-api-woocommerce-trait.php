@@ -120,7 +120,7 @@ trait API_WooCommerce_Trait {
 	 * @param Money    $btc_total The required value of Bitcoin after which this order will be considered paid.
 	 *
 	 * @return Bitcoin_Address
-	 * @throws Exception
+	 * @throws BH_WP_Bitcoin_Gateway_Exception
 	 */
 	public function get_fresh_address_for_order( WC_Order $order, Money $btc_total ): Bitcoin_Address {
 		$this->logger->debug( 'Get fresh address for `shop_order:' . $order->get_id() . '`' );
@@ -163,7 +163,7 @@ trait API_WooCommerce_Trait {
 	 * @param Bitcoin_Gateway $gateway
 	 *
 	 * @return Bitcoin_Address[]
-	 * @throws Exception
+	 * @throws BH_WP_Bitcoin_Gateway_Exception
 	 */
 	public function get_fresh_addresses_for_gateway( Bitcoin_Gateway $gateway ): array {
 
@@ -191,7 +191,7 @@ trait API_WooCommerce_Trait {
 	 * @used-by Bitcoin_Gateway::is_available()
 	 *
 	 * @return bool
-	 * @throws Exception
+	 * @throws BH_WP_Bitcoin_Gateway_Exception
 	 */
 	public function is_fresh_address_available_for_gateway( Bitcoin_Gateway $gateway ): bool {
 
@@ -214,7 +214,7 @@ trait API_WooCommerce_Trait {
 	 * @param bool     $refresh Should the result be returned from cache or refreshed from remote APIs.
 	 *
 	 * @return WC_Bitcoin_Order_Interface
-	 * @throws Exception
+	 * @throws BH_WP_Bitcoin_Gateway_Exception
 	 */
 	public function get_order_details( WC_Order $wc_order, bool $refresh = true ): WC_Bitcoin_Order_Interface {
 
@@ -233,7 +233,7 @@ trait API_WooCommerce_Trait {
 	 *
 	 * @param WC_Bitcoin_Order_Interface $bitcoin_order
 	 *
-	 * @throws Exception
+	 * @throws BH_WP_Bitcoin_Gateway_Exception
 	 */
 	protected function refresh_order( WC_Bitcoin_Order_Interface $bitcoin_order ): bool {
 
@@ -322,7 +322,7 @@ trait API_WooCommerce_Trait {
 	 * @uses \BrianHenryIE\WP_Bitcoin_Gateway\API_Interface::get_order_details()
 	 * @see  Details_Formatter
 	 *
-	 * @throws Exception
+	 * @throws BH_WP_Bitcoin_Gateway_Exception
 	 */
 	public function get_formatted_order_details( WC_Order $order, bool $refresh = true ): array {
 

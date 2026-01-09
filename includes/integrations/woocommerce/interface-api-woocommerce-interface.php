@@ -53,7 +53,7 @@ interface API_WooCommerce_Interface extends API_Interface {
 	 * @param WC_Order $order The (newly placed) WooCommerce order.
 	 *
 	 * @return Bitcoin_Address
-	 * @throws Exception When no address is available.
+	 * @throws BH_WP_Bitcoin_Gateway_Exception When no address is available.
 	 */
 	public function get_fresh_address_for_order( WC_Order $order, Money $btc_total ): Bitcoin_Address;
 
@@ -84,7 +84,7 @@ interface API_WooCommerce_Interface extends API_Interface {
 	 * @param Bitcoin_Gateway $gateway
 	 *
 	 * @return Bitcoin_Address[]
-	 * @throws Exception
+	 * @throws BH_WP_Bitcoin_Gateway_Exception
 	 */
 	public function get_fresh_addresses_for_gateway( Bitcoin_Gateway $gateway ): array;
 
@@ -96,7 +96,7 @@ interface API_WooCommerce_Interface extends API_Interface {
 	 * @param bool     $refresh Should an API request be made to check for new transactions, or just use existing data.
 	 *
 	 * @return array<string, Transaction_Interface>
-	 * @throws Exception When the order has no Bitcoin address.
+	 * @throws BH_WP_Bitcoin_Gateway_Exception When the order has no Bitcoin address.
 	 */
 	public function get_formatted_order_details( WC_Order $order, bool $refresh = true ): array;
 }

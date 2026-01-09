@@ -374,7 +374,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 	 * @param int $order_id The id of the order being paid.
 	 *
 	 * @return array{result:string, redirect:string}
-	 * @throws Exception Throws an exception when no address is available (which is caught by WooCommerce and displayed at checkout).
+	 * @throws BH_WP_Bitcoin_Gateway_Exception Throws an exception when no address is available (which is caught by WooCommerce and displayed at checkout).
 	 */
 	public function process_payment( $order_id ) {
 
