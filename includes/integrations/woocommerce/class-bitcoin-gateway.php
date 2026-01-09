@@ -334,6 +334,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 			$settings_fields['description']['description'] .= ' <a href="' . esc_url( $checkout_url ) . '" title="Adds an item to your cart and opens the checkout in a new tab.">Visit checkout</a>.';
 		}
 
+		// TODO: no!
 		$saved_xpub = $this->plugin_settings->get_master_public_key( $this->id );
 		if ( ! empty( $saved_xpub ) ) {
 			$settings_fields['xpub']['description'] = '<a href="' . esc_url( admin_url( 'edit.php?post_type=bh-bitcoin-address' ) ) . '">View addresses</a>';

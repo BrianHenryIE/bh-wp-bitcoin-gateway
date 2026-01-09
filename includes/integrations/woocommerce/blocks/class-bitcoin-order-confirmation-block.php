@@ -178,9 +178,11 @@ class Bitcoin_Order_Confirmation_Block {
 	 * @hooked render_block_context
 	 * @see render_block()
 	 *
-	 * @param array{postId:int,postType:string}                                                             $context
-	 * @param array{blockName:string, attrs:array, innerBlocks:array, innerHTML:string, innerContent:array} $parsed_block
-	 * @param ?WP_Block                                                                                     $parent_block
+	 * innerBlocks is the same array shape as the array itself.
+	 *
+	 * @param array{postId:int,postType:string}                                                                                   $context
+	 * @param array{blockName:string|null, attrs:array, innerBlocks:array, innerHTML:string, innerContent:array<int,string|null>} $parsed_block
+	 * @param ?WP_Block                                                                                                           $parent_block
 	 *
 	 * @return array
 	 */

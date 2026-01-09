@@ -28,6 +28,8 @@ use WP_Query;
 /**
  * Register the custom post types with WordPress.
  *
+ * @see _get_list_table()
+ *
  * @see register_post_type()
  * @see register_post_status()
  *
