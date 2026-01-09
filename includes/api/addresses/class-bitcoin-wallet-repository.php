@@ -7,6 +7,7 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses;
 
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\BH_WP_Bitcoin_Gateway_Exception;
 use Exception;
 use InvalidArgumentException;
 use WP_Post;
@@ -49,7 +50,7 @@ class Bitcoin_Wallet_Repository extends WP_Post_Repository_Abstract {
 		if ( 1 === count( $posts ) ) {
 			return $this->bitcoin_wallet_factory->get_by_wp_post( $posts[0] );
 		}
-		throw new Exception( count( $posts ) . ' Bitcoin_Wallets found, only one expected, for ' . $xpub );
+		throw new BH_WP_Bitcoin_Gateway_Exception( count( $posts ) . ' Bitcoin_Wallets found, only one expected, for ' . $xpub );
 	}
 
 	/**
@@ -119,7 +120,7 @@ class Bitcoin_Wallet_Repository extends WP_Post_Repository_Abstract {
 		$post_id          = wp_insert_post( $query_args_array, true );
 
 		if ( is_wp_error( $post_id ) ) {
-			throw new Exception( 'Failed to save new wallet as wp_post' );
+			throw new BH_WP_Bitcoin_Gateway_Exception( 'Failed to save new wallet as wp_post' );
 		}
 
 		return $this->get_by_wp_post_id( $post_id );

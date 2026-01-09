@@ -11,6 +11,7 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses;
 
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Check_Assigned_Addresses_For_Transactions_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
@@ -148,7 +149,7 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 
 			if ( is_wp_error( $new_post_id ) ) {
 				// TODO Log.
-				throw new Exception( 'WordPress failed to save new transaction.' );
+				throw new BH_WP_Bitcoin_Gateway_Exception( 'WordPress failed to save new transaction.' );
 			}
 
 			return get_post( $new_post_id ); // @phpstan-ignore return.type

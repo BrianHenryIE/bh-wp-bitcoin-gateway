@@ -9,6 +9,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet_Factory;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet_Repository;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Currency;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\UnknownCurrencyException;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
@@ -381,11 +382,11 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 
 		if ( ! ( $order instanceof WC_Order ) ) {
 			// This should never happen.
-			throw new Exception( __( 'Error creating order.', 'bh-wp-bitcoin-gateway' ) );
+			throw new BH_WP_Bitcoin_Gateway_Exception( __( 'Error creating order.', 'bh-wp-bitcoin-gateway' ) );
 		}
 
 		if ( is_null( $this->api ) ) {
-			throw new Exception( __( 'API unavailable for new Bitcoin gateway order.', 'bh-wp-bitcoin-gateway' ) );
+			throw new BH_WP_Bitcoin_Gateway_Exception( __( 'API unavailable for new Bitcoin gateway order.', 'bh-wp-bitcoin-gateway' ) );
 		}
 
 		$api = $this->api;
@@ -409,7 +410,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 			$btc_address = $api->get_fresh_address_for_order( $order, $btc_total );
 		} catch ( Exception $e ) {
 			$this->logger->error( $e->getMessage(), array( 'exception' => $e ) );
-			throw new Exception( 'Unable to find Bitcoin address to send to. Please choose another payment method.' );
+			throw new BH_WP_Bitcoin_Gateway_Exception( 'Unable to find Bitcoin address to send to. Please choose another payment method.' );
 		}
 
 		/**

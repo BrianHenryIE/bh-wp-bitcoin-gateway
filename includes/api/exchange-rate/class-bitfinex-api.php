@@ -11,6 +11,7 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Exchange_Rate;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Exchange_Rate_API_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Currency;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use Exception;
@@ -39,11 +40,11 @@ class Bitfinex_API implements Exchange_Rate_API_Interface {
 
 		if ( is_wp_error( $request_response ) ) {
 			$error_message = $request_response->errors[ array_key_first( $request_response->errors ) ][0];
-			throw new Exception( $error_message );
+			throw new BH_WP_Bitcoin_Gateway_Exception( $error_message );
 		}
 
 		if ( 200 !== $request_response['response']['code'] ) {
-			throw new Exception();
+			throw new BH_WP_Bitcoin_Gateway_Exception();
 		}
 
 		$reponse_body = json_decode( $request_response['body'], true );

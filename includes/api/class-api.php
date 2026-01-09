@@ -25,6 +25,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Transaction_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain\Rate_Limit_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Addresses_Generation_Result;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Check_Assigned_Addresses_For_Transactions_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Ensure_Unused_Addresses_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
@@ -127,7 +128,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 		$exchange_rate = $this->get_exchange_rate( $fiat_amount->getCurrency() );
 
 		if ( is_null( $exchange_rate ) ) {
-			throw new Exception( 'No exchange rate available' );
+			throw new BH_WP_Bitcoin_Gateway_Exception( 'No exchange rate available' );
 		}
 
 		// 1 BTC = xx USD.

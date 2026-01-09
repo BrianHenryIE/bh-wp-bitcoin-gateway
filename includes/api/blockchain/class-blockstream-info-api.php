@@ -17,6 +17,7 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain_API_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
 use Exception;
 use JsonException;
@@ -61,7 +62,7 @@ class Blockstream_Info_API implements Blockchain_API_Interface, LoggerAwareInter
 		$request_response = wp_remote_get( $address_info_url_bs );
 
 		if ( is_wp_error( $request_response ) ) {
-			throw new Exception( $request_response->get_error_message() );
+			throw new BH_WP_Bitcoin_Gateway_Exception( $request_response->get_error_message() );
 		}
 		if ( 429 === $request_response['response']['code'] ) {
 			/** @var array{error:string, message:string} $blockstream_rate_limit_response */
@@ -73,7 +74,7 @@ class Blockstream_Info_API implements Blockchain_API_Interface, LoggerAwareInter
 		}
 
 		if ( 200 !== $request_response['response']['code'] ) {
-			throw new Exception( 'Unexpected response received.' );
+			throw new BH_WP_Bitcoin_Gateway_Exception( 'Unexpected response received.' );
 		}
 
 		/**
@@ -111,7 +112,7 @@ class Blockstream_Info_API implements Blockchain_API_Interface, LoggerAwareInter
 		$blocks_url_bs    = 'https://blockstream.info/api/blocks/tip/height';
 		$request_response = wp_remote_get( $blocks_url_bs );
 		if ( is_wp_error( $request_response ) || 200 !== $request_response['response']['code'] ) {
-			throw new Exception();
+			throw new BH_WP_Bitcoin_Gateway_Exception();
 		}
 		return intval( $request_response['body'] );
 	}
