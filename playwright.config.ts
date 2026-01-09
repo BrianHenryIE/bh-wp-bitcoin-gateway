@@ -25,6 +25,7 @@ export default defineConfig( {
 	// retries: process.env.CI ? 2 : 0,
 	// /* Opt out of parallel tests on CI. */
 	// workers: process.env.CI ? 1 : undefined,
+	workers: 1,
 	/* Reporter to use. See https://playwright.dev/docs/test-reporters */
 	reporter: 'html',
 	// https://playwright.dev/docs/test-timeouts
@@ -37,7 +38,7 @@ export default defineConfig( {
 		baseURL:
 			process.env.BASEURL ||
 			process.env.WP_BASE_URL ||
-			'http://localhost:8889',
+			'http://localhost:8888',
 
 		/* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
 		trace: 'on-first-retry',
