@@ -31,6 +31,7 @@ if ( function_exists( 'xdebug_info' ) ) {
 WP_Mock::setUsePatchwork( true );
 WP_Mock::bootstrap();
 
+/** @var string $project_root_dir Defined in {@see /tests/bootstrap.php} */
 global $project_root_dir;
 
 $class_map = array(
@@ -47,6 +48,7 @@ spl_autoload_register(
 	}
 );
 
+/** @var string $plugin_root_dir Defined in {@see /tests/bootstrap.php} */
 global $plugin_root_dir;
 require_once $plugin_root_dir . '/autoload.php';
 
