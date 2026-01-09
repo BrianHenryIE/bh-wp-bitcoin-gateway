@@ -7,6 +7,9 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
+use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduler;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Factory;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet_Factory;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\BH_WP_Bitcoin_Gateway_Exception;
@@ -190,31 +193,54 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 
 		$xpub_before = $this->get_xpub();
 
+		// This gets the `$_POST` data and saves it.
 		$is_processed = parent::process_admin_options();
-		$xpub_after   = $this->get_xpub();
+
+		// If nothing changed, we can return early.
+		if ( ! $is_processed ) {
+			return false;
+		}
+
+		$xpub_after = $this->get_xpub();
+
+		if ( $xpub_after === $xpub_before ) {
+			// Definitely no change!
+			return $is_processed;
+		}
+
+		if ( is_null( $xpub_after ) ) {
+			// The setting value was deleted.
+			// TODO: maybe mark the wallet inactive.
+			return $is_processed;
+		}
 
 		$bitcoin_wallet_factory    = new Bitcoin_Wallet_Factory();
 		$bitcoin_wallet_repository = new Bitcoin_Wallet_Repository( $bitcoin_wallet_factory );
 
-		$wallet = $xpub_after && $bitcoin_wallet_repository->get_by_xpub( $xpub_after );
+		$wallet = $bitcoin_wallet_repository->get_by_xpub( $xpub_after )
+			?? $bitcoin_wallet_repository->save_new( $xpub_after );
 
-		if ( $xpub_before !== $xpub_after && ! empty( $xpub_after ) ) {
-			$gateway_name = $this->get_method_title() === $this->get_method_description() ? $this->get_method_title() : $this->get_method_title() . ' (' . $this->get_method_description() . ')';
-			$this->logger->info(
-				"New xpub key set for gateway $gateway_name: $xpub_after",
-				array(
-					'gateway_id'  => $this->id,
-					'xpub_before' => $xpub_before,
-					'xpub_after'  => $xpub_after,
-				)
-			);
-		}
+		$gateway_name = $this->get_method_title() === $this->get_method_description() ? $this->get_method_title() : $this->get_method_title() . ' (' . $this->get_method_description() . ')';
+		$this->logger->info(
+			"New xpub key set for gateway $gateway_name: $xpub_after",
+			array(
+				'gateway_id'   => $this->id,
+				'gateway_name' => $gateway_name,
+				'xpub_before'  => $xpub_before,
+				'xpub_after'   => $xpub_after,
+			)
+		);
 
-		if ( ! $wallet && ! is_null( $this->api ) ) {
-			$generate_wallet_result = $this->api->generate_new_wallet( $xpub_after, $this->id );
-			// TODO: use a background task here?
-			$this->api->ensure_unused_addresses_for_wallet( $generate_wallet_result->get_wallet(), 1 );
-		}
+		// TODO: inject all this.
+		$bitcoin_address_factory    = new Bitcoin_Address_Factory();
+		$bitcoin_address_repository = new Bitcoin_Address_Repository( $bitcoin_address_factory );
+
+		$background_jobs_scheduler = new Background_Jobs_Scheduler(
+			$bitcoin_address_repository,
+			$this->logger
+		);
+
+		$background_jobs_scheduler->schedule_single_ensure_unused_addresses( $wallet );
 
 		// TODO: maybe mark the previous xpub's wallet as "inactive". (although it could be in use in another instance of the gateway).
 
@@ -345,9 +371,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 	 */
 	public function is_available() {
 
-		// if ( ! is_null( $this->is_available_cache ) ) {
-		// return $this->is_available_cache;
-		// }
+		// TODO: review `$this->is_available_cache` and when we should avoid db calls and http calls.
 
 		if ( is_null( $this->api ) ) {
 			$this->is_available_cache = false;
@@ -461,8 +485,10 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 	 * @return string
 	 */
 	public function get_xpub(): ?string {
-		// TODO: validate xpub format.
-		return $this->settings['xpub'];
+		// TODO: validate xpub format when setting.
+		return isset( $this->settings['xpub'] ) && is_string( $this->settings['xpub'] ) && ! empty( $this->settings['xpub'] )
+			? $this->settings['xpub']
+			: null;
 	}
 
 	/**
