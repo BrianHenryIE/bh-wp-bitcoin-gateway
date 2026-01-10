@@ -134,11 +134,11 @@ class Frontend_Assets {
 			'btc_address'                 => $order_details['btc_address'] ?? '',
 			'btc_total'                   => isset( $order_details['btc_total'] ) && ( $order_details['btc_total'] instanceof Money ) ? $order_details['btc_total']->getAmount()->toScale( 8 ) : '',
 			'order_id'                    => (string) $order->get_id(),
-			'btc_amount_received'         => is_string( $order_details['btc_amount_received'] ) ? $order_details['btc_amount_received'] : '',
-			'status'                      => is_string( $order_details['payment_status'] ) ? $order_details['payment_status'] : '',
-			'amount_received'             => is_string( $order_details['btc_amount_received_formatted'] ) ? $order_details['btc_amount_received_formatted'] : '',
-			'order_status_formatted'      => is_string( $order_details['order_status_formatted'] ) ? $order_details['order_status_formatted'] : '',
-			'last_checked_time_formatted' => is_string( $order_details['last_checked_time_formatted'] ) ? $order_details['last_checked_time_formatted'] : '',
+			'btc_amount_received'         => isset( $order_details['btc_amount_received'] ) && is_string( $order_details['btc_amount_received'] ) ? $order_details['btc_amount_received'] : '',
+			'status'                      => isset( $order_details['payment_status'] ) && is_string( $order_details['payment_status'] ) ? $order_details['payment_status'] : '',
+			'amount_received'             => isset( $order_details['btc_amount_received_formatted'] ) && is_string( $order_details['btc_amount_received_formatted'] ) ? $order_details['btc_amount_received_formatted'] : '',
+			'order_status_formatted'      => isset( $order_details['order_status_formatted'] ) && is_string( $order_details['order_status_formatted'] ) ? $order_details['order_status_formatted'] : '',
+			'last_checked_time_formatted' => isset( $order_details['last_checked_time_formatted'] ) && is_string( $order_details['last_checked_time_formatted'] ) ? $order_details['last_checked_time_formatted'] : '',
 		);
 
 		$order_details_json = wp_json_encode( $filtered_order_details, JSON_PRETTY_PRINT );

@@ -15,7 +15,9 @@ use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodTyp
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Currency;
+use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\UnknownCurrencyException;
 use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
+use WC_Payment_Gateway;
 
 /**
  * Instance of the class expected by PaymentMethodRegistry.
@@ -38,7 +40,7 @@ class Bitcoin_Gateway_Blocks_Checkout_Support extends AbstractPaymentMethodType 
 	/**
 	 * The gateway instance.
 	 *
-	 * @var Bitcoin_Gateway
+	 * @var WC_Payment_Gateway&Bitcoin_Gateway
 	 */
 	protected $gateway;
 
@@ -107,12 +109,19 @@ class Bitcoin_Gateway_Blocks_Checkout_Support extends AbstractPaymentMethodType 
 	 * @see \WC_Payment_Gateway::supports()
 	 *
 	 * @return array{title:string, description:string, supports:array<string>}
+	 * @throws UnknownCurrencyException
 	 */
 	public function get_payment_method_data(): array {
+		/** @var string $title */
+		$title = $this->get_setting( 'title' );
+		/** @var string $description */
+		$description = $this->get_setting( 'description' );
+		/** @var array<int|string, string> $supports */
+		$supports = $this->gateway->supports;
 		return array(
-			'title'                     => $this->get_setting( 'title' ),
-			'description'               => $this->get_setting( 'description' ),
-			'supports'                  => array_filter( $this->gateway->supports, array( $this->gateway, 'supports' ) ),
+			'title'                     => $title,
+			'description'               => $description,
+			'supports'                  => $supports,
 			'exchange_rate_information' => sprintf(
 				'1 BTC = %s %s',
 				get_woocommerce_currency(),

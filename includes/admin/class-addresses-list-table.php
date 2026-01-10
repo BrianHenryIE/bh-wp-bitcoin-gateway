@@ -20,6 +20,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Bitcoin_Gateway;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Post_BH_Bitcoin_Address;
 use Exception;
 use WP_Post;
+use WP_Post_Type;
 
 /**
  * Hooks into standard WP_List_Table actions and filters.
@@ -52,18 +53,13 @@ class Addresses_List_Table extends \WP_Posts_List_Table {
 		 * Since this object is instantiated because it was defined when registering the post type, it's
 		 * extremely unlikely the post type will not exist.
 		 *
-		 * @var \WP_Post_Type $post_type_object
+		 * @see Post_BH_Bitcoin_Address::$plugin_objects
+		 * @see Post_BH_Bitcoin_Address::register_address_post_type()
+		 *
+		 * @var WP_Post_Type&object{plugin_objects:array<string,API_Interface&API_WooCommerce_Interface>} $post_type_object
 		 */
 		$post_type_object = get_post_type_object( $post_type_name );
-
-		/**
-		 *
-		 * @see Post_BH_Bitcoin_Address::$plugin_objects
-		 *
-		 * @var API_Interface&API_WooCommerce_Interface $api
-		 */
-		$api       = $post_type_object->plugin_objects['api'];
-		$this->api = $api;
+		$this->api        = $post_type_object->plugin_objects['api'];
 
 		add_filter( 'post_row_actions', array( $this, 'edit_row_actions' ), 10, 2 );
 	}
@@ -77,13 +73,15 @@ class Addresses_List_Table extends \WP_Posts_List_Table {
 
 	/**
 	 * Define the custom columns for the post type.
-	 * Status|Order|Transactions|Received|Wallet|Derivation path.
+	 * Status|Order|Transactions|Amount-Received|Wallet|Derivation-path|Last-modified.
 	 *
 	 * @return array<string, string> Column name : HTML output.
 	 */
 	public function get_columns() {
+		/** @var non-empty-array<string,string> $columns */
 		$columns = parent::get_columns();
 
+		/** @var non-empty-array<string,string> $new_columns */
 		$new_columns = array();
 		foreach ( $columns as $key => $column ) {
 

@@ -58,6 +58,7 @@ class Bitcoin_Transaction_Factory {
 
 		$factory_registry->addFactory(
 			\DateTimeInterface::class,
+			/** @param stdClass{date?:string, timezone:string} $json_object */
 			function ( stdClass $json_object ) {
 				if (
 					! property_exists( $json_object, 'date' )

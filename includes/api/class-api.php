@@ -283,7 +283,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 		$all_wallets_have_enough_addresses_fn = function ( array $unused_addresses_by_wallet, int $required_count ): bool {
 			return array_reduce(
 				$unused_addresses_by_wallet,
-				function ( bool $carry, array $addresses ) use ( $required_count ) {
+				function ( bool $carry, array $addresses ) use ( $required_count ): bool {
 					return $carry && count( $addresses ) >= $required_count;
 				},
 				true

@@ -12,6 +12,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Factory;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet_Factory;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet_Repository;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\API;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Currency;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\UnknownCurrencyException;
@@ -78,7 +79,9 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 		 */
 		$this->setLogger( new NullLogger() );
 
-		$this->api = $api ?? $GLOBALS['bh_wp_bitcoin_gateway'];
+		/** @var ?API $api */
+		$api       = $GLOBALS['bh_wp_bitcoin_gateway'];
+		$this->api = $api;
 
 		$this->plugin_settings = new \BrianHenryIE\WP_Bitcoin_Gateway\API\Settings();
 
@@ -128,7 +131,8 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 			$method_description .= $this->get_formatted_link_to_order_confirmation_edit();
 		}
 
-		return (string) apply_filters( 'woocommerce_gateway_method_description', $method_description, $this );
+		$filtered = apply_filters( 'woocommerce_gateway_method_description', $method_description, $this );
+		return is_string( $filtered ) ? $filtered : $method_description;
 	}
 
 	/**
@@ -500,6 +504,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 	 * @return float
 	 */
 	public function get_price_margin_percent(): float {
-		return floatval( $this->settings['price_margin'] ?? 2.0 );
+		$price_margin = $this->settings['price_margin'];
+		return is_numeric( $price_margin ) ? floatval( $price_margin ) : 2.0;
 	}
 }
