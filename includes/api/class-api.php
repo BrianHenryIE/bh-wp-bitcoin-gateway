@@ -28,6 +28,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Addresses_Generation_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Check_Assigned_Addresses_For_Transactions_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Ensure_Unused_Addresses_Result;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Mark_Address_As_Paid_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_VOut;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Update_Address_Transactions_Result;
@@ -549,17 +550,34 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 		if ( $is_paid ) {
 			$this->mark_address_as_paid( $bitcoin_address );
 		}
+
+		// TODO: return!
 	}
 
-	protected function mark_address_as_paid( Bitcoin_Address $bitcoin_address ) {
+	/**
+	 *
+	 * TODO: maybe split this into ~"set address status to used" and ~"fire action to alert integrations".
+	 *
+	 * @used-by self::check_address_for_payment()
+	 *
+	 * @param Bitcoin_Address $bitcoin_address
+	 */
+	protected function mark_address_as_paid( Bitcoin_Address $bitcoin_address ): Mark_Address_As_Paid_Result {
 
-		// TODO: Change the post status.
-		// $bitcoin_address->get_post_id()
+		$status_before = $bitcoin_address->get_status();
+
+		$this->bitcoin_address_repository->set_status(
+			address: $bitcoin_address,
+			status: Bitcoin_Address_Status::USED
+		);
 
 		$order_post_id = $bitcoin_address->get_order_id();
 
 		if ( ! $order_post_id ) {
-			return;
+			return new Mark_Address_As_Paid_Result(
+				$bitcoin_address,
+				$status_before,
+			);
 		}
 
 		/** @var class-string $order_post_type */
@@ -569,6 +587,8 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 		$address_array = (array) $bitcoin_address;
 
 		/**
+		 * TODO: Maybe this should be a filter to learn who used the action(filter).
+		 *
 		 * @phpstan-type array{} Bitcoin_Address_Array
 		 *
 		 * @param class-string $order_post_type
@@ -576,6 +596,11 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 		 * @param array{} $address_array
 		 */
 		do_action( 'bh_wp_bitcoin_gateway_payment_received', $order_post_type, $order_post_id, $address_array );
+
+		return new Mark_Address_As_Paid_Result(
+			$bitcoin_address,
+			$status_before,
+		);
 	}
 
 	/**
