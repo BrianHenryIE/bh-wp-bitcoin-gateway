@@ -10,6 +10,9 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\Frontend\Blocks;
 use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
 use WP_Block_Type;
 
+/**
+ * @phpstan-type BlockVariationArray array{name:string,title:string,description:string,isDefault?:bool,attributes:array<mixed>,isActive?:array<string>,scope?:array<string>}
+ */
 class Bitcoin_Image_Block {
 
 	/**
@@ -30,10 +33,10 @@ class Bitcoin_Image_Block {
 	 * @hooked get_block_type_variations
 	 * @see WP_Block_Type::get_variations()
 	 *
-	 * @param array         $variations
-	 * @param WP_Block_Type $block_type
+	 * @param array<BlockVariationArray> $variations
+	 * @param WP_Block_Type              $block_type
 	 *
-	 * @return array<array> Array of block variations.
+	 * @return array<BlockVariationArray> Array of block variations.
 	 */
 	public function add_bitcoin_image_variation( array $variations, WP_Block_Type $block_type ): array {
 
