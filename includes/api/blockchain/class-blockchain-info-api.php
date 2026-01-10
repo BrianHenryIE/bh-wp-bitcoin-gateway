@@ -54,6 +54,11 @@ class Blockchain_Info_Api implements Blockchain_API_Interface, LoggerAwareInterf
 	 * @throws BH_WP_Bitcoin_Gateway_Exception
 	 */
 	public function get_transactions_received( string $btc_address ): array {
+
+		/**
+		 * TODO: In BlockchainInfoApi functions, first check is `$response->getBody()` = 'Rate limited'.
+		 */
+
 		$raw_address = $this->api->getRawAddr( $btc_address );
 
 		$adapter = new Blockchain_Info_Api_Transaction_Adapter();
