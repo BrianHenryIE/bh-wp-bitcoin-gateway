@@ -1,5 +1,11 @@
 <?php
 /**
+ * Use the {@see https://bitfinex.com} API for currency conversion.
+ *
+ * TODO: surface the ToS to the admin UI.
+ *
+ * @see https://www.bitfinex.com/legal/general/api-terms/
+ *
  * @see https://docs.bitfinex.com/docs/rest-public
  * @see https://docs.bitfinex.com/v2/reference#rest-public-ticker
  *

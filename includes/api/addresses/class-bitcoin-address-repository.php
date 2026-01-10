@@ -148,6 +148,11 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 	}
 
 	/**
+	 * Get all address, optionally filter by wallet and/or status.
+	 *
+	 * @param ?Bitcoin_Wallet         $wallet
+	 * @param ?Bitcoin_Address_Status $status
+	 *
 	 * @return Bitcoin_Address[]
 	 */
 	public function get_addresses(

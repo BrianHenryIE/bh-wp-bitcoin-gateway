@@ -69,9 +69,10 @@ class Wallets_List_Table extends WP_Posts_List_Table {
 	 * @return array<string, string> Column name : HTML output.
 	 */
 	public function get_columns() {
+		/** @var non-empty-array<string,string> $columns */
 		$columns = parent::get_columns();
 
-		/** @var array<string,string> $new_columns */
+		/** @var non-empty-array<string,string> $new_columns */
 		$new_columns = array();
 		foreach ( $columns as $key => $column ) {
 
