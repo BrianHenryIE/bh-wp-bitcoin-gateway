@@ -327,7 +327,7 @@ trait API_WooCommerce_Trait {
 	 * @uses \BrianHenryIE\WP_Bitcoin_Gateway\API_Interface::get_order_details()
 	 * @see  Details_Formatter
 	 *
-	 * @return array<string, string|null|Money|BigNumber|array<Bitcoin_Transaction>>
+	 * @return array<string, string|null|Money|BigNumber|array<Bitcoin_Transaction>|WC_Bitcoin_Order_Interface|WC_Order>
 	 *
 	 * @throws BH_WP_Bitcoin_Gateway_Exception
 	 */
