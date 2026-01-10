@@ -80,7 +80,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 		$this->setLogger( new NullLogger() );
 
 		/** @var ?API $api */
-		$api       = $GLOBALS['bh_wp_bitcoin_gateway'];
+		$api       = $api ?? $GLOBALS['bh_wp_bitcoin_gateway'];
 		$this->api = $api;
 
 		$this->plugin_settings = new \BrianHenryIE\WP_Bitcoin_Gateway\API\Settings();
@@ -338,8 +338,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 			$settings_fields['description']['description'] .= ' <a href="' . esc_url( $checkout_url ) . '" title="Adds an item to your cart and opens the checkout in a new tab.">Visit checkout</a>.';
 		}
 
-		// TODO: no!
-		$saved_xpub = $this->plugin_settings->get_master_public_key( $this->id );
+		$saved_xpub = $this->get_xpub();
 		if ( ! empty( $saved_xpub ) ) {
 			$settings_fields['xpub']['description'] = '<a href="' . esc_url( admin_url( 'edit.php?post_type=bh-bitcoin-address' ) ) . '">View addresses</a>';
 		}
