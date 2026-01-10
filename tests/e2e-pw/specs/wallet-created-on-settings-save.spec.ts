@@ -24,6 +24,8 @@ test.describe( 'Wallet creation on settings save', () => {
 		await removeMasterPublicKeyFromWooCommerceBitcoinPaymentGateway();
 		await resetBitcoinData();
 
+		// TODO: delete `woocommerce_bitcoin_gateway_settings` wp_option to fully reset, add separate test for existing settings.
+
 		// Confirm there are no wallets via REST API.
 		// const restResponse = await page.request.get(
 		// 	'/wp-json/wp/v2/bh-bitcoin-wallet'
@@ -54,11 +56,11 @@ test.describe( 'Wallet creation on settings save', () => {
 		const current = await page
 			.locator( '#woocommerce_bitcoin_gateway_xpub' )
 			.inputValue();
-		if ( current !== xpub ) {
-			await page.fill( '#woocommerce_bitcoin_gateway_xpub', xpub );
-			await page.click( '.woocommerce-save-button' );
-			await page.waitForLoadState( 'networkidle' );
-		}
+
+		// Always hit save. If this is used as a utility function for other tests' arrange, then do it conditionally on change.
+		await page.fill( '#woocommerce_bitcoin_gateway_xpub', xpub );
+		await page.click( '.woocommerce-save-button' );
+		await page.waitForLoadState( 'networkidle' );
 
 		// Fetch wallets via helper endpoint
 		const wallets = await listBitcoinWallets();
