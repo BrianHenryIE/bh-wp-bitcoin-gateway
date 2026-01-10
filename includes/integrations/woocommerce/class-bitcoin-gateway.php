@@ -198,28 +198,34 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 		$xpub_before = $this->get_xpub();
 
 		// This gets the `$_POST` data and saves it.
-		$is_processed = parent::process_admin_options();
+		$options_updated = parent::process_admin_options();
 
-		// If nothing changed, we can return early.
-		if ( ! $is_processed ) {
-			return false;
-		}
+		// Regardless whether the wallet address has changed, ensure it exists.
+		$bitcoin_wallet_factory    = new Bitcoin_Wallet_Factory();
+		$bitcoin_wallet_repository = new Bitcoin_Wallet_Repository( $bitcoin_wallet_factory );
 
 		$xpub_after = $this->get_xpub();
 
+		if ( ! is_null( $xpub_after ) && empty( $bitcoin_wallet_repository->get_by_xpub( $xpub_after ) ) ) {
+			$bitcoin_wallet_repository->save_new( $xpub_after );
+		}
+
+		// If nothing changed, we can return early.
+		if ( ! $options_updated ) {
+			return false;
+		}
+
+		// Other settings may have changed.
 		if ( $xpub_after === $xpub_before ) {
 			// Definitely no change!
-			return $is_processed;
+			return $options_updated;
 		}
 
 		if ( is_null( $xpub_after ) ) {
 			// The setting value was deleted.
 			// TODO: maybe mark the wallet inactive.
-			return $is_processed;
+			return $options_updated;
 		}
-
-		$bitcoin_wallet_factory    = new Bitcoin_Wallet_Factory();
-		$bitcoin_wallet_repository = new Bitcoin_Wallet_Repository( $bitcoin_wallet_factory );
 
 		$wallet = $bitcoin_wallet_repository->get_by_xpub( $xpub_after )
 			?? $bitcoin_wallet_repository->save_new( $xpub_after );
@@ -248,7 +254,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 
 		// TODO: maybe mark the previous xpub's wallet as "inactive". (although it could be in use in another instance of the gateway).
 
-		return $is_processed;
+		return $options_updated;
 	}
 
 	/**
@@ -338,7 +344,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 			$settings_fields['description']['description'] .= ' <a href="' . esc_url( $checkout_url ) . '" title="Adds an item to your cart and opens the checkout in a new tab.">Visit checkout</a>.';
 		}
 
-		$saved_xpub = $this->get_xpub();
+		$saved_xpub = $this->get_option( 'xpub' );
 		if ( ! empty( $saved_xpub ) ) {
 			$settings_fields['xpub']['description'] = '<a href="' . esc_url( admin_url( 'edit.php?post_type=bh-bitcoin-address' ) ) . '">View addresses</a>';
 		}
