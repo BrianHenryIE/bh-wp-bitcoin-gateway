@@ -223,6 +223,9 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 	/**
 	 * Check that there are two addresses generated and unused for every wallet (or specific wallet/number).
 	 *
+	 * TODO: If a store has 100 orders/minute, this should still only check each address once every ten minutes, since
+	 * until a new block is mined, the result won't change. TODO: mempool?
+	 *
 	 * Payment addresses may be used outside WordPress and if we were to reuse those addresses, confirming the payment
 	 * can't be done confidently. (TODO: still only consider transactions made after the address is assigned to an order).
 	 *
