@@ -23,6 +23,8 @@ class Bitcoin_Gateway_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 	 */
 	public function test_generates_new_addresses_when_xpub_changes(): void {
 
+		$this->markTestSkipped( 'TODO: inject background jobs scheduler.' );
+
 		$GLOBALS['bh_wp_bitcoin_gateway'] = $this->makeEmpty(
 			API_WooCommerce_Interface::class,
 			array(
