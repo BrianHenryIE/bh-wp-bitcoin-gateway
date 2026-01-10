@@ -53,8 +53,29 @@ class Settings_Unit_Test extends \Codeception\Test\Unit {
 			'get_option',
 			array(
 				'times'  => 1,
-				'args'   => array( 'woocommerce_bitcoin_gateway_settings', \WP_Mock\Functions::type( 'array' ) ),
-				'return' => array( 'log_level' => 'notice' ),
+				'args'   => array( 'bh_wp_bitcoin_gateway_log_level', 'notice' ),
+				'return' => 'info',
+			)
+		);
+
+		$sut = new Settings();
+
+		$result = $sut->get_log_level();
+
+		$this->assertEquals( 'info', $result );
+	}
+
+	/**
+	 * @covers ::get_log_level
+	 */
+	public function test_get_log_level_no_value_default_notice(): void {
+
+		\WP_Mock::userFunction(
+			'get_option',
+			array(
+				'times'  => 1,
+				'args'   => array( 'bh_wp_bitcoin_gateway_log_level', 'notice' ),
+				'return' => false,
 			)
 		);
 
@@ -68,14 +89,14 @@ class Settings_Unit_Test extends \Codeception\Test\Unit {
 	/**
 	 * @covers ::get_log_level
 	 */
-	public function test_get_log_level_no_value_default_info(): void {
+	public function test_get_log_level_bad_value_default_notice(): void {
 
 		\WP_Mock::userFunction(
 			'get_option',
 			array(
 				'times'  => 1,
-				'args'   => array( 'woocommerce_bitcoin_gateway_settings', \WP_Mock\Functions::type( 'array' ) ),
-				'return' => array(),
+				'args'   => array( 'bh_wp_bitcoin_gateway_log_level', 'notice' ),
+				'return' => 'not-a-real-log-level',
 			)
 		);
 
@@ -83,27 +104,6 @@ class Settings_Unit_Test extends \Codeception\Test\Unit {
 
 		$result = $sut->get_log_level();
 
-		$this->assertEquals( 'info', $result );
-	}
-
-	/**
-	 * @covers ::get_log_level
-	 */
-	public function test_get_log_level_bad_value_default_info(): void {
-
-		\WP_Mock::userFunction(
-			'get_option',
-			array(
-				'times'  => 1,
-				'args'   => array( 'woocommerce_bitcoin_gateway_settings', \WP_Mock\Functions::type( 'array' ) ),
-				'return' => array( 'log_level' => 'not-a-real-log-level' ),
-			)
-		);
-
-		$sut = new Settings();
-
-		$result = $sut->get_log_level();
-
-		$this->assertEquals( 'info', $result );
+		$this->assertEquals( 'notice', $result );
 	}
 }
