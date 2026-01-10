@@ -16,7 +16,7 @@ class Admin_Order_UI_Unit_Test extends \Codeception\Test\Unit {
 		parent::setUp();
 		WP_Mock::setUp();
 
-		WP_Mock::passthruFunction( 'absint' );
+		WP_Mock::passthruFunction( 'absint', array( 'return' => fn( $value ) => intval( $value ) ) );
 	}
 
 	protected function tearDown(): void {
