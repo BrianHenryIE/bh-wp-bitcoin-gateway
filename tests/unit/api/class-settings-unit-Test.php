@@ -31,9 +31,10 @@ class Settings_Unit_Test extends \Codeception\Test\Unit {
 	 * @covers ::get_plugin_version
 	 */
 	public function test_get_plugin_version(): void {
-		global $plugin_root_dir, $plugin_name_php;
+		/** @var string $plugin_root_dir Defined in {@see /tests/bootstrap.php} */
+		global $plugin_root_dir;
 
-		$plugin_file = $plugin_root_dir . DIRECTORY_SEPARATOR . 'bh-wp-bitcoin-gateway.php';
+		$plugin_file = sprintf( '%s/%s', $plugin_root_dir, 'bh-wp-bitcoin-gateway.php' );
 
 		$plugin_file_contents = (string) file_get_contents( $plugin_file );
 

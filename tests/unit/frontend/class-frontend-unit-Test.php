@@ -19,6 +19,7 @@ class Frontend_Unit_Test extends \Codeception\Test\Unit {
 		parent::setUp();
 		\WP_Mock::setUp();
 
+		/** @phpstan-ignore argument.type */
 		WP_Mock::passthruFunction( 'absint', array( 'return' => fn( $value ) => intval( $value ) ) );
 	}
 

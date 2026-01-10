@@ -26,6 +26,8 @@ class HPOS_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 
 		/**
 		 * `doing_action('before_woocommerce_init')` must be true.
+		 *
+		 * @var string[] $wp_current_filter
 		 */
 		global $wp_current_filter;
 		$wp_current_filter[] = 'before_woocommerce_init';
@@ -47,6 +49,7 @@ class HPOS_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 
 		$sut->declare_compatibility();
 
+		/** @var array{compatible:array<string>, incompatible:array<string>} $result */
 		$result = FeaturesUtil::get_compatible_plugins_for_feature( 'custom_order_tables' );
 
 		$this->assertContains( 'bh-wp-bitcoin-gateway/bh-wp-bitcoin-gateway.php', $result['compatible'], wp_json_encode( $result['compatible'] ) ?: '' );
