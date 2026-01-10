@@ -8,6 +8,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Int
 use Codeception\Stub\Expected;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
+use WP_Mock;
 
 /**
  * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\Frontend\Frontend_Assets
@@ -17,6 +18,8 @@ class Frontend_Unit_Test extends \Codeception\Test\Unit {
 	protected function setUp(): void {
 		parent::setUp();
 		\WP_Mock::setUp();
+
+		WP_Mock::passthruFunction( 'absint', array( 'return' => fn( $value ) => intval( $value ) ) );
 	}
 
 	protected function tearDown(): void {
