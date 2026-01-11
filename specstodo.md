@@ -17,7 +17,10 @@ A list of tests that should be written.
 * What should happen on activation?
 * What should happen on deactivation?
 * Test I18n
+* Exchange rate should update via Action Scheduler.
 
+API T&Cs need to be linked from somewhere
+API logos need to be displayed (certainly for CoinGecko exchange rate)
 
 
 Code architecture:
@@ -26,5 +29,6 @@ Code architecture:
 
 Outside project:
 * bh-wp-logger needs testing
+* bh-wp-private-uploads needs wpcs/phpstan/testing
 * wc-filter-orders-by-payment doesn't work with HPOS
 * 
