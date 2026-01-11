@@ -79,9 +79,23 @@ class Settings implements Settings_Interface, WooCommerce_Logger_Settings_Interf
 	 * The plugin version, as used in caching JS and CSS assets.
 	 */
 	public function get_plugin_version(): string {
-		return defined( 'BH_WP_BITCOIN_GATEWAY_VERSION' )
-			? constant( 'BH_WP_BITCOIN_GATEWAY_VERSION' )
-			: '2.0.0';
+		if (
+			defined( 'BH_WP_BITCOIN_GATEWAY_VERSION' )
+			&& is_string( constant( 'BH_WP_BITCOIN_GATEWAY_VERSION' ) ) // @phpstan-ignore booleanAnd.rightAlwaysTrue
+			&& $this->is_valid_version_string( constant( 'BH_WP_BITCOIN_GATEWAY_VERSION' ) )
+		) {
+			return constant( 'BH_WP_BITCOIN_GATEWAY_VERSION' );
+		}
+		return '2.0.0';
+	}
+
+	/**
+	 * Confirm the string is a ~semver version.
+	 *
+	 * @param string $version_string Assumed to be a version e.g. "1.2.3".
+	 */
+	protected function is_valid_version_string( string $version_string ): bool {
+		return (bool) preg_match( '/^[0-9]+(\.[0-9]+)*([a-zA-Z0-9\-]+)?$/', $version_string );
 	}
 
 	/**
