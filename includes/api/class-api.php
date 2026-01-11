@@ -25,8 +25,10 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Transaction_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain\Rate_Limit_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Addresses_Generation_Result;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Check_Assigned_Addresses_For_Transactions_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Ensure_Unused_Addresses_Result;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Mark_Address_As_Paid_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_VOut;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Update_Address_Transactions_Result;
@@ -93,7 +95,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 	 *
 	 * @param Currency $currency
 	 *
-	 * @throws Exception
+	 * @throws BH_WP_Bitcoin_Gateway_Exception
 	 */
 	public function get_exchange_rate( Currency $currency ): ?Money {
 		$transient_name = 'bh_wp_bitcoin_gateway_exchange_rate_' . $currency->getCurrencyCode();
@@ -127,7 +129,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 		$exchange_rate = $this->get_exchange_rate( $fiat_amount->getCurrency() );
 
 		if ( is_null( $exchange_rate ) ) {
-			throw new Exception( 'No exchange rate available' );
+			throw new BH_WP_Bitcoin_Gateway_Exception( 'No exchange rate available' );
 		}
 
 		// 1 BTC = xx USD.
@@ -151,7 +153,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 	 * @param string  $master_public_key Xpub/ypub/zpub string.
 	 * @param ?string $gateway_id
 	 *
-	 * @throws Exception
+	 * @throws BH_WP_Bitcoin_Gateway_Exception
 	 */
 	public function generate_new_wallet( string $master_public_key, ?string $gateway_id = null ): Wallet_Generation_Result {
 
@@ -221,6 +223,9 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 	/**
 	 * Check that there are two addresses generated and unused for every wallet (or specific wallet/number).
 	 *
+	 * TODO: If a store has 100 orders/minute, this should still only check each address once every ten minutes, since
+	 * until a new block is mined, the result won't change. TODO: mempool?
+	 *
 	 * Payment addresses may be used outside WordPress and if we were to reuse those addresses, confirming the payment
 	 * can't be done confidently. (TODO: still only consider transactions made after the address is assigned to an order).
 	 *
@@ -282,7 +287,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 		$all_wallets_have_enough_addresses_fn = function ( array $unused_addresses_by_wallet, int $required_count ): bool {
 			return array_reduce(
 				$unused_addresses_by_wallet,
-				function ( bool $carry, array $addresses ) use ( $required_count ) {
+				function ( bool $carry, array $addresses ) use ( $required_count ): bool {
 					return $carry && count( $addresses ) >= $required_count;
 				},
 				true
@@ -337,7 +342,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 	 * @param Bitcoin_Wallet $wallet
 	 * @param int            $generate_count // TODO:  20 is the standard lookahead for wallets. cite.
 	 *
-	 * @throws Exception When no wallet object is found for the master public key (xpub) string.
+	 * @throws BH_WP_Bitcoin_Gateway_Exception When no wallet object is found for the master public key (xpub) string.
 	 */
 	public function generate_new_addresses_for_wallet( Bitcoin_Wallet $wallet, int $generate_count = 2 ): Addresses_Generation_Result {
 
@@ -548,17 +553,34 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 		if ( $is_paid ) {
 			$this->mark_address_as_paid( $bitcoin_address );
 		}
+
+		// TODO: return!
 	}
 
-	protected function mark_address_as_paid( Bitcoin_Address $bitcoin_address ) {
+	/**
+	 *
+	 * TODO: maybe split this into ~"set address status to used" and ~"fire action to alert integrations".
+	 *
+	 * @used-by self::check_address_for_payment()
+	 *
+	 * @param Bitcoin_Address $bitcoin_address
+	 */
+	protected function mark_address_as_paid( Bitcoin_Address $bitcoin_address ): Mark_Address_As_Paid_Result {
 
-		// TODO: Change the post status.
-		// $bitcoin_address->get_post_id()
+		$status_before = $bitcoin_address->get_status();
+
+		$this->bitcoin_address_repository->set_status(
+			address: $bitcoin_address,
+			status: Bitcoin_Address_Status::USED
+		);
 
 		$order_post_id = $bitcoin_address->get_order_id();
 
 		if ( ! $order_post_id ) {
-			return;
+			return new Mark_Address_As_Paid_Result(
+				$bitcoin_address,
+				$status_before,
+			);
 		}
 
 		/** @var class-string $order_post_type */
@@ -568,6 +590,8 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 		$address_array = (array) $bitcoin_address;
 
 		/**
+		 * TODO: Maybe this should be a filter to learn who used the action(filter).
+		 *
 		 * @phpstan-type array{} Bitcoin_Address_Array
 		 *
 		 * @param class-string $order_post_type
@@ -575,6 +599,11 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 		 * @param array{} $address_array
 		 */
 		do_action( 'bh_wp_bitcoin_gateway_payment_received', $order_post_type, $order_post_id, $address_array );
+
+		return new Mark_Address_As_Paid_Result(
+			$bitcoin_address,
+			$status_before,
+		);
 	}
 
 	/**

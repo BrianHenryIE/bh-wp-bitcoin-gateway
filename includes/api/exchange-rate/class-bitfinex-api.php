@@ -1,9 +1,17 @@
 <?php
 /**
+ * Use the {@see https://bitfinex.com} API for currency conversion.
+ *
+ * TODO: surface the ToS to the admin UI.
+ *
+ * @see https://www.bitfinex.com/legal/general/api-terms/
+ *
  * @see https://docs.bitfinex.com/docs/rest-public
  * @see https://docs.bitfinex.com/v2/reference#rest-public-ticker
  *
  * @see https://api-pub.bitfinex.com/v2/conf/pub:list:pair:exchange
+ *
+ * Obviously, this should be spun into its own Composer package and use JsonMapper.
  *
  * @package    brianhenryie/bh-wp-bitcoin-gateway
  */
@@ -11,9 +19,9 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Exchange_Rate;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Exchange_Rate_API_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Currency;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
-use Exception;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 
@@ -27,7 +35,7 @@ class Bitfinex_API implements Exchange_Rate_API_Interface {
 	/**
 	 * Fetch the current exchange from a remote API.
 	 *
-	 * @throws Exception when the request fails
+	 * @throws BH_WP_Bitcoin_Gateway_Exception when the request fails.
 	 */
 	public function get_exchange_rate( Currency $currency ): Money {
 
@@ -38,15 +46,17 @@ class Bitfinex_API implements Exchange_Rate_API_Interface {
 		$request_response = wp_remote_get( $url );
 
 		if ( is_wp_error( $request_response ) ) {
-			$error_message = $request_response->errors[ array_key_first( $request_response->errors ) ][0];
-			throw new Exception( $error_message );
+			throw new BH_WP_Bitcoin_Gateway_Exception( $request_response->get_error_message() );
 		}
 
 		if ( 200 !== $request_response['response']['code'] ) {
-			throw new Exception();
+			throw new BH_WP_Bitcoin_Gateway_Exception();
 		}
 
-		$reponse_body = json_decode( $request_response['body'], true );
+		/**
+		 * @var array{0:array{0:string,1:int,2:float,3:int,4:float,5:int,6:float,7:int,8:float,9:int,10:int}} $response_body
+		 */
+		$response_body = json_decode( $request_response['body'], true );
 
 		// Multiple rates can be queried at the same time.
 
@@ -63,7 +73,7 @@ class Bitfinex_API implements Exchange_Rate_API_Interface {
 		 * HIGH                  float  Daily high,
 		 * LOW                   float  Daily low
 		 */
-		$trading_pair_response = $reponse_body[0];
+		$trading_pair_response = $response_body[0];
 
 		$exchange_rate = $trading_pair_response[7];
 

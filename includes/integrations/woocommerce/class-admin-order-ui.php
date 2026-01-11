@@ -54,11 +54,11 @@ class Admin_Order_UI {
 	 * phpcs:disable WordPress.Security.NonceVerification.Recommended
 	 */
 	protected function get_order_id(): ?int {
-		if ( isset( $_GET['id'] ) ) {
+		if ( isset( $_GET['id'] ) && is_numeric( $_GET['id'] ) ) {
 			return absint( $_GET['id'] );
 		}
 
-		if ( isset( $_GET['post'] ) ) {
+		if ( isset( $_GET['post'] ) && is_numeric( $_GET['post'] ) ) {
 			return absint( $_GET['post'] );
 		}
 

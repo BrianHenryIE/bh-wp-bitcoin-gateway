@@ -17,6 +17,10 @@ use WC_Order;
 use WP_Block;
 use WP_Block_Type_Registry;
 
+/**
+ * @phpstan-type ParsedBlockWithoutSubblock array{blockName:string|null, attrs:array<mixed>, innerBlocks:null, innerHTML:string, innerContent:array<int,string|null>}
+ * @phpstan-type ParsedBlock array{blockName:string|null, attrs:array<mixed>, innerBlocks:array<ParsedBlockWithoutSubblock>, innerHTML:string, innerContent:array<int,string|null>}
+ */
 class Bitcoin_Order_Confirmation_Block {
 
 	public function __construct(
@@ -50,13 +54,16 @@ class Bitcoin_Order_Confirmation_Block {
 			'bh-wp-bitcoin-gateway/orderId' => 'orderId',
 		);
 		foreach ( (array) $order_details?->to_array( as_camel_case: true ) as $key => $value ) {
-			$provides_context[ "bh-wp-bitcoin-gateway/$key" ] = $value;
+			if ( is_string( $value ) ) {
+				$provides_context[ "bh-wp-bitcoin-gateway/$key" ] = $value;
+			}
 		}
 
 		register_block_type(
 			// TODO: rename to be explicitly a block for WooCommerce.
 			'bh-wp-bitcoin-gateway/bitcoin-order',
 			array(
+				// TODO: Should this be `editor_script_handles` as an array?
 				'editor_script'    => 'bh-wp-bitcoin-gateway-bitcoin-order-block',
 				'attributes'       => array(
 					'orderId' => array(
@@ -99,7 +106,7 @@ class Bitcoin_Order_Confirmation_Block {
 			$block->context['bh-wp-bitcoin-gateway/orderId'] = $order_id;
 		}
 
-		$order_details_formatted = $this->get_order_details_formatted()->to_array( as_camel_case: true );
+		$order_details_formatted = $this->get_order_details_formatted()?->to_array( as_camel_case: true ) ?? array();
 		foreach ( $order_details_formatted as $key => $value ) {
 			$block->context[ "bh-wp-bitcoin-gateway/$key" ] = $value;
 		}
@@ -107,6 +114,12 @@ class Bitcoin_Order_Confirmation_Block {
 		$wrapper_attributes = array(
 			'class' => 'bh-wp-bitcoin-gateway-bitcoin-order-container',
 		);
+		/**
+		 * TODO: we know these are strings, link to where they are set.
+		 *
+		 * @var string $key
+		 * @var string $value
+		 */
 		foreach ( $block->context as $key => $value ) {
 			$sanitized_key = str_replace( array( ':', '/' ), '-', $key );
 			$wrapper_attributes[ 'data-context-' . $sanitized_key ] = esc_attr( (string) $value );
@@ -145,9 +158,8 @@ class Bitcoin_Order_Confirmation_Block {
 		if ( ! function_exists( 'wc_get_order' ) ) {
 			return null; // TODO: Add breakpoint and make sure this isn't executing unless it is needed.
 		}
-		return wc_get_order(
-			$this->detect_order_id()
-		) ?: null;
+		$wc_order = wc_get_order( $this->detect_order_id() );
+		return $wc_order instanceof WC_Order ? $wc_order : null;
 	}
 
 	/**
@@ -157,12 +169,12 @@ class Bitcoin_Order_Confirmation_Block {
 	 */
 	protected function detect_order_id(): int {
 
-		if ( isset( $GLOBALS['order-received'] ) ) {
+		if ( isset( $GLOBALS['order-received'] ) && is_numeric( $GLOBALS['order-received'] ) ) {
 			return absint( $GLOBALS['order-received'] );
 		}
 
 		// Check the key in the URL.
-		if ( function_exists( 'wc_get_order_id_by_order_key' ) && isset( $_GET['key'] ) ) {
+		if ( function_exists( 'wc_get_order_id_by_order_key' ) && isset( $_GET['key'] ) && is_string( $_GET['key'] ) ) {
 			$order_id = wc_get_order_id_by_order_key( sanitize_text_field( $_GET['key'] ) );
 			if ( $order_id > 0 ) {
 				return $order_id;
@@ -178,11 +190,13 @@ class Bitcoin_Order_Confirmation_Block {
 	 * @hooked render_block_context
 	 * @see render_block()
 	 *
-	 * @param array{postId:int,postType:string}                                                             $context
-	 * @param array{blockName:string, attrs:array, innerBlocks:array, innerHTML:string, innerContent:array} $parsed_block
-	 * @param ?WP_Block                                                                                     $parent_block
+	 * innerBlocks is the same array shape as the array itself.
 	 *
-	 * @return array
+	 * @param array{postId:int,postType:string} $context
+	 * @param array&ParsedBlock                 $parsed_block
+	 * @param ?WP_Block                         $parent_block
+	 *
+	 * @return array{postId:int,postType:string}|array{postId:int,'postType':string, "bh-wp-bitcoin-gateway/orderId":int}
 	 */
 	public function add_order_id_context( array $context, array $parsed_block, ?WP_Block $parent_block ): array {
 

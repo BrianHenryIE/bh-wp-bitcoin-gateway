@@ -7,7 +7,10 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Status;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Transaction;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Math\BigNumber;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order_Interface;
@@ -56,6 +59,7 @@ trait API_WooCommerce_Trait {
 	 * @return array<string, Bitcoin_Gateway>
 	 */
 	public function get_bitcoin_gateways(): array {
+		// The second check here is because on the first page load after deleting a plugin, it is still in the active plugins list.
 		if ( ! is_plugin_active( 'woocommerce/woocommerce.php' ) || ! class_exists( WC_Payment_Gateways::class ) ) {
 			return array();
 		}
@@ -119,7 +123,7 @@ trait API_WooCommerce_Trait {
 	 * @param Money    $btc_total The required value of Bitcoin after which this order will be considered paid.
 	 *
 	 * @return Bitcoin_Address
-	 * @throws Exception
+	 * @throws BH_WP_Bitcoin_Gateway_Exception
 	 */
 	public function get_fresh_address_for_order( WC_Order $order, Money $btc_total ): Bitcoin_Address {
 		$this->logger->debug( 'Get fresh address for `shop_order:' . $order->get_id() . '`' );
@@ -127,7 +131,7 @@ trait API_WooCommerce_Trait {
 		$btc_addresses = $this->get_fresh_addresses_for_gateway( $this->get_bitcoin_gateways()[ $order->get_payment_method() ] );
 
 		if ( empty( $btc_addresses ) ) {
-			throw new Exception( 'No Bitcoin addresses available.' );
+			throw new BH_WP_Bitcoin_Gateway_Exception( 'No Bitcoin addresses available.' );
 		}
 
 		$btc_address = array_shift( $btc_addresses );
@@ -162,7 +166,7 @@ trait API_WooCommerce_Trait {
 	 * @param Bitcoin_Gateway $gateway
 	 *
 	 * @return Bitcoin_Address[]
-	 * @throws Exception
+	 * @throws BH_WP_Bitcoin_Gateway_Exception
 	 */
 	public function get_fresh_addresses_for_gateway( Bitcoin_Gateway $gateway ): array {
 
@@ -190,9 +194,13 @@ trait API_WooCommerce_Trait {
 	 * @used-by Bitcoin_Gateway::is_available()
 	 *
 	 * @return bool
-	 * @throws Exception
+	 * @throws BH_WP_Bitcoin_Gateway_Exception
 	 */
 	public function is_fresh_address_available_for_gateway( Bitcoin_Gateway $gateway ): bool {
+
+		if ( is_null( $gateway->get_xpub() ) ) {
+			return false;
+		}
 
 		$wallet           = $this->bitcoin_wallet_repository->get_by_xpub( $gateway->get_xpub() );
 		$unused_addresses = $this->bitcoin_address_repository->get_unused_bitcoin_addresses( $wallet );
@@ -213,7 +221,7 @@ trait API_WooCommerce_Trait {
 	 * @param bool     $refresh Should the result be returned from cache or refreshed from remote APIs.
 	 *
 	 * @return WC_Bitcoin_Order_Interface
-	 * @throws Exception
+	 * @throws BH_WP_Bitcoin_Gateway_Exception
 	 */
 	public function get_order_details( WC_Order $wc_order, bool $refresh = true ): WC_Bitcoin_Order_Interface {
 
@@ -232,7 +240,7 @@ trait API_WooCommerce_Trait {
 	 *
 	 * @param WC_Bitcoin_Order_Interface $bitcoin_order
 	 *
-	 * @throws Exception
+	 * @throws BH_WP_Bitcoin_Gateway_Exception
 	 */
 	protected function refresh_order( WC_Bitcoin_Order_Interface $bitcoin_order ): bool {
 
@@ -316,12 +324,12 @@ trait API_WooCommerce_Trait {
 	 * @param WC_Order $order The WooCommerce order object to update.
 	 * @param bool     $refresh Should saved order details be returned or remote APIs be queried.
 	 *
-	 * @return array<string, mixed>
-	 *
 	 * @uses \BrianHenryIE\WP_Bitcoin_Gateway\API_Interface::get_order_details()
 	 * @see  Details_Formatter
 	 *
-	 * @throws Exception
+	 * @return array<string, string|null|Money|BigNumber|array<Bitcoin_Transaction>|WC_Bitcoin_Order_Interface|WC_Order>
+	 *
+	 * @throws BH_WP_Bitcoin_Gateway_Exception
 	 */
 	public function get_formatted_order_details( WC_Order $order, bool $refresh = true ): array {
 

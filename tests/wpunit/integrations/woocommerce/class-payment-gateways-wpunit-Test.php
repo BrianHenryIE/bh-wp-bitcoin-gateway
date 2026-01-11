@@ -3,6 +3,7 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\API;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
 use Codeception\Stub\Expected;
@@ -20,7 +21,7 @@ class Payment_Gateways_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCa
 
 		$logger   = new ColorLogger();
 		$settings = $this->makeEmpty( Settings_Interface::class );
-		$api      = $this->makeEmpty( API_Interface::class );
+		$api      = $this->make( API::class );
 
 		$sut = new Payment_Gateways( $api, $settings, $logger );
 

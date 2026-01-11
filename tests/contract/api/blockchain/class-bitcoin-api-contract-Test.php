@@ -88,7 +88,7 @@ class Bitcoin_API_Contract_Test extends \lucatume\WPBrowser\TestCase\WPTestCase 
 		$result = $sut->get_transactions_received( $sent_to );
 
 		$logger->info( get_class( $sut ) );
-		$logger->info( wp_json_encode( $result, JSON_THROW_ON_ERROR ) );
+		$logger->info( json_encode( $result, JSON_THROW_ON_ERROR ) );
 
 		/** @var Transaction_Interface $first_transaction */
 		$first_transaction = array_pop( $result );

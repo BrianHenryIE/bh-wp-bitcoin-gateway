@@ -2,6 +2,8 @@
 /**
  * AJAX endpoint for fetching order information.
  *
+ * TODO: Move this to /integrations/woocommerce.
+ *
  * Used on Thank You and my-account screens to query for transaction updates.
  *
  * @package    brianhenryie/bh-wp-bitcoin-gateway
@@ -10,6 +12,7 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Frontend;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 
@@ -20,21 +23,16 @@ class AJAX {
 	use LoggerAwareTrait;
 
 	/**
-	 * Main class to get order information.
-	 *
-	 * @uses API_Interface::get_formatted_order_details()
-	 */
-	protected API_Interface $api;
-
-	/**
 	 * Constructor
 	 *
-	 * @param API_Interface   $api The main plugin functions.
-	 * @param LoggerInterface $logger A PSR logger.
+	 * @param API_WooCommerce_Interface $api The main plugin functions, to get order information.
+	 * @param LoggerInterface           $logger A PSR logger.
 	 */
-	public function __construct( API_Interface $api, LoggerInterface $logger ) {
+	public function __construct(
+		protected API_WooCommerce_Interface $api,
+		LoggerInterface $logger
+	) {
 		$this->setLogger( $logger );
-		$this->api = $api;
 	}
 
 	/**
@@ -52,7 +50,7 @@ class AJAX {
 			wp_send_json_error( array( 'message' => 'Bad/no nonce.' ), 400 );
 		}
 
-		if ( ! isset( $_POST['order_id'] ) ) {
+		if ( ! isset( $_POST['order_id'] ) || ! is_numeric( $_POST['order_id'] ) ) {
 			wp_send_json_error( array( 'message' => 'No order id provided.' ), 400 );
 		}
 
@@ -61,13 +59,11 @@ class AJAX {
 		$order = wc_get_order( $order_id );
 
 		if ( ! ( $order instanceof \WC_Order ) ) {
-			wp_send_json_error( array( 'message' => 'Invalid order id' ), 400 );
+			wp_send_json_error( array( 'message' => 'Invalid order id: ' . $order_id ), 400 );
 		}
 
 		// TODO: Include the order key in the AJAX request.
-		// if( $order->get_customer_id() !== get_current_user_id() && ! $order->key_is_valid( $key ) ) {
-		// wp_send_json_error( 'Not permitted', 401 );
-		// }
+		// Check `$order->get_customer_id() !== get_current_user_id()` and `$order->key_is_valid( $key )`.
 
 		$result = $this->api->get_formatted_order_details( $order, true );
 

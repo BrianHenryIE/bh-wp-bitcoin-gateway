@@ -34,12 +34,15 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduler;
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduler_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Nimq_API;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\API;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain\Blockchain_Info_Api;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain\Blockstream_Info_API;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain_API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Exchange_Rate\Bitfinex_API;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Exchange_Rate_API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Generate_Address_API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Settings;
+use BrianHenryIE\WP_Bitcoin_Gateway\Art4\Requests\Psr\HttpClient;
+use BrianHenryIE\WP_Bitcoin_Gateway\BlockchainInfo\BlockchainInfoApi;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\lucatume\DI52\Container;
 use BrianHenryIE\WP_Bitcoin_Gateway\WC_Logger\WC_Logger_Settings_Interface;
@@ -50,6 +53,8 @@ use BrianHenryIE\WP_Bitcoin_Gateway\WP_Logger\Logger;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Logger\Logger_Settings_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Logger\Logger_Settings_Trait;
 use Exception;
+use Psr\Http\Client\ClientInterface;
+use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 use Throwable;
@@ -118,7 +123,11 @@ $container->singleton(
 	}
 );
 
+// $container->bind( RequestFactoryInterface::class, HttpClient::class );
+// $container->bind( ClientInterface::class, HttpClient::class );
+// $container->bind( Blockchain_API_Interface::class, Blockchain_Info_Api::class );
 $container->bind( Blockchain_API_Interface::class, Blockstream_Info_API::class );
+
 $container->bind( Generate_Address_API_Interface::class, Nimq_API::class );
 $container->bind( Exchange_Rate_API_Interface::class, Bitfinex_API::class );
 

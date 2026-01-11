@@ -3,7 +3,6 @@
  * @package           brianhenryie/bh-wp-bitcoin-gateway
  */
 
-/** @var string $project_root_dir */
 $GLOBALS['project_root_dir']   = $project_root_dir  = codecept_root_dir();
 $GLOBALS['plugin_root_dir']    = $plugin_root_dir   = $project_root_dir;
 $GLOBALS['plugin_slug']        = $plugin_slug       = basename( $project_root_dir );

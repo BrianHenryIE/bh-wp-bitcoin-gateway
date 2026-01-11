@@ -8,6 +8,7 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Generate_Address_API_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\Nimiq\XPub;
 use Exception;
 use Psr\Log\LoggerAwareTrait;
@@ -35,7 +36,7 @@ class Nimq_API implements Generate_Address_API_Interface {
 	 * @param int    $nth Derive path nth address in sequence.
 	 *
 	 * @return string
-	 * @throws Exception Failed to generate address.
+	 * @throws BH_WP_Bitcoin_Gateway_Exception Failed to generate address.
 	 */
 	public function generate_address( string $public_address, int $nth ): string {
 

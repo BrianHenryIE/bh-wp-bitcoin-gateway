@@ -206,6 +206,8 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 	 */
 	public function test_is_fresh_address_available_for_gateway_true(): void {
 
+		$this->markTestSkipped( 'is_fresh_address_available_for_gateway no does not make API calls' );
+
 		$address = $this->make(
 			Bitcoin_Address::class,
 			array(

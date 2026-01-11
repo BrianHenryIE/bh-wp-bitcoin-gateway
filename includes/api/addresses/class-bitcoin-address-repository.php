@@ -7,6 +7,7 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses;
 
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use Exception;
 use WP_Post;
@@ -61,7 +62,7 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 		}
 
 		if ( count( $posts ) > 1 ) {
-			throw new Exception( 'more than one wp_post found for bitcoin address ' . $address );
+			throw new BH_WP_Bitcoin_Gateway_Exception( 'more than one wp_post found for bitcoin address ' . $address );
 		}
 
 		return $posts[0]->ID;
@@ -73,7 +74,7 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 	 * @param int $post_id WordPress wp_posts ID.
 	 *
 	 * @return Bitcoin_Address
-	 * @throws Exception When the post_type of the post returned for the given post_id is not a Bitcoin_Address.
+	 * @throws BH_WP_Bitcoin_Gateway_Exception When the post_type of the post returned for the given post_id is not a Bitcoin_Address.
 	 */
 	public function get_by_post_id( int $post_id ): Bitcoin_Address {
 		return $this->bitcoin_address_factory->get_by_wp_post_id( $post_id );
@@ -147,6 +148,11 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 	}
 
 	/**
+	 * Get all address, optionally filter by wallet and/or status.
+	 *
+	 * @param ?Bitcoin_Wallet         $wallet
+	 * @param ?Bitcoin_Address_Status $status
+	 *
 	 * @return Bitcoin_Address[]
 	 */
 	public function get_addresses(
@@ -178,7 +184,7 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 	/**
 	 * Wrapper on wp_insert_post(), sets the address as the post_title, post_excerpt and post_name.
 	 *
-	 * @throws Exception When WordPress fails to create the wp_post.
+	 * @throws BH_WP_Bitcoin_Gateway_Exception When WordPress fails to create the wp_post.
 	 */
 	public function save_new(
 		Bitcoin_Wallet $wallet,
@@ -208,7 +214,7 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 
 		if ( is_wp_error( $post_id ) ) {
 			// TODO Log.
-			throw new Exception( 'WordPress failed to create a post for the wallet.' );
+			throw new BH_WP_Bitcoin_Gateway_Exception( 'WordPress failed to create a post for the wallet.' );
 		}
 
 		// TODO: Maybe start a background job to check for transactions. Where is best to do that?

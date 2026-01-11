@@ -11,6 +11,7 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses;
 
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Check_Assigned_Addresses_For_Transactions_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
@@ -37,7 +38,7 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 	 *
 	 * @param int $post_id WordPress wp_posts ID.
 	 *
-	 * @throws Exception When the post_type of the post returned for the given post_id is not a Bitcoin_Transaction.
+	 * @throws BH_WP_Bitcoin_Gateway_Exception When the post_type of the post returned for the given post_id is not a Bitcoin_Transaction.
 	 */
 	public function get_by_post_id( int $post_id ): Bitcoin_Transaction {
 		return $this->bitcoin_transaction_factory->get_by_wp_post_id( $post_id );
@@ -78,7 +79,7 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 	 * @used-by API::get_saved_transactions() When displaying all addresses.
 	 *
 	 * @return null|array<int, Bitcoin_Transaction> Post_id:transaction object; where null suggests there was nothing saved before, and an empty array suggests it has been checked but no transactions had been seen.
-	 * @throws Exception
+	 * @throws BH_WP_Bitcoin_Gateway_Exception
 	 */
 	public function get_transactions_for_address(
 		Bitcoin_Address $address,
@@ -148,7 +149,7 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 
 			if ( is_wp_error( $new_post_id ) ) {
 				// TODO Log.
-				throw new Exception( 'WordPress failed to save new transaction.' );
+				throw new BH_WP_Bitcoin_Gateway_Exception( 'WordPress failed to save new transaction.' );
 			}
 
 			return get_post( $new_post_id ); // @phpstan-ignore return.type
@@ -162,7 +163,7 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 	 *
 	 * @param Transaction $transaction A transaction from an API.
 	 *
-	 * @throws Exception When WordPress fails to create the wp_post.
+	 * @throws BH_WP_Bitcoin_Gateway_Exception When WordPress fails to create the wp_post.
 	 * @throws JsonException
 	 */
 	public function save_new(

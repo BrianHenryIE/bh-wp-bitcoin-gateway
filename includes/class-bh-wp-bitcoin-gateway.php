@@ -14,6 +14,7 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\Admin\Menu;
 use BrianHenryIE\WP_Bitcoin_Gateway\Admin\Register_List_Tables;
 use BrianHenryIE\WP_Bitcoin_Gateway\Frontend\Blocks\Bitcoin_Image_Block;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\Woo_Cancel_Abandoned_Order\Woo_Cancel_Abandoned_Order;
@@ -206,6 +207,11 @@ class BH_WP_Bitcoin_Gateway {
 		add_action( 'woocommerce_blocks_payment_method_type_registration', array( $payment_gateways, 'register_woocommerce_block_checkout_support' ) );
 
 		add_filter( 'woocommerce_available_payment_gateways', array( $payment_gateways, 'add_logger_to_gateways' ) );
+
+		/** @var Menu $menu */
+		$menu = $this->container->get( Menu::class );
+
+		add_action( 'admin_menu', array( $menu, 'add_woocommerce_payments_submenu' ) );
 	}
 
 	/**

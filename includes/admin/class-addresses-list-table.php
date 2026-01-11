@@ -13,11 +13,14 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\Admin;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Factory;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_WP_Post_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Bitcoin_Gateway;
+use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Post_BH_Bitcoin_Address;
 use Exception;
 use WP_Post;
+use WP_Post_Type;
 
 /**
  * Hooks into standard WP_List_Table actions and filters.
@@ -50,7 +53,10 @@ class Addresses_List_Table extends \WP_Posts_List_Table {
 		 * Since this object is instantiated because it was defined when registering the post type, it's
 		 * extremely unlikely the post type will not exist.
 		 *
-		 * @var \WP_Post_Type $post_type_object
+		 * @see Post_BH_Bitcoin_Address::$plugin_objects
+		 * @see Post_BH_Bitcoin_Address::register_address_post_type()
+		 *
+		 * @var WP_Post_Type&object{plugin_objects:array<string,API_Interface&API_WooCommerce_Interface>} $post_type_object
 		 */
 		$post_type_object = get_post_type_object( $post_type_name );
 		$this->api        = $post_type_object->plugin_objects['api'];
@@ -67,13 +73,15 @@ class Addresses_List_Table extends \WP_Posts_List_Table {
 
 	/**
 	 * Define the custom columns for the post type.
-	 * Status|Order|Transactions|Received|Wallet|Derivation path.
+	 * Status|Order|Transactions|Amount-Received|Wallet|Derivation-path|Last-modified.
 	 *
 	 * @return array<string, string> Column name : HTML output.
 	 */
 	public function get_columns() {
+		/** @var non-empty-array<string,string> $columns */
 		$columns = parent::get_columns();
 
+		/** @var non-empty-array<string,string> $new_columns */
 		$new_columns = array();
 		foreach ( $columns as $key => $column ) {
 
@@ -105,7 +113,7 @@ class Addresses_List_Table extends \WP_Posts_List_Table {
 	 * @param WP_Post $post The post the address information is stored under.
 	 *
 	 * @return Bitcoin_Address
-	 * @throws Exception When the post/post id does not match a bh-bitcoin-address cpt.
+	 * @throws BH_WP_Bitcoin_Gateway_Exception When the post/post id does not match a bh-bitcoin-address cpt.
 	 */
 	protected function get_bitcoin_address_object( WP_Post $post ): Bitcoin_Address {
 		$bitcoin_address_factory = new Bitcoin_Address_Factory();

@@ -21,31 +21,26 @@ use WC_Order;
 class Thank_You {
 	use LoggerAwareTrait;
 
-	const TEMPLATE_NAME = 'checkout/thankyou-bitcoin-instructions-status.php';
-
-	/**
-	 * Used to check is the gateway relevant for this thank you page load.
-	 *
-	 * @uses API_Interface::is_order_has_bitcoin_gateway()
-	 *
-	 * @var API_Interface
-	 */
-	protected API_Interface $api;
+	const string TEMPLATE_NAME = 'checkout/thankyou-bitcoin-instructions-status.php';
 
 	/**
 	 * Constructor
 	 *
-	 * @param API_Interface   $api The main plugin functions.
-	 * @param LoggerInterface $logger A PSR logger.
+	 * @param API_WooCommerce_Interface $api The main plugin functions.
+	 * @param LoggerInterface           $logger A PSR logger.
 	 */
-	public function __construct( API_Interface $api, LoggerInterface $logger ) {
+	public function __construct(
+		protected API_WooCommerce_Interface $api,
+		LoggerInterface $logger,
+	) {
 		$this->setLogger( $logger );
-		$this->api = $api;
 	}
 
 	/**
 	 * When the thank you page loads, if the order loading is a Bitcoin order, print the payment instructions (via
 	 * the template).
+	 *
+	 * @uses API_Interface::is_order_has_bitcoin_gateway() to check is the gateway relevant for this thank you page load.
 	 *
 	 * @hooked woocommerce_thankyou
 	 *

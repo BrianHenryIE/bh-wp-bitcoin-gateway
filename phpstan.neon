@@ -24,6 +24,7 @@ parameters:
 #        - wp-content/plugins/...
         - wp-content/plugins/woocommerce
         - vendor/wp-cli
+    reportUnmatchedIgnoredErrors: false
     ignoreErrors:
         - # WC_Settings_API::process_admin_options() specifies the bool return, but add_action does not expect any.
           message: '#Action callback returns bool but should not return anything.#'

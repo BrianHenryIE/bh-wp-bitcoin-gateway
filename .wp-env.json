@@ -27,6 +27,7 @@
     "wp-content/plugins/give-next-gen": "./wp-content/plugins/give-next-gen",
     "wp-content/plugins/givewp-example-gateway": "./wp-content/plugins/givewp-example-gateway",
     "wp-content/plugins/log-http-requests": "./wp-content/plugins/log-http-requests",
+    "wp-content/plugins/query-monitor": "./wp-content/plugins/query-monitor",
     "wp-content/plugins/woo-cancel-abandoned-order": "./wp-content/plugins/woo-cancel-abandoned-order",
     "wp-content/plugins/woo-nimiq-gateway": "./wp-content/plugins/woo-nimiq-gateway",
     "wp-content/plugins/woocommerce": "./wp-content/plugins/woocommerce",

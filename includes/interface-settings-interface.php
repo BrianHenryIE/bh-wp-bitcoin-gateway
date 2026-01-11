@@ -32,13 +32,6 @@ interface Settings_Interface {
 	public function get_plugin_url(): string;
 
 	/**
-	 * Get the xpub/ypub/zpub of the gateway.
-	 *
-	 * @param string $gateway_id Optionally specify the gateway id if there are multiple instances.
-	 */
-	public function get_master_public_key( string $gateway_id = 'bitcoin_gateway' ): string;
-
-	/**
 	 * Get the absolute path to the plugin root on the server filesystem, with trailingslash.
 	 */
 	public function get_plugin_dir(): string;

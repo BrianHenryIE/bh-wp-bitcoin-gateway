@@ -30,6 +30,15 @@
     <exclude-pattern>/wp-content/uploads</exclude-pattern>
     <exclude-pattern>/phpstanbootstrap.php</exclude-pattern>
 
+	<!-- Configure custom capabilities -->
+	<rule ref="WordPress.WP.Capabilities">
+		<properties>
+			<property name="custom_capabilities" type="array">
+				<element value="manage_woocommerce"/>
+			</property>
+		</properties>
+	</rule>
+
     <!-- Do not require the object type in the comment, presuming it is strongly typed -->
     <rule ref="Squiz.Commenting.VariableComment.MissingVar">
         <exclude-pattern>*</exclude-pattern>

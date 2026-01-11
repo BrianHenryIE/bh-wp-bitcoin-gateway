@@ -10,12 +10,12 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain;
 
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\Art4\Requests\Psr\HttpClient;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain_API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\BlockchainInfo\BlockchainInfoApi;
 use BrianHenryIE\WP_Bitcoin_Gateway\BlockchainInfo\Model\Transaction;
-use Exception;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
@@ -51,9 +51,14 @@ class Blockchain_Info_Api implements Blockchain_API_Interface, LoggerAwareInterf
 	 * @param string $btc_address
 	 *
 	 * @return Transaction_Interface[]
-	 * @throws Exception
+	 * @throws BH_WP_Bitcoin_Gateway_Exception
 	 */
 	public function get_transactions_received( string $btc_address ): array {
+
+		/**
+		 * TODO: In BlockchainInfoApi functions, first check is `$response->getBody()` = 'Rate limited'.
+		 */
+
 		$raw_address = $this->api->getRawAddr( $btc_address );
 
 		$adapter = new Blockchain_Info_Api_Transaction_Adapter();
@@ -66,7 +71,7 @@ class Blockchain_Info_Api implements Blockchain_API_Interface, LoggerAwareInterf
 	}
 
 	/**
-	 * @throws Exception
+	 * @throws BH_WP_Bitcoin_Gateway_Exception
 	 */
 	public function get_blockchain_height(): int {
 

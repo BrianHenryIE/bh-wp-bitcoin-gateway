@@ -2,8 +2,7 @@
 /**
  * The public-facing functionality of the plugin.
  *
- * @link       http://example.com
- * @since      1.0.0
+ * TODO: Move to integrations/woocommerce.
  *
  * @package    brianhenryie/bh-wp-bitcoin-gateway
  */
@@ -11,6 +10,8 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Frontend;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
@@ -23,27 +24,34 @@ class Frontend_Assets {
 	use LoggerAwareTrait;
 
 	/**
-	 * Get the plugin version for caching.
-	 */
-	protected Settings_Interface $settings;
-
-	/**
-	 * Check is the order a Bitcoin order.
-	 * Get the order details.
-	 */
-	protected API_Interface $api;
-
-	/**
 	 * Constructor
 	 *
-	 * @param API_Interface      $api The main plugin functions.
-	 * @param Settings_Interface $settings The plugin settings.
-	 * @param LoggerInterface    $logger A PSR logger.
+	 * @param API_WooCommerce_Interface $api Check is the order a Bitcoin order; get the order details.
+	 * @param Settings_Interface        $settings Get the plugin version for caching.
+	 * @param LoggerInterface           $logger A PSR logger.
 	 */
-	public function __construct( API_Interface $api, Settings_Interface $settings, LoggerInterface $logger ) {
+	public function __construct(
+		protected API_WooCommerce_Interface $api,
+		protected Settings_Interface $settings,
+		LoggerInterface $logger
+	) {
 		$this->setLogger( $logger );
-		$this->settings = $settings;
-		$this->api      = $api;
+	}
+
+	/**
+	 * Try to find the order id as `order-received` or `view-order` in the PHP globals.
+	 */
+	protected function get_order_id_from_globals(): ?int {
+
+		if ( isset( $GLOBALS['order-received'] ) && is_numeric( $GLOBALS['order-received'] ) ) {
+			return absint( $GLOBALS['order-received'] );
+		}
+
+		if ( isset( $GLOBALS['view-order'] ) && is_numeric( $GLOBALS['view-order'] ) ) {
+			return absint( $GLOBALS['view-order'] );
+		}
+
+		return null;
 	}
 
 	/**
@@ -55,10 +63,14 @@ class Frontend_Assets {
 	 */
 	public function enqueue_styles(): void {
 
-		$order_id = isset( $GLOBALS['order-received'] ) ? $GLOBALS['order-received'] : ( isset( $GLOBALS['view-order'] ) ? $GLOBALS['view-order'] : 0 );
-		$order_id = intval( $order_id );
+		$order_id = $this->get_order_id_from_globals();
 
-		if ( empty( $order_id ) || ! $this->api->is_order_has_bitcoin_gateway( $order_id ) ) {
+		if ( ! $order_id ) {
+			return;
+		}
+
+		if ( ! $this->api->is_order_has_bitcoin_gateway( $order_id ) ) {
+			// Although we're on the thank-you page, this isn't a Bitcoin order.
 			return;
 		}
 
@@ -77,8 +89,7 @@ class Frontend_Assets {
 	 */
 	public function enqueue_scripts(): void {
 
-		$order_id = isset( $GLOBALS['order-received'] ) ? $GLOBALS['order-received'] : ( isset( $GLOBALS['view-order'] ) ? $GLOBALS['view-order'] : 0 );
-		$order_id = intval( $order_id );
+		$order_id = $this->get_order_id_from_globals();
 
 		if ( empty( $order_id ) || ! $this->api->is_order_has_bitcoin_gateway( $order_id ) ) {
 			return;
@@ -105,8 +116,8 @@ class Frontend_Assets {
 		$webpack_manifest_path = $this->settings->get_plugin_dir()
 			. '/assets/js/frontend/woocommerce/shortcode/thank-you/thank-you.min.asset.php';
 
-		/** @var array{dependencies: array<string>, version:string} $webpack_manifest */
-		$webpack_manifest = include $webpack_manifest_path;
+		/** @var array{dependencies?: array<string>, version?:string} $webpack_manifest */
+		$webpack_manifest = (array) include $webpack_manifest_path;
 
 		wp_register_script(
 			'bh-wp-bitcoin-gateway-shortcode-thank-you',
@@ -121,13 +132,13 @@ class Frontend_Assets {
 		// Filter array to explicit allow-list containing only the required keys for frontend TypeScript.
 		$filtered_order_details = array(
 			'btc_address'                 => $order_details['btc_address'] ?? '',
-			'btc_total'                   => isset( $order_details['btc_total'] ) ? $order_details['btc_total']->getAmount()->toScale( 8 ) : '',
+			'btc_total'                   => isset( $order_details['btc_total'] ) && ( $order_details['btc_total'] instanceof Money ) ? $order_details['btc_total']->getAmount()->toScale( 8 ) : '',
 			'order_id'                    => (string) $order->get_id(),
-			'btc_amount_received'         => (string) ( $order_details['btc_amount_received'] ?? '' ),
-			'status'                      => $order_details['payment_status'] ?? '',
-			'amount_received'             => $order_details['btc_amount_received_formatted'] ?? '',
-			'order_status_formatted'      => $order_details['order_status_formatted'] ?? '',
-			'last_checked_time_formatted' => $order_details['last_checked_time_formatted'] ?? '',
+			'btc_amount_received'         => isset( $order_details['btc_amount_received'] ) && is_string( $order_details['btc_amount_received'] ) ? $order_details['btc_amount_received'] : '',
+			'status'                      => isset( $order_details['payment_status'] ) && is_string( $order_details['payment_status'] ) ? $order_details['payment_status'] : '',
+			'amount_received'             => isset( $order_details['btc_amount_received_formatted'] ) && is_string( $order_details['btc_amount_received_formatted'] ) ? $order_details['btc_amount_received_formatted'] : '',
+			'order_status_formatted'      => isset( $order_details['order_status_formatted'] ) && is_string( $order_details['order_status_formatted'] ) ? $order_details['order_status_formatted'] : '',
+			'last_checked_time_formatted' => isset( $order_details['last_checked_time_formatted'] ) && is_string( $order_details['last_checked_time_formatted'] ) ? $order_details['last_checked_time_formatted'] : '',
 		);
 
 		$order_details_json = wp_json_encode( $filtered_order_details, JSON_PRETTY_PRINT );
@@ -144,9 +155,9 @@ var bh_wp_bitcoin_gateway_order_details = $order_details_json;
 EOD;
 
 		wp_add_inline_script(
-		// TODO: move this into WooCommerce specific file
-		// 'bh-wp-bitcoin-gateway-shortcode-checkout-thank-you',
-		// 'bh-wp-bitcoin-gateway-woocommerce-thank-you-classic-theme',
+		// TODO: move this into WooCommerce specific file, then page specific.
+		// 'bh-wp-bitcoin-gateway-shortcode-checkout-thank-you'.
+		// 'bh-wp-bitcoin-gateway-woocommerce-thank-you-classic-theme'.
 			'bh-wp-bitcoin-gateway-shortcode-thank-you',
 			$script,
 			'before'

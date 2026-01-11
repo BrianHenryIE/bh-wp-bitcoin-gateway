@@ -7,16 +7,18 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Model;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet;
 
+/**
+ * @used-by API::update_address_transactions()
+ */
 class Update_Address_Transactions_Result {
 
 	/**
 	 * Constructor
 	 *
-	 * @param Bitcoin_Address                   $address
-	 * @param array<int, string>                $known_tx_ids_before <post_id, tx_id>
-	 * @param array<int, Transaction_Interface> $all_transactions <post_id, Transaction_Interface>
+	 * @param Bitcoin_Address                   $address The refreshed address details/object.
+	 * @param array<int, string>                $known_tx_ids_before <post_id, tx_id>.
+	 * @param array<int, Transaction_Interface> $all_transactions <post_id, Transaction_Interface>.
 	 */
 	public function __construct(
 		public Bitcoin_Address $address,
@@ -26,11 +28,14 @@ class Update_Address_Transactions_Result {
 	}
 
 	/**
+	 * Filters all known transactions to those that new since this update was run.
+	 *
 	 * @return array<int, Transaction_Interface>
 	 */
 	public function get_new_transactions(): array {
-		if ( is_null( $this->known_tx_ids_before ) ) {
-			return array();
+		// If there were none before, all transactions are new transactions (potentially empty array).
+		if ( empty( $this->known_tx_ids_before ) ) {
+			return $this->all_transactions;
 		}
 		$new_transactions = array();
 		foreach ( $this->all_transactions as $post_id => $transaction ) {
@@ -40,5 +45,12 @@ class Update_Address_Transactions_Result {
 			$new_transactions[ $post_id ] = $transaction;
 		}
 		return $new_transactions;
+	}
+
+	/**
+	 * Are there any new transactions?
+	 */
+	public function is_updated(): bool {
+		return ! empty( $this->get_new_transactions() );
 	}
 }

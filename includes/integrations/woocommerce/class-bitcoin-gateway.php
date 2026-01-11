@@ -7,8 +7,13 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
+use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduler;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Factory;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet_Factory;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet_Repository;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\API;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Currency;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\UnknownCurrencyException;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
@@ -74,7 +79,9 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 		 */
 		$this->setLogger( new NullLogger() );
 
-		$this->api = $api ?? $GLOBALS['bh_wp_bitcoin_gateway'];
+		/** @var ?API $api */
+		$api       = $api ?? $GLOBALS['bh_wp_bitcoin_gateway'];
+		$this->api = $api;
 
 		$this->plugin_settings = new \BrianHenryIE\WP_Bitcoin_Gateway\API\Settings();
 
@@ -124,7 +131,8 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 			$method_description .= $this->get_formatted_link_to_order_confirmation_edit();
 		}
 
-		return (string) apply_filters( 'woocommerce_gateway_method_description', $method_description, $this );
+		$filtered = apply_filters( 'woocommerce_gateway_method_description', $method_description, $this );
+		return is_string( $filtered ) ? $filtered : $method_description;
 	}
 
 	/**
@@ -189,35 +197,64 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 
 		$xpub_before = $this->get_xpub();
 
-		$is_processed = parent::process_admin_options();
-		$xpub_after   = $this->get_xpub();
+		// This gets the `$_POST` data and saves it.
+		$options_updated = parent::process_admin_options();
 
+		// Regardless whether the wallet address has changed, ensure it exists.
 		$bitcoin_wallet_factory    = new Bitcoin_Wallet_Factory();
 		$bitcoin_wallet_repository = new Bitcoin_Wallet_Repository( $bitcoin_wallet_factory );
 
-		$wallet = $xpub_after && $bitcoin_wallet_repository->get_by_xpub( $xpub_after );
+		$xpub_after = $this->get_xpub();
 
-		if ( $xpub_before !== $xpub_after && ! empty( $xpub_after ) ) {
-			$gateway_name = $this->get_method_title() === $this->get_method_description() ? $this->get_method_title() : $this->get_method_title() . ' (' . $this->get_method_description() . ')';
-			$this->logger->info(
-				"New xpub key set for gateway $gateway_name: $xpub_after",
-				array(
-					'gateway_id'  => $this->id,
-					'xpub_before' => $xpub_before,
-					'xpub_after'  => $xpub_after,
-				)
-			);
+		if ( ! is_null( $xpub_after ) && empty( $bitcoin_wallet_repository->get_by_xpub( $xpub_after ) ) ) {
+			$bitcoin_wallet_repository->save_new( $xpub_after );
 		}
 
-		if ( ! $wallet && ! is_null( $this->api ) ) {
-			$generate_wallet_result = $this->api->generate_new_wallet( $xpub_after, $this->id );
-			// TODO: use a background task here?
-			$this->api->ensure_unused_addresses_for_wallet( $generate_wallet_result->get_wallet(), 1 );
+		// If nothing changed, we can return early.
+		if ( ! $options_updated ) {
+			return false;
 		}
+
+		// Other settings may have changed.
+		if ( $xpub_after === $xpub_before ) {
+			// Definitely no change!
+			return $options_updated;
+		}
+
+		if ( is_null( $xpub_after ) ) {
+			// The setting value was deleted.
+			// TODO: maybe mark the wallet inactive.
+			return $options_updated;
+		}
+
+		$wallet = $bitcoin_wallet_repository->get_by_xpub( $xpub_after )
+			?? $bitcoin_wallet_repository->save_new( $xpub_after );
+
+		$gateway_name = $this->get_method_title() === $this->get_method_description() ? $this->get_method_title() : $this->get_method_title() . ' (' . $this->get_method_description() . ')';
+		$this->logger->info(
+			"New xpub key set for gateway $gateway_name: $xpub_after",
+			array(
+				'gateway_id'   => $this->id,
+				'gateway_name' => $gateway_name,
+				'xpub_before'  => $xpub_before,
+				'xpub_after'   => $xpub_after,
+			)
+		);
+
+		// TODO: inject all this.
+		$bitcoin_address_factory    = new Bitcoin_Address_Factory();
+		$bitcoin_address_repository = new Bitcoin_Address_Repository( $bitcoin_address_factory );
+
+		$background_jobs_scheduler = new Background_Jobs_Scheduler(
+			$bitcoin_address_repository,
+			$this->logger
+		);
+
+		$background_jobs_scheduler->schedule_single_ensure_unused_addresses( $wallet );
 
 		// TODO: maybe mark the previous xpub's wallet as "inactive". (although it could be in use in another instance of the gateway).
 
-		return $is_processed;
+		return $options_updated;
 	}
 
 	/**
@@ -307,7 +344,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 			$settings_fields['description']['description'] .= ' <a href="' . esc_url( $checkout_url ) . '" title="Adds an item to your cart and opens the checkout in a new tab.">Visit checkout</a>.';
 		}
 
-		$saved_xpub = $this->plugin_settings->get_master_public_key( $this->id );
+		$saved_xpub = $this->get_option( 'xpub' );
 		if ( ! empty( $saved_xpub ) ) {
 			$settings_fields['xpub']['description'] = '<a href="' . esc_url( admin_url( 'edit.php?post_type=bh-bitcoin-address' ) ) . '">View addresses</a>';
 		}
@@ -344,9 +381,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 	 */
 	public function is_available() {
 
-		// if ( ! is_null( $this->is_available_cache ) ) {
-		// return $this->is_available_cache;
-		// }
+		// TODO: review `$this->is_available_cache` and when we should avoid db calls and http calls.
 
 		if ( is_null( $this->api ) ) {
 			$this->is_available_cache = false;
@@ -373,7 +408,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 	 * @param int $order_id The id of the order being paid.
 	 *
 	 * @return array{result:string, redirect:string}
-	 * @throws Exception Throws an exception when no address is available (which is caught by WooCommerce and displayed at checkout).
+	 * @throws BH_WP_Bitcoin_Gateway_Exception Throws an exception when no address is available (which is caught by WooCommerce and displayed at checkout).
 	 */
 	public function process_payment( $order_id ) {
 
@@ -381,11 +416,11 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 
 		if ( ! ( $order instanceof WC_Order ) ) {
 			// This should never happen.
-			throw new Exception( __( 'Error creating order.', 'bh-wp-bitcoin-gateway' ) );
+			throw new BH_WP_Bitcoin_Gateway_Exception( __( 'Error creating order.', 'bh-wp-bitcoin-gateway' ) );
 		}
 
 		if ( is_null( $this->api ) ) {
-			throw new Exception( __( 'API unavailable for new Bitcoin gateway order.', 'bh-wp-bitcoin-gateway' ) );
+			throw new BH_WP_Bitcoin_Gateway_Exception( __( 'API unavailable for new Bitcoin gateway order.', 'bh-wp-bitcoin-gateway' ) );
 		}
 
 		$api = $this->api;
@@ -409,7 +444,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 			$btc_address = $api->get_fresh_address_for_order( $order, $btc_total );
 		} catch ( Exception $e ) {
 			$this->logger->error( $e->getMessage(), array( 'exception' => $e ) );
-			throw new Exception( 'Unable to find Bitcoin address to send to. Please choose another payment method.' );
+			throw new BH_WP_Bitcoin_Gateway_Exception( 'Unable to find Bitcoin address to send to. Please choose another payment method.' );
 		}
 
 		/**
@@ -460,8 +495,10 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 	 * @return string
 	 */
 	public function get_xpub(): ?string {
-		// TODO: validate xpub format.
-		return $this->settings['xpub'];
+		// TODO: validate xpub format when setting.
+		return isset( $this->settings['xpub'] ) && is_string( $this->settings['xpub'] ) && ! empty( $this->settings['xpub'] )
+			? $this->settings['xpub']
+			: null;
 	}
 
 	/**
@@ -472,6 +509,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 	 * @return float
 	 */
 	public function get_price_margin_percent(): float {
-		return floatval( $this->settings['price_margin'] ?? 2.0 );
+		$price_margin = $this->settings['price_margin'];
+		return is_numeric( $price_margin ) ? floatval( $price_margin ) : 2.0;
 	}
 }

@@ -3,10 +3,12 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Frontend;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\API;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
 use Codeception\Stub\Expected;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
+use WP_Mock;
 
 /**
  * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\Frontend\Frontend_Assets
@@ -16,6 +18,9 @@ class Frontend_Unit_Test extends \Codeception\Test\Unit {
 	protected function setUp(): void {
 		parent::setUp();
 		\WP_Mock::setUp();
+
+		/** @phpstan-ignore argument.type */
+		WP_Mock::passthruFunction( 'absint', array( 'return' => fn( $value ) => intval( $value ) ) );
 	}
 
 	protected function tearDown(): void {
@@ -94,7 +99,7 @@ class Frontend_Unit_Test extends \Codeception\Test\Unit {
 	public function test_enqueue_styles_not_on_other_pages(): void {
 
 		$logger   = new ColorLogger();
-		$api      = $this->makeEmpty( API_Interface::class );
+		$api      = $this->make( API::class );
 		$settings = $this->makeEmpty(
 			Settings_Interface::class,
 			array(
