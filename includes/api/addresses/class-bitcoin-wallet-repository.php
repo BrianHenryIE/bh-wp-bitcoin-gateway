@@ -8,16 +8,18 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\BH_WP_Bitcoin_Gateway_Exception;
-use Exception;
-use InvalidArgumentException;
 use WP_Post;
-use wpdb;
 
 /**
  * @see Bitcoin_Wallet_WP_Post_Interface
  */
 class Bitcoin_Wallet_Repository extends WP_Post_Repository_Abstract {
 
+	/**
+	 * Constructor.
+	 *
+	 * @param Bitcoin_Wallet_Factory $bitcoin_wallet_factory Factory for creating Bitcoin wallet objects.
+	 */
 	public function __construct(
 		protected Bitcoin_Wallet_Factory $bitcoin_wallet_factory,
 	) {
@@ -27,6 +29,7 @@ class Bitcoin_Wallet_Repository extends WP_Post_Repository_Abstract {
 	 * NB: post_name is 200 characters long. zpub is 111 characters.
 	 *
 	 * @param string $xpub The master public key of the wallet.
+	 * @throws BH_WP_Bitcoin_Gateway_Exception
 	 */
 	public function get_by_xpub( string $xpub ): ?Bitcoin_Wallet {
 		$args = new Bitcoin_Wallet_Query(

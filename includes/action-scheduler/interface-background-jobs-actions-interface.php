@@ -7,22 +7,33 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler;
 
+/**
+ * `do_action( HOOK_NAME )` is called by Action Scheduler / wp_cron to run these tasks.
+ * We `add_action( HOOK_NAME )` to our implementations of the functions below to handle them.
+ */
 interface Background_Jobs_Actions_Interface {
 
 	/**
-	 *
+	 * The hook name for updating exchange rates.
 	 */
 	const string UPDATE_EXCHANGE_RATE_HOOK = 'bh_wp_bitcoin_gateway_update_exchange_rate';
 
+	/**
+	 * The hook name for regularly ensuring there is an unused payment address available.
+	 */
 	const string RECURRING_ENSURE_UNUSED_ADDRESSES_HOOK = 'bh_wp_bitcoin_gateway_recurring_ensure_unused_addresses';
+
+	/**
+	 * The hook name for a single check to ensure there is an unused address available, use e.g. immediately after
+	 * one is assigned to an order.
+	 */
+	const string SINGLE_ENSURE_UNUSED_ADDRESSES_HOOK = 'bh_wp_bitcoin_gateway_single_ensure_unused_addresses';
 
 	/**
 	 * Fetch all addresses pending payment ("assigned") and query remote API for payments. Handle rate limited responses.
 	 * Reschedule a check in ten minutes for addresses still unpaid. This is a non-repeating action when there are no addresses with 'assigned' status.
 	 */
 	const string CHECK_ASSIGNED_ADDRESSES_TRANSACTIONS_HOOK = 'bh_wp_bitcoin_gateway_check_assigned_addresses_transactions';
-
-	const string SINGLE_ENSURE_UNUSED_ADDRESSES_HOOK = 'bh_wp_bitcoin_gateway_single_ensure_unused_addresses';
 
 	/**
 	 * Generating new addresses is math-heavy so we do it in a background task.

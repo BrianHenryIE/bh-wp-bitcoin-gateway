@@ -17,7 +17,6 @@ use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\Handler\FactoryRegistry;
 use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\Handler\PropertyMapper;
 use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\JsonMapperBuilder;
 use InvalidArgumentException;
-use JsonException;
 use stdClass;
 use WP_Post;
 
@@ -27,11 +26,13 @@ use WP_Post;
 class Bitcoin_Transaction_Factory {
 
 	/**
+	 * Get a Bitcoin transaction by WordPress post ID.
+	 *
 	 * @param int $post_id The WordPress post id this wallet is stored under.
 	 *
 	 * @throws InvalidArgumentException When the supplied post_id is not a post of this type.
-	 * @throws BuilderException
-	 * @throws ClassFactoryException
+	 * @throws BuilderException When the JSON mapper fails to build the transaction object from the post content.
+	 * @throws ClassFactoryException When the JSON mapper cannot create required class instances during deserialization.
 	 */
 	public function get_by_wp_post_id( int $post_id ): Bitcoin_Transaction {
 		$post = get_post( $post_id );
@@ -49,8 +50,8 @@ class Bitcoin_Transaction_Factory {
 	 *
 	 * @param WP_Post $post The backing WP_Post for this Bitcoin_Transaction.
 	 *
-	 * @throws BuilderException
-	 * @throws ClassFactoryException
+	 * @throws BuilderException When the JSON mapper fails to deserialize the transaction data from post_content.
+	 * @throws ClassFactoryException When the JSON mapper cannot instantiate required classes like DateTimeInterface or Money during object creation.
 	 */
 	public function get_by_wp_post( WP_Post $post ): Bitcoin_Transaction {
 

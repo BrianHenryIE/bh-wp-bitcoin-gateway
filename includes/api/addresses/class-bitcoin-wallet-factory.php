@@ -9,17 +9,21 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses;
 
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use InvalidArgumentException;
 use WP_Post;
 
+/**
+ * Factory for creating Bitcoin_Wallet objects from WordPress posts.
+ *
+ * Converts wp_posts custom post types and their associated post_meta into typed Bitcoin_Wallet domain objects.
+ */
 class Bitcoin_Wallet_Factory {
 
 	/**
 	 * @param int $post_id The WordPress post id this wallet is stored under.
 	 *
-	 * @throws BH_WP_Bitcoin_Gateway_Exception When the supplied post_id is not a post of this type.
+	 * @throws InvalidArgumentException When the supplied post_id is not a post of this type.
 	 */
 	public function get_by_wp_post_id( int $post_id ): Bitcoin_Wallet {
 		$post = get_post( $post_id );
@@ -30,6 +34,12 @@ class Bitcoin_Wallet_Factory {
 		return $this->get_by_wp_post( $post );
 	}
 
+	/**
+	 * Create a Bitcoin_Wallet object from a WordPress post + its post_meta.
+	 *
+	 * @param WP_Post $post The WordPress post representing the wallet.
+	 * @return Bitcoin_Wallet The Bitcoin wallet object.
+	 */
 	public function get_by_wp_post( WP_Post $post ): Bitcoin_Wallet {
 
 		$bitcoin_wallet = new Bitcoin_Wallet(
@@ -47,6 +57,9 @@ class Bitcoin_Wallet_Factory {
 	 * Get the current balance of this wallet, or null if it has never been checked.
 	 *
 	 * Must iterate across all addresses and sum them.
+	 *
+	 * @param WP_Post $post The WordPress post representing the wallet.
+	 * @return Money|null The wallet balance or null if never checked.
 	 */
 	protected function get_balance( WP_Post $post ): ?Money {
 		$balance = get_post_meta( $post->ID, Bitcoin_Wallet_WP_Post_Interface::BALANCE_META_KEY, true );
@@ -59,6 +72,9 @@ class Bitcoin_Wallet_Factory {
 
 	/**
 	 * Get the index of the last generated address, so generating new addresses can start higher.
+	 *
+	 * @param WP_Post $post The WordPress post representing the wallet.
+	 * @return int|null The index of the last derived address or null.
 	 */
 	protected function get_address_index( WP_Post $post ): ?int {
 		$index = get_post_meta( $post->ID, Bitcoin_Wallet_WP_Post_Interface::LAST_DERIVED_ADDRESS_INDEX_META_KEY, true );

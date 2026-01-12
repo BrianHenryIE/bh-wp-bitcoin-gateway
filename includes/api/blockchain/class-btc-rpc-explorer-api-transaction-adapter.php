@@ -1,4 +1,9 @@
 <?php
+/**
+ * Adapter for BTC RPC Explorer transaction objects.
+ *
+ * @package brianhenryie/bh-wp-bitcoin-gateway
+ */
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain;
 
@@ -16,6 +21,13 @@ use BrianHenryIE\WP_Bitcoin_Gateway\BtcRpcExplorer\Model\VOut;
  */
 class Btc_Rpc_Explorer_Api_Transaction_Adapter {
 
+	/**
+	 * Adapt a BTC RPC Explorer transaction to the internal transaction interface.
+	 *
+	 * @param TXSummary $transaction The BTC RPC Explorer transaction object.
+	 * @param int       $block_height The block height for the transaction.
+	 * @return Transaction_Interface The adapted transaction.
+	 */
 	public function adapt(
 		TXSummary $transaction,
 		int $block_height,
@@ -24,7 +36,7 @@ class Btc_Rpc_Explorer_Api_Transaction_Adapter {
 			tx_id: $transaction->txId,
 			block_time: $transaction->getBlockTime(),
 			version: $transaction->version,
-			v_in: array(), // TODO:
+			v_in: array(), // TODO: Implement `v_in` mapper.
 			v_out: $this->get_v_out( $transaction ),
 			block_height: $block_height,
 		);

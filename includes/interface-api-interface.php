@@ -86,6 +86,12 @@ interface API_Interface {
 	 */
 	public function ensure_unused_addresses( int $required_count = 2 ): array;
 
+	/**
+	 * Ensure a specific wallet has the requested number of unused addresses.
+	 *
+	 * @param Bitcoin_Wallet $wallet The wallet to ensure there are unused addresses for.
+	 * @param int            $required_count Number of unused addresses required.
+	 */
 	public function ensure_unused_addresses_for_wallet( Bitcoin_Wallet $wallet, int $required_count = 2 ): Ensure_Unused_Addresses_Result;
 
 	/**
@@ -116,9 +122,9 @@ interface API_Interface {
 	/**
 	 * Return transactions for a Bitcoin address without any remote API calls.
 	 *
-	 * @param Bitcoin_Address $bitcoin_address
+	 * @param Bitcoin_Address $bitcoin_address The payment address to get transactions for.
 	 *
-	 * @return array<Bitcoin_Transaction&Transaction_Interface>
+	 * @return ?array<Bitcoin_Transaction&Transaction_Interface>
 	 */
 	public function get_saved_transactions( Bitcoin_Address $bitcoin_address ): ?array;
 }

@@ -6,7 +6,6 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Status;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
@@ -17,13 +16,12 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Or
 use DateInterval;
 use DateTimeImmutable;
 use DateTimeZone;
-use Exception;
 use WC_Order;
 use WC_Payment_Gateway;
 use WC_Payment_Gateways;
 
 /**
- * implements API_WooCommerce_Interface
+ * Implements API_WooCommerce_Interface
  */
 trait API_WooCommerce_Trait {
 
@@ -123,18 +121,16 @@ trait API_WooCommerce_Trait {
 	 * @param Money    $btc_total The required value of Bitcoin after which this order will be considered paid.
 	 *
 	 * @return Bitcoin_Address
-	 * @throws BH_WP_Bitcoin_Gateway_Exception
+	 * @throws BH_WP_Bitcoin_Gateway_Exception When no Bitcoin addresses are available or the address cannot be assigned to the order.
 	 */
 	public function get_fresh_address_for_order( WC_Order $order, Money $btc_total ): Bitcoin_Address {
 		$this->logger->debug( 'Get fresh address for `shop_order:' . $order->get_id() . '`' );
 
-		$btc_addresses = $this->get_fresh_addresses_for_gateway( $this->get_bitcoin_gateways()[ $order->get_payment_method() ] );
+		$btc_address = $this->get_fresh_address_for_gateway( $this->get_bitcoin_gateways()[ $order->get_payment_method() ] );
 
-		if ( empty( $btc_addresses ) ) {
+		if ( is_null( $btc_address ) ) {
 			throw new BH_WP_Bitcoin_Gateway_Exception( 'No Bitcoin addresses available.' );
 		}
-
-		$btc_address = array_shift( $btc_addresses );
 
 		$this->bitcoin_address_repository->assign_to_order(
 			address: $btc_address,
@@ -163,27 +159,29 @@ trait API_WooCommerce_Trait {
 	}
 
 	/**
-	 * @param Bitcoin_Gateway $gateway
+	 * Get an unused payment addresses for a specific payment gateway's wallet.
 	 *
-	 * @return Bitcoin_Address[]
-	 * @throws BH_WP_Bitcoin_Gateway_Exception
+	 * TODO: this should Makes a remote API call if the address has not been recently checked.
+	 *
+	 * @param Bitcoin_Gateway $gateway The Bitcoin payment gateway to get addresses for.
+	 *
+	 * @throws BH_WP_Bitcoin_Gateway_Exception When the wallet cannot be created/retrieved or unused addresses cannot be generated.
 	 */
-	public function get_fresh_addresses_for_gateway( Bitcoin_Gateway $gateway ): array {
+	public function get_fresh_address_for_gateway( Bitcoin_Gateway $gateway ): ?Bitcoin_Address {
 
 		if ( empty( $gateway->get_xpub() ) ) {
 			$this->logger->debug( "No master public key set on gateway {$gateway->id}", array( 'gateway' => $gateway ) );
-			return array();
+			return null;
 		}
 
 		$wallet = $this->bitcoin_wallet_repository->get_by_xpub( $gateway->get_xpub() )
 							?? $this->bitcoin_wallet_repository->save_new( $gateway->get_xpub(), $gateway->id );
 
-		$this->ensure_unused_addresses_for_wallet( $wallet, 1 );
+		$result = $this->ensure_unused_addresses_for_wallet( $wallet, 1 );
 
-		return $this->bitcoin_address_repository->get_addresses(
-			wallet: $wallet,
-			status: Bitcoin_Address_Status::UNUSED,
-		);
+		$unused_addresses = $result->get_unused_addresses();
+
+		return array_first( $unused_addresses );
 	}
 
 	/**
@@ -194,7 +192,7 @@ trait API_WooCommerce_Trait {
 	 * @used-by Bitcoin_Gateway::is_available()
 	 *
 	 * @return bool
-	 * @throws BH_WP_Bitcoin_Gateway_Exception
+	 * @throws BH_WP_Bitcoin_Gateway_Exception When the wallet lookup fails or the address repository cannot be queried.
 	 */
 	public function is_fresh_address_available_for_gateway( Bitcoin_Gateway $gateway ): bool {
 
@@ -221,7 +219,7 @@ trait API_WooCommerce_Trait {
 	 * @param bool     $refresh Should the result be returned from cache or refreshed from remote APIs.
 	 *
 	 * @return WC_Bitcoin_Order_Interface
-	 * @throws BH_WP_Bitcoin_Gateway_Exception
+	 * @throws BH_WP_Bitcoin_Gateway_Exception When the order has no Bitcoin address or blockchain API queries fail during refresh.
 	 */
 	public function get_order_details( WC_Order $wc_order, bool $refresh = true ): WC_Bitcoin_Order_Interface {
 
@@ -235,12 +233,13 @@ trait API_WooCommerce_Trait {
 	}
 
 	/**
+	 * Perform a remote check for transactions and save new details to the order.
 	 *
 	 * TODO: mempool.
 	 *
-	 * @param WC_Bitcoin_Order_Interface $bitcoin_order
+	 * @param WC_Bitcoin_Order_Interface $bitcoin_order The WC_Order order to refresh.
 	 *
-	 * @throws BH_WP_Bitcoin_Gateway_Exception
+	 * @throws BH_WP_Bitcoin_Gateway_Exception When blockchain API queries fail or transaction data cannot be updated.
 	 */
 	protected function refresh_order( WC_Bitcoin_Order_Interface $bitcoin_order ): bool {
 
@@ -317,19 +316,19 @@ trait API_WooCommerce_Trait {
 	 * Get order details for printing in HTML templates.
 	 *
 	 * Returns an array of:
-	 * * html formatted values
+	 * * HTML formatted values
 	 * * raw values that are known to be used in the templates
 	 * * objects the values are from
 	 *
 	 * @param WC_Order $order The WooCommerce order object to update.
 	 * @param bool     $refresh Should saved order details be returned or remote APIs be queried.
 	 *
-	 * @uses \BrianHenryIE\WP_Bitcoin_Gateway\API_Interface::get_order_details()
+	 * @uses API_WooCommerce_Interface::get_order_details()
 	 * @see  Details_Formatter
 	 *
 	 * @return array<string, string|null|Money|BigNumber|array<Bitcoin_Transaction>|WC_Bitcoin_Order_Interface|WC_Order>
 	 *
-	 * @throws BH_WP_Bitcoin_Gateway_Exception
+	 * @throws BH_WP_Bitcoin_Gateway_Exception When order details cannot be retrieved or formatted due to missing address or API failures.
 	 */
 	public function get_formatted_order_details( WC_Order $order, bool $refresh = true ): array {
 
@@ -340,7 +339,7 @@ trait API_WooCommerce_Trait {
 		// HTML formatted data.
 		$result = $formatted->to_array();
 
-		// Raw data.
+		// Raw data. TODO: convert `::get_btc_total_price(): Money`, use typed class with all strings.
 		$result['btc_total']           = $order_details->get_btc_total_price();
 		$result['btc_exchange_rate']   = $order_details->get_btc_exchange_rate();
 		$result['btc_address']         = $order_details->get_address()->get_raw_address();

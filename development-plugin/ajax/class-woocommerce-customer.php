@@ -8,9 +8,6 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Development_Plugin\Ajax;
 
 use WC_Customer;
-use WP_REST_Request;
-use WP_REST_Response;
-use WP_REST_Server;
 
 /**
  * Set customer data in WooCommerce session for testing.
@@ -86,7 +83,7 @@ class WooCommerce_Customer {
 		$billing_fields = array( 'first_name', 'last_name', 'company', 'address_1', 'address_2', 'city', 'state', 'postcode', 'country', 'email', 'phone' );
 		foreach ( $billing_fields as $field ) {
 			if ( isset( $_POST[ 'billing_' . $field ] ) && is_string( $_POST[ 'billing_' . $field ] ) ) {
-				$billing_props[ 'billing_' . $field ] = wc_clean( wp_unslash( $_POST[ 'billing_' . $field ] ) );
+				$billing_props[ 'billing_' . $field ] = sanitize_text_field( wp_unslash( $_POST[ 'billing_' . $field ] ) );
 			}
 		}
 
@@ -94,7 +91,7 @@ class WooCommerce_Customer {
 		$shipping_fields = array( 'first_name', 'last_name', 'company', 'address_1', 'address_2', 'city', 'state', 'postcode', 'country' );
 		foreach ( $shipping_fields as $field ) {
 			if ( isset( $_POST[ 'shipping_' . $field ] ) && is_string( $_POST[ 'shipping_' . $field ] ) ) {
-				$shipping_props[ 'shipping_' . $field ] = wc_clean( wp_unslash( $_POST[ 'shipping_' . $field ] ) );
+				$shipping_props[ 'shipping_' . $field ] = sanitize_text_field( wp_unslash( $_POST[ 'shipping_' . $field ] ) );
 			}
 		}
 

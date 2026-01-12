@@ -60,9 +60,9 @@ class Bitcoin_Transaction_Repository_WPUnit_Test extends \lucatume\WPBrowser\Tes
 
 		$result = $sut->save_new( $transaction_to_save, $bitcoin_address );
 
-		$this->assertEquals( '6b1942ad9572d9675017a3a082e4e3f2dd857ce3e9c34dc8eff0c5b8babf0408',$result->get_txid());
-		$this->assertEquals( 2,$result->get_version());
-		$this->assertEquals( $block_time->format('U'),$result->get_block_time()->format('U'));
-		$this->assertEquals(619213 ,$result->get_block_height());
+		$this->assertEquals( '6b1942ad9572d9675017a3a082e4e3f2dd857ce3e9c34dc8eff0c5b8babf0408', $result->get_txid() );
+		$this->assertEquals( 2, $result->get_version() );
+		$this->assertEquals( $block_time->format( 'U' ), $result->get_block_time()->format( 'U' ) );
+		$this->assertEquals( 619213, $result->get_block_height() );
 	}
 }

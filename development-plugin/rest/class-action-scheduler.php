@@ -50,6 +50,8 @@ class Action_Scheduler {
 
 	/**
 	 * Search for Action Scheduler schedule events.
+	 *
+	 * @param WP_REST_Request $request The REST request object.
 	 */
 	public function action_scheduler_search( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 
@@ -134,6 +136,8 @@ class Action_Scheduler {
 
 	/**
 	 * Delete an Action Scheduler scheduled task by id (int).
+	 *
+	 * @param WP_REST_Request $request The REST request object.
 	 */
 	public function action_scheduler_delete( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 

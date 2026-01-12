@@ -28,11 +28,21 @@ readonly class Bitcoin_Wallet_Query extends WP_Post_Query_Abstract {
 	protected function get_wp_post_fields(): array {
 		$wp_post_fields = array();
 
-		$this->master_public_key && $wp_post_fields['post_title']   = $this->master_public_key;
-		$this->master_public_key && $wp_post_fields['post_title']   = $this->master_public_key;
-		$this->status && $wp_post_fields['post_status']             = $this->status;
-		$this->master_public_key && $wp_post_fields['post_excerpt'] = $this->master_public_key;
-		$this->master_public_key && $wp_post_fields['post_name']    = sanitize_title( $this->master_public_key );
+		if ( $this->master_public_key ) {
+			$wp_post_fields['post_title'] = $this->master_public_key;
+		}
+		if ( $this->master_public_key ) {
+			$wp_post_fields['post_title'] = $this->master_public_key;
+		}
+		if ( $this->status ) {
+			$wp_post_fields['post_status'] = $this->status;
+		}
+		if ( $this->master_public_key ) {
+			$wp_post_fields['post_excerpt'] = $this->master_public_key;
+		}
+		if ( $this->master_public_key ) {
+			$wp_post_fields['post_name'] = sanitize_title( $this->master_public_key );
+		}
 
 		return $wp_post_fields;
 	}
@@ -55,6 +65,7 @@ readonly class Bitcoin_Wallet_Query extends WP_Post_Query_Abstract {
 	 * @param ?string                $master_public_key The Wallet's master public key.
 	 * @param ?Bitcoin_Wallet_Status $status Current status, e.g. new.
 	 * @param ?array<int|string>     $gateway_refs List of gateways the Bitcoin_Wallet is being used by.
+	 * @param ?int                   $last_derived_address_index The highest address index that has been derived from this wallet's master public key.
 	 */
 	public function __construct(
 		public ?string $master_public_key = null,

@@ -13,6 +13,11 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Bitcoin_Gateway;
 
 interface Bitcoin_Address_Interface {
 
+	/**
+	 * Get the WordPress post ID for this saved Bitcoin payment address.
+	 *
+	 * @return int The post ID.
+	 */
 	public function get_post_id(): int;
 
 	/**

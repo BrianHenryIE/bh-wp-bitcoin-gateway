@@ -1,4 +1,9 @@
 <?php
+/**
+ * Adapter to convert Blockstream.info API transaction data to internal Transaction objects.
+ *
+ * @package brianhenryie/bh-wp-bitcoin-gateway
+ */
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain;
 
@@ -27,7 +32,7 @@ class BlockStream_Info_API_Transaction_Adapter {
 	 */
 	public function adapt( array $blockstream_transaction ): Transaction_Interface {
 		return new Transaction(
-			tx_id: (string) $blockstream_transaction['txid'], // $blockstream_transaction['status']['block_hash'] ?
+			tx_id: (string) $blockstream_transaction['txid'], // TODO: what is `$blockstream_transaction['status']['block_hash']`?
 			block_time: new DateTimeImmutable( '@' . $blockstream_transaction['status']['block_time'], new DateTimeZone( 'UTC' ) ),
 			version: $blockstream_transaction['version'],
 			v_in:  array_map( array( $this, 'map_v_in' ), $blockstream_transaction['vin'] ),
@@ -37,8 +42,11 @@ class BlockStream_Info_API_Transaction_Adapter {
 	}
 
 	/**
-	 * @param BlockStreamApiTransactionVInArray&array $v_in
-	 * @throws UnknownCurrencyException
+	 * Map a Blockstream API transaction vector input to internal Transaction_VIn.
+	 *
+	 * @param BlockStreamApiTransactionVInArray&array $v_in The transaction input from Blockstream API.
+	 * @return Transaction_VIn The mapped transaction input.
+	 * @throws UnknownCurrencyException When BTC currency code is not recognized by the Money library.
 	 */
 	protected function map_v_in( array $v_in ): Transaction_VIn {
 		return new Transaction_VIn(
@@ -52,8 +60,11 @@ class BlockStream_Info_API_Transaction_Adapter {
 	}
 
 	/**
-	 * @param BlockStreamApiTransactionVOutArray&array $v_out
-	 * @throws UnknownCurrencyException
+	 * Map a Blockstream API transaction output to internal Transaction_VOut.
+	 *
+	 * @param BlockStreamApiTransactionVOutArray&array $v_out The transaction output from Blockstream API.
+	 * @return Transaction_VOut The mapped transaction output.
+	 * @throws UnknownCurrencyException When BTC currency code is not recognized by the Money library.
 	 */
 	protected function map_v_out( array $v_out ): Transaction_VOut {
 		return new Transaction_VOut(

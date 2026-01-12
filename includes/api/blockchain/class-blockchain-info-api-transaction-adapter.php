@@ -1,4 +1,9 @@
 <?php
+/**
+ * Adapter for Blockchain.info transaction objects.
+ *
+ * @package brianhenryie/bh-wp-bitcoin-gateway
+ */
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain;
 
@@ -13,8 +18,17 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use DateTimeImmutable;
 use DateTimeZone;
 
+/**
+ * Adapter that converts Blockchain.info transaction objects to internal Transaction_Interface.
+ */
 class Blockchain_Info_Api_Transaction_Adapter {
 
+	/**
+	 * Adapt a Blockchain.info transaction to the internal transaction interface.
+	 *
+	 * @param BlockchainInfo_Transaction $transaction The Blockchain.info transaction object.
+	 * @return Transaction_Interface The adapted transaction.
+	 */
 	public function adapt( BlockchainInfo_Transaction $transaction ): Transaction_Interface {
 		return new Transaction(
 			tx_id: $transaction->getHash(),
@@ -26,6 +40,12 @@ class Blockchain_Info_Api_Transaction_Adapter {
 		);
 	}
 
+	/**
+	 * Map a Blockchain.info transaction vector input to internal Transaction_VIn.
+	 *
+	 * @param TransactionInput $transaction_input The transaction input from Blockchain.info.
+	 * @return Transaction_VIn The mapped transaction input.
+	 */
 	protected function map_t_in( TransactionInput $transaction_input ): Transaction_VIn {
 		return new Transaction_VIn(
 			sequence: $transaction_input->getSequence(),
@@ -37,6 +57,12 @@ class Blockchain_Info_Api_Transaction_Adapter {
 		);
 	}
 
+	/**
+	 * Map a Blockchain.info transaction vector output to internal Transaction_VOut.
+	 *
+	 * @param TransactionOut $out The transaction output from Blockchain.info.
+	 * @return Transaction_VOut The mapped transaction output.
+	 */
 	protected function map_v_out( TransactionOut $out ): Transaction_VOut {
 		return new Transaction_VOut(
 			value: Money::of( $out->getValue(), 'BTC' )->dividedBy( 100_000_000 ),

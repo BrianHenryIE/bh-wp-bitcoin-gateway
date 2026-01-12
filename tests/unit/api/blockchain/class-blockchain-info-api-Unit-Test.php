@@ -42,8 +42,6 @@ class Blockchain_Info_API_Unit_Test extends \Codeception\Test\Unit {
 		$this->assertEquals( '104.32394445', (string) $result->getAmount() );
 	}
 
-	/**
-	 */
 	public function test_get_address_balance(): void {
 
 		$this->markTestSkipped( 'old test – new we only fetch transactions and calculate the amount received based on the desired number of confirmations' );

@@ -8,6 +8,9 @@ class Transaction_Formatter {
 
 	/**
 	 * URL to the transaction details on blockchain.com.
+	 *
+	 * @param Transaction_Interface $transaction The transaction to get URL for.
+	 * @return string The URL to view the transaction.
 	 */
 	public function get_url( Transaction_Interface $transaction ): string {
 		return sprintf(
@@ -18,13 +21,19 @@ class Transaction_Formatter {
 
 	/**
 	 * Given a long string, return a short version with ellipses in the middle.
+	 *
+	 * @param Transaction_Interface $transaction The transaction to format.
+	 * @return string The shortened transaction ID with ellipses.
 	 */
 	public function get_ellipses( Transaction_Interface $transaction ): string {
 		return substr( $transaction->get_txid(), 0, 3 ) . '...' . substr( $transaction->get_txid(), - 3 );
 	}
 
 	/**
-	 * @param Transaction_Interface[] $new_order_transactions
+	 * Generate an order note for newly seen transactions.
+	 *
+	 * @param Transaction_Interface[] $new_order_transactions New transactions to include in the note.
+	 * @return string The HTML formatted order note.
 	 */
 	public function get_order_note( array $new_order_transactions ): string {
 
@@ -40,6 +49,12 @@ class Transaction_Formatter {
 		return $note;
 	}
 
+	/**
+	 * Get HTML formatted single transaction data for use in a WooCommerce order note.
+	 *
+	 * @param Transaction_Interface $transaction The transaction to format.
+	 * @return string The formatted note part with link and block height.
+	 */
 	protected function get_note_part( Transaction_Interface $transaction ): string {
 		return sprintf(
 			'<a href="%s" target="_blank">%s</a>, @%s',

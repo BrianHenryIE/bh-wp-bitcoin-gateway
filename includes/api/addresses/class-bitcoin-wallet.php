@@ -1,5 +1,10 @@
 <?php
 /**
+ * Bitcoin wallet stored as a WordPress custom post type.
+ *
+ * Represents a hierarchical deterministic (HD) wallet using an extended public key (xpub/ypub/zpub)
+ * that can derive multiple payment addresses for receiving Bitcoin payments.
+ *
  * Custom post type in WordPress, keyed with GUID of the wallet.
  *
  * TODO: Update the wp_post last modified time when updating metadata.
@@ -9,17 +14,29 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses;
 
+use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Post_BH_Bitcoin_Wallet;
+
+/**
+ * @see Bitcoin_Wallet_WP_Post_Interface
+ * @see Post_BH_Bitcoin_Wallet
+ */
 class Bitcoin_Wallet implements Bitcoin_Wallet_Interface {
 
 	/**
 	 * Constructor
+	 *
+	 * @param int                   $post_id The WordPress post ID where this wallet is stored in the database.
+	 * @param string                $xpub The extended public key (xpub/ypub/zpub) used to derive child addresses for this wallet.
+	 * @param Bitcoin_Wallet_Status $status The current operational status of the wallet (e.g. active, inactive).
+	 * @param ?int                  $address_index The highest derivation path index used for generating addresses, or null before any addresses have been generated.
+	 * @param ?string               $balance The cached total balance received across all addresses derived from this wallet, or null if never calculated.
 	 */
 	public function __construct(
 		protected int $post_id,
 		protected string $xpub,
 		protected Bitcoin_Wallet_Status $status,
 		protected ?int $address_index, // null before any addresses have been generated.
-		protected ?string $balance,
+		protected ?string $balance, // TODO: just use "received", "balance" requires monitoring all used addresses.
 	) {
 	}
 
