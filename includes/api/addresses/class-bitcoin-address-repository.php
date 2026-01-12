@@ -201,18 +201,18 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 	 *
 	 * @param Bitcoin_Wallet $wallet The wallet this address belongs to.
 	 * @param int            $derivation_path_sequence_index The derivation path index for this address.
-	 * @param string         $xpub The Bitcoin address string.
+	 * @param string         $address The Bitcoin payment address string.
 	 * @return Bitcoin_Address The saved Bitcoin address.
 	 * @throws BH_WP_Bitcoin_Gateway_Exception When WordPress fails to create the wp_post.
 	 */
 	public function save_new(
 		Bitcoin_Wallet $wallet,
 		int $derivation_path_sequence_index,
-		string $xpub,
+		string $address,
 	): Bitcoin_Address {
 
 		// Unlikely, but was an issue for Wallets.
-		$existing_post_id = $this->get_post_id_for_address( $xpub );
+		$existing_post_id = $this->get_post_id_for_address( $address );
 		if ( $existing_post_id ) {
 			return $this->bitcoin_address_factory->get_by_wp_post_id( $existing_post_id );
 		}
@@ -220,7 +220,7 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 		$query = new Bitcoin_Address_Query(
 			wallet_wp_post_parent_id: $wallet->get_post_id(),
 			status: Bitcoin_Address_Status::UNKNOWN,
-			xpub: $xpub,
+			xpub: $address,
 			derivation_path_sequence_index: $derivation_path_sequence_index,
 		);
 

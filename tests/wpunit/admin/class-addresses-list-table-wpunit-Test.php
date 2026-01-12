@@ -71,7 +71,7 @@ class Addresses_List_Table_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTe
 		$bitcoin_address = $bitcoin_address_repository->save_new(
 			wallet: $wallet,
 			derivation_path_sequence_index: $address_index,
-			xpub: $address,
+			address: $address,
 		);
 		$address_post_id = $bitcoin_address->get_post_id();
 

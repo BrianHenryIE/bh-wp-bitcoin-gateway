@@ -385,7 +385,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 			$bitcoin_address = $this->bitcoin_address_repository->save_new(
 				wallet: $wallet,
 				derivation_path_sequence_index: $address_index,
-				xpub: $new_address_string,
+				address: $new_address_string,
 			);
 
 			$generated_addresses[] = $bitcoin_address;

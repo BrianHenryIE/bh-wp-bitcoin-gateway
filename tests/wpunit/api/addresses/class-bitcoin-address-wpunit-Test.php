@@ -27,7 +27,7 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 		$bitcoin_address = $bitcoin_address_repository->save_new(
 			wallet:             $wallet,
 			derivation_path_sequence_index: 2,
-			xpub: 'address',
+			address: 'address',
 		);
 
 		/** @var WP_Post $bitcoin_address_post */
@@ -64,7 +64,7 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 		$bitcoin_address = $bitcoin_address_repository->save_new(
 			wallet:             $wallet,
 			derivation_path_sequence_index: 2,
-			xpub: 'address',
+			address: 'address',
 		);
 
 		$sut = $bitcoin_address_repository->get_by_post_id( $bitcoin_address->get_post_id() );
