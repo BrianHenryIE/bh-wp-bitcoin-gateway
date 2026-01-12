@@ -537,7 +537,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 
 		$total_received = $this->get_address_confirmed_balance(
 			raw_address: $bitcoin_address->get_raw_address(),
-			blockchain_height: 123,
+			blockchain_height: $this->get_blockchain_height(),
 			required_confirmations: 3,
 			transactions: $updated_transactions->all_transactions
 		);
@@ -556,6 +556,46 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 
 		// TODO: return!
 	}
+
+	/**
+	 * Fetch the current blockchain height from the API (no more than once every ten minutes).
+	 *
+	 * Needed to compare transactions' block heights to the number of required confirmations.
+	 *
+	 * TODO: The time of the block would be useful to know so as not to check again for ten minutes. For now, we are
+	 * using the time we checked at.
+	 *
+	 * @throws Rate_Limit_Exception
+	 */
+	protected function get_blockchain_height(): int {
+		$option_name                  = 'bh_wp_bitcoin_gateway_blockchain_height';
+		$saved_blockchain_height_json = get_option( $option_name );
+		if ( is_string( $saved_blockchain_height_json ) ) {
+			/** @var ?array{blockchain_height?:int, time?:string} $saved_blockchain_height_array */
+			$saved_blockchain_height_array = json_decode( $saved_blockchain_height_json, true );
+			if ( is_array( $saved_blockchain_height_array ) && isset( $saved_blockchain_height_array['time'], $saved_blockchain_height_array['blockchain_height'] ) ) {
+				$saved_blockchain_height_date_time = new DateTimeImmutable( $saved_blockchain_height_array['time'] );
+				$ten_minutes_ago                   = new DateTimeImmutable()->sub( new DateInterval( 'PT10M' ) );
+				if ( $saved_blockchain_height_date_time > $ten_minutes_ago ) {
+					return $saved_blockchain_height_array['blockchain_height'];
+				}
+			}
+		}
+		$latest_block_height = $this->blockchain_api->get_blockchain_height();
+
+		update_option(
+			$option_name,
+			wp_json_encode(
+				array(
+					'blockchain_height' => $latest_block_height,
+					'time'              => ( new DateTimeImmutable() )->format( \DateTimeInterface::ATOM ),
+				)
+			)
+		);
+
+		return $latest_block_height;
+	}
+
 
 	/**
 	 *
