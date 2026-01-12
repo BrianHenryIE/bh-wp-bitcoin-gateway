@@ -1,5 +1,8 @@
 <?php
 /**
+ * Result object for ensuring unused addresses are available.
+ *
+ * Contains the objects in their final state and a record of the changes.
  *
  * @package brianhenryie/bh-wp-bitcoin-gateway
  */
@@ -10,6 +13,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet;
 
 /**
+ * @used-by API::ensure_unused_addresses()
  */
 class Ensure_Unused_Addresses_Result {
 
@@ -29,5 +33,15 @@ class Ensure_Unused_Addresses_Result {
 		public array $unexpectedly_used_addresses_by_wallet,
 		public array $new_unused_addresses,
 	) {
+	}
+
+	/**
+	 * @return Bitcoin_Address[]
+	 */
+	public function get_unused_addresses(): array {
+		return array_merge(
+			$this->actual_existing_unused_addresses,
+			$this->new_unused_addresses
+		);
 	}
 }

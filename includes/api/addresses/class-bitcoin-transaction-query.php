@@ -10,7 +10,6 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Transactions;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Transaction_WP_Post_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\WP_Post_Query_Abstract;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction;
-use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Post_BH_Bitcoin_Transaction;
 use DateTimeInterface;
 
@@ -33,9 +32,15 @@ readonly class Bitcoin_Transaction_Query extends WP_Post_Query_Abstract {
 	protected function get_wp_post_fields(): array {
 		$fields = array();
 
-		$this->tx_id && $fields['post_name']                 = $this->tx_id; // slug, indexed.
-		$this->tx_id && $fields['post_title']                = $this->tx_id;
-		$this->transaction_object && $fields['post_content'] = json_encode( $this->transaction_object );
+		if ( $this->tx_id ) {
+			$fields['post_name'] = $this->tx_id; // slug, indexed.
+		}
+		if ( $this->tx_id ) {
+			$fields['post_title'] = $this->tx_id;
+		}
+		if ( $this->transaction_object ) {
+			$fields['post_content'] = wp_json_encode( $this->transaction_object );
+		}
 
 		return $fields;
 	}
@@ -54,12 +59,17 @@ readonly class Bitcoin_Transaction_Query extends WP_Post_Query_Abstract {
 	}
 
 	/**
-	 * @param array<int,string> $updated_transaction_meta_bitcoin_address_post_ids
+	 * Constructor for Bitcoin transaction query.
+	 *
+	 * @param ?Transaction       $transaction_object The complete transaction object from the blockchain API to be serialized and stored in post_content.
+	 * @param ?string            $tx_id The transaction ID to search by, stored in both post_name (slug) and post_title for efficient lookups.
+	 * @param ?int               $block_height The blockchain height to query transactions by, stored in post meta for confirmation tracking.
+	 * @param ?DateTimeInterface $block_datetime The timestamp when the transaction block was mined, stored as serialized DateTimeInterface in post meta.
+	 * @param ?array<int,string> $updated_transaction_meta_bitcoin_address_post_ids Mapping of address post IDs to transaction IDs for tracking which addresses received funds.
 	 */
 	public function __construct(
 		public ?Transaction $transaction_object = null,
 		public ?string $tx_id = null,
-		public ?int $version = null,
 		public ?int $block_height = null,
 		public ?DateTimeInterface $block_datetime = null,  // TODO: don't use serialized DateTimeInterface in meta, use something legible.
 		public ?array $updated_transaction_meta_bitcoin_address_post_ids = null,

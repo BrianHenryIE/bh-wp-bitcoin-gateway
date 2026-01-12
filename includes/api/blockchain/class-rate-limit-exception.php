@@ -17,6 +17,14 @@ use Throwable;
 
 class Rate_Limit_Exception extends Exception {
 
+	/**
+	 * Constructor.
+	 *
+	 * @param ?DateTimeInterface $reset_time When the rate limit will reset, if known.
+	 * @param string             $message Exception message.
+	 * @param int                $code Exception code.
+	 * @param ?Throwable         $previous Previous exception.
+	 */
 	public function __construct(
 		protected ?DateTimeInterface $reset_time = null,
 		string $message = '',
@@ -26,6 +34,9 @@ class Rate_Limit_Exception extends Exception {
 		parent::__construct( $message, $code, $previous );
 	}
 
+	/**
+	 * Get the time when the API can be next used, `null` if unknown.
+	 */
 	public function get_reset_time(): ?DateTimeInterface {
 		return $this->reset_time;
 	}

@@ -220,8 +220,6 @@ class BH_WP_Bitcoin_Gateway_Unit_Test extends \Codeception\Test\Unit {
 		$app->register_hooks();
 	}
 
-	/**
-	 */
 	public function test_define_order_hooks(): void {
 
 		$this->markTestSkipped( 'addresses should be checked, rather than orders' );

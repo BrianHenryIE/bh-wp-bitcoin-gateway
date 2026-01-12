@@ -1,6 +1,6 @@
 <?php
 /**
- * Really just a wrapper for WC_Order.
+ * A ~facade on WC_Order that returns strongly typed data.
  *
  * I.e. to return its string meta address as a typed Bitcoin_Address etc.
  *
@@ -10,7 +10,6 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model;
 
 use BadMethodCallException;
-use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Handler;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\BH_WP_Bitcoin_Gateway_Exception;
@@ -31,10 +30,25 @@ use WC_Payment_Gateways;
 class WC_Bitcoin_Order implements WC_Bitcoin_Order_Interface {
 	use LoggerAwareTrait;
 
+	/**
+	 * The underlying WooCommerce order object.
+	 *
+	 * @var WC_Order
+	 */
 	protected WC_Order $wc_order;
 
+	/**
+	 * The Bitcoin payment address assigned to this order.
+	 *
+	 * @var Bitcoin_Address
+	 */
 	protected Bitcoin_Address $address;
 
+	/**
+	 * The Bitcoin payment gateway used for this order.
+	 *
+	 * @var Bitcoin_Gateway|null
+	 */
 	protected ?Bitcoin_Gateway $gateway;
 
 	/**
@@ -42,16 +56,32 @@ class WC_Bitcoin_Order implements WC_Bitcoin_Order_Interface {
 	 *
 	 * TODO: Different orders may have different number of confirmations. E.g. more expensive orders might want higher
 	 * number of confirmations, orders that need near-er instant completion might trust mempool.
+	 *
+	 * @var int
 	 */
 	protected int $confirmations;
+
+	/**
+	 * The total amount of Bitcoin received at the payment address.
+	 *
+	 * @var Money
+	 */
 	protected Money $amount_received;
+
+	/**
+	 * The timestamp when the address was last checked for transactions.
+	 *
+	 * @var DateTimeInterface
+	 */
 	protected DateTimeInterface $last_checked_time;
 
 	/**
-	 * @param string       $name
-	 * @param array<mixed> $arguments
+	 * Magic method to proxy method calls to the underlying WooCommerce order.
 	 *
-	 * @return mixed
+	 * @param string       $name The method name to call.
+	 * @param array<mixed> $arguments The arguments to pass to the method.
+	 *
+	 * @throws BadMethodCallException When the method doesn't exist on the underlying WC_Order object.
 	 */
 	public function __call( string $name, array $arguments ): mixed {
 		if ( is_callable( array( $this->wc_order, $name ) ) ) {
@@ -60,6 +90,14 @@ class WC_Bitcoin_Order implements WC_Bitcoin_Order_Interface {
 		throw new BadMethodCallException();
 	}
 
+	/**
+	 * Constructor.
+	 *
+	 * @param WC_Order                   $wc_order The WooCommerce order.
+	 * @param Bitcoin_Address_Repository $bitcoin_address_repository Repository for Bitcoin addresses.
+	 *
+	 * @throws BH_WP_Bitcoin_Gateway_Exception When the order has no Bitcoin address or the address cannot be retrieved.
+	 */
 	public function __construct(
 		WC_Order $wc_order,
 		Bitcoin_Address_Repository $bitcoin_address_repository
@@ -107,12 +145,15 @@ class WC_Bitcoin_Order implements WC_Bitcoin_Order_Interface {
 		return BigNumber::of( $rate_meta['amount'] );
 	}
 
+	/**
+	 * Get the Bitcoin payment address associated with this order.
+	 */
 	public function get_address(): Bitcoin_Address {
 		return $this->address;
 	}
 
 	/**
-	 * A proxy for the Bitcoin Address object's last checked time.
+	 * A ~proxy for the Bitcoin Address object's last checked time.
 	 *
 	 * Null when never changed
 	 */
@@ -125,6 +166,11 @@ class WC_Bitcoin_Order implements WC_Bitcoin_Order_Interface {
 		return $last_checked_time instanceof DateTimeInterface ? $last_checked_time : null;
 	}
 
+	/**
+	 * Set the timestamp when the Bitcoin address was last checked for payments.
+	 *
+	 * @param DateTimeInterface $last_checked_time The timestamp of the last check.
+	 */
 	public function set_last_checked_time( DateTimeInterface $last_checked_time ): void {
 		// @phpstan-ignore-next-line This works fine.
 		$this->wc_order->add_meta_data( Order::LAST_CHECKED_META_KEY, $last_checked_time, true );
@@ -158,7 +204,9 @@ class WC_Bitcoin_Order implements WC_Bitcoin_Order_Interface {
 	}
 
 	/**
-	 * @param Money $updated_confirmed_value
+	 * Set the confirmed Bitcoin amount received for this order.
+	 *
+	 * @param Money $updated_confirmed_value The confirmed amount received in Bitcoin.
 	 */
 	public function set_amount_received( Money $updated_confirmed_value ): void {
 		$this->wc_order->add_meta_data( Order::BITCOIN_AMOUNT_RECEIVED_META_KEY, $updated_confirmed_value, true );

@@ -1,5 +1,7 @@
 <?php
 /**
+ * Bitfinex exchange rate API client.
+ *
  * Use the {@see https://bitfinex.com} API for currency conversion.
  *
  * TODO: surface the ToS to the admin UI.
@@ -21,21 +23,35 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Exchange_Rate;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Exchange_Rate_API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Currency;
+use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\UnknownCurrencyException;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 
+/**
+ * Queries API and returns Money object where 1 BTC = value of requested currency.
+ */
 class Bitfinex_API implements Exchange_Rate_API_Interface {
 	use LoggerAwareTrait;
 
-	public function __construct( LoggerInterface $logger ) {
+	/**
+	 * Constructor.
+	 *
+	 * @param LoggerInterface $logger Debug logging API calls; error logging failures.
+	 */
+	public function __construct(
+		LoggerInterface $logger
+	) {
 		$this->setLogger( $logger );
 	}
 
 	/**
 	 * Fetch the current exchange from a remote API.
 	 *
-	 * @throws BH_WP_Bitcoin_Gateway_Exception when the request fails.
+	 * @param Currency $currency The currency to get the Bitcoin exchange rate for.
+	 * @return Money The exchange rate.
+	 * @throws BH_WP_Bitcoin_Gateway_Exception When the request fails.
+	 * @throws UnknownCurrencyException Almost impossible – unless the Money library cannot use a Currency object it created.
 	 */
 	public function get_exchange_rate( Currency $currency ): Money {
 

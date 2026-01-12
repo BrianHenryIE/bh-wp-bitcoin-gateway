@@ -16,6 +16,9 @@ class Mark_Address_As_Paid_Result {
 
 	/**
 	 * Constructor.
+	 *
+	 * @param Bitcoin_Address        $bitcoin_address The Bitcoin address that was marked as paid.
+	 * @param Bitcoin_Address_Status $status_before The status of the address before it was marked as paid.
 	 */
 	public function __construct(
 		protected Bitcoin_Address $bitcoin_address,

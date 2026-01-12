@@ -3,8 +3,6 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
-use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Handler;
-use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduler;
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduler_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Status;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Transaction_Repository;
@@ -174,14 +172,8 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 		$bitcoin_address_repository = $this->makeEmpty(
 			Bitcoin_Address_Repository::class,
 			array(
-				'get_addresses' => Expected::once(
-					function ( ?Bitcoin_Wallet $wallet = null, ?Bitcoin_Address_Status $status = null ) use ( $addresses_result ): array {
-						/** @return Bitcoin_Address[] */
-						return $addresses_result;
-					}
-				),
-				'save_new'      => Expected::once( $address ),
-				'refresh'       => $address,
+				'save_new' => Expected::once( $address ),
+				'refresh'  => $address,
 			)
 		);
 
@@ -193,10 +185,7 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 		$bitcoin_gateway                   = new Bitcoin_Gateway( $sut );
 		$bitcoin_gateway->settings['xpub'] = 'xpub';
 
-		$result = $sut->get_fresh_addresses_for_gateway( $bitcoin_gateway );
-
-		/** @var Bitcoin_Address $address */
-		$address = array_pop( $result );
+		$address = $sut->get_fresh_address_for_gateway( $bitcoin_gateway );
 
 		self::assertEquals( 'success', $address->get_raw_address() );
 	}
@@ -312,12 +301,6 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 			Bitcoin_Address_Repository::class,
 			array(
 				'get_unused_bitcoin_addresses' => Expected::once( fn()=> array() ),
-				'get_addresses'                => Expected::once(
-					function ( ?Bitcoin_Wallet $wallet = null, ?Bitcoin_Address_Status $status = null ) use ( $addresses_result ): array {
-						/** @return Bitcoin_Address[] */
-						return $addresses_result;
-					}
-				),
 				'save_new'                     => Expected::once( $address ),
 				'refresh'                      => $address,
 			)

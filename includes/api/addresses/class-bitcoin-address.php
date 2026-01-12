@@ -12,9 +12,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\Admin\Addresses_List_Table;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Bitcoin_Gateway;
-use RuntimeException;
 use InvalidArgumentException;
-use WP_Post;
 
 /**
  * TODO: Should we rename this to payment address?
@@ -67,7 +65,15 @@ class Bitcoin_Address implements Bitcoin_Address_Interface {
 	/**
 	 * Constructor
 	 *
-	 * @param array<int,string>|null $tx_ids post_id:tx_id.
+	 * @param int                    $post_id The WordPress post ID for this address.
+	 * @param int                    $wallet_parent_post_id The post ID of the parent wallet.
+	 * @param string                 $raw_address The Bitcoin address string.
+	 * @param ?int                   $derivation_path_sequence_number The derivation path sequence number.
+	 * @param Bitcoin_Address_Status $status The current status of the address.
+	 * @param ?Money                 $target_amount The target amount for payment.
+	 * @param ?int                   $order_id The WooCommerce order ID associated with this address.
+	 * @param array<int,string>|null $tx_ids Transaction IDs as post_id:tx_id.
+	 * @param ?Money                 $balance The current balance of the address.
 	 *
 	 * @throws InvalidArgumentException When the supplied post_id is not a post of this type.
 	 */
@@ -78,13 +84,16 @@ class Bitcoin_Address implements Bitcoin_Address_Interface {
 		protected ?int $derivation_path_sequence_number = null,
 		protected Bitcoin_Address_Status $status = Bitcoin_Address_Status::UNKNOWN,
 		protected ?Money $target_amount = null,
-		// protected ?int $required_confirmations,
+		// protected ?int $required_confirmations.
 		protected ?int $order_id = null,
 		protected ?array $tx_ids = null,
 		protected ?Money $balance = null,
 	) {
 	}
 
+	/**
+	 * Get the WordPress post ID where this Bitcoin payment address is stored.
+	 */
 	public function get_post_id(): int {
 		return $this->post_id;
 	}
