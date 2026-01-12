@@ -133,9 +133,13 @@ class Bitcoin_Order_Confirmation_Block {
 		// Return the inner blocks content wrapped in our container.
 		$wrapper_attributes_string = get_block_wrapper_attributes( $wrapper_attributes );
 
-		// TODO: I thought this would re-render the inner blocks, which were rendered before this block determined the order id it was wrapping them with.
-		// $block->refresh_parsed_block_dependents();
-		// $block->refresh_context_dependents();
+		/**
+		 * TODO: I thought these would re-render the inner blocks, which were rendered before this block
+		 * determined the order id it was wrapping them with.
+		 *
+		 * @see WP_Block::refresh_parsed_block_dependents()
+		 * @see WP_Block::refresh_context_dependents()
+		 */
 
 		return sprintf(
 			'<div %1$s><div class="wp-block-group"><div class="wp-block-group__inner-container">%2$s</div></div></div>',
@@ -190,8 +194,8 @@ class Bitcoin_Order_Confirmation_Block {
 		}
 
 		// Check the key in the URL.
-		if ( function_exists( 'wc_get_order_id_by_order_key' ) && isset( $_GET['key'] ) && is_string( $_GET['key'] ) ) {
-			$order_id = wc_get_order_id_by_order_key( sanitize_text_field( $_GET['key'] ) );
+		if ( function_exists( 'wc_get_order_id_by_order_key' ) && isset( $_GET['key'] ) && is_numeric( $_GET['key'] ) ) {
+			$order_id = wc_get_order_id_by_order_key( absint( $_GET['key'] ) );
 			if ( $order_id > 0 ) {
 				return $order_id;
 			}
@@ -206,11 +210,12 @@ class Bitcoin_Order_Confirmation_Block {
 	 * @hooked render_block_context
 	 * @see render_block()
 	 *
-	 * innerBlocks is the same array shape as the array itself.
+	 * `$parsed_block['innerBlocks'][]` is the same array shape as the array itself.
+	 * TODO: Where is postID and postType set on the context?
 	 *
-	 * @param array{postId:int,postType:string} $context
-	 * @param array&ParsedBlock                 $parsed_block
-	 * @param ?WP_Block                         $parent_block
+	 * @param array{postId:int,postType:string} $context The current block context containing post ID and type from WordPress.
+	 * @param array&ParsedBlock                 $parsed_block The parsed block array structure containing block name, attributes, and inner blocks from the WordPress block parser.
+	 * @param ?WP_Block                         $parent_block The parent block instance if this block is nested, or null if it's a top-level block.
 	 *
 	 * @return array{postId:int,postType:string}|array{postId:int,'postType':string, "bh-wp-bitcoin-gateway/orderId":int}
 	 */

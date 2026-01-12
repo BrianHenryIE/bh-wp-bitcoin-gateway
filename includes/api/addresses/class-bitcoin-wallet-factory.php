@@ -9,17 +9,21 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses;
 
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use InvalidArgumentException;
 use WP_Post;
 
+/**
+ * Factory for creating Bitcoin_Wallet objects from WordPress posts.
+ *
+ * Converts wp_posts custom post types and their associated post_meta into typed Bitcoin_Wallet domain objects.
+ */
 class Bitcoin_Wallet_Factory {
 
 	/**
 	 * @param int $post_id The WordPress post id this wallet is stored under.
 	 *
-	 * @throws BH_WP_Bitcoin_Gateway_Exception When the supplied post_id is not a post of this type.
+	 * @throws InvalidArgumentException When the supplied post_id is not a post of this type.
 	 */
 	public function get_by_wp_post_id( int $post_id ): Bitcoin_Wallet {
 		$post = get_post( $post_id );

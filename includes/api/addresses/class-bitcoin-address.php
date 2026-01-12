@@ -84,13 +84,16 @@ class Bitcoin_Address implements Bitcoin_Address_Interface {
 		protected ?int $derivation_path_sequence_number = null,
 		protected Bitcoin_Address_Status $status = Bitcoin_Address_Status::UNKNOWN,
 		protected ?Money $target_amount = null,
-		// protected ?int $required_confirmations,
+		// protected ?int $required_confirmations.
 		protected ?int $order_id = null,
 		protected ?array $tx_ids = null,
 		protected ?Money $balance = null,
 	) {
 	}
 
+	/**
+	 * Get the WordPress post ID where this Bitcoin payment address is stored.
+	 */
 	public function get_post_id(): int {
 		return $this->post_id;
 	}

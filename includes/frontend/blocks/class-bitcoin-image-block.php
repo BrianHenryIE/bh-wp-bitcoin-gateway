@@ -33,8 +33,8 @@ class Bitcoin_Image_Block {
 	 * @hooked get_block_type_variations
 	 * @see WP_Block_Type::get_variations()
 	 *
-	 * @param array<BlockVariationArray> $variations
-	 * @param WP_Block_Type              $block_type
+	 * @param array<BlockVariationArray> $variations The existing block variations registered for this block type.
+	 * @param WP_Block_Type              $block_type The WordPress block type object being filtered.
 	 *
 	 * @return array<BlockVariationArray> Array of block variations.
 	 */
@@ -47,12 +47,12 @@ class Bitcoin_Image_Block {
 		$image_url = plugins_url( 'assets/bitcoin.png', $this->settings->get_plugin_basename() );
 
 		$variations[] = array(
-			'name'                      => 'bh-bitcoin-image',
-			'title'                     => __( 'Bitcoin image', 'bh-wp-bitcoin-gateway' ),
-			'description'               => __( 'The Bitcoin logo', 'bh-wp-bitcoin-gateway' ),
+			'name'        => 'bh-bitcoin-image',
+			'title'       => __( 'Bitcoin image', 'bh-wp-bitcoin-gateway' ),
+			'description' => __( 'The Bitcoin logo', 'bh-wp-bitcoin-gateway' ),
 			// 'scope'       => array( 'inserter' ),
-							'isDefault' => false,
-			'attributes'                => array(
+			'isDefault'   => false,
+			'attributes'  => array(
 				'url' => $image_url,
 			),
 		);

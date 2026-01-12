@@ -30,10 +30,25 @@ use WC_Payment_Gateways;
 class WC_Bitcoin_Order implements WC_Bitcoin_Order_Interface {
 	use LoggerAwareTrait;
 
+	/**
+	 * The underlying WooCommerce order object.
+	 *
+	 * @var WC_Order
+	 */
 	protected WC_Order $wc_order;
 
+	/**
+	 * The Bitcoin payment address assigned to this order.
+	 *
+	 * @var Bitcoin_Address
+	 */
 	protected Bitcoin_Address $address;
 
+	/**
+	 * The Bitcoin payment gateway used for this order.
+	 *
+	 * @var Bitcoin_Gateway|null
+	 */
 	protected ?Bitcoin_Gateway $gateway;
 
 	/**
@@ -41,9 +56,23 @@ class WC_Bitcoin_Order implements WC_Bitcoin_Order_Interface {
 	 *
 	 * TODO: Different orders may have different number of confirmations. E.g. more expensive orders might want higher
 	 * number of confirmations, orders that need near-er instant completion might trust mempool.
+	 *
+	 * @var int
 	 */
 	protected int $confirmations;
+
+	/**
+	 * The total amount of Bitcoin received at the payment address.
+	 *
+	 * @var Money
+	 */
 	protected Money $amount_received;
+
+	/**
+	 * The timestamp when the address was last checked for transactions.
+	 *
+	 * @var DateTimeInterface
+	 */
 	protected DateTimeInterface $last_checked_time;
 
 	/**
@@ -51,6 +80,8 @@ class WC_Bitcoin_Order implements WC_Bitcoin_Order_Interface {
 	 *
 	 * @param string       $name The method name to call.
 	 * @param array<mixed> $arguments The arguments to pass to the method.
+	 *
+	 * @throws BadMethodCallException When the method doesn't exist on the underlying WC_Order object.
 	 */
 	public function __call( string $name, array $arguments ): mixed {
 		if ( is_callable( array( $this->wc_order, $name ) ) ) {
@@ -64,6 +95,8 @@ class WC_Bitcoin_Order implements WC_Bitcoin_Order_Interface {
 	 *
 	 * @param WC_Order                   $wc_order The WooCommerce order.
 	 * @param Bitcoin_Address_Repository $bitcoin_address_repository Repository for Bitcoin addresses.
+	 *
+	 * @throws BH_WP_Bitcoin_Gateway_Exception When the order has no Bitcoin address or the address cannot be retrieved.
 	 */
 	public function __construct(
 		WC_Order $wc_order,

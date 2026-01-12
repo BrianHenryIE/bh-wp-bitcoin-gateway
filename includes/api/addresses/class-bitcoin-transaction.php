@@ -1,6 +1,6 @@
 <?php
 /**
- *
+ * Saved Bitcoin transaction stored as a WordPress custom post type.
  *
  * @package    brianhenryie/bh-wp-bitcoin-gateway
  */
@@ -17,7 +17,12 @@ use DateTimeInterface;
  * @phpstan-type WpUpdatePostArray array{ID?: int, post_author?: int, post_date?: string, post_date_gmt?: string, post_content?: string, post_content_filtered?: string, post_title?: string, post_excerpt?: string}
  */
 // TODO: prefer `readonly class` but PHPUnit won't mock readonly.
-// readonly class Bitcoin_Transaction implements Transaction_Interface {
+// readonly class Bitcoin_Transaction implements Transaction_Interface.
+
+/**
+ * Wraps a Transaction object from the blockchain API along with metadata about
+ * which Bitcoin addresses in the system are associated with this transaction.
+ */
 class Bitcoin_Transaction implements Transaction_Interface {
 
 	/**

@@ -1,9 +1,12 @@
 <?php
 /**
+ * Blockchain.com API client for querying Bitcoin addresses and transactions.
+ *
  * "Please limit your queries to a maximum of 1 every 10 seconds"
  *
  * @see https://www.blockchain.com/api/blockchain_api
  * @see https://www.blockchain.com/api/q
+ * @see https://github.com/brianhenryie/bh-php-blockchain-info
  *
  * @package    brianhenryie/bh-wp-bitcoin-gateway
  */
@@ -20,15 +23,22 @@ use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 
+/**
+ * Maps objects from brianhenryie/bh-php-blockchain-info library to internal representations.
+ */
 class Blockchain_Info_Api implements Blockchain_API_Interface, LoggerAwareInterface {
 	use LoggerAwareTrait;
 
+	/**
+	 * The Blockchain.com API client instance.
+	 */
 	protected BlockchainInfoApi $api;
 
 	/**
 	 * Constructor
 	 *
-	 * @param LoggerInterface $logger A PSR logger.
+	 * @param LoggerInterface        $logger A PSR logger for recording API requests and errors.
+	 * @param BlockchainInfoApi|null $api Optional pre-configured API client instance, or null to create default client with HTTP adapter.
 	 */
 	public function __construct(
 		LoggerInterface $logger,
@@ -38,8 +48,11 @@ class Blockchain_Info_Api implements Blockchain_API_Interface, LoggerAwareInterf
 		$this->api    = $api ?? $this->get_api();
 	}
 
+	/**
+	 * Construct an instance of the Blockchain.com API client.
+	 */
 	protected function get_api(): BlockchainInfoApi {
-		// Define Requests options
+		// Define options Requests library will set on cURL request.
 		$options = array();
 
 		$client = new HttpClient( $options );
@@ -48,10 +61,12 @@ class Blockchain_Info_Api implements Blockchain_API_Interface, LoggerAwareInterf
 	}
 
 	/**
-	 * @param string $btc_address
+	 * Get all transactions received by a Bitcoin address.
 	 *
-	 * @return Transaction_Interface[]
-	 * @throws BH_WP_Bitcoin_Gateway_Exception
+	 * @param string $btc_address The Bitcoin address to query for incoming transactions from the blockchain.
+	 *
+	 * @return Transaction_Interface[] Array of transactions where this address received funds.
+	 * @throws BH_WP_Bitcoin_Gateway_Exception When the API request fails or returns rate limit errors.
 	 */
 	public function get_transactions_received( string $btc_address ): array {
 
@@ -71,7 +86,10 @@ class Blockchain_Info_Api implements Blockchain_API_Interface, LoggerAwareInterf
 	}
 
 	/**
-	 * @throws BH_WP_Bitcoin_Gateway_Exception
+	 * Get the current height of the Bitcoin blockchain.
+	 *
+	 * @return int The current block height from Blockchain.com's API.
+	 * @throws BH_WP_Bitcoin_Gateway_Exception When the API request fails or the blockchain height cannot be retrieved.
 	 */
 	public function get_blockchain_height(): int {
 

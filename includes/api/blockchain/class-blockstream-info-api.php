@@ -53,8 +53,9 @@ class Blockstream_Info_API implements Blockchain_API_Interface, LoggerAwareInter
 	 *
 	 * @return array<string, Transaction_Interface> Transactions keyed by txid.
 	 *
-	 * @throws JsonException
-	 * @throws Rate_Limit_Exception
+	 * @throws JsonException When JSON decoding of the API response fails.
+	 * @throws Rate_Limit_Exception When HTTP 429 is returned, indicating the rate limit has been exceeded.
+	 * @throws BH_WP_Bitcoin_Gateway_Exception When the API request fails or returns an unexpected response code.
 	 */
 	public function get_transactions_received( string $btc_address ): array {
 
@@ -108,8 +109,10 @@ class Blockstream_Info_API implements Blockchain_API_Interface, LoggerAwareInter
 	}
 
 	/**
-	 * @return int
-	 * @throws BH_WP_Bitcoin_Gateway_Exception
+	 * Get the current Bitcoin blockchain height.
+	 *
+	 * @return int The current block height from Blockstream's API.
+	 * @throws BH_WP_Bitcoin_Gateway_Exception When the API request fails or returns a non-200 status code.
 	 */
 	public function get_blockchain_height(): int {
 		$blocks_url_bs    = 'https://blockstream.info/api/blocks/tip/height';

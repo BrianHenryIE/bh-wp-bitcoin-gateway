@@ -105,7 +105,7 @@ $container->bind( Logger_Settings_Interface::class, Settings::class );
 // BH WP Logger doesn't add its own hooks unless we use its singleton.
 $container->singleton(
 	LoggerInterface::class,
-	static function ( Container $container ) {
+	static function ( Container $_container ) {
 		return new WC_PSR_Logger(
 			new class() implements WC_Logger_Settings_Interface {
 				/**
