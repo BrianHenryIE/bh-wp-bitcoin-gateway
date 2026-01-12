@@ -528,4 +528,54 @@ class API_Unit_Test extends \Codeception\Test\Unit {
 
 		$this->assertEquals( 800003, $result );
 	}
+
+	/**
+	 * Test get_blockchain_height when saved value has invalid time format.
+	 *
+	 * @covers ::get_blockchain_height
+	 */
+	public function test_get_blockchain_height_invalid_time_format(): void {
+
+		$blockchain_api = $this->makeEmpty(
+			Blockchain_API_Interface::class,
+			array(
+				'get_blockchain_height' => Expected::once( 800004 ),
+			)
+		);
+
+		$sut = $this->get_sut(
+			blockchain_api: $blockchain_api,
+		);
+
+		$saved_value = json_encode(
+			array(
+				'blockchain_height' => 800000,
+				'time'              => 'invalid-date-format',
+			)
+		);
+
+		WP_Mock::userFunction(
+			'get_option',
+			array(
+				'times'  => 1,
+				'args'   => array( 'bh_wp_bitcoin_gateway_blockchain_height' ),
+				'return' => $saved_value,
+			)
+		);
+
+		WP_Mock::userFunction(
+			'update_option',
+			array(
+				'times' => 1,
+			)
+		);
+
+		$reflection = new ReflectionClass( $sut );
+		$method     = $reflection->getMethod( 'get_blockchain_height' );
+		$method->setAccessible( true );
+
+		$result = $method->invoke( $sut );
+
+		$this->assertEquals( 800004, $result );
+	}
 }

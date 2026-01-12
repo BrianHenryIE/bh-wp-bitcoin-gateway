@@ -600,10 +600,15 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 			/** @var ?array{blockchain_height?:int, time?:string} $saved_blockchain_height_array */
 			$saved_blockchain_height_array = json_decode( $saved_blockchain_height_json, true );
 			if ( is_array( $saved_blockchain_height_array ) && isset( $saved_blockchain_height_array['time'], $saved_blockchain_height_array['blockchain_height'] ) ) {
-				$saved_blockchain_height_date_time = new DateTimeImmutable( $saved_blockchain_height_array['time'] );
-				$ten_minutes_ago                   = new DateTimeImmutable()->sub( new DateInterval( 'PT10M' ) );
-				if ( $saved_blockchain_height_date_time > $ten_minutes_ago ) {
-					return $saved_blockchain_height_array['blockchain_height'];
+				try {
+					$saved_blockchain_height_date_time = new DateTimeImmutable( $saved_blockchain_height_array['time'] );
+					$ten_minutes_ago                   = new DateTimeImmutable()->sub( new DateInterval( 'PT10M' ) );
+					if ( $saved_blockchain_height_date_time > $ten_minutes_ago ) {
+						return (int) $saved_blockchain_height_array['blockchain_height'];
+					}
+				} catch ( \Exception $e ) {
+					// The stored time is invalid, so we'll fetch a new value.
+					$this->logger->warning( 'Could not parse stored blockchain height time. Refetching.', array( 'error' => $e->getMessage() ) );
 				}
 			}
 		}
