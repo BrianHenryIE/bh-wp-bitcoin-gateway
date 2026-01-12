@@ -105,8 +105,6 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 		$this->assertEquals( 123, $result );
 	}
 
-	/**
-	 */
 	public function test_set_status(): void {
 		$this->markTestIncomplete( 'should a Bitcoin_Address object have setters?' );
 

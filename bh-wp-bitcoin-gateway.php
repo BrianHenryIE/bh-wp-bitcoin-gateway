@@ -108,6 +108,9 @@ $container->singleton(
 	static function ( Container $container ) {
 		return new WC_PSR_Logger(
 			new class() implements WC_Logger_Settings_Interface {
+				/**
+				 * Get the plugin slug for logging.
+				 */
 				public function get_plugin_slug(): string {
 					return 'bh-wp-bitcoin-gateway';
 				}

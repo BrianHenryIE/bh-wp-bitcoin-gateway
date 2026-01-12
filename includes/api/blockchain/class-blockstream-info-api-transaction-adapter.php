@@ -37,7 +37,10 @@ class BlockStream_Info_API_Transaction_Adapter {
 	}
 
 	/**
-	 * @param BlockStreamApiTransactionVInArray&array $v_in
+	 * Map a Blockstream API transaction vector input to internal Transaction_VIn.
+	 *
+	 * @param BlockStreamApiTransactionVInArray&array $v_in The transaction input from Blockstream API.
+	 * @return Transaction_VIn The mapped transaction input.
 	 * @throws UnknownCurrencyException
 	 */
 	protected function map_v_in( array $v_in ): Transaction_VIn {
@@ -52,7 +55,10 @@ class BlockStream_Info_API_Transaction_Adapter {
 	}
 
 	/**
-	 * @param BlockStreamApiTransactionVOutArray&array $v_out
+	 * Map a Blockstream API transaction output to internal Transaction_VOut.
+	 *
+	 * @param BlockStreamApiTransactionVOutArray&array $v_out The transaction output from Blockstream API.
+	 * @return Transaction_VOut The mapped transaction output.
 	 * @throws UnknownCurrencyException
 	 */
 	protected function map_v_out( array $v_out ): Transaction_VOut {

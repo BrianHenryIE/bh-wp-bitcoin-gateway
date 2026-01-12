@@ -18,12 +18,20 @@ use Psr\Log\LoggerInterface;
 class Bitstamp_API implements Exchange_Rate_API_Interface {
 	use LoggerAwareTrait;
 
+	/**
+	 * Constructor.
+	 *
+	 * @param LoggerInterface $logger Logger instance for logging API calls.
+	 */
 	public function __construct( LoggerInterface $logger ) {
 		$this->setLogger( $logger );
 	}
 
 	/**
 	 * Fetch the current exchange from a remote API.
+	 *
+	 * @param Currency $currency The currency to get the Bitcoin exchange rate for.
+	 * @return Money The exchange rate.
 	 */
 	public function get_exchange_rate( Currency $currency ): Money {
 

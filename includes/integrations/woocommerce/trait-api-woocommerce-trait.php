@@ -6,7 +6,6 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Status;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
@@ -128,13 +127,11 @@ trait API_WooCommerce_Trait {
 	public function get_fresh_address_for_order( WC_Order $order, Money $btc_total ): Bitcoin_Address {
 		$this->logger->debug( 'Get fresh address for `shop_order:' . $order->get_id() . '`' );
 
-		$btc_addresses = $this->get_fresh_addresses_for_gateway( $this->get_bitcoin_gateways()[ $order->get_payment_method() ] );
+		$btc_address = $this->get_fresh_address_for_gateway( $this->get_bitcoin_gateways()[ $order->get_payment_method() ] );
 
-		if ( empty( $btc_addresses ) ) {
+		if ( is_null( $btc_address ) ) {
 			throw new BH_WP_Bitcoin_Gateway_Exception( 'No Bitcoin addresses available.' );
 		}
-
-		$btc_address = array_shift( $btc_addresses );
 
 		$this->bitcoin_address_repository->assign_to_order(
 			address: $btc_address,
@@ -163,27 +160,29 @@ trait API_WooCommerce_Trait {
 	}
 
 	/**
-	 * @param Bitcoin_Gateway $gateway
+	 * Get an unused payment addresses for a specific payment gateway's wallet.
 	 *
-	 * @return Bitcoin_Address[]
+	 * TODO: this should Makes a remote API call if the address has not been recently checked.
+	 *
+	 * @param Bitcoin_Gateway $gateway The Bitcoin payment gateway to get addresses for.
+	 *
 	 * @throws BH_WP_Bitcoin_Gateway_Exception
 	 */
-	public function get_fresh_addresses_for_gateway( Bitcoin_Gateway $gateway ): array {
+	public function get_fresh_address_for_gateway( Bitcoin_Gateway $gateway ): ?Bitcoin_Address {
 
 		if ( empty( $gateway->get_xpub() ) ) {
 			$this->logger->debug( "No master public key set on gateway {$gateway->id}", array( 'gateway' => $gateway ) );
-			return array();
+			return null;
 		}
 
 		$wallet = $this->bitcoin_wallet_repository->get_by_xpub( $gateway->get_xpub() )
 							?? $this->bitcoin_wallet_repository->save_new( $gateway->get_xpub(), $gateway->id );
 
-		$this->ensure_unused_addresses_for_wallet( $wallet, 1 );
+		$result = $this->ensure_unused_addresses_for_wallet( $wallet, 1 );
 
-		return $this->bitcoin_address_repository->get_addresses(
-			wallet: $wallet,
-			status: Bitcoin_Address_Status::UNUSED,
-		);
+		$unused_addresses = $result->get_unused_addresses();
+
+		return array_first( $unused_addresses );
 	}
 
 	/**
@@ -235,10 +234,11 @@ trait API_WooCommerce_Trait {
 	}
 
 	/**
+	 * Perform a remote check for transactions and save new details to the order.
 	 *
 	 * TODO: mempool.
 	 *
-	 * @param WC_Bitcoin_Order_Interface $bitcoin_order
+	 * @param WC_Bitcoin_Order_Interface $bitcoin_order The WC_Order order to refresh.
 	 *
 	 * @throws BH_WP_Bitcoin_Gateway_Exception
 	 */

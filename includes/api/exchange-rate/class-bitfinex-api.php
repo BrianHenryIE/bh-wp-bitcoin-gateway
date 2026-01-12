@@ -28,6 +28,11 @@ use Psr\Log\LoggerInterface;
 class Bitfinex_API implements Exchange_Rate_API_Interface {
 	use LoggerAwareTrait;
 
+	/**
+	 * Constructor.
+	 *
+	 * @param LoggerInterface $logger Debug logging API calls; error logging failures.
+	 */
 	public function __construct( LoggerInterface $logger ) {
 		$this->setLogger( $logger );
 	}
@@ -35,6 +40,8 @@ class Bitfinex_API implements Exchange_Rate_API_Interface {
 	/**
 	 * Fetch the current exchange from a remote API.
 	 *
+	 * @param Currency $currency The currency to get the Bitcoin exchange rate for.
+	 * @return Money The exchange rate.
 	 * @throws BH_WP_Bitcoin_Gateway_Exception when the request fails.
 	 */
 	public function get_exchange_rate( Currency $currency ): Money {

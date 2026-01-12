@@ -1,5 +1,6 @@
 <?php
 /**
+ * "vector out"
  *
  * NB: This does not account for multisig transactions.
  *
@@ -17,6 +18,12 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
  */
 readonly class Transaction_VOut {
 
+	/**
+	 * Constructor.
+	 *
+	 * @param Money   $value The value of the transaction output.
+	 * @param ?string $scriptpubkey_address
+	 */
 	public function __construct(
 		public Money $value,
 		// public int $n, // index of vouts for transaction?

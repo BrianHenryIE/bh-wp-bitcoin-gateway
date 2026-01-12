@@ -28,6 +28,11 @@ use WP_Post;
  */
 class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 
+	/**
+	 * Constructor.
+	 *
+	 * @param Bitcoin_Transaction_Factory $bitcoin_transaction_factory Factory for creating Bitcoin transaction objects.
+	 */
 	public function __construct(
 		protected Bitcoin_Transaction_Factory $bitcoin_transaction_factory,
 	) {
@@ -45,9 +50,11 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 	}
 
 	/**
-	 * @param string $tx_id
+	 * Get a WordPress post by transaction ID.
 	 *
-	 * @return ?WP_Post
+	 * @param string $tx_id The transaction ID to search for.
+	 *
+	 * @return WP_Post|null The WordPress post or null if not found.
 	 * @throws RuntimeException
 	 */
 	protected function get_post_by_transaction_id( string $tx_id ): ?WP_Post {
@@ -99,9 +106,11 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 	}
 
 	/**
-	 * @param Bitcoin_Address $address
+	 * Get the WordPress post IDs for all transactions associated with an address.
 	 *
-	 * @return ?int[]
+	 * @param Bitcoin_Address $address The Bitcoin address to get transaction IDs for.
+	 *
+	 * @return int[]|null Array of post IDs or null.
 	 */
 	protected function get_transactions_wp_post_ids_for_address(
 		Bitcoin_Address $address,
@@ -180,8 +189,12 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 	}
 
 	/**
-	 * @param array<int,string> $transaction_post_id_and_txid post_id:tx_id.
-	 * @param Bitcoin_Address   $address
+	 * Associate a transaction with a Bitcoin payment address in their respective post_metas.
+	 *
+	 * TODO: feels this should move into a service and keep this class dumber.
+	 *
+	 * @param array<int,string> $transaction_post_id_and_txid Transaction post_id:tx_id pairs.
+	 * @param Bitcoin_Address   $address The Bitcoin address to associate with.
 	 */
 	protected function associate_transaction_post_id_and_address(
 		array $transaction_post_id_and_txid,
@@ -197,7 +210,7 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 	 * Conversely, elsewhere, the address post_id will be linked on the transaction.
 	 *
 	 * @param array<int, string> $transactions_post_ids Key/value: <post_id, transaction_id>.
-	 * @param Bitcoin_Address    $address
+	 * @param Bitcoin_Address    $address The Bitcoin address to link transactions to.
 	 *
 	 * @return void TODO: return something meaningful.
 	 */

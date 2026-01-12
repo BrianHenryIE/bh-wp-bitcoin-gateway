@@ -23,6 +23,12 @@ use WP_Block_Type_Registry;
  */
 class Bitcoin_Order_Confirmation_Block {
 
+	/**
+	 * Constructor.
+	 *
+	 * @param Settings_Interface         $settings Plugin settings, plugin url required for serving script.
+	 * @param Bitcoin_Address_Repository $bitcoin_address_repository Repository for Bitcoin addresses.
+	 */
 	public function __construct(
 		protected Settings_Interface $settings,
 		protected Bitcoin_Address_Repository $bitcoin_address_repository,
@@ -139,6 +145,11 @@ class Bitcoin_Order_Confirmation_Block {
 	}
 
 
+	/**
+	 * Get formatted order details for display.
+	 *
+	 * @return Details_Formatter|null The formatted order details or null if no order found.
+	 */
 	protected function get_order_details_formatted(): ?Details_Formatter {
 		$order = $this->get_order();
 
@@ -154,6 +165,11 @@ class Bitcoin_Order_Confirmation_Block {
 		);
 	}
 
+	/**
+	 * Get the WooCommerce order for the current request.
+	 *
+	 * @return WC_Order|null The WooCommerce order or null if not found.
+	 */
 	protected function get_order(): ?WC_Order {
 		if ( ! function_exists( 'wc_get_order' ) ) {
 			return null; // TODO: Add breakpoint and make sure this isn't executing unless it is needed.

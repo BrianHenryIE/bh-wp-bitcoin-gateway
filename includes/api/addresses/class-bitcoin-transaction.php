@@ -23,7 +23,9 @@ class Bitcoin_Transaction implements Transaction_Interface {
 	/**
 	 * Constructor
 	 *
-	 * @param array<int,string> $bitcoin_addresses post_id:bitcoin_address
+	 * @param int               $post_id The WordPress post ID for this transaction.
+	 * @param Transaction       $transaction The transaction object.
+	 * @param array<int,string> $bitcoin_addresses Bitcoin addresses as post_id:bitcoin_address pairs.
 	 */
 	public function __construct(
 		protected int $post_id,
@@ -32,23 +34,39 @@ class Bitcoin_Transaction implements Transaction_Interface {
 	) {
 	}
 
+	/**
+	 * Get the WordPress post ID for this transaction.
+	 *
+	 * @return int The post ID.
+	 */
 	public function get_post_id(): int {
 		return $this->post_id;
 	}
 
+	/**
+	 * Get the transaction ID (txid/hash).
+	 */
 	public function get_txid(): string {
 		return $this->transaction->get_txid();
 	}
 
+	/**
+	 * Get the block time for this transaction.
+	 */
 	public function get_block_time(): DateTimeInterface {
 		return $this->transaction->get_block_time();
 	}
 
+	/**
+	 * Get the block height for this transaction. (TODO null if unconfirmed?).
+	 */
 	public function get_block_height(): ?int {
 		return $this->transaction->get_block_height();
 	}
 
-
+	/**
+	 * Get the transaction version, "1" or "2".
+	 */
 	public function get_version(): int {
 		return $this->transaction->get_version();
 	}

@@ -9,9 +9,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
-use Exception;
 use WP_Post;
-use wpdb;
 
 /**
  * Interface for creating/getting Bitcoin_Address objects stored in wp_posts table.
@@ -20,6 +18,11 @@ use wpdb;
  */
 class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 
+	/**
+	 * Constructor.
+	 *
+	 * @param Bitcoin_Address_Factory $bitcoin_address_factory Factory for creating Bitcoin payment address objects.
+	 */
 	public function __construct(
 		protected Bitcoin_Address_Factory $bitcoin_address_factory,
 	) {
@@ -80,6 +83,14 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 		return $this->bitcoin_address_factory->get_by_wp_post_id( $post_id );
 	}
 
+	/**
+	 * Refresh a saved Bitcoin payment address object from the database.
+	 *
+	 * NB: This does not perform any API calls.
+	 *
+	 * @param Bitcoin_Address $address The address to refresh.
+	 * @return Bitcoin_Address The refreshed Bitcoin address.
+	 */
 	public function refresh( Bitcoin_Address $address ): Bitcoin_Address {
 		return $this->bitcoin_address_factory->get_by_wp_post_id( $address->get_post_id() );
 	}
@@ -101,6 +112,7 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 	 *
 	 * It may be the case that they have been used in the meantime.
 	 *
+	 * @param ?Bitcoin_Wallet $wallet Optional wallet to filter addresses by.
 	 * @return Bitcoin_Address[]
 	 */
 	public function get_unused_bitcoin_addresses( ?Bitcoin_Wallet $wallet = null ): array {
@@ -148,10 +160,10 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 	}
 
 	/**
-	 * Get all address, optionally filter by wallet and/or status.
+	 * Get all saved Bitcoin payment address.
 	 *
-	 * @param ?Bitcoin_Wallet         $wallet
-	 * @param ?Bitcoin_Address_Status $status
+	 * @param ?Bitcoin_Wallet         $wallet Optional wallet to filter by.
+	 * @param ?Bitcoin_Address_Status $status Optional status to filter by.
 	 *
 	 * @return Bitcoin_Address[]
 	 */
@@ -169,6 +181,9 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 	}
 
 	/**
+	 * Get addresses matching a query.
+	 *
+	 * @param Bitcoin_Address_Query $filter The query filter to apply.
 	 * @return Bitcoin_Address[]
 	 */
 	protected function get_addresses_query( Bitcoin_Address_Query $filter ): array {
@@ -184,6 +199,10 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 	/**
 	 * Wrapper on wp_insert_post(), sets the address as the post_title, post_excerpt and post_name.
 	 *
+	 * @param Bitcoin_Wallet $wallet The wallet this address belongs to.
+	 * @param int            $derivation_path_sequence_index The derivation path index for this address.
+	 * @param string         $xpub The Bitcoin address string.
+	 * @return Bitcoin_Address The saved Bitcoin address.
 	 * @throws BH_WP_Bitcoin_Gateway_Exception When WordPress fails to create the wp_post.
 	 */
 	public function save_new(
@@ -251,7 +270,7 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 	 *
 	 * @see Bitcoin_Address_Status::ASSIGNED
 	 *
-	 * @param Bitcoin_Address $address
+	 * @param Bitcoin_Address $address The Bitcoin payment address to link.
 	 * @param int             $order_id The post_id (e.g. WooCommerce order id) that transactions to this address represent payment for.
 	 * @param Money           $btc_total The target amount to be paid, after which the order should be updated.
 	 */

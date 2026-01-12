@@ -61,7 +61,7 @@ readonly class Bitcoin_Address_Query extends WP_Post_Query_Abstract {
 	 * @param ?string                 $order_direction Order the results ASC or DESC.
 	 * @param ?int                    $posts_per_page TODO: What's the difference between this and `numberposts`?
 	 * @param array<int, string>|null $updated_transactions_post_ids post_id:tx_id.
-	 * @param int|null                $associated_order_id
+	 * @param ?int                    $associated_order_id The wp_post ID for the order associated with the address.
 	 * @param ?Money                  $target_amount The target amount of bitcoin to receive for the order the address is associated with. Saved in post_meta as `array{amount:string,currency:string}`.
 	 */
 	public function __construct(

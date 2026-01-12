@@ -19,7 +19,6 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain_API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
-use Exception;
 use JsonException;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
@@ -38,6 +37,8 @@ class Blockstream_Info_API implements Blockchain_API_Interface, LoggerAwareInter
 
 	/**
 	 * Constructor
+	 *
+	 * @param LoggerInterface $logger Logger instance for debug logging API calls.
 	 */
 	public function __construct(
 		LoggerInterface $logger
@@ -46,7 +47,9 @@ class Blockstream_Info_API implements Blockchain_API_Interface, LoggerAwareInter
 	}
 
 	/**
-	 * @param string $btc_address
+	 * Get all transactions received for a Bitcoin address.
+	 *
+	 * @param string $btc_address The Bitcoin address to query.
 	 *
 	 * @return array<string, Transaction_Interface> Transactions keyed by txid.
 	 *
