@@ -637,6 +637,8 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 	 * Get saved transactions for a Bitcoin address (`null` if never checked).
 	 *
 	 * @param Bitcoin_Address $bitcoin_address The Bitcoin address to get transactions for.
+	 * @return ?array<Bitcoin_Transaction|Transaction_Interface>
+	 * @throws BH_WP_Bitcoin_Gateway_Exception If one of the post IDs does not match the transaction post type.
 	 */
 	public function get_saved_transactions( Bitcoin_Address $bitcoin_address ): ?array {
 		return $this->bitcoin_transaction_repository->get_transactions_for_address( $bitcoin_address );
