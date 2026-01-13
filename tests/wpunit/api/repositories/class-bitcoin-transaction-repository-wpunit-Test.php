@@ -1,7 +1,10 @@
 <?php
 
-namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses;
+namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories;
 
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Factory;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Transaction_Factory;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet_Factory;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_VIn;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_VOut;
@@ -9,7 +12,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use DateTimeImmutable;
 
 /**
- * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Transaction_Repository
+ * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Transaction_Repository
  */
 class Bitcoin_Transaction_Repository_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 
