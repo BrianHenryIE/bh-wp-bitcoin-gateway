@@ -1,11 +1,11 @@
 <?php
 
-namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain;
+namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Blockchain;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
 
 /**
- * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain\Blockstream_Info_API
+ * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Blockchain\Blockstream_Info_API
  */
 class Blockstream_Info_API_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 
