@@ -18,7 +18,7 @@
  * @package    brianhenryie/bh-wp-bitcoin-gateway
  */
 
-namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Exchange_Rate;
+namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Exchange_Rate;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Exchange_Rate_API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\BH_WP_Bitcoin_Gateway_Exception;
