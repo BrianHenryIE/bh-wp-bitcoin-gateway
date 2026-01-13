@@ -14,7 +14,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\WP_Post_Query_Abstract;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Queries\WP_Post_Query_Abstract;
 use RuntimeException;
 use WP_Error;
 
