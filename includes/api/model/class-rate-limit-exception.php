@@ -9,13 +9,12 @@
  * @package brianhenryie/bh-wp-bitcoin-gateway
  */
 
-namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain;
+namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Model;
 
 use DateTimeInterface;
-use Exception;
 use Throwable;
 
-class Rate_Limit_Exception extends Exception {
+class Rate_Limit_Exception extends BH_WP_Bitcoin_Gateway_Exception {
 
 	/**
 	 * Constructor.

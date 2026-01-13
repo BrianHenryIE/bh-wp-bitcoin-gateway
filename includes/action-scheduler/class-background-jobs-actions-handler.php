@@ -20,7 +20,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet_Repository;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain\Rate_Limit_Exception;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Rate_Limit_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\BH_WP_Bitcoin_Gateway;
 use DateInterval;
 use DateTimeImmutable;

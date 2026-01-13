@@ -5,7 +5,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler;
 use BrianHenryIE\ColorLogger\ColorLogger;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet_Repository;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain\Rate_Limit_Exception;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Rate_Limit_Exception;
 use Codeception\Stub\Expected;
 use DateInterval;
 use DateTimeImmutable;
