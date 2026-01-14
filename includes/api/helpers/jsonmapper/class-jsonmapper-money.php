@@ -10,6 +10,7 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\JsonMapper;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\BH_WP_Bitcoin_Gateway_Exception;
+use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Math\Exception\NumberFormatException;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\UnknownCurrencyException;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 
@@ -46,12 +47,24 @@ class JsonMapper_Money {
 	 */
 	protected function validate( object $json_object ): void {
 		if (
-			! property_exists( $json_object, 'amount' )
-			|| ! property_exists( $json_object, 'currency' )
-			|| ! is_numeric( $json_object->amount )
-			|| ! is_string( $json_object->currency )
+			property_exists( $json_object, 'amount' )
+			&& property_exists( $json_object, 'currency' )
+			&& is_numeric( $json_object->amount )
+			&& is_string( $json_object->currency )
 		) {
-			throw new BH_WP_Bitcoin_Gateway_Exception( 'Invalid json encoded money object.' );
+			return;
 		}
+
+		$previous_exception = null;
+		if ( property_exists( $json_object, 'amount' ) && ! is_numeric( $json_object->amount ) ) {
+			$previous_exception = new NumberFormatException(
+				message: is_string( $json_object->amount ) ? $json_object->amount : ''
+			);
+		}
+
+		throw new BH_WP_Bitcoin_Gateway_Exception(
+			message: 'Invalid json encoded money object.',
+			previous: $previous_exception
+		);
 	}
 }

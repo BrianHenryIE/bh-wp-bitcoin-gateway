@@ -208,7 +208,11 @@ class JsonMapper_Money_Unit_Test extends \Codeception\Test\Unit {
 
 		$this->expectException( \BrianHenryIE\WP_Bitcoin_Gateway\Brick\Math\Exception\NumberFormatException::class );
 
-		$mapper( $json_object );
+		try {
+			$mapper( $json_object );
+		} catch ( BH_WP_Bitcoin_Gateway_Exception $exception ) {
+			throw $exception->getPrevious();
+		}
 	}
 
 	/**
@@ -265,7 +269,11 @@ class JsonMapper_Money_Unit_Test extends \Codeception\Test\Unit {
 
 		$this->expectException( \BrianHenryIE\WP_Bitcoin_Gateway\Brick\Math\Exception\NumberFormatException::class );
 
-		$mapper( $json_object );
+		try {
+			$mapper( $json_object );
+		} catch ( BH_WP_Bitcoin_Gateway_Exception $exception ) {
+			throw $exception->getPrevious();
+		}
 	}
 
 	/**

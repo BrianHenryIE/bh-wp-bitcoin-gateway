@@ -77,7 +77,7 @@ parameters:
           path: tests/unit/helpers/jsonmapper/class-jsonmapper-datetimeinterface-Unit-Test.php
         - # Throwing `$exception->getPrevious()` which may be null.
           identifier: throw.notThrowable
-          path: tests/unit/helpers/jsonmapper/class-jsonmapper-datetimeinterface-Unit-Test.php
+          path: tests/unit/helpers/jsonmapper
         - # Setting properties on empty class made to look like a DateTimeInterface object once encoded.
           identifier: property.notFound
           path: tests/unit/helpers/jsonmapper/class-jsonmapper-datetimeinterface-Unit-Test.php
