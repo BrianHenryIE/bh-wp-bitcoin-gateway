@@ -72,3 +72,12 @@ parameters:
         - # Allow array destructuring in constructor calls
           path: includes/api/model
           message: '#Parameter \#\d+ \$.*? of method .*__construct\(\) expects .*?, mixed given.#'
+        - # Argument type error is `stdclass` vs `object`.
+          identifier: argument.type
+          path: tests/unit/helpers/jsonmapper/class-jsonmapper-datetimeinterface-Unit-Test.php
+        - # Throwing `$exception->getPrevious()` which may be null.
+          identifier: throw.notThrowable
+          path: tests/unit/helpers/jsonmapper/class-jsonmapper-datetimeinterface-Unit-Test.php
+        - # Setting properties on empty class made to look like a DateTimeInterface object once encoded.
+          identifier: property.notFound
+          path: tests/unit/helpers/jsonmapper/class-jsonmapper-datetimeinterface-Unit-Test.php
