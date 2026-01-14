@@ -12,6 +12,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet_Factory;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Queries\Bitcoin_Wallet_Query;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet_Status;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\BH_WP_Bitcoin_Gateway_Exception;
+use InvalidArgumentException;
 use WP_Post;
 
 /**
@@ -66,7 +67,7 @@ class Bitcoin_Wallet_Repository extends WP_Post_Repository_Abstract {
 	 * @param int $post_id WordPress wp_posts ID.
 	 *
 	 * @return Bitcoin_Wallet
-	 * @throws BH_WP_Bitcoin_Gateway_Exception When the post_type of the post returned for the given post_id is not a Bitcoin_Wallet.
+	 * @throws InvalidArgumentException When the post_type of the post returned for the given post_id is not a Bitcoin_Wallet.
 	 */
 	public function get_by_wp_post_id( int $post_id ): Bitcoin_Wallet {
 		return $this->bitcoin_wallet_factory->get_by_wp_post_id( $post_id );
@@ -78,7 +79,7 @@ class Bitcoin_Wallet_Repository extends WP_Post_Repository_Abstract {
 	 *
 	 * @return Bitcoin_Wallet[]
 	 */
-	public function get_all( $status = Bitcoin_Wallet_Status::ALL ): array {
+	public function get_all( Bitcoin_Wallet_Status $status ): array {
 		$args = new Bitcoin_Wallet_Query(
 			status: $status,
 		);

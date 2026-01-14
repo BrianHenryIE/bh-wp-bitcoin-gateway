@@ -16,12 +16,12 @@ class Update_Address_Transactions_Result {
 	/**
 	 * Constructor
 	 *
-	 * @param Bitcoin_Address                   $address The refreshed address details/object.
+	 * @param Bitcoin_Address                   $queried_address The checked (unmodified) address details/object.
 	 * @param array<int, string>                $known_tx_ids_before <post_id, tx_id>.
 	 * @param array<int, Transaction_Interface> $all_transactions <post_id, Transaction_Interface>.
 	 */
 	public function __construct(
-		public Bitcoin_Address $address,
+		public Bitcoin_Address $queried_address,
 		public ?array $known_tx_ids_before,
 		public array $all_transactions,
 	) {

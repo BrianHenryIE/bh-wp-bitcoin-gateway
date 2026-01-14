@@ -21,6 +21,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Address_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Wallet_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Rate_Limit_Exception;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Bitcoin_Wallet_Service;
 use BrianHenryIE\WP_Bitcoin_Gateway\BH_WP_Bitcoin_Gateway;
 use DateInterval;
 use DateTimeImmutable;
@@ -37,15 +38,13 @@ class Background_Jobs_Actions_Handler implements Background_Jobs_Actions_Interfa
 	 * Constructor
 	 *
 	 * @param API_Background_Jobs_Interface       $api Main plugin class.
-	 * @param Bitcoin_Address_Repository          $bitcoin_address_repository Object to learn if there are addresses to act on.
-	 * @param Bitcoin_Wallet_Repository           $bitcoin_wallet_repository To get the object from the post_id.
+	 * @param Bitcoin_Wallet_Service              $wallet_service Used to convert post_id into Bitcoin_Wallet and check are there addresses to check.
 	 * @param Background_Jobs_Scheduler_Interface $background_jobs_scheduler Uses Action Scheduler `as_*` functions to invoke this class's functions during cron/background.
 	 * @param LoggerInterface                     $logger PSR logger.
 	 */
 	public function __construct(
 		protected API_Background_Jobs_Interface $api,
-		protected Bitcoin_Address_Repository $bitcoin_address_repository,
-		protected Bitcoin_Wallet_Repository $bitcoin_wallet_repository,
+		protected Bitcoin_Wallet_Service $wallet_service,
 		protected Background_Jobs_Scheduler_Interface $background_jobs_scheduler,
 		LoggerInterface $logger
 	) {
@@ -95,7 +94,7 @@ class Background_Jobs_Actions_Handler implements Background_Jobs_Actions_Interfa
 	public function single_ensure_unused_addresses( int $wallet_post_id ): void {
 		$this->logger->debug( 'Starting `single_ensure_unused_addresses()` background job for `wallet_post_id:' . $wallet_post_id . '`.' );
 
-		$wallet = $this->bitcoin_wallet_repository->get_by_wp_post_id( $wallet_post_id );
+		$wallet = $this->wallet_service->get_wallet_by_wp_post_id( $wallet_post_id );
 
 		$result = $this->api->ensure_unused_addresses_for_wallet( $wallet );
 
@@ -170,7 +169,7 @@ class Background_Jobs_Actions_Handler implements Background_Jobs_Actions_Interfa
 
 		// If we are still waiting for payments, schedule another check in ten minutes.
 		// TODO: Is this better placed in API class?
-		if ( $this->bitcoin_address_repository->has_assigned_bitcoin_addresses() ) {
+		if ( $this->wallet_service->has_assigned_bitcoin_addresses() ) {
 			$this->background_jobs_scheduler->schedule_single_check_assigned_addresses_for_transactions(
 				new DateTimeImmutable( 'now' )->add( new DateInterval( 'PT10M' ) )
 			);

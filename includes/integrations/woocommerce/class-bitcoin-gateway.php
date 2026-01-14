@@ -201,13 +201,11 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 		$options_updated = parent::process_admin_options();
 
 		// Regardless whether the wallet address has changed, ensure it exists.
-		$bitcoin_wallet_factory    = new Bitcoin_Wallet_Factory();
-		$bitcoin_wallet_repository = new Bitcoin_Wallet_Repository( $bitcoin_wallet_factory );
 
 		$xpub_after = $this->get_xpub();
 
-		if ( ! is_null( $xpub_after ) && empty( $bitcoin_wallet_repository->get_by_xpub( $xpub_after ) ) ) {
-			$bitcoin_wallet_repository->save_new( $xpub_after );
+		if ( ! is_null( $xpub_after ) ) {
+			$this->api?->get_wallet_for_master_public_key( $xpub_after, $this->id );
 		}
 
 		// If nothing changed, we can return early.
@@ -227,9 +225,6 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 			return $options_updated;
 		}
 
-		$wallet = $bitcoin_wallet_repository->get_by_xpub( $xpub_after )
-			?? $bitcoin_wallet_repository->save_new( $xpub_after );
-
 		$gateway_name = $this->get_method_title() === $this->get_method_description() ? $this->get_method_title() : $this->get_method_title() . ' (' . $this->get_method_description() . ')';
 		$this->logger->info(
 			"New xpub key set for gateway $gateway_name: $xpub_after",
@@ -240,17 +235,6 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 				'xpub_after'   => $xpub_after,
 			)
 		);
-
-		// TODO: inject all this.
-		$bitcoin_address_factory    = new Bitcoin_Address_Factory();
-		$bitcoin_address_repository = new Bitcoin_Address_Repository( $bitcoin_address_factory );
-
-		$background_jobs_scheduler = new Background_Jobs_Scheduler(
-			$bitcoin_address_repository,
-			$this->logger
-		);
-
-		$background_jobs_scheduler->schedule_single_ensure_unused_addresses( $wallet );
 
 		// TODO: maybe mark the previous xpub's wallet as "inactive". (although it could be in use in another instance of the gateway).
 

@@ -7,6 +7,7 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Blockchain\Adapters;
 
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Blockchain\Blockstream_Info_API;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_VIn;

@@ -58,8 +58,8 @@ class API_Unit_Test extends \Codeception\Test\Unit {
 			bitcoin_address_repository: $bitcoin_address_repository ?? $this->make( Bitcoin_Address_Repository::class ),
 			bitcoin_transaction_repository: $bitcoin_transaction_repository ?? $this->make( Bitcoin_Transaction_Repository::class ),
 			blockchain_api: $blockchain_api ?? $this->makeEmpty( Blockchain_API_Interface::class ),
-			generate_address_api: $generate_address_api ?? $this->makeEmpty( Generate_Address_API_Interface::class ),
-			exchange_rate_api: $exchange_rate_api ?? $this->makeEmpty( Exchange_Rate_API_Interface::class ),
+			wallet_service: $generate_address_api ?? $this->makeEmpty( Generate_Address_API_Interface::class ),
+			exchange_rate_service: $exchange_rate_api ?? $this->makeEmpty( Exchange_Rate_API_Interface::class ),
 			background_jobs_scheduler: $background_jobs_scheduling ?? $this->makeEmpty( Background_Jobs_Scheduler_Interface::class )
 		);
 		return $sut;

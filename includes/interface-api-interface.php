@@ -9,6 +9,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Addresses_Generation_Result;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Check_Address_For_Payment_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Check_Assigned_Addresses_For_Transactions_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Ensure_Unused_Addresses_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
@@ -19,6 +20,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Handler;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet;
+use BrianHenryIE\WP_Bitcoin_Gateway\Development_Plugin\Rest\Bitcoin;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Bitcoin_Gateway;
 
 /**
@@ -52,10 +54,10 @@ interface API_Interface {
 	 *
 	 * @used-by Bitcoin_Gateway::process_admin_options()
 	 *
-	 * @param string  $master_public_key The wallet address to save as a wallet object cpt.
+	 * @param string  $xpub The wallet address to save as a wallet object cpt.
 	 * @param ?string $gateway_id The Bitcoin gateway (it is presumably linked to one).
 	 */
-	public function generate_new_wallet( string $master_public_key, ?string $gateway_id = null ): Wallet_Generation_Result;
+	public function get_wallet_for_master_public_key( string $xpub, ?string $gateway_id = null ): Wallet_Generation_Result;
 
 	/**
 	 * For each Bitcoin gateway, calls `generate_new_addresses_for_wallet()`.
@@ -95,15 +97,6 @@ interface API_Interface {
 	public function ensure_unused_addresses_for_wallet( Bitcoin_Wallet $wallet, int $required_count = 2 ): Ensure_Unused_Addresses_Result;
 
 	/**
-	 * Get transactions for an address object, with number of confirmations for each, and show which are new or updated.
-	 *
-	 * @used-by CLI::check_transactions()
-	 *
-	 * @param Bitcoin_Address $address Address object for existing saved address (i.e. this doesn't work for arbitrary addresses).
-	 */
-	public function update_address_transactions( Bitcoin_Address $address ): Update_Address_Transactions_Result;
-
-	/**
 	 * Validate addresses have not been used before by checking for transactions.
 	 *
 	 * @used-by Background_Jobs_Actions_Handler::check_new_addresses_for_transactions()
@@ -118,6 +111,15 @@ interface API_Interface {
 	 * The main function for checking for payments received.
 	 */
 	public function check_assigned_addresses_for_payment(): Check_Assigned_Addresses_For_Transactions_Result;
+
+	/**
+	 * Query the blockchain for transactions for an address and mark it paid when appropriate.
+	 *
+	 * @used-by CLI::check_transactions()
+	 *
+	 * @param Bitcoin_Address $payment_address Previously assigned address.
+	 */
+	public function check_address_for_payment( Bitcoin_Address $payment_address ): Check_Address_For_Payment_Result;
 
 	/**
 	 * Return transactions for a Bitcoin address without any remote API calls.

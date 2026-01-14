@@ -162,7 +162,7 @@ class CLI extends WP_CLI_Command {
 					/** @var string|null $address */
 					$address = $order->get_meta( Order::BITCOIN_ADDRESS_META_KEY );
 					if ( empty( $address ) ) {
-						throw new \InvalidArgumentException( 'Order ' . $order->get_id() . ' has no Bitcoin address' );
+						throw new InvalidArgumentException( 'Order ' . $order->get_id() . ' has no Bitcoin address' );
 					}
 					$bitcoin_address_post_id = $bitcoin_address_repository->get_post_id_for_address( $address );
 					if ( is_null( $bitcoin_address_post_id ) ) {
@@ -181,14 +181,14 @@ class CLI extends WP_CLI_Command {
 					$bitcoin_address = $bitcoin_address_repository->get_by_post_id( $bitcoin_address_post_id );
 			}
 
-			$result = $this->api->update_address_transactions( $bitcoin_address );
+			$result = $this->api->check_address_for_payment( $bitcoin_address );
 
 			$is_updated = $result->is_updated();
 
 			// TODO: Check for WooCommerce active.
 
 			$formatted = array(
-				'address' => $result->address->get_raw_address(),
+				'address' => $result->queried_address->get_raw_address(),
 				'updated' => wc_bool_to_string( $is_updated ),
 			);
 
@@ -196,7 +196,7 @@ class CLI extends WP_CLI_Command {
 				$formatted['new_transactions'] = $result->get_new_transactions();
 			}
 
-			$formatted['balance'] = $result->address->get_balance();
+			$formatted['balance'] = $result->queried_address->get_balance();
 
 			WP_CLI\Utils\format_items( $format, $formatted, array_keys( $formatted ) );
 

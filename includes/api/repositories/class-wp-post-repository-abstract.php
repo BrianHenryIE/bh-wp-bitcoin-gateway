@@ -52,7 +52,7 @@ abstract class WP_Post_Repository_Abstract {
 		);
 
 		if ( ! is_wp_error( $result ) ) {
-			return; // return $this->get_by_wp_post_id( $result );
+			return; // TODO: Should we return the refreshed object, `$this->get_by_wp_post_id( $result )`.
 		}
 
 		throw new RuntimeException( $result->get_error_message() );

@@ -85,63 +85,6 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 	}
 
 	/**
-	 * Return the previously saved transactions for this address.
-	 *
-	 * The Bitcoin_Address's wp_post has a meta key that holds an array of post ids for saved transactions.
-	 *
-	 * @see Addresses_List_Table::column_transactions_count() When displaying all addresses.
-	 * @used-by API::get_saved_transactions() When displaying all addresses.
-	 *
-	 * @param Bitcoin_Address $address The Bitcoin address to retrieve saved transactions for from its post meta.
-	 *
-	 * @return null|array<int, Bitcoin_Transaction> Post_id:transaction object; where null suggests there was nothing saved before, and an empty array suggests it has been checked but no transactions had been seen.
-	 * @throws BH_WP_Bitcoin_Gateway_Exception When a stored transaction post ID cannot be converted to a Bitcoin_Transaction object.
-	 */
-	public function get_transactions_for_address(
-		Bitcoin_Address $address,
-	): ?array {
-		$transaction_post_ids = $this->get_transactions_wp_post_ids_for_address( $address );
-
-		if ( is_null( $transaction_post_ids ) ) {
-			return null;
-		}
-
-		$transaction_by_post_ids = array();
-		foreach ( $transaction_post_ids as $transaction_post_id ) {
-			$transaction_by_post_ids[ $transaction_post_id ] = $this->get_by_post_id( $transaction_post_id );
-		}
-
-		return $transaction_by_post_ids;
-	}
-
-	/**
-	 * Get the WordPress post IDs for all transactions associated with an address.
-	 *
-	 * @param Bitcoin_Address $address The Bitcoin address to get transaction IDs for.
-	 *
-	 * @return int[]|null Array of post IDs or null.
-	 */
-	protected function get_transactions_wp_post_ids_for_address(
-		Bitcoin_Address $address,
-	): ?array {
-		$saved_post_meta = get_post_meta( $address->get_post_id(), Bitcoin_Address_WP_Post_Interface::TRANSACTIONS_META_KEY, true );
-
-		if ( empty( $saved_post_meta ) ) {
-			return null;
-		}
-
-		if ( ! is_string( $saved_post_meta ) ) {
-			// TODO: throw an exception – data corrupt.
-			return null;
-		}
-
-		/** @var array<int, string> $saved_meta_array <post_id : transaction id>. */
-		$saved_meta_array = json_decode( json: $saved_post_meta, associative: true, flags: JSON_THROW_ON_ERROR );
-
-		return array_keys( $saved_meta_array );
-	}
-
-	/**
 	 * Save a transaction to WordPress posts table or return existing post.
 	 *
 	 * TODO: How to indicate if this was newly saved or already existed.

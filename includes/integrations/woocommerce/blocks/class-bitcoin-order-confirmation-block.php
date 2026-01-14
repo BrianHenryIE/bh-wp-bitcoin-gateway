@@ -9,9 +9,9 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Blocks;
 
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Address_Repository;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\BH_WP_Bitcoin_Gateway_Exception;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Details_Formatter;
-use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
 use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
 use WC_Order;
 use WP_Block;
@@ -26,12 +26,11 @@ class Bitcoin_Order_Confirmation_Block {
 	/**
 	 * Constructor.
 	 *
-	 * @param Settings_Interface         $settings Plugin settings, plugin url required for serving script.
-	 * @param Bitcoin_Address_Repository $bitcoin_address_repository Repository for Bitcoin addresses.
+	 * @param Settings_Interface $settings Plugin settings, plugin url required for serving script.
 	 */
 	public function __construct(
 		protected Settings_Interface $settings,
-		protected Bitcoin_Address_Repository $bitcoin_address_repository,
+		protected API_WooCommerce_Interface $api,
 	) {
 	}
 
@@ -40,6 +39,7 @@ class Bitcoin_Order_Confirmation_Block {
 	 * Hooking on `init` so even if WooCommerce is disabled, the blocks are still available for design.
 	 *
 	 * @hooked init
+	 * @throws BH_WP_Bitcoin_Gateway_Exception
 	 */
 	public function register_block(): void {
 
@@ -54,12 +54,10 @@ class Bitcoin_Order_Confirmation_Block {
 			array( 'in_footer' => true )
 		);
 
-		$order_details = $this->get_order_details_formatted();
-
 		$provides_context = array(
 			'bh-wp-bitcoin-gateway/orderId' => 'orderId',
 		);
-		foreach ( (array) $order_details?->to_array( as_camel_case: true ) as $key => $value ) {
+		foreach ( $this->get_order_details_formatted_array() as $key => $value ) {
 			if ( is_string( $value ) ) {
 				$provides_context[ "bh-wp-bitcoin-gateway/$key" ] = $value;
 			}
@@ -112,7 +110,7 @@ class Bitcoin_Order_Confirmation_Block {
 			$block->context['bh-wp-bitcoin-gateway/orderId'] = $order_id;
 		}
 
-		$order_details_formatted = $this->get_order_details_formatted()?->to_array( as_camel_case: true ) ?? array();
+		$order_details_formatted = $this->get_order_details_formatted_array();
 		foreach ( $order_details_formatted as $key => $value ) {
 			$block->context[ "bh-wp-bitcoin-gateway/$key" ] = $value;
 		}
@@ -148,25 +146,20 @@ class Bitcoin_Order_Confirmation_Block {
 		);
 	}
 
-
 	/**
 	 * Get formatted order details for display.
 	 *
-	 * @return Details_Formatter|null The formatted order details or null if no order found.
+	 * @return array<string,mixed> The formatted order details or null if no order found.
 	 */
-	protected function get_order_details_formatted(): ?Details_Formatter {
+	protected function get_order_details_formatted_array(): array {
 		$order = $this->get_order();
 
 		if ( is_null( $order ) ) {
-			return null;
+			return array();
 		}
 
-		return new Details_Formatter(
-			new WC_Bitcoin_Order(
-				$order,
-				$this->bitcoin_address_repository,
-			)
-		);
+		$order_details_formatted_array = $this->api->get_formatted_order_details( $order, false );
+		return Details_Formatter::camel_case_keys( $order_details_formatted_array );
 	}
 
 	/**
@@ -193,9 +186,11 @@ class Bitcoin_Order_Confirmation_Block {
 			return absint( $GLOBALS['order-received'] );
 		}
 
-		// Check the key in the URL.
+		// Check the key in the URL. The `key` is the ~nonce.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( function_exists( 'wc_get_order_id_by_order_key' ) && isset( $_GET['key'] ) && is_numeric( $_GET['key'] ) ) {
-			$order_id = wc_get_order_id_by_order_key( absint( $_GET['key'] ) );
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$order_id = wc_get_order_id_by_order_key( (string) absint( $_GET['key'] ) );
 			if ( $order_id > 0 ) {
 				return $order_id;
 			}

@@ -15,6 +15,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Address_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Math\BigNumber;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Bitcoin_Gateway;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Order;
 use DateTimeInterface;
@@ -93,36 +94,21 @@ class WC_Bitcoin_Order implements WC_Bitcoin_Order_Interface {
 	/**
 	 * Constructor.
 	 *
-	 * @param WC_Order                   $wc_order The WooCommerce order.
-	 * @param Bitcoin_Address_Repository $bitcoin_address_repository Repository for Bitcoin addresses.
+	 * @param WC_Order        $wc_order The WooCommerce order.
+	 * @param Bitcoin_Address $bitcoin_address The address assigned to the order.
 	 *
 	 * @throws BH_WP_Bitcoin_Gateway_Exception When the order has no Bitcoin address or the address cannot be retrieved.
 	 */
 	public function __construct(
 		WC_Order $wc_order,
-		Bitcoin_Address_Repository $bitcoin_address_repository
+		Bitcoin_Address $bitcoin_address,
 	) {
 
 		$this->wc_order = $wc_order;
-
-		try {
-			/** @var ?string $bitcoin_address_xpub */
-			$bitcoin_address_xpub = $wc_order->get_meta( Order::BITCOIN_ADDRESS_META_KEY );
-			if ( is_null( $bitcoin_address_xpub ) ) {
-				// If this were to happen, it should be possible to look up which address is associated with this order id.
-				throw new BH_WP_Bitcoin_Gateway_Exception( 'No Bitcoin address found for order.' );
-			}
-			$bitcoin_address_post_id = $bitcoin_address_repository->get_post_id_for_address( $bitcoin_address_xpub );
-			if ( is_null( $bitcoin_address_post_id ) ) {
-				throw new BH_WP_Bitcoin_Gateway_Exception( 'Problem with order Bitcoin address.' );
-			}
-			$this->address = $bitcoin_address_repository->get_by_post_id( $bitcoin_address_post_id );
-		} catch ( Exception $exception ) {
-			// $this->logger->warning( "`shop_order:{$order->get_id()}` has no Bitcoin address.", array( 'order_id' => $order->get_id() ) );
-			throw new BH_WP_Bitcoin_Gateway_Exception( 'Problem with order Bitcoin address.' );
-		}
-
+		$this->address  = $bitcoin_address;
 		$this->setLogger( new NullLogger() );
+
+		// TODO: Consider checking mutual assignment.
 	}
 
 	/**

@@ -43,6 +43,11 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 	 */
 	public function get_post_id_for_address( string $address ): ?int {
 
+		$cached = wp_cache_get( $address, Bitcoin_Address_WP_Post_Interface::POST_TYPE );
+		if ( is_numeric( $cached ) ) {
+			return intval( $cached );
+		}
+
 		global $wpdb;
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
 		// @phpstan-ignore-next-line
@@ -220,7 +225,7 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 		// Unlikely, but was an issue for Wallets.
 		$existing_post_id = $this->get_post_id_for_address( $address );
 		if ( $existing_post_id ) {
-			return $this->bitcoin_address_factory->get_by_wp_post_id( $existing_post_id );
+			throw new BH_WP_Bitcoin_Gateway_Exception( 'Attempted to save a payment address that already exists: ' . $address );
 		}
 
 		$query = new Bitcoin_Address_Query(
@@ -241,8 +246,6 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 			// TODO Log.
 			throw new BH_WP_Bitcoin_Gateway_Exception( 'WordPress failed to create a post for the wallet.' );
 		}
-
-		// TODO: Maybe start a background job to check for transactions. Where is best to do that?
 
 		return $this->bitcoin_address_factory->get_by_wp_post_id( $post_id );
 	}
