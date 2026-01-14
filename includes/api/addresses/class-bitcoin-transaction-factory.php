@@ -7,7 +7,8 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses;
 
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\BH_WP_Bitcoin_Gateway_Exception;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\JsonMapper\JsonMapper_DateTimeInterface;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\JsonMapper\JsonMapper_Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\BtcRpcExplorer\JsonMapper\AssociativeArrayMiddleware;
@@ -16,8 +17,8 @@ use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\Exception\ClassFactoryException;
 use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\Handler\FactoryRegistry;
 use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\Handler\PropertyMapper;
 use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\JsonMapperBuilder;
+use DateTimeInterface;
 use InvalidArgumentException;
-use stdClass;
 use WP_Post;
 
 /**
@@ -58,46 +59,16 @@ class Bitcoin_Transaction_Factory {
 		$factory_registry = new FactoryRegistry();
 
 		$factory_registry->addFactory(
-			\DateTimeInterface::class,
-			/** @param stdClass{date?:string, timezone:string} $json_object */
-			function ( stdClass $json_object ) {
-				if (
-					! property_exists( $json_object, 'date' )
-					|| ! property_exists( $json_object, 'timezone' )
-				) {
-					throw new BH_WP_Bitcoin_Gateway_Exception( 'Invalid json encoded DateTime object.' );
-				}
-				/** @var string $date */
-				$date = $json_object->date;
-				/** @var string $timezone */
-				$timezone = $json_object->timezone;
-				return new \DateTimeImmutable( $date )
-				->setTimezone(
-					new \DateTimeZone( $timezone )
-				);
-			}
+			DateTimeInterface::class,
+			new JsonMapper_DateTimeInterface()
 		);
 
 		$factory_registry->addFactory(
 			Money::class,
-			function ( stdClass $json_object ) {
-				/**
-				 * @see Money::jsonSerialize()
-				 */
-				if (
-					! property_exists( $json_object, 'amount' )
-					|| ! property_exists( $json_object, 'currency' )
-				) {
-					throw new BH_WP_Bitcoin_Gateway_Exception( 'Invalid json encoded money object.' );
-				}
-				/** @var string $amount */
-				$amount = $json_object->amount;
-				/** @var string $currency */
-				$currency = $json_object->currency;
-				return Money::of( $amount, $currency );
-			}
+			new JsonMapper_Money()
 		);
 
+		// TODO: after testing, see what -> are unnecessary.
 		$property_mapper = new PropertyMapper( $factory_registry );
 		$mapper          = JsonMapperBuilder::new()
 			->withPropertyMapper( $property_mapper )
