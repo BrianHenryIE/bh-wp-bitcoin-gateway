@@ -17,13 +17,13 @@ class Details_Formatter_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestC
 	 */
 	public function test_get_wc_order_status_formatted(): void {
 
-		$wc_order      = self::make(
+		$wc_order      = $this->make(
 			WC_Order::class,
 			array(
 				'get_status' => 'on-hold',
 			)
 		);
-		$bitcoin_order = self::make(
+		$bitcoin_order = $this->make(
 			WC_Bitcoin_Order::class,
 			array(
 				'wc_order' => $wc_order,
@@ -42,14 +42,14 @@ class Details_Formatter_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestC
 	 */
 	public function test_get_xpub_js_span(): void {
 
-		$address = self::make(
+		$address = $this->make(
 			Bitcoin_Address::class,
 			array(
 				'get_raw_address' => 'xpub1a2s3d4f5gabcdef',
 			)
 		);
 
-		$bitcoin_order = self::make(
+		$bitcoin_order = $this->make(
 			WC_Bitcoin_Order::class,
 			array(
 				'get_address' => $address,

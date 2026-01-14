@@ -52,19 +52,19 @@ class BH_WP_Bitcoin_Gateway_Unit_Test extends \Codeception\Test\Unit {
 		$container->bind(
 			API_Interface::class,
 			function () {
-				return self::makeEmpty( API_Interface::class );
+				return $this->makeEmpty( API_Interface::class );
 			}
 		);
 		$container->bind(
 			API_WooCommerce_Interface::class,
 			function () {
-				return self::makeEmpty( API_WooCommerce_Interface::class );
+				return $this->makeEmpty( API_WooCommerce_Interface::class );
 			}
 		);
 		$container->bind(
 			'BrianHenryIE\\WP_Bitcoin_Gateway\\API_Interface&BrianHenryIE\\WP_Bitcoin_Gateway\\Integrations\\WooCommerce\\API_WooCommerce_Interface',
 			function () {
-				return self::makeEmpty( API_WooCommerce_Interface::class );
+				return $this->makeEmpty( API_WooCommerce_Interface::class );
 			}
 		);
 		$settings = $this->makeEmpty(
@@ -79,7 +79,7 @@ class BH_WP_Bitcoin_Gateway_Unit_Test extends \Codeception\Test\Unit {
 		$container->bind(
 			API_Background_Jobs_Interface::class,
 			function () {
-				return self::makeEmpty( API_Background_Jobs_Interface::class );
+				return $this->makeEmpty( API_Background_Jobs_Interface::class );
 			}
 		);
 

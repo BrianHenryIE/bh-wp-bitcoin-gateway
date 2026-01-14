@@ -144,7 +144,7 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 		);
 
 		$addresses_result = array(
-			self::make(
+			$this->make(
 				Bitcoin_Address::class,
 				array(
 					'get_status' => Bitcoin_Address_Status::ASSIGNED,
@@ -153,7 +153,7 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 			$address,
 		);
 
-		$wallet = self::make(
+		$wallet = $this->make(
 			Bitcoin_Wallet::class,
 			array(
 				'get_post_id'       => 321,
@@ -209,7 +209,7 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 
 		$addresses_result = array(
 			$address,
-			self::make(
+			$this->make(
 				Bitcoin_Address::class,
 				array(
 					'get_post_id'     => 123,
@@ -219,7 +219,7 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 			),
 		);
 
-		$wallet = self::make(
+		$wallet = $this->make(
 			Bitcoin_Wallet::class,
 			array(
 				'get_post_id'       => 321,
@@ -266,7 +266,7 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 	 */
 	public function test_get_fresh_address_for_order(): void {
 
-		$address = self::make(
+		$address = $this->make(
 			Bitcoin_Address::class,
 			array(
 				'get_post_id'     => 123,
@@ -278,10 +278,10 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 
 		$addresses_result = array(
 			$address,
-			self::make( Bitcoin_Address::class ),
+			$this->make( Bitcoin_Address::class ),
 		);
 
-		$wallet = self::make(
+		$wallet = $this->make(
 			Bitcoin_Wallet::class,
 			array(
 				'get_post_id'       => 321,
@@ -380,7 +380,7 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 			)
 		);
 
-		$blockchain_api = self::makeEmpty(
+		$blockchain_api = $this->makeEmpty(
 			Blockchain_API_Interface::class,
 			array(
 				'get_transactions' => array(),

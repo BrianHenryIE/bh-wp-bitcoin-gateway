@@ -46,14 +46,14 @@ class Woo_Cancel_Abandoned_Order_Unit_Test extends \lucatume\WPBrowser\TestCase\
 	 */
 	public function test_abort_canceling_partially_paid_order(): void {
 
-		$bitcoin_address_mock = self::make(
+		$bitcoin_address_mock = $this->make(
 			Bitcoin_Address::class,
 			array(
 				'get_blockchain_transactions' => Expected::once( array( 'not', 'empty' ) ),
 			)
 		);
 
-		$bitcoin_order_mock = self::makeEmpty(
+		$bitcoin_order_mock = $this->makeEmpty(
 			WC_Bitcoin_Order::class,
 			array(
 				'get_address' => Expected::once( $bitcoin_address_mock ),
@@ -121,13 +121,13 @@ class Woo_Cancel_Abandoned_Order_Unit_Test extends \lucatume\WPBrowser\TestCase\
 	 */
 	public function test_abort_canceling_partially_paid_order_no_transactions(): void {
 
-		$address_mock       = self::makeEmpty(
+		$address_mock       = $this->makeEmpty(
 			Bitcoin_Address::class,
 			array(
 				'get_blockchain_transactions' => Expected::once( array() ),
 			)
 		);
-		$bitcoin_order_mock = self::makeEmpty(
+		$bitcoin_order_mock = $this->makeEmpty(
 			WC_Bitcoin_Order::class,
 			array(
 				'get_address' => Expected::once( $address_mock ),

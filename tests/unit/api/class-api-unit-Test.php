@@ -134,7 +134,7 @@ class API_Unit_Test extends \Codeception\Test\Unit {
 	 */
 	public function test_update_address_transactions(): void {
 
-		$transaction = self::make(
+		$transaction = $this->make(
 			Transaction::class,
 			array(
 				'get_txid'         => 'transaction_from_api',
@@ -143,7 +143,7 @@ class API_Unit_Test extends \Codeception\Test\Unit {
 			)
 		);
 
-		$blockchain_api = self::makeEmpty(
+		$blockchain_api = $this->makeEmpty(
 			Blockchain_API_Interface::class,
 			array(
 				'get_transactions_received' => Expected::once(
@@ -163,7 +163,7 @@ class API_Unit_Test extends \Codeception\Test\Unit {
 			)
 		);
 
-		$bitcoin_transaction_repository = self::makeEmpty(
+		$bitcoin_transaction_repository = $this->makeEmpty(
 			Bitcoin_Transaction_Repository::class,
 			array(
 				'save_new' => Expected::once(
@@ -177,7 +177,7 @@ class API_Unit_Test extends \Codeception\Test\Unit {
 			)
 		);
 
-		$bitcoin_address_repository = self::makeEmpty(
+		$bitcoin_address_repository = $this->makeEmpty(
 			Bitcoin_Address_Repository::class,
 			array(
 				'set_status' => Expected::once(),
@@ -190,7 +190,7 @@ class API_Unit_Test extends \Codeception\Test\Unit {
 			blockchain_api: $blockchain_api,
 		);
 
-		$address = self::make(
+		$address = $this->make(
 			Bitcoin_Address::class,
 			array(
 				'get_raw_address'  => Expected::once( 'xpub' ),
