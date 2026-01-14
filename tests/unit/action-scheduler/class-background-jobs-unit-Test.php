@@ -7,7 +7,9 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Address_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Wallet_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Addresses_Generation_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Check_Assigned_Addresses_For_Transactions_Result;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Bitcoin_Wallet_Service;
 use Codeception\Stub\Expected;
+use Psr\Log\LoggerInterface;
 use WP_Mock;
 
 /**
@@ -25,14 +27,27 @@ class Background_Jobs_Unit_Test extends \Codeception\Test\Unit {
 		parent::tearDown();
 	}
 
+	protected function get_sut(
+		?API_Background_Jobs_Interface $api = null,
+		?Bitcoin_Wallet_Service $wallet_service = null,
+		?Background_Jobs_Scheduler_Interface $background_jobs_scheduler = null,
+		?LoggerInterface $logger = null,
+	): Background_Jobs_Actions_Handler {
+		return new Background_Jobs_Actions_Handler(
+			api:$api ?? $this->makeEmpty( API_Background_Jobs_Interface::class ),
+			wallet_service: $wallet_service ?? $this->make( Bitcoin_Wallet_Service::class ),
+			background_jobs_scheduler: $background_jobs_scheduler ?? $this->makeEmpty( Background_Jobs_Scheduler_Interface::class ),
+			logger: $logger ?? new ColorLogger(),
+		);
+	}
+
 	/**
 	 * @covers ::generate_new_addresses
 	 * @covers ::__construct
 	 */
 	public function test_generate_new_adresses_action(): void {
 
-		$logger                     = new ColorLogger();
-		$api                        = $this->makeEmpty(
+		$api = $this->makeEmpty(
 			API_Background_Jobs_Interface::class,
 			array(
 				'generate_new_addresses' => Expected::once(
@@ -42,17 +57,10 @@ class Background_Jobs_Unit_Test extends \Codeception\Test\Unit {
 				),
 			)
 		);
-		$bitcoin_address_repository = $this->makeEmpty( Bitcoin_Address_Repository::class );
-		$bitcoin_wallet_repository  = $this->makeEmpty( Bitcoin_Wallet_Repository::class );
-		$background_jobs_scheduler  = $this->makeEmpty( Background_Jobs_Scheduler_Interface::class );
 
 		/** @var API_Background_Jobs_Interface $sut */
-		$sut = new Background_Jobs_Actions_Handler(
+		$sut = $this->get_sut(
 			api: $api,
-			bitcoin_address_repository: $bitcoin_address_repository,
-			bitcoin_wallet_repository: $bitcoin_wallet_repository,
-			background_jobs_scheduler: $background_jobs_scheduler,
-			logger: $logger
 		);
 
 		/** @see Background_Jobs_Actions_Handler::generate_new_addresses() */
@@ -64,8 +72,8 @@ class Background_Jobs_Unit_Test extends \Codeception\Test\Unit {
 	 */
 	public function test_check_new_addresses_for_transactions_action(): void {
 
-		$logger                     = new ColorLogger();
-		$api                        = $this->makeEmpty(
+		$logger = new ColorLogger();
+		$api    = $this->makeEmpty(
 			API_Background_Jobs_Interface::class,
 			array(
 				'check_new_addresses_for_transactions' => Expected::once(
@@ -75,16 +83,10 @@ class Background_Jobs_Unit_Test extends \Codeception\Test\Unit {
 				),
 			)
 		);
-		$bitcoin_address_repository = $this->makeEmpty( Bitcoin_Address_Repository::class );
-		$bitcoin_wallet_repository  = $this->makeEmpty( Bitcoin_Wallet_Repository::class );
-		$background_jobs_scheduler  = $this->makeEmpty( Background_Jobs_Scheduler_Interface::class );
 
 		/** @var API_Background_Jobs_Interface $sut */
-		$sut = new Background_Jobs_Actions_Handler(
+		$sut = $this->get_sut(
 			api: $api,
-			bitcoin_address_repository: $bitcoin_address_repository,
-			bitcoin_wallet_repository: $bitcoin_wallet_repository,
-			background_jobs_scheduler: $background_jobs_scheduler,
 			logger: $logger
 		);
 
@@ -101,8 +103,8 @@ class Background_Jobs_Unit_Test extends \Codeception\Test\Unit {
 	 */
 	public function test_check_assigned_addresses_for_transactions_action(): void {
 
-		$logger                     = new ColorLogger();
-		$api                        = $this->makeEmpty(
+		$logger              = new ColorLogger();
+		$api                 = $this->makeEmpty(
 			API_Background_Jobs_Interface::class,
 			array(
 				'check_assigned_addresses_for_payment' => Expected::once(
@@ -112,15 +114,16 @@ class Background_Jobs_Unit_Test extends \Codeception\Test\Unit {
 				),
 			)
 		);
-		$bitcoin_address_repository = $this->makeEmpty( Bitcoin_Address_Repository::class );
-		$bitcoin_wallet_repository  = $this->makeEmpty( Bitcoin_Wallet_Repository::class );
-		$background_jobs_scheduler  = $this->makeEmpty( Background_Jobs_Scheduler_Interface::class );
+		$wallet_service_mock = $this->makeEmpty(
+			Bitcoin_Wallet_Service::class,
+			array(
+				'has_assigned_bitcoin_addresses' => Expected::once( false ),
+			)
+		);
 
-		$sut = new Background_Jobs_Actions_Handler(
+		$sut = $this->get_sut(
 			api: $api,
-			bitcoin_address_repository: $bitcoin_address_repository,
-			bitcoin_wallet_repository: $bitcoin_wallet_repository,
-			background_jobs_scheduler: $background_jobs_scheduler,
+			wallet_service: $wallet_service_mock,
 			logger: $logger
 		);
 		/** @see Background_Jobs_Actions_Handler::check_assigned_addresses_for_transactions() */
