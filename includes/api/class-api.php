@@ -266,8 +266,6 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 	/**
 	 * Derive new Bitcoin addresses for a saved wallet.
 	 *
-	 * @deprecated Should use ~ensure... instead.
-	 *
 	 * @param Bitcoin_Wallet $wallet The wallet to generate child addresses from using its master public key and current address index.
 	 * @param int            $generate_count The number of sequential addresses to derive from the wallet's next available derivation path index. 20 is the standard lookahead for wallets.
 	 *
