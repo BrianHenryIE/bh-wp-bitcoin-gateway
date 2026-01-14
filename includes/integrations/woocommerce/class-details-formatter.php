@@ -64,7 +64,7 @@ class Details_Formatter {
 	 * TODO: This should display the store currency value for one Bitcoin at the time of order. Currently ~"90817.00".
 	 */
 	public function get_btc_exchange_rate_formatted(): string {
-		return $this->order->get_currency() . ' ' . wc_price( $this->order->get_btc_exchange_rate()->toFloat(), array( 'currency' => $this->order->get_currency() ) );
+		return $this->order->get_currency() . ' ' . wc_price( $this->order->get_btc_exchange_rate()->getAmount()->toFloat(), array( 'currency' => $this->order->get_currency() ) );
 	}
 
 	/**

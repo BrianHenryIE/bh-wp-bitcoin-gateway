@@ -2,6 +2,7 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model;
 
+use BrianHenryIE\ColorLogger\ColorLogger;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Order;
 use Codeception\Stub\Expected;
@@ -19,7 +20,9 @@ class Bitcoin_Order_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase 
 	): WC_Bitcoin_Order {
 		return new WC_Bitcoin_Order(
 			wc_order: $order ?? $this->make( WC_Order::class ),
-			bitcoin_address: $bitcoin_address ?? $this->make( Bitcoin_Address::class ),
+			payment_address: $bitcoin_address ?? $this->make( Bitcoin_Address::class ),
+			transactions: array(),
+			logger: new ColorLogger(),
 		);
 	}
 

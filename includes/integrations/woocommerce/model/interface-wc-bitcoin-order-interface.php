@@ -28,9 +28,9 @@ interface WC_Bitcoin_Order_Interface {
 	/**
 	 * Get the Bitcoin to fiat exchange rate for this order.
 	 *
-	 * @return BigNumber The exchange rate.
+	 * @return Money The exchange rate.
 	 */
-	public function get_btc_exchange_rate(): BigNumber;
+	public function get_btc_exchange_rate(): Money;
 
 	/**
 	 * Get the Bitcoin address assigned to this order.
