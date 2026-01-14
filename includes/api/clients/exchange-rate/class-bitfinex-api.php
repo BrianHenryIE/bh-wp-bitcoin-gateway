@@ -25,6 +25,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Currency;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\UnknownCurrencyException;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
+use JsonException;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 
@@ -52,6 +53,7 @@ class Bitfinex_API implements Exchange_Rate_API_Interface {
 	 * @return Money The exchange rate.
 	 * @throws BH_WP_Bitcoin_Gateway_Exception When the request fails.
 	 * @throws UnknownCurrencyException Almost impossible – unless the Money library cannot use a Currency object it created.
+	 * @throws JsonException If the API returns unexpected/invalid data.
 	 */
 	public function get_exchange_rate( Currency $currency ): Money {
 
@@ -72,7 +74,7 @@ class Bitfinex_API implements Exchange_Rate_API_Interface {
 		/**
 		 * @var array{0:array{0:string,1:int,2:float,3:int,4:float,5:int,6:float,7:int,8:float,9:int,10:int}} $response_body
 		 */
-		$response_body = json_decode( $request_response['body'], true );
+		$response_body = json_decode( $request_response['body'], true, 512, JSON_THROW_ON_ERROR );
 
 		// Multiple rates can be queried at the same time.
 
