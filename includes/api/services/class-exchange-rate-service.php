@@ -8,18 +8,35 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Services;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Exchange_Rate_API_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\JsonMapper\JsonMapper_DateTimeInterface;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\JsonMapper\JsonMapper_Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\BH_WP_Bitcoin_Gateway_Exception;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exchange_Rate;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Rate_Limit_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Math\BigDecimal;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Math\RoundingMode;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Currency;
+use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\UnknownCurrencyException;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
-use Exception;
+use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\Exception\BuilderException;
+use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\Exception\ClassFactoryException;
+use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\Handler\FactoryRegistry;
+use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\Handler\PropertyMapper;
+use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\JsonMapperBuilder;
+use DateTimeImmutable;
+use DateTimeInterface;
+use JsonException;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 
+/**
+ * Uses a `Exchange_Rate_API_Interface` implementation and saves the result, JSON encoded, in a transient.
+ */
 class Exchange_Rate_Service implements LoggerAwareInterface {
 	use LoggerAwareTrait;
+
+	protected const string TRANSIENT_BASE = 'bh_wp_bitcoin_gateway_exchange_rate_';
 
 	/**
 	 * Constructor
@@ -35,37 +52,45 @@ class Exchange_Rate_Service implements LoggerAwareInterface {
 	}
 
 	/**
-	 * Return the cached exchange rate, or fetch it.
-	 * Cache for one hour.
+	 * Get the value of 1 BTC in the requested currency.
 	 *
-	 * Value of 1 BTC.
+	 * Return the cached exchange rate, or fetch it.
+	 * Caches for one hour.
 	 *
 	 * @param Currency $currency The fiat currency to get the BTC exchange rate for (e.g., USD, EUR, GBP).
 	 *
 	 * @throws BH_WP_Bitcoin_Gateway_Exception When the exchange rate API returns invalid data or the currency is not supported.
 	 */
 	public function get_exchange_rate( Currency $currency ): ?Money {
-		$transient_name = 'bh_wp_bitcoin_gateway_exchange_rate_' . $currency->getCurrencyCode();
-		/** @var false|array{amount:string,currency:string} $exchange_rate_stored_transient */
-		$exchange_rate_stored_transient = get_transient( $transient_name );
 
-		if ( empty( $exchange_rate_stored_transient ) ) {
-			try {
-				$exchange_rate = $this->exchange_rate_api->get_exchange_rate( $currency );
-				// } catch ( Rate_Limit_Exception $e ) {
-				//
-				// } catch ( UnknownCurrencyException $e ) {
-				// return null;
-			} catch ( Exception $e ) {
-				// TODO: rate limit.
-				return null;
-			}
-			set_transient( $transient_name, $exchange_rate->jsonSerialize(), HOUR_IN_SECONDS );
-		} else {
-			$exchange_rate = Money::of( $exchange_rate_stored_transient['amount'], $exchange_rate_stored_transient['currency'] );
+		$exchange_rate_stored_transient = $this->get_cached_exchange_rate( $currency );
+
+		if ( ! is_null( $exchange_rate_stored_transient ) ) {
+			return $exchange_rate_stored_transient->rate;
 		}
 
-		return $exchange_rate;
+		try {
+			$exchange_rate_money = $this->exchange_rate_api->get_exchange_rate( $currency );
+		} catch ( Rate_Limit_Exception $e ) {
+			// TODO: set up background job.
+			return null;
+		} catch ( UnknownCurrencyException $e ) {
+			// Ignore this error.
+			// It could only happen if the currency of the Money object passed to the function was not
+			// recognised by brick/money which doesn't make sense. I.e. the exception would have happened
+			// before this function was called.
+			return null;
+		} catch ( JsonException $e ) {
+			// TODO: decide if this should be logged inside the API class.
+			return null;
+		}
+
+		$this->set_cached_exchange_rate(
+			rate: $exchange_rate_money,
+			api_classname: get_class( $this->exchange_rate_api )
+		);
+
+		return $exchange_rate_money;
 	}
 
 	/**
@@ -86,14 +111,109 @@ class Exchange_Rate_Service implements LoggerAwareInterface {
 		}
 
 		// 1 BTC = xx USD.
-		$exchange_rate = BigDecimal::of( '1' )->dividedBy( $exchange_rate->getAmount(), 16, RoundingMode::DOWN );
+		$exchange_rate = BigDecimal::of( '1' )->dividedBy( $exchange_rate->getAmount(), 24, RoundingMode::HALF_EVEN );
 
-		return $fiat_amount->convertedTo( Currency::of( 'BTC' ), $exchange_rate, null, RoundingMode::DOWN );
+		return $fiat_amount->convertedTo( Currency::of( 'BTC' ), $exchange_rate, null, RoundingMode::HALF_EVEN );
+	}
 
-		// This is a good number for January 2023, 0.000001 BTC = 0.02 USD.
-		// TODO: Calculate the appropriate number of decimals on the fly.
-		// $num_decimal_places = 6;
-		// $string_result      = (string) wc_round_discount( $float_result, $num_decimal_places + 1 );
-		// return $string_result.
+	/**
+	 * E.g. `bh_wp_bitcoin_gateway_exchange_rate_USD`.
+	 *
+	 * @param Currency $currency The currency we have just fetched the exchange rate for.
+	 */
+	protected function get_transient_name( Currency $currency ): string {
+		return self::TRANSIENT_BASE . $currency->getCurrencyCode();
+	}
+
+	/**
+	 * Save using transients
+	 *
+	 * Maybe later directly use {@see wp_using_ext_object_cache}, {@see wp_cache_set()}.
+	 *
+	 * @param Money  $rate Money object where the value in that currency equals one BTC.
+	 * @param string $api_classname The API that was used to fetch the exchange rate.
+	 */
+	protected function set_cached_exchange_rate(
+		Money $rate,
+		string $api_classname,
+	): void {
+
+		$exchange_rate = new Exchange_Rate(
+			rate: $rate,
+			api_classname: $api_classname,
+			date_saved: new DateTimeImmutable(),
+		);
+
+		// This returns a bool. If setting transients is failing, we should broadly rate limit trying anything.
+		set_transient(
+			transient: $this->get_transient_name(
+				currency: $rate->getCurrency()
+			),
+			value: wp_json_encode( $exchange_rate ),
+			expiration: HOUR_IN_SECONDS
+		);
+	}
+
+	/**
+	 * Get the JSON encoded transient, parse it to an object.
+	 *
+	 * @param Currency $currency The currency to fetch (mostly for the transient name).
+	 */
+	protected function get_cached_exchange_rate( Currency $currency ): ?Exchange_Rate {
+
+		/** @var false|string $exchange_rate_stored_transient_json_string */
+		$exchange_rate_stored_transient_json_string = get_transient(
+			transient: $this->get_transient_name( $currency )
+		);
+
+		if ( ! is_string( $exchange_rate_stored_transient_json_string ) ) {
+			return null;
+		}
+
+		try {
+			$factory_registry = new FactoryRegistry();
+
+			$factory_registry->addFactory(
+				DateTimeInterface::class,
+				new JsonMapper_DateTimeInterface()
+			);
+
+			$factory_registry->addFactory(
+				Money::class,
+				new JsonMapper_Money()
+			);
+		} catch ( ClassFactoryException $exception ) {
+			// Something must be wrong with the factory implementation.
+			// Definitely should not be a run-time error to just register them.
+			$this->logger->error( $exception->getMessage(), array( 'exception' => $exception ) );
+			return null;
+		}
+
+		// TODO: after testing, see what -> are unnecessary.
+		$property_mapper = new PropertyMapper( $factory_registry );
+
+		try {
+			$mapper = JsonMapperBuilder::new()
+				->withPropertyMapper( $property_mapper )
+				->withAttributesMiddleware()
+				->withDocBlockAnnotationsMiddleware()
+				->withTypedPropertiesMiddleware()
+				->withNamespaceResolverMiddleware()
+				->withObjectConstructorMiddleware( $factory_registry )
+				->build();
+		} catch ( BuilderException $exception ) {
+			// NB Just catching this / hiding it could result in constant API calls.
+			// So...? When there's an API error that's not external, we should rate limit internally somehow.
+			$this->logger->error( $exception->getMessage(), array( 'exception' => $exception ) );
+			return null;
+		}
+
+		/** @var Exchange_Rate $exchange_rate */
+		$exchange_rate = $mapper->mapToClassFromString(
+			$exchange_rate_stored_transient_json_string,
+			Exchange_Rate::class
+		);
+
+		return $exchange_rate;
 	}
 }
