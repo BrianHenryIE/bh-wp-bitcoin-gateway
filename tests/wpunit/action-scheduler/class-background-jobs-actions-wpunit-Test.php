@@ -3,29 +3,39 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Address_Repository;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Wallet_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Rate_Limit_Exception;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Bitcoin_Wallet_Service;
 use Codeception\Stub\Expected;
 use DateInterval;
 use DateTimeImmutable;
 use lucatume\WPBrowser\TestCase\WPTestCase;
+use Psr\Log\LoggerInterface;
 
 /**
  * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Handler
  */
 class Background_Jobs_Actions_WPUnit_Test extends WPTestCase {
 
+	protected function get_sut(
+		?API_Background_Jobs_Interface $api = null,
+		?Bitcoin_Wallet_Service $wallet_service = null,
+		?Background_Jobs_Scheduler_Interface $background_jobs_scheduler = null,
+		?LoggerInterface $logger = null,
+	): Background_Jobs_Actions_Handler {
+		return new Background_Jobs_Actions_Handler(
+			api:$api ?? $this->makeEmpty( API_Background_Jobs_Interface::class ),
+			wallet_service: $wallet_service ?? $this->make( Bitcoin_Wallet_Service::class ),
+			background_jobs_scheduler: $background_jobs_scheduler ?? $this->makeEmpty( Background_Jobs_Scheduler_Interface::class ),
+			logger: $logger ?? new ColorLogger(),
+		);
+	}
+
 	/**
 	 * @covers ::add_action_scheduler_repeating_actions
 	 */
 	public function test_add_action_scheduler_repeating_actions(): void {
 
-		$logger                     = new ColorLogger();
-		$api                        = $this->makeEmpty( API_Background_Jobs_Interface::class );
-		$bitcoin_address_repository = $this->makeEmpty( Bitcoin_Address_Repository::class );
-		$bitcoin_wallet_repository  = $this->makeEmpty( Bitcoin_Wallet_Repository::class );
-		$background_jobs_scheduler  = $this->makeEmpty(
+		$background_jobs_scheduler = $this->makeEmpty(
 			Background_Jobs_Scheduler_Interface::class,
 			array(
 				'schedule_recurring_ensure_unused_addresses' => Expected::once(),
@@ -34,12 +44,8 @@ class Background_Jobs_Actions_WPUnit_Test extends WPTestCase {
 		);
 
 		/** @var Background_Jobs_Actions_Interface $sut */
-		$sut = new Background_Jobs_Actions_Handler(
-			api: $api,
-			bitcoin_address_repository: $bitcoin_address_repository,
-			bitcoin_wallet_repository: $bitcoin_wallet_repository,
+		$sut = $this->get_sut(
 			background_jobs_scheduler: $background_jobs_scheduler,
-			logger: $logger
 		);
 
 		/**
@@ -53,19 +59,15 @@ class Background_Jobs_Actions_WPUnit_Test extends WPTestCase {
 	 */
 	public function test_check_new_addresses_for_transactions_action_rate_limit_failure_reschedules(): void {
 
-		$logger = new ColorLogger();
-
 		$reset_time = new DateTimeImmutable()->add( new DateInterval( 'P1D' ) );
 
-		$api                        = $this->makeEmpty(
+		$api                       = $this->makeEmpty(
 			API_Background_Jobs_Interface::class,
 			array(
 				'check_new_addresses_for_transactions' => fn() => throw new Rate_Limit_Exception( $reset_time ),
 			)
 		);
-		$bitcoin_address_repository = $this->makeEmpty( Bitcoin_Address_Repository::class );
-		$bitcoin_wallet_repository  = $this->makeEmpty( Bitcoin_Wallet_Repository::class );
-		$background_jobs_scheduler  = $this->makeEmpty(
+		$background_jobs_scheduler = $this->makeEmpty(
 			Background_Jobs_Scheduler_Interface::class,
 			array(
 				'schedule_check_newly_generated_bitcoin_addresses_for_transactions' => Expected::once( $reset_time ),
@@ -73,12 +75,9 @@ class Background_Jobs_Actions_WPUnit_Test extends WPTestCase {
 		);
 
 		/** @var Background_Jobs_Actions_Interface $sut */
-		$sut = new Background_Jobs_Actions_Handler(
+		$sut = $this->get_sut(
 			api: $api,
-			bitcoin_address_repository: $bitcoin_address_repository,
-			bitcoin_wallet_repository: $bitcoin_wallet_repository,
 			background_jobs_scheduler: $background_jobs_scheduler,
-			logger: $logger
 		);
 
 		/** @see Background_Jobs_Actions_Handler::check_new_addresses_for_transactions() */
@@ -90,19 +89,19 @@ class Background_Jobs_Actions_WPUnit_Test extends WPTestCase {
 	 */
 	public function test_check_assigned_addresses_for_transactions_action_rate_limit_failure_reschedules(): void {
 
-		$logger = new ColorLogger();
-
 		$reset_time = new DateTimeImmutable()->add( new DateInterval( 'P1D' ) );
 
-		$api                        = $this->makeEmpty(
+		$api                       = $this->makeEmpty(
 			API_Background_Jobs_Interface::class,
 			array(
 				'check_assigned_addresses_for_payment' => fn() => throw new Rate_Limit_Exception( $reset_time ),
 			)
 		);
-		$bitcoin_address_repository = $this->makeEmpty( Bitcoin_Address_Repository::class );
-		$bitcoin_wallet_repository  = $this->makeEmpty( Bitcoin_Wallet_Repository::class );
-		$background_jobs_scheduler  = $this->makeEmpty(
+		$wallet_service_mock = $this->makeEmpty( Bitcoin_Wallet_Service::class,
+		array(
+			'has_assigned_bitcoin_addresses' => Expected::once(false),
+		));
+		$background_jobs_scheduler = $this->makeEmpty(
 			Background_Jobs_Scheduler_Interface::class,
 			array(
 				'schedule_check_assigned_addresses_for_transactions' => Expected::once(),
@@ -111,12 +110,10 @@ class Background_Jobs_Actions_WPUnit_Test extends WPTestCase {
 		);
 
 		/** @var Background_Jobs_Actions_Interface $sut */
-		$sut = new Background_Jobs_Actions_Handler(
+		$sut = $this->get_sut(
 			api: $api,
-			bitcoin_address_repository: $bitcoin_address_repository,
-			bitcoin_wallet_repository: $bitcoin_wallet_repository,
+			wallet_service: $wallet_service_mock,
 			background_jobs_scheduler: $background_jobs_scheduler,
-			logger: $logger
 		);
 
 		/** @see Background_Jobs_Actions_Handler::check_assigned_addresses_for_transactions() */
