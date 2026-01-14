@@ -3,7 +3,11 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Services;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain_API_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Transaction_Repository;
 use Codeception\Stub\Expected;
 use DateTimeImmutable;
@@ -332,5 +336,76 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 		$result = $method->invoke( $sut );
 
 		$this->assertEquals( 800004, $result );
+	}
+
+	/**
+	 * @covers ::update_address_transactions
+	 */
+	public function test_update_address_transactions(): void {
+
+		$transaction = $this->make(
+			Transaction::class,
+			array(
+				'get_txid'         => 'transaction_from_api',
+				'get_block_height' => 123,
+				'get_block_time'   => new DateTimeImmutable( 'now' ),
+			)
+		);
+
+		$blockchain_api = $this->makeEmpty(
+			Blockchain_API_Interface::class,
+			array(
+				'get_transactions_received' => Expected::once(
+					function ( string $address ) use ( $transaction ): array {
+						assert( 'xpub' === $address );
+						return array( $transaction );
+					}
+				),
+			)
+		);
+
+		$bitcoin_transaction = $this->make(
+			Bitcoin_Transaction::class,
+			array(
+				'get_txid'    => 'transaction_from_wp_post',
+				'get_post_id' => 567,
+			)
+		);
+
+		$bitcoin_transaction_repository = $this->makeEmpty(
+			Bitcoin_Transaction_Repository::class,
+			array(
+				'save_new' => Expected::once(
+					function (
+						Transaction_Interface $transaction,
+						Bitcoin_Address $address,
+					) use ( $bitcoin_transaction ): Bitcoin_Transaction {
+						return $bitcoin_transaction;
+					}
+				),
+			)
+		);
+
+		$sut = $this->get_sut(
+			blockchain_api: $blockchain_api,
+			bitcoin_transaction_repository: $bitcoin_transaction_repository
+		);
+
+		$address = $this->make(
+			Bitcoin_Address::class,
+			array(
+				'get_raw_address'  => Expected::once( 'xpub' ),
+				'set_transactions' => Expected::once(),
+				'get_tx_ids'       => Expected::once( array() ),
+			)
+		);
+
+		$result           = $sut->update_address_transactions( $address );
+		$new_transactions = $result->get_new_transactions();
+		$result_first     = array_shift(
+			$new_transactions
+		);
+
+		$this->assertEquals( 'transaction_from_wp_post', $result_first?->get_txid() );
 	}
 }
