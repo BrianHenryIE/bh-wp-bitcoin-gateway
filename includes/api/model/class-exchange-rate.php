@@ -19,13 +19,13 @@ class Exchange_Rate {
 	/**
 	 * Constructor
 	 *
-	 * @param Money $rate The value of a currency that equates to 1 BTC.
-	 * @param string $api_classname The API the exchange rate was fetched from.
+	 * @param Money             $rate The value of a currency that equates to 1 BTC.
+	 * @param string            $api_classname The API the exchange rate was fetched from.
 	 * @param DateTimeInterface $date_saved When it was queried/saved.
 	 */
 	public function __construct(
-		public readonly Money             $rate,
-		public readonly string            $api_classname,
+		public readonly Money $rate,
+		public readonly string $api_classname,
 		public readonly DateTimeInterface $date_saved,
 	) {
 	}

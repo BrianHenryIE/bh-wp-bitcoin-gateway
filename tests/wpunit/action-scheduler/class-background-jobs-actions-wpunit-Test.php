@@ -97,10 +97,12 @@ class Background_Jobs_Actions_WPUnit_Test extends WPTestCase {
 				'check_assigned_addresses_for_payment' => fn() => throw new Rate_Limit_Exception( $reset_time ),
 			)
 		);
-		$wallet_service_mock = $this->makeEmpty( Bitcoin_Wallet_Service::class,
-		array(
-			'has_assigned_bitcoin_addresses' => Expected::once(false),
-		));
+		$wallet_service_mock       = $this->makeEmpty(
+			Bitcoin_Wallet_Service::class,
+			array(
+				'has_assigned_bitcoin_addresses' => Expected::once( false ),
+			)
+		);
 		$background_jobs_scheduler = $this->makeEmpty(
 			Background_Jobs_Scheduler_Interface::class,
 			array(
