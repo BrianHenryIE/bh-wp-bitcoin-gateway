@@ -6,17 +6,14 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Math\BigNumber;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order_Interface;
 use DateInterval;
 use DateTimeImmutable;
 use DateTimeZone;
-use Psr\Log\NullLogger;
 use WC_Order;
 use WC_Payment_Gateway;
 use WC_Payment_Gateways;
@@ -231,14 +228,25 @@ trait API_WooCommerce_Trait {
 		}
 		$bitcoin_address = $this->wallet_service->get_saved_address_by_bitcoin_payment_address( $assigned_payment_address );
 
-		$this->setLogger( new NullLogger() );
-		$bitcoin_order = new WC_Bitcoin_Order( $wc_order, $bitcoin_address );
+		$transaction_ids = $bitcoin_address->get_tx_ids();
 
-		if ( $refresh ) {
-			$this->refresh_order( $bitcoin_order );
+		$transactions = null;
+		if ( ! is_null( $transaction_ids ) ) {
+			$transactions = $this->payment_service->get_saved_transactions(
+				transaction_post_ids: array_keys( $transaction_ids )
+			);
 		}
 
-		return $bitcoin_order;
+		$bitcoin_order = new WC_Bitcoin_Order(
+			wc_order: $wc_order,
+			payment_address: $bitcoin_address,
+			transactions: $transactions,
+			logger: $this->logger
+		);
+
+		return $refresh
+			? $this->refresh_order( $bitcoin_order )
+			: $bitcoin_order;
 	}
 
 	/**
@@ -250,7 +258,7 @@ trait API_WooCommerce_Trait {
 	 *
 	 * @throws BH_WP_Bitcoin_Gateway_Exception When blockchain API queries fail or transaction data cannot be updated.
 	 */
-	protected function refresh_order( WC_Bitcoin_Order_Interface $bitcoin_order ): bool {
+	protected function refresh_order( WC_Bitcoin_Order_Interface $bitcoin_order ): WC_Bitcoin_Order_Interface {
 
 		$updated = false;
 
@@ -288,7 +296,8 @@ trait API_WooCommerce_Trait {
 		$gateway = $bitcoin_order->get_gateway();
 
 		if ( ! $gateway ) {
-			return false;
+			// TODO: log / exception.
+			return $bitcoin_order;
 		}
 
 		if ( ! $bitcoin_order->is_paid() && ! is_null( $confirmed_value_current ) && ! $confirmed_value_current->isZero() ) {
@@ -317,7 +326,16 @@ trait API_WooCommerce_Trait {
 
 		$bitcoin_order->save();
 
-		return $updated;
+		$refreshed_address = $this->wallet_service->refresh( $bitcoin_order->get_address() );
+		/** @var WC_Order $refreshed_wc_order */
+		$refreshed_wc_order = wc_get_order( $bitcoin_order->get_id() );
+
+		return new WC_Bitcoin_Order(
+			wc_order: $refreshed_wc_order,
+			payment_address: $refreshed_address,
+			transactions: $check_address_for_payment_result->all_transactions,
+			logger: $this->logger
+		);
 	}
 
 	/**
