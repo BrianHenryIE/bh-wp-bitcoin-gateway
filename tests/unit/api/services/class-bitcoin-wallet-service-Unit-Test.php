@@ -298,7 +298,7 @@ class Bitcoin_Wallet_Service_Unit_Test extends \Codeception\Test\Unit {
 			)
 		);
 
-		$call_count = 0;
+		$call_count           = 0;
 		$generate_address_api = $this->makeEmpty(
 			Generate_Address_API_Interface::class,
 			array(
@@ -323,7 +323,7 @@ class Bitcoin_Wallet_Service_Unit_Test extends \Codeception\Test\Unit {
 			)
 		);
 
-		$address_check_count = 0;
+		$address_check_count        = 0;
 		$bitcoin_address_repository = $this->makeEmpty(
 			Bitcoin_Address_Repository::class,
 			array(
@@ -350,7 +350,7 @@ class Bitcoin_Wallet_Service_Unit_Test extends \Codeception\Test\Unit {
 			)
 		);
 
-		$set_index_call_count = 0;
+		$set_index_call_count      = 0;
 		$bitcoin_wallet_repository = $this->makeEmpty(
 			Bitcoin_Wallet_Repository::class,
 			array(
