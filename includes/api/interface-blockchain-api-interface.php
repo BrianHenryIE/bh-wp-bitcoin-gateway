@@ -5,7 +5,7 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API;
 
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Rate_Limit_Exception;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\Rate_Limit_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction;
 
 interface Blockchain_API_Interface {

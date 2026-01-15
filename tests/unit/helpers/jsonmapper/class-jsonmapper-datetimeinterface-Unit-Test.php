@@ -9,7 +9,7 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\JsonMapper;
 
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\BH_WP_Bitcoin_Gateway_Exception;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
 use DateInvalidTimeZoneException;
 use DateMalformedStringException;
 use DateTimeImmutable;
