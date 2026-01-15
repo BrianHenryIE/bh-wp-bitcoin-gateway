@@ -34,7 +34,7 @@ class Bitcoin_Wallet_Repository extends WP_Post_Repository_Abstract {
 	 * NB: post_name is 200 characters long. zpub is 111 characters.
 	 *
 	 * @param string $xpub The master public key of the wallet.
-	 * @throws BH_WP_Bitcoin_Gateway_Exception
+	 * @throws BH_WP_Bitcoin_Gateway_Exception If more than one saved wallet was found for the master public key.
 	 */
 	public function get_by_xpub( string $xpub ): ?Bitcoin_Wallet {
 		$args = new Bitcoin_Wallet_Query(
@@ -52,12 +52,15 @@ class Bitcoin_Wallet_Repository extends WP_Post_Repository_Abstract {
 
 		/** @var WP_Post[] $posts */
 		$posts = get_posts( $query );
+
 		if ( empty( $posts ) ) {
 			return null;
 		}
+
 		if ( 1 === count( $posts ) ) {
 			return $this->bitcoin_wallet_factory->get_by_wp_post( $posts[0] );
 		}
+
 		throw new BH_WP_Bitcoin_Gateway_Exception( count( $posts ) . ' Bitcoin_Wallets found, only one expected, for ' . $xpub );
 	}
 
@@ -148,5 +151,14 @@ class Bitcoin_Wallet_Repository extends WP_Post_Repository_Abstract {
 				last_derived_address_index: $index,
 			)
 		);
+	}
+
+	/**
+	 * Fetch the wallet from its wp_post again.
+	 *
+	 * @param Bitcoin_Wallet $wallet To refresh.
+	 */
+	public function refresh( Bitcoin_Wallet $wallet ): Bitcoin_Wallet {
+		return $this->bitcoin_wallet_factory->get_by_wp_post_id( $wallet->get_post_id() );
 	}
 }

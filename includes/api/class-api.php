@@ -419,7 +419,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 		return new Check_Address_For_Payment_Result(
 			check_address_for_payment_service_result: $check_address_for_payment_service_result,
 			is_paid: $is_paid,
-			refreshed_address: $this->wallet_service->refresh( $payment_address ),
+			refreshed_address: $this->wallet_service->refresh_address( $payment_address ),
 		);
 	}
 

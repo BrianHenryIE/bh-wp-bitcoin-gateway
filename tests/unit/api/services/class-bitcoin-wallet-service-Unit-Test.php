@@ -113,6 +113,16 @@ class Bitcoin_Wallet_Service_Unit_Test extends \Codeception\Test\Unit {
 						$this->assertEquals( 1, $index );
 					}
 				),
+				'refresh'                   => Expected::once(
+					function ( Bitcoin_Wallet $wallet ): Bitcoin_Wallet {
+						return $this->make(
+							Bitcoin_Wallet::class,
+							array(
+								'get_address_index' => Expected::once( 1 ),
+							)
+						);
+					}
+				),
 			)
 		);
 
@@ -125,8 +135,7 @@ class Bitcoin_Wallet_Service_Unit_Test extends \Codeception\Test\Unit {
 		$result = $sut->generate_new_addresses_for_wallet( $wallet );
 
 		$this->assertCount( 2, $result->new_addresses );
-		$this->assertEquals( 1, $result->address_index );
-		$this->assertSame( $wallet, $result->wallet );
+		$this->assertEquals( 1, $result->get_highest_address_index() );
 	}
 
 	/**
@@ -198,6 +207,16 @@ class Bitcoin_Wallet_Service_Unit_Test extends \Codeception\Test\Unit {
 						$this->assertEquals( 7, $index );
 					}
 				),
+				'refresh'                   => Expected::once(
+					function ( Bitcoin_Wallet $wallet ): Bitcoin_Wallet {
+						return $this->make(
+							Bitcoin_Wallet::class,
+							array(
+								'get_address_index' => Expected::once( 7 ),
+							)
+						);
+					}
+				),
 			)
 		);
 
@@ -210,7 +229,7 @@ class Bitcoin_Wallet_Service_Unit_Test extends \Codeception\Test\Unit {
 		$result = $sut->generate_new_addresses_for_wallet( $wallet );
 
 		$this->assertCount( 2, $result->new_addresses );
-		$this->assertEquals( 7, $result->address_index );
+		$this->assertEquals( 7, $result->get_highest_address_index() );
 	}
 
 	/**
@@ -234,7 +253,7 @@ class Bitcoin_Wallet_Service_Unit_Test extends \Codeception\Test\Unit {
 			array(
 				'generate_address' => Expected::exactly(
 					5,
-					function ( string $xpub_param, int $index ) use ( $xpub ): string {
+					function ( string $xpub_param, int $index ): string {
 						return 'bc1qaddress' . $index;
 					}
 				),
@@ -267,6 +286,16 @@ class Bitcoin_Wallet_Service_Unit_Test extends \Codeception\Test\Unit {
 						$this->assertEquals( 4, $index );
 					}
 				),
+				'refresh'                   => Expected::once(
+					function ( Bitcoin_Wallet $wallet ): Bitcoin_Wallet {
+						return $this->make(
+							Bitcoin_Wallet::class,
+							array(
+								'get_address_index' => Expected::once( 4 ),
+							)
+						);
+					}
+				),
 			)
 		);
 
@@ -279,7 +308,7 @@ class Bitcoin_Wallet_Service_Unit_Test extends \Codeception\Test\Unit {
 		$result = $sut->generate_new_addresses_for_wallet( $wallet, 5 );
 
 		$this->assertCount( 5, $result->new_addresses );
-		$this->assertEquals( 4, $result->address_index );
+		$this->assertEquals( 4, $result->get_highest_address_index() );
 	}
 
 	/**
@@ -295,6 +324,7 @@ class Bitcoin_Wallet_Service_Unit_Test extends \Codeception\Test\Unit {
 			array(
 				'get_xpub'          => Expected::atLeastOnce( $xpub ),
 				'get_address_index' => Expected::once( null ),
+				'get_post_id'       => Expected::once( 4 ),
 			)
 		);
 
@@ -302,7 +332,7 @@ class Bitcoin_Wallet_Service_Unit_Test extends \Codeception\Test\Unit {
 		$generate_address_api = $this->makeEmpty(
 			Generate_Address_API_Interface::class,
 			array(
-				'generate_address' => function ( string $xpub_param, int $index ) use ( $xpub, &$call_count ): string {
+				'generate_address' => function ( string $xpub_param, int $index ) use ( &$call_count ): string {
 					++$call_count;
 					return 'bc1qaddress' . $index;
 				},
@@ -336,6 +366,15 @@ class Bitcoin_Wallet_Service_Unit_Test extends \Codeception\Test\Unit {
 					// Other addresses don't exist.
 					return null;
 				},
+				'get_by_post_id'          => Expected::once(
+					function () {
+						return new Bitcoin_Address(
+							post_id: 123,
+							wallet_parent_post_id: 4,
+							raw_address: 'bc1qaddress0',
+						);
+					}
+				),
 				'save_new'                => Expected::exactly(
 					2,
 					function ( Bitcoin_Wallet $wallet, int $index, string $address ) use ( $bitcoin_address_1, $bitcoin_address_2 ): Bitcoin_Address {
@@ -364,6 +403,16 @@ class Bitcoin_Wallet_Service_Unit_Test extends \Codeception\Test\Unit {
 						$this->assertEquals( 2, $index );
 					}
 				},
+				'refresh'                   => Expected::once(
+					function ( Bitcoin_Wallet $wallet ): Bitcoin_Wallet {
+							return $this->make(
+								Bitcoin_Wallet::class,
+								array(
+									'get_address_index' => Expected::once( 2 ),
+								)
+							);
+					}
+				),
 			)
 		);
 
@@ -376,7 +425,7 @@ class Bitcoin_Wallet_Service_Unit_Test extends \Codeception\Test\Unit {
 		$result = $sut->generate_new_addresses_for_wallet( $wallet, 2 );
 
 		$this->assertCount( 2, $result->new_addresses );
-		$this->assertEquals( 2, $result->address_index );
+		$this->assertEquals( 2, $result->get_highest_address_index() );
 		$this->assertEquals( 3, $call_count ); // Should have tried to generate 3 addresses.
 		$this->assertEquals( 2, $set_index_call_count ); // Should have set index twice.
 	}
@@ -439,7 +488,7 @@ class Bitcoin_Wallet_Service_Unit_Test extends \Codeception\Test\Unit {
 		$result = $sut->generate_new_addresses_for_wallet( $wallet, 1 );
 
 		$this->assertCount( 1, $result->new_addresses );
-		$this->assertEquals( 0, $result->address_index );
+		$this->assertEquals( 0, $result->get_highest_address_index() );
 		$this->assertEquals( 'bc1qaddress0', $result->new_addresses[0]->get_raw_address() );
 	}
 }

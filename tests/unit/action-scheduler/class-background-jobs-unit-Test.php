@@ -3,6 +3,7 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Address_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Wallet_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Addresses_Generation_Result;
@@ -52,7 +53,12 @@ class Background_Jobs_Unit_Test extends \Codeception\Test\Unit {
 			array(
 				'generate_new_addresses' => Expected::once(
 					function () {
-						return array( $this->createMock( Addresses_Generation_Result::class ) );
+						return array(
+							new Addresses_Generation_Result(
+								wallet: $this->make( Bitcoin_Wallet::class ),
+								new_addresses: array(),
+							),
+						);
 					}
 				),
 			)

@@ -273,14 +273,14 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 		$get_wallet_for_xpub_service_result = new Get_Wallet_For_Xpub_Service_Result(
 			xpub: 'xpub12345',
 			gateway_id: 'bitcoin',
-			wallet:$wallet,
+			wallet: $wallet,
 			is_new: false,
 		);
 
 		$address_generation_result = new Addresses_Generation_Result(
 			wallet: $wallet,
 			new_addresses: array( $address ),
-			address_index: 1,
+			prior_address_index: null,
 		);
 
 		$bitcoin_wallet_service = $this->makeEmpty(

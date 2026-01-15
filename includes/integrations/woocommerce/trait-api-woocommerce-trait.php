@@ -326,7 +326,7 @@ trait API_WooCommerce_Trait {
 
 		$bitcoin_order->save();
 
-		$refreshed_address = $this->wallet_service->refresh( $bitcoin_order->get_address() );
+		$refreshed_address = $this->wallet_service->refresh_address( $bitcoin_order->get_address() );
 		/** @var WC_Order $refreshed_wc_order */
 		$refreshed_wc_order = wc_get_order( $bitcoin_order->get_id() );
 

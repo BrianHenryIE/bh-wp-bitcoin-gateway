@@ -129,18 +129,33 @@ class Bitcoin_Wallet_Service implements LoggerAwareInterface {
 	public function generate_new_addresses_for_wallet( Bitcoin_Wallet $wallet, int $generate_count = 2 ): Addresses_Generation_Result {
 
 		// This will start the first address creation at index 0 and others at n+1.
-		$address_index = $wallet->get_address_index() ?? -1;
+		$prior_index   = $wallet->get_address_index();
+		$address_index = $prior_index ?? -1;
 
 		/** @var non-empty-array<Bitcoin_Address> $generated_addresses */
 		$generated_addresses       = array();
 		$generated_addresses_count = 0;
+
+		/** @var array<Bitcoin_Address> $orphaned_addresses */
+		$orphaned_addresses = array();
 
 		do {
 			++$address_index;
 
 			$new_address_string = $this->generate_address_api->generate_address( $wallet->get_xpub(), $address_index );
 
-			if ( ! is_null( $this->bitcoin_address_repository->get_post_id_for_address( $new_address_string ) ) ) {
+			$existing_address_post_id = $this->bitcoin_address_repository->get_post_id_for_address( $new_address_string );
+			if ( ! is_null( $existing_address_post_id ) ) {
+
+				$existing_address = $this->bitcoin_address_repository->get_by_post_id( $existing_address_post_id );
+
+				// The wallet was probably deleted and left orphaned saved addresses (likely to happen during testing).
+				if ( $existing_address->get_wallet_parent_post_id() !== $wallet->get_post_id() ) {
+					$this->bitcoin_address_repository->set_wallet_id( $existing_address, $wallet->get_post_id() );
+					$orphaned_address     = $this->bitcoin_address_repository->refresh( $existing_address );
+					$orphaned_addresses[] = $orphaned_address;
+				}
+
 				// Although inefficient to run this inside the loop, overall, searching past the known index could cause a PHP timeout.
 				// (emphasizing that this should be run as a scheduled task).
 				$this->bitcoin_wallet_repository->set_highest_address_index( $wallet, $address_index );
@@ -161,12 +176,11 @@ class Bitcoin_Wallet_Service implements LoggerAwareInterface {
 
 		$this->bitcoin_wallet_repository->set_highest_address_index( $wallet, $address_index );
 
-		// TODO: Should probably refresh wallet here... TODO: make sure to record any changes (previous address index etc) in the result object.
-
 		return new Addresses_Generation_Result(
-			wallet: $wallet,
+			wallet: $this->bitcoin_wallet_repository->refresh( $wallet ),
 			new_addresses: $generated_addresses,
-			address_index: $address_index,
+			orphaned_addresses: $orphaned_addresses,
+			prior_address_index: $prior_index,
 		);
 	}
 
@@ -177,7 +191,12 @@ class Bitcoin_Wallet_Service implements LoggerAwareInterface {
 		return $this->bitcoin_address_repository->get_assigned_bitcoin_addresses();
 	}
 
-	public function refresh( Bitcoin_Address $address ): Bitcoin_Address {
+	/**
+	 * Fetch the address from the datastore again. I.e. it is immutable.
+	 *
+	 * @param Bitcoin_Address $address Existing object, presumably updated elsewhere.
+	 */
+	public function refresh_address( Bitcoin_Address $address ): Bitcoin_Address {
 		return $this->bitcoin_address_repository->refresh( $address );
 	}
 

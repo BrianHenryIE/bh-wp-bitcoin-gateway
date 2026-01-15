@@ -300,4 +300,20 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 			)
 		);
 	}
+
+	/**
+	 * An address wp_post's parent post_id for its wallet may need to be set if the original wallet wp_post was
+	 * deleted but the address's wp_post remained orphaned.
+	 *
+	 * @param Bitcoin_Address $address Address object to update.
+	 * @param int             $wallet_post_id The new/correct wallet post_id to set.
+	 */
+	public function set_wallet_id( Bitcoin_Address $address, int $wallet_post_id ): void {
+		$this->update(
+			model: $address,
+			query: new Bitcoin_Address_Query(
+				wallet_wp_post_parent_id: $wallet_post_id,
+			)
+		);
+	}
 }
