@@ -27,3 +27,29 @@ export async function getActionSchedulerTableRowForOrder(
 
 	return ( await tableRow.count() ) > 0 ? tableRow : null;
 }
+
+export async function runActionSchedulerScheduledEvent(
+	page: any,
+	hook: string
+) {
+	const actionSchedulerUrl =
+		'/wp-admin/tools.php?page=action-scheduler&status=pending&s=' + hook;
+	await page.goto(actionSchedulerUrl);
+
+	const pendingJob = page.locator(
+		'td[data-colname="Hook"]:has-text("' + hook + '")'
+	);
+
+	if ((await pendingJob.count()) > 0) {
+		// Run the job
+		await pendingJob.hover();
+		const runButton = pendingJob.locator('.run a');
+		if ((await runButton.count()) > 0) {
+			await runButton.click();
+			await page.waitForLoadState('networkidle');
+		}
+	}
+
+	// const rowSelector = `td[data-colname="Arguments"]:has-text("'order_id' => ${ orderId }")`;
+	// const tableRow = page.locator( rowSelector ).locator( '..' ).first();
+}
