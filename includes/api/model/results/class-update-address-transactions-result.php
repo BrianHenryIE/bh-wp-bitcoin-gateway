@@ -4,9 +4,10 @@
  * @package brianhenryie/bh-wp-bitcoin-gateway
  */
 
-namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Model;
+namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
 
 /**
  * @used-by API::update_address_transactions()

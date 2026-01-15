@@ -5,7 +5,7 @@
  * @package brianhenryie/bh-wp-bitcoin-gateway
  */
 
-namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Model;
+namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results;
 
 /**
  * @used-by API::check_addresses_for_transactions()

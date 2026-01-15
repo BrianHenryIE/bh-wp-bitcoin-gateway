@@ -7,7 +7,7 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Results;
 
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Update_Address_Transactions_Result;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Update_Address_Transactions_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Payment_Service;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 
