@@ -7,10 +7,10 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments;
 
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_VIn;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_VOut;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_VIn;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_VOut;
 use DateTimeInterface;
 
 /**

@@ -5,9 +5,9 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories\Bitcoin_Address_Factory;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories\Bitcoin_Transaction_Factory;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories\Bitcoin_Wallet_Factory;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_VIn;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_VOut;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_VIn;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_VOut;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use DateTimeImmutable;
 

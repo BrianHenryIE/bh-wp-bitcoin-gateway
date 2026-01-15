@@ -7,10 +7,10 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Blockchain\Adapters;
 
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_VIn;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_VOut;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_VIn;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_VOut;
 use BrianHenryIE\WP_Bitcoin_Gateway\BlockchainInfo\Model\Transaction as BlockchainInfo_Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\BlockchainInfo\Model\TransactionInput;
 use BrianHenryIE\WP_Bitcoin_Gateway\BlockchainInfo\Model\TransactionOut;
