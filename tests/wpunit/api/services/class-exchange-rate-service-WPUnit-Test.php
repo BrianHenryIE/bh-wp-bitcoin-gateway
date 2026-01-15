@@ -31,17 +31,18 @@ class Exchange_Rate_Service_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPT
 
 		$result1 = $sut->get_exchange_rate( Currency::of( 'USD' ) );
 
-		$this->assertEquals( 'USD', $result1->getCurrency()->getCurrencyCode() );
-		$this->assertEquals( '89000.00', $result1->getAmount()->__toString() );
+		$this->assertEquals( 'USD', $result1?->getCurrency()->getCurrencyCode() );
+		$this->assertEquals( '89000.00', $result1?->getAmount()->__toString() );
 
 		$cached = get_transient( 'bh_wp_bitcoin_gateway_exchange_rate_USD' );
 		$this->assertNotEmpty( $cached );
+		// @phpstan-ignore argument.type
 		$this->assertIsObject( json_decode( $cached ) );
 
 		$result2 = $sut->get_exchange_rate( Currency::of( 'USD' ) );
 
-		$this->assertEquals( 'USD', $result2->getCurrency()->getCurrencyCode() );
-		$this->assertEquals( '89000.00', $result2->getAmount()->__toString() );
+		$this->assertEquals( 'USD', $result2?->getCurrency()->getCurrencyCode() );
+		$this->assertEquals( '89000.00', $result2?->getAmount()->__toString() );
 	}
 
 	/**
@@ -78,8 +79,8 @@ class Exchange_Rate_Service_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPT
 
 		$result = $sut->get_exchange_rate( Currency::of( 'USD' ) );
 
-		$this->assertEquals( 'USD', $result->getCurrency()->getCurrencyCode() );
-		$this->assertEquals( '89100.00', $result->getAmount()->__toString() );
+		$this->assertEquals( 'USD', $result?->getCurrency()->getCurrencyCode() );
+		$this->assertEquals( '89100.00', $result?->getAmount()->__toString() );
 	}
 
 	/**
@@ -116,8 +117,8 @@ class Exchange_Rate_Service_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPT
 		$result = $sut->convert_fiat_to_btc( Money::of( '45000.00', 'USD' ) );
 
 		$this->assertTrue(
-			condition: $result->isEqualTo( Money::of( 0.5, 'BTC' ) ),
-			message: $result->getAmount()->__toString()
+			$result->isEqualTo( Money::of( 0.5, 'BTC' ) ),
+			$result->getAmount()->__toString()
 		);
 	}
 }
