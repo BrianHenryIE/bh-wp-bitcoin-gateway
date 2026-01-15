@@ -66,7 +66,7 @@ class Exchange_Rate_Service_Unit_Test extends \Codeception\Test\Unit {
 		$exchange_rate_api_mock = $this->makeEmpty(
 			Exchange_Rate_API_Interface::class,
 			array(
-				'get_exchange_rate' => Expected::never()
+				'get_exchange_rate' => Expected::never(),
 			)
 		);
 
@@ -145,8 +145,8 @@ class Exchange_Rate_Service_Unit_Test extends \Codeception\Test\Unit {
 			array(
 				'times' => 1,
 				'args'  => array(
-					'transient'          => 'bh_wp_bitcoin_gateway_exchange_rate_USD',
-					'value'              => \WP_Mock\Functions::type( 'string' ),
+					'transient'  => 'bh_wp_bitcoin_gateway_exchange_rate_USD',
+					'value'      => \WP_Mock\Functions::type( 'string' ),
 					'expiration' => 3600,
 				),
 			)
