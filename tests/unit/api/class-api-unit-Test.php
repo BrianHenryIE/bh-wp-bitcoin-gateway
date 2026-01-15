@@ -5,27 +5,18 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\API;
 use BrianHenryIE\ColorLogger\ColorLogger;
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduler_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Check_Assigned_Addresses_For_Transactions_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_VOut;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Update_Address_Transactions_Result;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Address_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address_Status;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Transaction;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Transaction_Repository;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Wallet_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Bitcoin_Wallet_Service;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Exchange_Rate_Service;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Payment_Service;
-use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Currency;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
 use Codeception\Stub\Expected;
 use DateTimeImmutable;
-use DateTimeInterface;
 use Psr\Log\LoggerInterface;
-use ReflectionClass;
 use WP_Mock;
 
 /**
