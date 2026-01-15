@@ -7,8 +7,8 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Queries;
 
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet_Status;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet_WP_Post_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet_Status;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet_WP_Post_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Post_BH_Bitcoin_Wallet;
 
 /**

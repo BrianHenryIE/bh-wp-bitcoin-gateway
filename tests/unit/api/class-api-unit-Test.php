@@ -4,13 +4,13 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\API;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduler_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Check_Assigned_Addresses_For_Transactions_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_VOut;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Update_Address_Transactions_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Address_Repository;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Status;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Transaction;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address_Status;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Transaction_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Wallet_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction;

@@ -7,10 +7,10 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories;
 
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories\Bitcoin_Wallet_Factory;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Queries\Bitcoin_Wallet_Query;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet_Status;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet_Status;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
 use InvalidArgumentException;
 use WP_Post;

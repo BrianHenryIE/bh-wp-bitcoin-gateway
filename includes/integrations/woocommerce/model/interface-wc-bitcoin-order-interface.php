@@ -7,7 +7,7 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model;
 
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Math\BigNumber;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Bitcoin_Gateway;

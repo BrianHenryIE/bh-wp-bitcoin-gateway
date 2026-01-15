@@ -2,7 +2,7 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results;
 
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Results\Get_Wallet_For_Xpub_Service_Result;
 
 class Wallet_Generation_Result_Unit_Test extends \Codeception\Test\Unit {

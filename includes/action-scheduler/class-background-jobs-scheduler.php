@@ -20,7 +20,7 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Address_Repository;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet;
 use DateTimeImmutable;
 use DateTimeInterface;
 use Psr\Log\LoggerAwareTrait;

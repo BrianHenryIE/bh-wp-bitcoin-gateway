@@ -7,12 +7,12 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories;
 
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories\Bitcoin_Address_Factory;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Queries\Bitcoin_Address_Query;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Status;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_WP_Post_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address_Status;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address_WP_Post_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use WP_Post;

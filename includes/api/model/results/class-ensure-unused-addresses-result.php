@@ -9,8 +9,8 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results;
 
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet;
 
 /**
  * @used-by API::ensure_unused_addresses()

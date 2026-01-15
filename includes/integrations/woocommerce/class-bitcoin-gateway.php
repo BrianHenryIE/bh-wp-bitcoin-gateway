@@ -19,7 +19,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\UnknownCurrencyExcepti
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
 use Exception;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LogLevel;
 use Psr\Log\NullLogger;

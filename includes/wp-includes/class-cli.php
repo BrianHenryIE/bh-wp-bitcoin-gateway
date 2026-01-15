@@ -11,7 +11,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories\Bitcoin_Address_Factory;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Address_Repository;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_WP_Post_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address_WP_Post_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;

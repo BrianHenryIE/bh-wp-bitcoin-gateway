@@ -2,7 +2,7 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
 use WC_Order;
 

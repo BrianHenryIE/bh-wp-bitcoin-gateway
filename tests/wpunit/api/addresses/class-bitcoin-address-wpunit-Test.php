@@ -1,6 +1,6 @@
 <?php
 
-namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses;
+namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Address_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories\Bitcoin_Address_Factory;
@@ -9,7 +9,7 @@ use ReflectionProperty;
 use WP_Post;
 
 /**
- * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address
+ * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address
  */
 class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 
