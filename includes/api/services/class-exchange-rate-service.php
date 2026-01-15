@@ -14,6 +14,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_E
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exchange_Rate;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\Rate_Limit_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Math\BigDecimal;
+use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Math\Exception\MathException;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Math\RoundingMode;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Currency;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\UnknownCurrencyException;
@@ -103,6 +104,8 @@ class Exchange_Rate_Service implements LoggerAwareInterface {
 	 * @param Money $fiat_amount The order total amount in fiat currency from the WooCommerce order (stored as a float string in order meta).
 	 *
 	 * @throws BH_WP_Bitcoin_Gateway_Exception When no exchange rate is available for the given currency.
+	 * @throws UnknownCurrencyException If somehow the currency requested in the Money `$fiat_amount` parameter doesn't exist.
+	 * @throws MathException If we attempt to divide by zero.
 	 */
 	public function convert_fiat_to_btc( Money $fiat_amount ): Money {
 
