@@ -7,7 +7,7 @@
  * @package brianhenryie/bh-wp-bitcoin-gateway
  */
 
-namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses;
+namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments;
 
 interface Bitcoin_Transaction_WP_Post_Interface {
 

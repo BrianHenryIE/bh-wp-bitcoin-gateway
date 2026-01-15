@@ -7,8 +7,7 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Queries;
 
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Transaction_WP_Post_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Queries\WP_Post_Query_Abstract;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Bitcoin_Transaction_WP_Post_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Post_BH_Bitcoin_Transaction;
 use DateTimeInterface;

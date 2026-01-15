@@ -9,7 +9,7 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes;
 
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Transaction_WP_Post_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Bitcoin_Transaction_WP_Post_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 
 /**
