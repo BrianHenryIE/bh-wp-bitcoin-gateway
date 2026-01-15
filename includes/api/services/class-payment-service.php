@@ -2,13 +2,16 @@
 /**
  * Checks the blockchain for transactions; calculates total amount received.
  *
+ * @see https://en.bitcoin.it/wiki/Confirmation
+ * @see https://blog.lopp.net/how-many-bitcoin-confirmations-is-enough/
+ *
  * @package brianhenryie/bh-wp-bitcoin-gateway
  */
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Services;
 
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Bitcoin_Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain_API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\Rate_Limit_Exception;
@@ -21,6 +24,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\MoneyMismatchException
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\UnknownCurrencyException;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use DateInterval;
+use DateMalformedStringException;
 use DateTimeImmutable;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
@@ -47,15 +51,19 @@ class Payment_Service implements LoggerAwareInterface {
 	/**
 	 * Check a Bitcoin address for payment and mark as paid if sufficient funds received.
 	 *
+	 * TODO: Get `$required_confirmations` from global setting / address specific.
+	 *
 	 * @param Bitcoin_Address $bitcoin_address The Bitcoin address to check.
+	 * @param int             $required_confirmations The number of additional blocks that must be mined to avoid confirming on an orphaned block.
 	 */
-	public function check_address_for_payment( Bitcoin_Address $bitcoin_address ): Check_Address_For_Payment_Service_Result {
+	public function check_address_for_payment(
+		Bitcoin_Address $bitcoin_address,
+		int $required_confirmations = 6
+	): Check_Address_For_Payment_Service_Result {
 
 		$update_address_transactions_result = $this->update_address_transactions( $bitcoin_address );
 
 		$blockchain_height = $this->get_blockchain_height();
-
-		$required_confirmations = 3; // TODO: get from global / address.
 
 		$total_received = $this->get_address_confirmed_balance(
 			raw_address: $bitcoin_address->get_raw_address(),
@@ -95,7 +103,7 @@ class Payment_Service implements LoggerAwareInterface {
 					if ( $saved_blockchain_height_date_time > $ten_minutes_ago ) {
 						return (int) $saved_blockchain_height_array['blockchain_height'];
 					}
-				} catch ( \Exception $e ) {
+				} catch ( DateMalformedStringException $e ) {
 					// The stored time is invalid, so we'll fetch a new value.
 					$this->logger->warning( 'Could not parse stored blockchain height time. Refetching.', array( 'error' => $e->getMessage() ) );
 				}

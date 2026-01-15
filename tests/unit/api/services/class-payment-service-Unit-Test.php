@@ -428,7 +428,7 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 		$blockchain_height      = 800100;
 		$required_confirmations = 3;
 
-		// Transaction with 5 confirmations (more than required)
+		// Transaction with 5 confirmations (more than required).
 		$transaction1 = new Transaction(
 			tx_id: 'abc123',
 			block_time: new DateTimeImmutable( 'now' ),
@@ -465,7 +465,7 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 		$blockchain_height      = 800100;
 		$required_confirmations = 3;
 
-		// Transaction with exactly 3 confirmations
+		// Transaction with exactly 3 confirmations.
 		$transaction = new Transaction(
 			tx_id: 'def456',
 			block_time: new DateTimeImmutable( 'now' ),
@@ -477,7 +477,7 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 					scriptpubkey_address: $raw_address,
 				),
 			),
-			block_height: 800097, // blockchain_height (800100) - block_height (800097) = 3
+			block_height: 800097, // blockchain_height (800100) - block_height (800097) = 3.
 		);
 
 		$transactions = array( $transaction );
