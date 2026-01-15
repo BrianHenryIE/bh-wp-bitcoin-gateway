@@ -14,7 +14,7 @@ use DateTimeInterface;
  *
  * Contains transaction ID, version, block height/time, and input/output vectors.
  */
-class Transaction implements Transaction_Interface {
+readonly class Transaction implements Transaction_Interface {
 
 	/**
 	 * Constructor.
