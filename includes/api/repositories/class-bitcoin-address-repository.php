@@ -37,6 +37,9 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 	/**
 	 * Given a bitcoin public key, get the WordPress post_id it is saved under.
 	 *
+	 * TODO: If a wallet post is deleted, but its addresses are not, and it is re-saved with
+	 * a new post_id, the orphaned addresses will behave unpredictably.
+	 *
 	 * @param string $address Xpub|ypub|zpub.
 	 *
 	 * @return int|null The post id if it exists, null if it is not found.
