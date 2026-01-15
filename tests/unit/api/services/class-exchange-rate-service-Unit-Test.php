@@ -20,7 +20,7 @@ class Exchange_Rate_Service_Unit_Test extends \Codeception\Test\Unit {
 
 	protected function setUp(): void {
 
-		// $this->markTestSkipped('Needs changes to WP_Mock to support named parameters.');
+		$this->markTestSkipped('Needs changes to WP_Mock to support named parameters.');
 
 		parent::setUp();
 		WP_Mock::setUp();
