@@ -3,6 +3,8 @@
  */
 import config from '../../../../playwright.config';
 
+// status pending or past due.
+
 async function fetchBitcoinAddresses( status?: string ): Promise< Response > {
 	const baseURL: string = config.use.baseURL!;
 	let fullUrl = `${ baseURL }/wp-json/wp/v2/bh-bitcoin-address`;
