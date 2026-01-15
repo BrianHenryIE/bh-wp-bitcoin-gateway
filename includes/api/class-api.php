@@ -196,7 +196,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 
 			// TODO: handle rate limits.
 			$address_transactions_result = $this->payment_service->update_address_transactions( $address );
-			if ( empty( $address_transactions_result->is_unused() ) ) {
+			if ( $address_transactions_result->is_unused() ) {
 				$actual_unused_addresses_by_wallet[ $address_wallet_id ][] = $address;
 			} else {
 				$unexpectedly_used_addresses_by_wallet[ $address_wallet_id ][] = $address;
@@ -240,7 +240,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 						status: $is_used_status,
 					);
 
-					if ( empty( $address_transactions_result->queried_address->get_tx_ids() ) ) {
+					if ( $address_transactions_result->is_unused() ) {
 						$actual_unused_addresses_by_wallet[ $wallet->get_post_id() ][] = $new_address;
 						$new_addresses_by_wallet[ $wallet->get_post_id() ][]           = $new_address;
 					}
