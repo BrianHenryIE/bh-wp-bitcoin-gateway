@@ -32,7 +32,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Han
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduler;
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduler_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Nimq_API;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\Wallet\Nimq_API;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\API;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Blockchain\Blockchain_Info_Api;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Blockchain\Blockstream_Info_API;

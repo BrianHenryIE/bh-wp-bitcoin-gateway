@@ -1,11 +1,11 @@
 <?php
 
-namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses;
+namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\Wallet;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
 
 /**
- * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Nimq_API
+ * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\Wallet\Nimq_API
  */
 class Nimq_API_Unit_Test extends \Codeception\Test\Unit {
 
