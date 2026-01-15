@@ -184,7 +184,7 @@ class Payment_Service implements LoggerAwareInterface {
 		return array_reduce(
 			$transactions,
 			function ( Money $carry, Transaction_Interface $transaction ) use ( $raw_address, $blockchain_height, $required_confirmations ) {
-				if ( ( $blockchain_height - $transaction->get_block_height() ) > $required_confirmations ) {
+				if ( ( $blockchain_height - $transaction->get_block_height() ) >= $required_confirmations ) {
 					return $carry->plus( $this->get_value_for_transaction( $raw_address, $transaction ) );
 				}
 				return $carry;

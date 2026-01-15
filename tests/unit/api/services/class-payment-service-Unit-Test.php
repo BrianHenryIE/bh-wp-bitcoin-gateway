@@ -8,7 +8,9 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain_API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_VOut;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Transaction_Repository;
+use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use Codeception\Stub\Expected;
 use DateTimeImmutable;
 use DateTimeInterface;
@@ -343,13 +345,18 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 	 */
 	public function test_update_address_transactions(): void {
 
-		$transaction = $this->make(
-			Transaction::class,
-			array(
-				'get_txid'         => 'transaction_from_api',
-				'get_block_height' => 123,
-				'get_block_time'   => new DateTimeImmutable( 'now' ),
-			)
+		$transaction = new Transaction(
+			tx_id: 'transaction_from_api',
+			block_time: new DateTimeImmutable( 'now' ),
+			version: 1,
+			v_in: array(),
+			v_out: array(
+				new Transaction_VOut(
+					value: Money::of( 100000000, 'BTC' ),
+					scriptpubkey_address: 'raw_address',
+				),
+			),
+			block_height: 123,
 		);
 
 		$blockchain_api = $this->makeEmpty(
@@ -407,5 +414,249 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 		);
 
 		$this->assertEquals( 'transaction_from_wp_post', $result_first?->get_txid() );
+	}
+
+	/**
+	 * Test get_address_confirmed_balance with transactions that have enough confirmations.
+	 *
+	 * @covers ::get_address_confirmed_balance
+	 */
+	public function test_get_address_confirmed_balance_with_confirmed_transactions(): void {
+		$sut = $this->get_sut();
+
+		$raw_address            = 'bc1qtest123';
+		$blockchain_height      = 800100;
+		$required_confirmations = 3;
+
+		// Transaction with 5 confirmations (more than required)
+		$transaction1 = new Transaction(
+			tx_id: 'abc123',
+			block_time: new DateTimeImmutable( 'now' ),
+			version: 1,
+			v_in: array(),
+			v_out: array(
+				new Transaction_VOut(
+					value: Money::of( 100000000, 'BTC' ),
+					scriptpubkey_address: $raw_address,
+				),
+			),
+			block_height: 800095,
+		);
+
+		$transactions = array( $transaction1 );
+
+		$balance = $sut->get_address_confirmed_balance( $raw_address, $blockchain_height, $required_confirmations, $transactions );
+
+		$this->assertEquals( '1.00000000', $balance->getAmount()->__toString() );
+		$this->assertEquals( 'BTC', $balance->getCurrency()->getCurrencyCode() );
+	}
+
+	/**
+	 * Test get_address_confirmed_balance with transaction that has exactly required confirmations.
+	 *
+	 * This tests the boundary condition where confirmations exactly equal the requirement.
+	 *
+	 * @covers ::get_address_confirmed_balance
+	 */
+	public function test_get_address_confirmed_balance_with_exactly_required_confirmations(): void {
+		$sut = $this->get_sut();
+
+		$raw_address            = 'bc1qtest123';
+		$blockchain_height      = 800100;
+		$required_confirmations = 3;
+
+		// Transaction with exactly 3 confirmations
+		$transaction = new Transaction(
+			tx_id: 'def456',
+			block_time: new DateTimeImmutable( 'now' ),
+			version: 1,
+			v_in: array(),
+			v_out: array(
+				new Transaction_VOut(
+					value: Money::of( 50000000, 'BTC' ),
+					scriptpubkey_address: $raw_address,
+				),
+			),
+			block_height: 800097, // blockchain_height (800100) - block_height (800097) = 3
+		);
+
+		$transactions = array( $transaction );
+
+		$balance = $sut->get_address_confirmed_balance( $raw_address, $blockchain_height, $required_confirmations, $transactions );
+
+		$this->assertEquals( '0.50000000', $balance->getAmount()->__toString() );
+		$this->assertEquals( 'BTC', $balance->getCurrency()->getCurrencyCode() );
+	}
+
+	/**
+	 * Test get_address_confirmed_balance with transaction that has insufficient confirmations.
+	 *
+	 * @covers ::get_address_confirmed_balance
+	 */
+	public function test_get_address_confirmed_balance_with_insufficient_confirmations(): void {
+		$sut = $this->get_sut();
+
+		$raw_address            = 'bc1qtest123';
+		$blockchain_height      = 800100;
+		$required_confirmations = 3;
+
+		// Transaction with only 2 confirmations (less than required).
+		$transaction = new Transaction(
+			tx_id: 'ghi789',
+			block_time: new DateTimeImmutable( 'now' ),
+			version: 1,
+			v_in: array(),
+			v_out: array(
+				new Transaction_VOut(
+					value: Money::of( 100000000, 'BTC' ),
+					scriptpubkey_address: $raw_address,
+				),
+			),
+			block_height: 800098, // blockchain_height (800100) - block_height (800098) = 2.
+		);
+
+		$transactions = array( $transaction );
+
+		$balance = $sut->get_address_confirmed_balance( $raw_address, $blockchain_height, $required_confirmations, $transactions );
+
+		$this->assertEquals( '0.00000000', $balance->getAmount()->__toString() );
+		$this->assertEquals( 'BTC', $balance->getCurrency()->getCurrencyCode() );
+	}
+
+	/**
+	 * Test get_address_confirmed_balance with empty transactions array.
+	 *
+	 * @covers ::get_address_confirmed_balance
+	 */
+	public function test_get_address_confirmed_balance_with_empty_transactions(): void {
+		$sut = $this->get_sut();
+
+		$raw_address            = 'bc1qtest123';
+		$blockchain_height      = 800100;
+		$required_confirmations = 3;
+		$transactions           = array();
+
+		$balance = $sut->get_address_confirmed_balance( $raw_address, $blockchain_height, $required_confirmations, $transactions );
+
+		$this->assertEquals( '0.00000000', $balance->getAmount()->__toString() );
+		$this->assertEquals( 'BTC', $balance->getCurrency()->getCurrencyCode() );
+	}
+
+	/**
+	 * Test get_address_confirmed_balance with multiple transactions of varying confirmation levels.
+	 *
+	 * @covers ::get_address_confirmed_balance
+	 */
+	public function test_get_address_confirmed_balance_with_mixed_confirmations(): void {
+		$sut = $this->get_sut();
+
+		$raw_address            = 'bc1qtest123';
+		$blockchain_height      = 800100;
+		$required_confirmations = 3;
+
+		// Transaction with 10 confirmations (should be included).
+		$transaction1 = new Transaction(
+			tx_id: 'jkl111',
+			block_time: new DateTimeImmutable( 'now' ),
+			version: 1,
+			v_in: array(),
+			v_out: array(
+				new Transaction_VOut(
+					value: Money::of( 100000000, 'BTC' ),
+					scriptpubkey_address: $raw_address,
+				),
+			),
+			block_height: 800090,
+		);
+
+		// Transaction with exactly 3 confirmations (should be included).
+		$transaction2 = new Transaction(
+			tx_id: 'mno222',
+			block_time: new DateTimeImmutable( 'now' ),
+			version: 1,
+			v_in: array(),
+			v_out: array(
+				new Transaction_VOut(
+					value: Money::of( 50000000, 'BTC' ),
+					scriptpubkey_address: $raw_address,
+				),
+			),
+			block_height: 800097,
+		);
+
+		// Transaction with only 2 confirmations (should NOT be included).
+		$transaction3 = new Transaction(
+			tx_id: 'pqr333',
+			block_time: new DateTimeImmutable( 'now' ),
+			version: 1,
+			v_in: array(),
+			v_out: array(
+				new Transaction_VOut(
+					value: Money::of( 25000000, 'BTC' ),
+					scriptpubkey_address: $raw_address,
+				),
+			),
+			block_height: 800098,
+		);
+
+		$transactions = array( $transaction1, $transaction2, $transaction3 );
+
+		$balance = $sut->get_address_confirmed_balance( $raw_address, $blockchain_height, $required_confirmations, $transactions );
+
+		// Should be 1 + 0.5 = 1.5 BTC (transaction3 excluded due to insufficient confirmations).
+		$this->assertEquals( '1.50000000', $balance->getAmount()->__toString() );
+		$this->assertEquals( 'BTC', $balance->getCurrency()->getCurrencyCode() );
+	}
+
+	/**
+	 * Test get_address_confirmed_balance filters transactions to correct address.
+	 *
+	 * @covers ::get_address_confirmed_balance
+	 */
+	public function test_get_address_confirmed_balance_filters_by_address(): void {
+		$sut = $this->get_sut();
+
+		$raw_address            = 'bc1qtest123';
+		$other_address          = 'bc1qother456';
+		$blockchain_height      = 800100;
+		$required_confirmations = 3;
+
+		// Transaction to our address.
+		$transaction1 = new Transaction(
+			tx_id: 'stu444',
+			block_time: new DateTimeImmutable( 'now' ),
+			version: 1,
+			v_in: array(),
+			v_out: array(
+				new Transaction_VOut(
+					value: Money::of( 100000000, 'BTC' ),
+					scriptpubkey_address: $raw_address,
+				),
+			),
+			block_height: 800090,
+		);
+
+		// Transaction to different address (should not be counted).
+		$transaction2 = new Transaction(
+			tx_id: 'vwx555',
+			block_time: new DateTimeImmutable( 'now' ),
+			version: 1,
+			v_in: array(),
+			v_out: array(
+				new Transaction_VOut(
+					value: Money::of( 50000000, 'BTC' ),
+					scriptpubkey_address: $other_address,
+				),
+			),
+			block_height: 800090,
+		);
+
+		$transactions = array( $transaction1, $transaction2 );
+
+		$balance = $sut->get_address_confirmed_balance( $raw_address, $blockchain_height, $required_confirmations, $transactions );
+
+		// Should only count transaction1.
+		$this->assertEquals( '1.00000000', $balance->getAmount()->__toString() );
+		$this->assertEquals( 'BTC', $balance->getCurrency()->getCurrencyCode() );
 	}
 }
