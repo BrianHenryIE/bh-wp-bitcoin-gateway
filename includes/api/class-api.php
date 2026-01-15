@@ -196,10 +196,16 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 
 			// TODO: handle rate limits.
 			$address_transactions_result = $this->payment_service->update_address_transactions( $address );
-			if ( empty( $address_transactions_result->queried_address->get_tx_ids() ) ) {
+			if ( empty( $address_transactions_result->is_unused() ) ) {
 				$actual_unused_addresses_by_wallet[ $address_wallet_id ][] = $address;
 			} else {
 				$unexpectedly_used_addresses_by_wallet[ $address_wallet_id ][] = $address;
+
+				$this->wallet_service->set_payment_address_status(
+					address: $address,
+					status: Bitcoin_Address_Status::USED,
+				);
+
 				// TODO: log more.
 			}
 		}
@@ -226,6 +232,14 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 					$address_generation_result   = $this->generate_new_addresses_for_wallet( $wallet, 1 );
 					$new_address                 = array_first( $address_generation_result->new_addresses );
 					$address_transactions_result = $this->payment_service->update_address_transactions( $new_address );
+
+					$is_used_status = $address_transactions_result->is_unused() ? Bitcoin_Address_Status::UNUSED : Bitcoin_Address_Status::USED;
+
+					$this->wallet_service->set_payment_address_status(
+						address: $new_address,
+						status: $is_used_status,
+					);
+
 					if ( empty( $address_transactions_result->queried_address->get_tx_ids() ) ) {
 						$actual_unused_addresses_by_wallet[ $wallet->get_post_id() ][] = $new_address;
 						$new_addresses_by_wallet[ $wallet->get_post_id() ][]           = $new_address;

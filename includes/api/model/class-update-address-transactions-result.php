@@ -53,4 +53,11 @@ class Update_Address_Transactions_Result {
 	public function is_updated(): bool {
 		return ! empty( $this->get_new_transactions() );
 	}
+
+	/**
+	 * After checking for transactions, an address is unused if no transactions were found.
+	 */
+	public function is_unused(): bool {
+		return empty( $this->all_transactions );
+	}
 }
