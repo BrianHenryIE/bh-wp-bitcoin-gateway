@@ -220,6 +220,8 @@ class Payment_Service implements LoggerAwareInterface {
 	 *
 	 * The Bitcoin_Address's wp_post has a meta key that holds an array of post ids for saved transactions.
 	 *
+	 * TODO: Add Bitcoin_Transaction_Repository::get_by_post_ids() function.
+	 *
 	 * @see Addresses_List_Table::column_transactions_count() When displaying all addresses.
 	 * @used-by API::get_saved_transactions() When displaying all addresses.
 	 *
