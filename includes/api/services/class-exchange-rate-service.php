@@ -57,6 +57,8 @@ class Exchange_Rate_Service implements LoggerAwareInterface {
 	 * Return the cached exchange rate, or fetch it.
 	 * Caches for one hour.
 	 *
+	 * TODO: Add rate limiting.
+	 *
 	 * @param Currency $currency The fiat currency to get the BTC exchange rate for (e.g., USD, EUR, GBP).
 	 *
 	 * @throws BH_WP_Bitcoin_Gateway_Exception When the exchange rate API returns invalid data or the currency is not supported.
