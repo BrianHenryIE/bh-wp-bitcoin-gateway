@@ -6,6 +6,7 @@ use BrianHenryIE\ColorLogger\ColorLogger;
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduler_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Check_Assigned_Addresses_For_Transactions_Result;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_VOut;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Update_Address_Transactions_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Address_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Status;
@@ -81,12 +82,18 @@ class API_Unit_Test extends \Codeception\Test\Unit {
 			$address,
 		);
 
-		$updated_transaction = $this->make(
-			Transaction::class,
-			array(
-				'get_block_time'   => new DateTimeImmutable( 'now' ),
-				'get_block_height' => 123,
-			)
+		$updated_transaction = new Transaction(
+			tx_id: 'tx123',
+			block_time: new DateTimeImmutable( 'now' ),
+			version: 1,
+			v_in: array(),
+			v_out: array(
+				new Transaction_VOut(
+					value: Money::of( 100000000, 'BTC' ),
+					scriptpubkey_address: 'raw_address',
+				),
+			),
+			block_height: 123,
 		);
 
 		$updated_transactions = array(
