@@ -66,7 +66,6 @@ class API_Unit_Test extends \Codeception\Test\Unit {
 	/**
 	 * @covers ::check_new_addresses_for_transactions
 	 * @covers ::check_addresses_for_transactions
-	 * @covers ::update_address_transactions
 	 */
 	public function test_check_new_addresses_for_transactions(): void {
 

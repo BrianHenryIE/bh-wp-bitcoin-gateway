@@ -51,7 +51,7 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 	}
 
 	/**
-	 * @covers ::get_bitcoin_gateways
+	 * @see API_WooCommerce_Trait::get_bitcoin_gateways
 	 */
 	public function test_get_bitcoin_gateways(): void {
 
@@ -88,7 +88,7 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 	}
 
 	/**
-	 * @covers ::is_bitcoin_gateway
+	 * @see API_WooCommerce_Trait::is_bitcoin_gateway
 	 */
 	public function test_is_bitcoin_gateway(): void {
 
@@ -105,7 +105,7 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 	}
 
 	/**
-	 * @covers ::is_order_has_bitcoin_gateway
+	 * @see API_WooCommerce_Trait::is_order_has_bitcoin_gateway
 	 */
 	public function test_is_order_has_bitcoin_gateway(): void {
 
@@ -126,7 +126,7 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 	}
 
 	/**
-	 * @covers API_WooCommerce_Trait::get_fresh_address_for_gateway
+	 * @see API_WooCommerce_Trait::get_fresh_address_for_gateway
 	 */
 	public function test_get_fresh_addresses_for_gateway(): void {
 
@@ -183,7 +183,7 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 	}
 
 	/**
-	 * @covers API_WooCommerce_Trait::is_fresh_address_available_for_gateway
+	 * @see API_WooCommerce_Trait::is_fresh_address_available_for_gateway
 	 */
 	public function test_is_fresh_address_available_for_gateway_true(): void {
 
@@ -247,8 +247,8 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 	}
 
 	/**
-	 * @covers API_WooCommerce_Trait::get_fresh_address_for_order
-	 * @covers API_WooCommerce_Trait::get_fresh_address_for_gateway
+	 * @see API_WooCommerce_Trait::get_fresh_address_for_order
+	 * @see API_WooCommerce_Trait::get_fresh_address_for_gateway
 	 */
 	public function test_get_fresh_address_for_order(): void {
 
@@ -339,9 +339,9 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 	}
 
 	/**
-	 * @covers API_WooCommerce_Trait::get_order_details
-	 * @covers API_WooCommerce_Trait::refresh_order
-	 * @covers API_WooCommerce_Trait::update_address_transactions
+	 * @see API_WooCommerce_Trait::get_order_details
+	 * @see API_WooCommerce_Trait::refresh_order
+	 * @see API_WooCommerce_Trait::update_address_transactions
 	 */
 	public function test_get_order_details_no_transactions(): void {
 
@@ -412,9 +412,9 @@ class API_WooCommerce_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 	}
 
 	/**
-	 * @covers API_WooCommerce_Trait::get_order_details
-	 * @covers API_WooCommerce_Trait::refresh_order
-	 * @covers API_WooCommerce_Trait::update_address_transactions
+	 * @see API_WooCommerce_Trait::get_order_details
+	 * @see API_WooCommerce_Trait::refresh_order
+	 * @see API_WooCommerce_Trait::update_address_transactions
 	 */
 	public function test_get_order_details_no_refresh(): void {
 
