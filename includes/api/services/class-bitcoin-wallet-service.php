@@ -128,14 +128,14 @@ class Bitcoin_Wallet_Service implements LoggerAwareInterface {
 	 */
 	public function generate_new_addresses_for_wallet( Bitcoin_Wallet $wallet, int $generate_count = 2 ): Addresses_Generation_Result {
 
-		$address_index = $wallet->get_address_index();
+		// This will start the first address creation at index 0 and others at n+1.
+		$address_index = $wallet->get_address_index() ?? -1;
 
 		/** @var non-empty-array<Bitcoin_Address> $generated_addresses */
 		$generated_addresses       = array();
 		$generated_addresses_count = 0;
 
 		do {
-			// TODO: Post increment or we will never generate address 0 like this.
 			++$address_index;
 
 			$new_address_string = $this->generate_address_api->generate_address( $wallet->get_xpub(), $address_index );
