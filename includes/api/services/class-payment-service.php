@@ -192,6 +192,10 @@ class Payment_Service implements LoggerAwareInterface {
 		return array_reduce(
 			$transactions,
 			function ( Money $carry, Transaction_Interface $transaction ) use ( $raw_address, $blockchain_height, $required_confirmations ) {
+				// TODO: run contract tests to see is this how mempool does behave.
+				if( is_null( $transaction->get_block_height() ) ) {
+					return $carry;
+				}
 				if ( ( $blockchain_height - $transaction->get_block_height() ) >= $required_confirmations ) {
 					return $carry->plus( $this->get_value_for_transaction( $raw_address, $transaction ) );
 				}
