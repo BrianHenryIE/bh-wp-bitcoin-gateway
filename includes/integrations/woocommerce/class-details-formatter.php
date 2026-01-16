@@ -64,7 +64,7 @@ class Details_Formatter {
 	 * TODO: This should display the store currency value for one Bitcoin at the time of order. Currently ~"90817.00".
 	 */
 	public function get_btc_exchange_rate_formatted(): string {
-		return $this->order->get_currency() . ' ' . wc_price( $this->order->get_btc_exchange_rate()->toFloat(), array( 'currency' => $this->order->get_currency() ) );
+		return $this->order->get_currency() . ' ' . wc_price( $this->order->get_btc_exchange_rate()->getAmount()->toFloat(), array( 'currency' => $this->order->get_currency() ) );
 	}
 
 	/**
@@ -209,15 +209,24 @@ class Details_Formatter {
 		$result['payment_status']                              = $this->get_friendly_status();
 		$result['payment_address']                             = $this->order->get_address()->get_raw_address();
 
-		if ( $as_camel_case ) {
-			foreach ( $result as $key => $value ) {
-				$new_key            = $this->as_camel_case( $key );
-				$result[ $new_key ] = $value;
-				unset( $result[ $key ] );
-			}
-		}
+		return $as_camel_case
+			? self::camel_case_keys( $result )
+			: $result;
+	}
 
-		return $result;
+	/**
+	 * Convert an array's keys to camelCase, presumably to output for JavaScript.
+	 *
+	 * @param array<string,mixed> $array_with_keys Array to update.
+	 * @return array<string,mixed>
+	 */
+	public static function camel_case_keys( array $array_with_keys ): array {
+		foreach ( $array_with_keys as $key => $value ) {
+			$new_key                     = self::as_camel_case( $key );
+			$array_with_keys[ $new_key ] = $value;
+			unset( $array_with_keys[ $key ] );
+		}
+		return $array_with_keys;
 	}
 
 	/**
@@ -227,7 +236,7 @@ class Details_Formatter {
 	 *
 	 * @return string CamelCase variable name.
 	 */
-	protected function as_camel_case( string $variable_name ): string {
+	protected static function as_camel_case( string $variable_name ): string {
 		return lcfirst( str_replace( ' ', '', ucwords( str_replace( '_', ' ', $variable_name ) ) ) );
 	}
 }

@@ -14,6 +14,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduler;
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduler_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Admin\Plugins_Page;
 use BrianHenryIE\WP_Bitcoin_Gateway\Admin\Register_List_Tables;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Generate_Address_API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Frontend\Frontend_Assets;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\Woo_Cancel_Abandoned_Order\Woo_Cancel_Abandoned_Order;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
@@ -52,19 +53,19 @@ class BH_WP_Bitcoin_Gateway_Unit_Test extends \Codeception\Test\Unit {
 		$container->bind(
 			API_Interface::class,
 			function () {
-				return self::makeEmpty( API_Interface::class );
+				return $this->makeEmpty( API_Interface::class );
 			}
 		);
 		$container->bind(
 			API_WooCommerce_Interface::class,
 			function () {
-				return self::makeEmpty( API_WooCommerce_Interface::class );
+				return $this->makeEmpty( API_WooCommerce_Interface::class );
 			}
 		);
 		$container->bind(
 			'BrianHenryIE\\WP_Bitcoin_Gateway\\API_Interface&BrianHenryIE\\WP_Bitcoin_Gateway\\Integrations\\WooCommerce\\API_WooCommerce_Interface',
 			function () {
-				return self::makeEmpty( API_WooCommerce_Interface::class );
+				return $this->makeEmpty( API_WooCommerce_Interface::class );
 			}
 		);
 		$settings = $this->makeEmpty(
@@ -79,12 +80,19 @@ class BH_WP_Bitcoin_Gateway_Unit_Test extends \Codeception\Test\Unit {
 		$container->bind(
 			API_Background_Jobs_Interface::class,
 			function () {
-				return self::makeEmpty( API_Background_Jobs_Interface::class );
+				return $this->makeEmpty( API_Background_Jobs_Interface::class );
 			}
 		);
 
 		$container->bind( Background_Jobs_Scheduler_Interface::class, Background_Jobs_Scheduler::class );
 		$container->bind( Background_Jobs_Actions_Interface::class, Background_Jobs_Actions_Handler::class );
+
+		$container->bind(
+			Generate_Address_API_Interface::class,
+			function () {
+				return $this->makeEmpty( Generate_Address_API_Interface::class );
+			}
+		);
 
 		return $container;
 	}

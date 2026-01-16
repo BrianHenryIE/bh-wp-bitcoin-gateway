@@ -9,8 +9,6 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Repository;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Wallet_Repository;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
@@ -21,15 +19,11 @@ class Checkout implements LoggerAwareInterface {
 	/**
 	 * Constructor.
 	 *
-	 * @param API_WooCommerce_Interface  $api API functions for WooCommerce integration.
-	 * @param Bitcoin_Wallet_Repository  $bitcoin_wallet_repository Repository for Bitcoin wallets.
-	 * @param Bitcoin_Address_Repository $bitcoin_address_repository Repository for payment addresses.
-	 * @param LoggerInterface            $logger PSR logger instance.
+	 * @param API_WooCommerce_Interface $api API functions for WooCommerce integration.
+	 * @param LoggerInterface           $logger PSR logger instance.
 	 */
 	public function __construct(
 		protected API_WooCommerce_Interface $api,
-		protected Bitcoin_Wallet_Repository $bitcoin_wallet_repository,
-		protected Bitcoin_Address_Repository $bitcoin_address_repository,
 		LoggerInterface $logger,
 	) {
 		$this->setLogger( $logger );
@@ -59,20 +53,19 @@ class Checkout implements LoggerAwareInterface {
 
 			$master_public_key = $bitcoin_gateway->get_xpub();
 
+			// Probably a new gateway that is not configured.
 			if ( ! $master_public_key ) {
 				// TODO: log.
 				continue;
 			}
 
-			// The assumption here is that there was a Wallet created when the xpub was saved in the UI.
-			$wallet = $this->bitcoin_wallet_repository->get_by_xpub( $master_public_key );
+			// Although it's safe to assume here that there was a Wallet created when the xpub was saved in the UI,
+			// this would create it anyway.
+			$wallet_result = $this->api->get_wallet_for_master_public_key( $master_public_key );
 
-			if ( ! $wallet ) {
-				// TODO: log.
-				continue;
+			if ( ! $wallet_result->did_schedule_ensure_addresses ) {
+				$this->api->ensure_unused_addresses_for_wallet( $wallet_result->wallet, 1 );
 			}
-
-			$result = $this->api->ensure_unused_addresses_for_wallet( $wallet, 1 );
 		}
 	}
 }

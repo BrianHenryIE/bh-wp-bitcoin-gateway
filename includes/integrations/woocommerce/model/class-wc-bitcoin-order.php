@@ -10,17 +10,15 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model;
 
 use BadMethodCallException;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Repository;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\BH_WP_Bitcoin_Gateway_Exception;
-use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Math\BigNumber;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Bitcoin_Gateway;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Order;
 use DateTimeInterface;
-use Exception;
 use Psr\Log\LoggerAwareTrait;
-use Psr\Log\NullLogger;
+use Psr\Log\LoggerInterface;
 use WC_Order;
 use WC_Payment_Gateways;
 
@@ -29,20 +27,6 @@ use WC_Payment_Gateways;
  */
 class WC_Bitcoin_Order implements WC_Bitcoin_Order_Interface {
 	use LoggerAwareTrait;
-
-	/**
-	 * The underlying WooCommerce order object.
-	 *
-	 * @var WC_Order
-	 */
-	protected WC_Order $wc_order;
-
-	/**
-	 * The Bitcoin payment address assigned to this order.
-	 *
-	 * @var Bitcoin_Address
-	 */
-	protected Bitcoin_Address $address;
 
 	/**
 	 * The Bitcoin payment gateway used for this order.
@@ -93,36 +77,20 @@ class WC_Bitcoin_Order implements WC_Bitcoin_Order_Interface {
 	/**
 	 * Constructor.
 	 *
-	 * @param WC_Order                   $wc_order The WooCommerce order.
-	 * @param Bitcoin_Address_Repository $bitcoin_address_repository Repository for Bitcoin addresses.
+	 * @param WC_Order                      $wc_order The WooCommerce order.
+	 * @param Bitcoin_Address               $payment_address The address assigned to the order.
+	 * @param ?array<Transaction_Interface> $transactions The known transactions for the address.
+	 * @param LoggerInterface               $logger PSR logger.
 	 *
 	 * @throws BH_WP_Bitcoin_Gateway_Exception When the order has no Bitcoin address or the address cannot be retrieved.
 	 */
 	public function __construct(
-		WC_Order $wc_order,
-		Bitcoin_Address_Repository $bitcoin_address_repository
+		protected WC_Order $wc_order,
+		protected Bitcoin_Address $payment_address,
+		protected ?array $transactions,
+		LoggerInterface $logger,
 	) {
-
-		$this->wc_order = $wc_order;
-
-		try {
-			/** @var ?string $bitcoin_address_xpub */
-			$bitcoin_address_xpub = $wc_order->get_meta( Order::BITCOIN_ADDRESS_META_KEY );
-			if ( is_null( $bitcoin_address_xpub ) ) {
-				// If this were to happen, it should be possible to look up which address is associated with this order id.
-				throw new BH_WP_Bitcoin_Gateway_Exception( 'No Bitcoin address found for order.' );
-			}
-			$bitcoin_address_post_id = $bitcoin_address_repository->get_post_id_for_address( $bitcoin_address_xpub );
-			if ( is_null( $bitcoin_address_post_id ) ) {
-				throw new BH_WP_Bitcoin_Gateway_Exception( 'Problem with order Bitcoin address.' );
-			}
-			$this->address = $bitcoin_address_repository->get_by_post_id( $bitcoin_address_post_id );
-		} catch ( Exception $exception ) {
-			// $this->logger->warning( "`shop_order:{$order->get_id()}` has no Bitcoin address.", array( 'order_id' => $order->get_id() ) );
-			throw new BH_WP_Bitcoin_Gateway_Exception( 'Problem with order Bitcoin address.' );
-		}
-
-		$this->setLogger( new NullLogger() );
+		$this->setLogger( $logger );
 	}
 
 	/**
@@ -136,20 +104,20 @@ class WC_Bitcoin_Order implements WC_Bitcoin_Order_Interface {
 	}
 
 	/**
-	 * The Bitcoin exchange rate at the time of purchase.
+	 * The price of 1 Bitcoin at the time of purchase.
 	 */
-	public function get_btc_exchange_rate(): BigNumber {
+	public function get_btc_exchange_rate(): Money {
 		/** @var array{amount:string, currency:string} $rate_meta */
 		$rate_meta = $this->wc_order->get_meta( Order::EXCHANGE_RATE_AT_TIME_OF_PURCHASE_META_KEY );
 
-		return BigNumber::of( $rate_meta['amount'] );
+		return Money::of( $rate_meta['amount'], $rate_meta['currency'] );
 	}
 
 	/**
 	 * Get the Bitcoin payment address associated with this order.
 	 */
 	public function get_address(): Bitcoin_Address {
-		return $this->address;
+		return $this->payment_address;
 	}
 
 	/**
@@ -158,7 +126,7 @@ class WC_Bitcoin_Order implements WC_Bitcoin_Order_Interface {
 	 * Null when never changed
 	 */
 	public function get_last_checked_time(): ?DateTimeInterface {
-		if ( is_null( $this->address->get_tx_ids() ) ) {
+		if ( is_null( $this->payment_address->get_tx_ids() ) ) {
 			return null;
 		}
 		/** @var DateTimeInterface|mixed $last_checked_time */

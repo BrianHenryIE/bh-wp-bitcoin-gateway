@@ -1,9 +1,10 @@
 <?php
 
-namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain;
+namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Blockchain;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Blockchain\Adapters\Blockchain_Info_Api_Transaction_Adapter;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\BlockchainInfo\BlockchainInfoApi;
 use BrianHenryIE\WP_Bitcoin_Gateway\BlockchainInfo\Model\RawAddress;
 use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\Enums\TextNotation;
@@ -12,7 +13,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\Middleware\CaseConversion;
 use Codeception\Stub\Expected;
 
 /**
- * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain\Blockchain_Info_API
+ * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Blockchain\Blockchain_Info_API
  */
 class Blockchain_Info_API_Unit_Test extends \Codeception\Test\Unit {
 

@@ -1,0 +1,40 @@
+<?php
+/**
+ * Query data; resolved transactions; value sent to address.
+ *
+ * @package brianhenryie/bh-wp-bitcoin-gateway
+ */
+
+namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Results;
+
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Update_Address_Transactions_Result;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Payment_Service;
+use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
+
+/**
+ * @used-by Payment_Service::check_address_for_payment()
+ * @see Payment_Service::update_address_transactions()
+ */
+class Check_Address_For_Payment_Service_Result extends Update_Address_Transactions_Result {
+
+	/**
+	 * Constructor
+	 *
+	 * @param Update_Address_Transactions_Result $update_address_transactions_result We first must update transactions before performing the calculations.
+	 * @param int                                $blockchain_height The current blockchain height.
+	 * @param int                                $required_confirmations The required confirmations to consider this "paid".
+	 * @param Money                              $total_received The total received with the required confirmations.
+	 */
+	public function __construct(
+		protected Update_Address_Transactions_Result $update_address_transactions_result,
+		readonly public int $blockchain_height,
+		readonly public int $required_confirmations,
+		readonly public Money $total_received,
+	) {
+		parent::__construct(
+			queried_address: $update_address_transactions_result->queried_address,
+			known_tx_ids_before: $update_address_transactions_result->known_tx_ids_before,
+			all_transactions: $update_address_transactions_result->all_transactions,
+		);
+	}
+}

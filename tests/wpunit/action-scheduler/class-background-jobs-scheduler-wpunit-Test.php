@@ -5,7 +5,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler;
 use ActionScheduler_Abstract_Schedule;
 use ActionScheduler_Action;
 use BrianHenryIE\ColorLogger\ColorLogger;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address_Repository;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Address_Repository;
 use Codeception\Stub\Expected;
 use DateInterval;
 use DateTimeImmutable;

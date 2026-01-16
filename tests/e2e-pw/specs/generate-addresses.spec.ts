@@ -14,6 +14,7 @@ import { configureBitcoinXpub } from '../helpers/ui/configure-bitcoin-xpub';
 import { createSimpleProduct } from '../helpers/ui/create-simple-product';
 import { loginAsAdmin } from '../helpers/ui/login';
 import { placeBitcoinOrder } from '../helpers/ui/place-bitcoin-order';
+import {fetchActions} from "../helpers/rest/action-scheduler";
 
 test.describe( 'Generate new addresses', () => {
 	test.beforeAll( async ( { browser } ) => {
@@ -23,53 +24,31 @@ test.describe( 'Generate new addresses', () => {
 		await page.close();
 	} );
 
-	test( 'should generate addresses when number available falls below 20', async ( {
+	test( 'should ensure new addresses after placing order', async ( {
 		page,
 	} ) => {
+
+		const testStarted = new Date().toISOString();
+
 		/**
-		 * Delete all but 19 unused addresses to test the generation
-		 * 20 is the threshold to trigger generation
-		 * @see API::generate_new_addresses_for_wallet()
+		 * Delete all unused addresses
 		 */
-		const beforeDeletingUnusedCount =
-			await getBitcoinAddressCount( 'unused' );
-		const toDelete = beforeDeletingUnusedCount - 49;
-		if ( toDelete > 0 ) {
-			await deleteBitcoinAddresses( toDelete, 'unused' );
-			const afterDeletingUnusedCount =
-				await getBitcoinAddressCount( 'unused' );
-		} else {
-			const afterDeletingUnusedCount = beforeDeletingUnusedCount;
+		const beforeDeletingUnusedCount = await getBitcoinAddressCount( 'unused' );
+		console.log('beforeDeletingUnusedCount: ' + beforeDeletingUnusedCount);
+		if ( beforeDeletingUnusedCount > 0 ) {
+			await deleteBitcoinAddresses( beforeDeletingUnusedCount - 1, 'unused' );
 		}
+
+		const afterDeletingUnusedCount = await getBitcoinAddressCount( 'unused' );
+		console.log('afterDeletingUnusedCount: ' + afterDeletingUnusedCount);
+
 
 		// Place an order to trigger address generation
 		await placeBitcoinOrder( page );
 
-		// Login as admin again
-		await loginAsAdmin( page );
+		const actionQueued = await fetchActions('bh_wp_bitcoin_gateway_single_ensure_unused_addresses', false, testStarted);
+		expect( actionQueued.length ).toBe( 1 );
 
-		// Check Action Scheduler for pending job
-		await page.goto(
-			'/wp-admin/tools.php?page=action-scheduler&status=pending'
-		);
-
-		const pendingJob = page.locator(
-			'td[data-colname="Hook"]:has-text("bh_wp_bitcoin_gateway_generate_new_addresses")'
-		);
-
-		if ( ( await pendingJob.count() ) > 0 ) {
-			// Run the job
-			await pendingJob.hover();
-			const runButton = pendingJob.locator( '.run a' );
-			if ( ( await runButton.count() ) > 0 ) {
-				await runButton.click();
-				await page.waitForLoadState( 'networkidle' );
-			}
-		}
-
-		const finalUnusedCount = await getBitcoinAddressCount( 'unused' );
-
-		expect( finalUnusedCount ).toBeGreaterThanOrEqual( 20 );
 	} );
 
 	test( 'should correctly report the all addresses count', async ( {

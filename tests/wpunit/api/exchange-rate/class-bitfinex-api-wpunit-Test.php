@@ -5,13 +5,13 @@
  * @package           brianhenryie/bh-wp-bitcoin-gateway
  */
 
-namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Exchange_Rate;
+namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Exchange_Rate;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Currency;
 
 /**
- * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\API\Exchange_Rate\Bitfinex_API
+ * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Exchange_Rate\Bitfinex_API
  */
 class Bitfinex_API_Integration_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 

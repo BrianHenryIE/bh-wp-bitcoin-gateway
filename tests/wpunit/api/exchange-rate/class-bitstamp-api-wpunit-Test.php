@@ -1,12 +1,12 @@
 <?php
 
-namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Exchange_Rate;
+namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Exchange_Rate;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Currency;
 
 /**
- * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\API\Exchange_Rate\Bitstamp_API
+ * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Exchange_Rate\Bitstamp_API
  */
 class Bitstamp_API_Integration_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 

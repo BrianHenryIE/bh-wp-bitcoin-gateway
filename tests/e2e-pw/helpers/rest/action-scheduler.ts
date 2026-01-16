@@ -26,10 +26,14 @@ export interface ActionSchedulerItem {
 
 export async function fetchActions(
 	hook: string,
-	future: boolean = true
+	future: boolean = true,
+	since: string|null = null
 ): Promise< Record< string, ActionSchedulerItem >[] > {
 	let path = `/wp-json/e2e-test-helper/v1/action_scheduler/search?hook=${ hook }`;
-	if ( future ) {
+	// Does this include past-due?
+	if ( since ) {
+		path += `&date_compare=>=&date=${ since }`;
+	} else if ( future ) {
 		path += `&date_compare=>=&date=${ new Date().toISOString() }`;
 	}
 	const response = await debugFetch( path );

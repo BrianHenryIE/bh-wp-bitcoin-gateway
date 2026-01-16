@@ -5,11 +5,9 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Address;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Bitcoin_Transaction;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\BH_WP_Bitcoin_Gateway_Exception;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Transaction_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Math\BigNumber;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order_Interface;
@@ -132,7 +130,7 @@ trait API_WooCommerce_Trait {
 			throw new BH_WP_Bitcoin_Gateway_Exception( 'No Bitcoin addresses available.' );
 		}
 
-		$this->bitcoin_address_repository->assign_to_order(
+		$this->wallet_service->assign_order_to_bitcoin_payment_address(
 			address: $btc_address,
 			order_id: $order->get_id(),
 			btc_total: $btc_total
@@ -144,7 +142,7 @@ trait API_WooCommerce_Trait {
 		$this->logger->info(
 			sprintf(
 				'Assigned `bh-bitcoin-address:%d` %s to `shop_order:%d`.',
-				$this->bitcoin_address_repository->get_post_id_for_address( $btc_address->get_raw_address() ),
+				$btc_address->get_post_id(),
 				$btc_address->get_raw_address(),
 				$order->get_id()
 			)
@@ -174,10 +172,9 @@ trait API_WooCommerce_Trait {
 			return null;
 		}
 
-		$wallet = $this->bitcoin_wallet_repository->get_by_xpub( $gateway->get_xpub() )
-							?? $this->bitcoin_wallet_repository->save_new( $gateway->get_xpub(), $gateway->id );
+		$wallet_result = $this->wallet_service->get_wallet_for_xpub( $gateway->get_xpub() );
 
-		$result = $this->ensure_unused_addresses_for_wallet( $wallet, 1 );
+		$result = $this->ensure_unused_addresses_for_wallet( $wallet_result->wallet, 1 );
 
 		$unused_addresses = $result->get_unused_addresses();
 
@@ -200,8 +197,8 @@ trait API_WooCommerce_Trait {
 			return false;
 		}
 
-		$wallet           = $this->bitcoin_wallet_repository->get_by_xpub( $gateway->get_xpub() );
-		$unused_addresses = $this->bitcoin_address_repository->get_unused_bitcoin_addresses( $wallet );
+		$result           = $this->wallet_service->get_wallet_for_xpub( $gateway->get_xpub() );
+		$unused_addresses = $this->wallet_service->get_unused_bitcoin_addresses( $result->wallet );
 
 		// TODO: maybe schedule a job to find an unused address.
 
@@ -223,13 +220,33 @@ trait API_WooCommerce_Trait {
 	 */
 	public function get_order_details( WC_Order $wc_order, bool $refresh = true ): WC_Bitcoin_Order_Interface {
 
-		$bitcoin_order = new WC_Bitcoin_Order( $wc_order, $this->bitcoin_address_repository );
+		/** @var ?string $assigned_payment_address */
+		$assigned_payment_address = $wc_order->get_meta( Order::BITCOIN_ADDRESS_META_KEY );
+		if ( is_null( $assigned_payment_address ) ) {
+			// If this were to happen, it should be possible to look up which address is associated with this order id.
+			throw new BH_WP_Bitcoin_Gateway_Exception( 'No Bitcoin payment address found for order.' );
+		}
+		$bitcoin_address = $this->wallet_service->get_saved_address_by_bitcoin_payment_address( $assigned_payment_address );
 
-		if ( $refresh ) {
-			$this->refresh_order( $bitcoin_order );
+		$transaction_ids = $bitcoin_address->get_tx_ids();
+
+		$transactions = null;
+		if ( ! is_null( $transaction_ids ) ) {
+			$transactions = $this->payment_service->get_saved_transactions(
+				transaction_post_ids: array_keys( $transaction_ids )
+			);
 		}
 
-		return $bitcoin_order;
+		$bitcoin_order = new WC_Bitcoin_Order(
+			wc_order: $wc_order,
+			payment_address: $bitcoin_address,
+			transactions: $transactions,
+			logger: $this->logger
+		);
+
+		return $refresh
+			? $this->refresh_order( $bitcoin_order )
+			: $bitcoin_order;
 	}
 
 	/**
@@ -241,28 +258,27 @@ trait API_WooCommerce_Trait {
 	 *
 	 * @throws BH_WP_Bitcoin_Gateway_Exception When blockchain API queries fail or transaction data cannot be updated.
 	 */
-	protected function refresh_order( WC_Bitcoin_Order_Interface $bitcoin_order ): bool {
+	protected function refresh_order( WC_Bitcoin_Order_Interface $bitcoin_order ): WC_Bitcoin_Order_Interface {
 
 		$updated = false;
 
 		$time_now = new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) );
 
-		$bitcoin_address = $bitcoin_order->get_address();
+		$bitcoin_address         = $bitcoin_order->get_address();
+		$confirmed_value_current = $bitcoin_address->get_amount_received();
 
-		$update_address_transactions_result = $this->update_address_transactions( $bitcoin_address );
-
-		$confirmed_value_current = $bitcoin_order->get_address()->get_amount_received();
+		$check_address_for_payment_result = $this->check_address_for_payment( $bitcoin_address );
 
 		// Filter to transactions that have just been seen, so we can record them in notes.
-		$new_order_transactions = $update_address_transactions_result->get_new_transactions();
+		$new_order_transactions = $check_address_for_payment_result->get_new_transactions();
 
 		$transaction_formatter = new Transaction_Formatter();
 
 		// Add a note saying "one new transactions seen, unconfirmed total =, confirmed total = ...".
 		$note = '';
-		if ( ! empty( $update_address_transactions_result->get_new_transactions() ) ) {
+		if ( $check_address_for_payment_result->is_updated() ) {
 			$updated = true;
-			$note   .= $transaction_formatter->get_order_note( $update_address_transactions_result->get_new_transactions() );
+			$note   .= $transaction_formatter->get_order_note( $check_address_for_payment_result->get_new_transactions() );
 		}
 
 		if ( ! empty( $note ) ) {
@@ -280,7 +296,8 @@ trait API_WooCommerce_Trait {
 		$gateway = $bitcoin_order->get_gateway();
 
 		if ( ! $gateway ) {
-			return false;
+			// TODO: log / exception.
+			return $bitcoin_order;
 		}
 
 		if ( ! $bitcoin_order->is_paid() && ! is_null( $confirmed_value_current ) && ! $confirmed_value_current->isZero() ) {
@@ -294,7 +311,7 @@ trait API_WooCommerce_Trait {
 				 *
 				 * @var Transaction_Interface $last_transaction
 				 */
-				$last_transaction = array_last( $update_address_transactions_result->all_transactions );
+				$last_transaction = array_last( $check_address_for_payment_result->all_transactions );
 				$bitcoin_order->payment_complete( $last_transaction->get_txid() );
 				$this->logger->info( "`shop_order:{$bitcoin_order->get_id()}` has been marked paid.", array( 'order_id' => $bitcoin_order->get_id() ) );
 
@@ -309,7 +326,16 @@ trait API_WooCommerce_Trait {
 
 		$bitcoin_order->save();
 
-		return $updated;
+		$refreshed_address = $this->wallet_service->refresh_address( $bitcoin_order->get_address() );
+		/** @var WC_Order $refreshed_wc_order */
+		$refreshed_wc_order = wc_get_order( $bitcoin_order->get_id() );
+
+		return new WC_Bitcoin_Order(
+			wc_order: $refreshed_wc_order,
+			payment_address: $refreshed_address,
+			transactions: $check_address_for_payment_result->all_transactions,
+			logger: $this->logger
+		);
 	}
 
 	/**
@@ -326,7 +352,7 @@ trait API_WooCommerce_Trait {
 	 * @uses API_WooCommerce_Interface::get_order_details()
 	 * @see  Details_Formatter
 	 *
-	 * @return array<string, string|null|Money|BigNumber|array<Bitcoin_Transaction>|WC_Bitcoin_Order_Interface|WC_Order>
+	 * @return array<string, mixed>
 	 *
 	 * @throws BH_WP_Bitcoin_Gateway_Exception When order details cannot be retrieved or formatted due to missing address or API failures.
 	 */

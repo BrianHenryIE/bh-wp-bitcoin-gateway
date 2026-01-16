@@ -32,12 +32,12 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Han
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduler;
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduler_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Addresses\Nimq_API;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\Wallet\Nimq_API;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\API;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain\Blockchain_Info_Api;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain\Blockstream_Info_API;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Blockchain\Blockchain_Info_Api;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Blockchain\Blockstream_Info_API;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain_API_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Exchange_Rate\Bitfinex_API;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Exchange_Rate\Bitfinex_API;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Exchange_Rate_API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Generate_Address_API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Settings;
