@@ -3,7 +3,7 @@
  * @package    brianhenryie/bh-wp-bitcoin-gateway
  */
 
-namespace BrianHenryIE\WP_Bitcoin_Gateway\API;
+namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers;
 
 interface Generate_Address_API_Interface {
 

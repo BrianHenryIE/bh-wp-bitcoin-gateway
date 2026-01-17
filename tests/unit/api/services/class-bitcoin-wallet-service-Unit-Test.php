@@ -4,7 +4,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Services;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Generate_Address_API_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\Generate_Address_API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Address_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Wallet_Repository;
 use Codeception\Stub\Expected;

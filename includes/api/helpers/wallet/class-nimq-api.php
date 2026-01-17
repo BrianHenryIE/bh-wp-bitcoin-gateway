@@ -7,7 +7,7 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\Wallet;
 
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Generate_Address_API_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\Generate_Address_API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\Nimiq\XPub;
 use Exception;
