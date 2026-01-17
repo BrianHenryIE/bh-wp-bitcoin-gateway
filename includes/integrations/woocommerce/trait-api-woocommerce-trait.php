@@ -122,7 +122,7 @@ trait API_WooCommerce_Trait {
 	 * @throws BH_WP_Bitcoin_Gateway_Exception When no Bitcoin addresses are available or the address cannot be assigned to the order.
 	 */
 	public function get_fresh_address_for_order( WC_Order $order, Money $btc_total ): Bitcoin_Address {
-		$this->logger->debug( 'Get fresh address for `shop_order:' . $order->get_id() . '`' );
+		$this->logger->debug( 'Get fresh address for `shop_order:{order_id}`', array( 'order_id' => $order->get_id() ) );
 
 		$btc_address = $this->get_fresh_address_for_gateway( $this->get_bitcoin_gateways()[ $order->get_payment_method() ] );
 
@@ -140,11 +140,11 @@ trait API_WooCommerce_Trait {
 		$order->save();
 
 		$this->logger->info(
-			sprintf(
-				'Assigned `bh-bitcoin-address:%d` %s to `shop_order:%d`.',
-				$btc_address->get_post_id(),
-				$btc_address->get_raw_address(),
-				$order->get_id()
+			'Assigned `bh-bitcoin-address:{post_id}` {address} to `shop_order:{order_id}`.',
+			array(
+				'post_id'  => $btc_address->get_post_id(),
+				'address'  => $btc_address->get_raw_address(),
+				'order_id' => $order->get_id(),
 			)
 		);
 
@@ -313,7 +313,7 @@ trait API_WooCommerce_Trait {
 				 */
 				$last_transaction = array_last( $check_address_for_payment_result->all_transactions );
 				$bitcoin_order->payment_complete( $last_transaction->get_txid() );
-				$this->logger->info( "`shop_order:{$bitcoin_order->get_id()}` has been marked paid.", array( 'order_id' => $bitcoin_order->get_id() ) );
+				$this->logger->info( '`shop_order:{order_id}` has been marked paid.', array( 'order_id' => $bitcoin_order->get_id() ) );
 
 				$updated = true;
 			}
