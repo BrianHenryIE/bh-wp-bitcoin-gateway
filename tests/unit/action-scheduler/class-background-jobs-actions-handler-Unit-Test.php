@@ -7,6 +7,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Update_Exchange_Rate_Resul
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Addresses_Generation_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Check_Assigned_Addresses_For_Transactions_Result;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Ensure_Unused_Addresses_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Bitcoin_Wallet_Service;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Results\Exchange_Rate_Service_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
@@ -381,5 +382,203 @@ class Background_Jobs_Actions_Handler_Unit_Test extends \Codeception\Test\Unit {
 		};
 
 		$this->assertTrue( $logger->hasInfoThatPasses( $assert_log ) );
+	}
+
+	/**
+	 * @covers ::single_ensure_unused_addresses
+	 */
+	public function test_single_ensure_unused_addresses_logs_debug_on_start(): void {
+
+		$logger         = new ColorLogger();
+		$wallet_post_id = 123;
+
+		$wallet_mock = $this->make( Bitcoin_Wallet::class );
+
+		$wallet_service = $this->makeEmpty(
+			Bitcoin_Wallet_Service::class,
+			array(
+				'get_wallet_by_wp_post_id' => Expected::once( $wallet_mock ),
+			)
+		);
+
+		$result = new Ensure_Unused_Addresses_Result(
+			wallet: $wallet_mock,
+			assumed_existing_unused_addresses: array(),
+			actual_existing_unused_addresses: array(),
+			unexpectedly_used_addresses_by_wallet: array(),
+			new_unused_addresses: array(),
+		);
+
+		$api = $this->makeEmpty(
+			API_Background_Jobs_Interface::class,
+			array(
+				'ensure_unused_addresses_for_wallet' => Expected::once( $result ),
+			)
+		);
+
+		$sut = $this->get_sut(
+			api: $api,
+			wallet_service: $wallet_service,
+			logger: $logger
+		);
+
+		$sut->single_ensure_unused_addresses( $wallet_post_id );
+
+		$this->assertTrue( $logger->hasDebugRecords() );
+		$this->assertTrue( $logger->hasDebugThatContains( 'Starting `single_ensure_unused_addresses()` background job' ) );
+	}
+
+	/**
+	 * @covers ::single_ensure_unused_addresses
+	 */
+	public function test_single_ensure_unused_addresses_logs_debug_with_wallet_post_id_context(): void {
+
+		$logger         = new ColorLogger();
+		$wallet_post_id = 456;
+
+		$wallet_mock = $this->make( Bitcoin_Wallet::class );
+
+		$wallet_service = $this->makeEmpty(
+			Bitcoin_Wallet_Service::class,
+			array(
+				'get_wallet_by_wp_post_id' => Expected::once( $wallet_mock ),
+			)
+		);
+
+		$result = new Ensure_Unused_Addresses_Result(
+			wallet: $wallet_mock,
+			assumed_existing_unused_addresses: array(),
+			actual_existing_unused_addresses: array(),
+			unexpectedly_used_addresses_by_wallet: array(),
+			new_unused_addresses: array(),
+		);
+
+		$api = $this->makeEmpty(
+			API_Background_Jobs_Interface::class,
+			array(
+				'ensure_unused_addresses_for_wallet' => Expected::once( $result ),
+			)
+		);
+
+		$sut = $this->get_sut(
+			api: $api,
+			wallet_service: $wallet_service,
+			logger: $logger
+		);
+
+		$sut->single_ensure_unused_addresses( $wallet_post_id );
+
+		// Check that context contains the wallet_post_id.
+		$has_expected_context = false;
+		foreach ( $logger->records as $record ) {
+			/** @var array{level:string,context:array{wallet_post_id?:int}} $record */
+			if ( 'debug' === $record['level']
+				&& isset( $record['context']['wallet_post_id'] )
+				&& 456 === $record['context']['wallet_post_id'] ) {
+				$has_expected_context = true;
+				break;
+			}
+		}
+
+		$this->assertTrue( $has_expected_context, 'Should log wallet_post_id 456 in debug context' );
+	}
+
+	/**
+	 * @covers ::single_ensure_unused_addresses
+	 */
+	public function test_single_ensure_unused_addresses_logs_info_on_completion(): void {
+
+		$logger         = new ColorLogger();
+		$wallet_post_id = 789;
+
+		$wallet_mock = $this->make( Bitcoin_Wallet::class );
+
+		$wallet_service = $this->makeEmpty(
+			Bitcoin_Wallet_Service::class,
+			array(
+				'get_wallet_by_wp_post_id' => Expected::once( $wallet_mock ),
+			)
+		);
+
+		$result = new Ensure_Unused_Addresses_Result(
+			wallet: $wallet_mock,
+			assumed_existing_unused_addresses: array(),
+			actual_existing_unused_addresses: array(),
+			unexpectedly_used_addresses_by_wallet: array(),
+			new_unused_addresses: array(),
+		);
+
+		$api = $this->makeEmpty(
+			API_Background_Jobs_Interface::class,
+			array(
+				'ensure_unused_addresses_for_wallet' => Expected::once( $result ),
+			)
+		);
+
+		$sut = $this->get_sut(
+			api: $api,
+			wallet_service: $wallet_service,
+			logger: $logger
+		);
+
+		$sut->single_ensure_unused_addresses( $wallet_post_id );
+
+		$this->assertTrue( $logger->hasInfoRecords() );
+		$this->assertTrue( $logger->hasInfoThatContains( 'Finished `single_ensure_unused_addresses()` background job' ) );
+	}
+
+	/**
+	 * @covers ::single_ensure_unused_addresses
+	 */
+	public function test_single_ensure_unused_addresses_logs_info_with_wallet_post_id_context(): void {
+
+		$logger         = new ColorLogger();
+		$wallet_post_id = 321;
+
+		$wallet_mock = $this->make( Bitcoin_Wallet::class );
+
+		$wallet_service = $this->makeEmpty(
+			Bitcoin_Wallet_Service::class,
+			array(
+				'get_wallet_by_wp_post_id' => Expected::once( $wallet_mock ),
+			)
+		);
+
+		$result = new Ensure_Unused_Addresses_Result(
+			wallet: $wallet_mock,
+			assumed_existing_unused_addresses: array(),
+			actual_existing_unused_addresses: array(),
+			unexpectedly_used_addresses_by_wallet: array(),
+			new_unused_addresses: array(),
+		);
+
+		$api = $this->makeEmpty(
+			API_Background_Jobs_Interface::class,
+			array(
+				'ensure_unused_addresses_for_wallet' => Expected::once( $result ),
+			)
+		);
+
+		$sut = $this->get_sut(
+			api: $api,
+			wallet_service: $wallet_service,
+			logger: $logger
+		);
+
+		$sut->single_ensure_unused_addresses( $wallet_post_id );
+
+		// Check that info context contains the wallet_post_id.
+		$has_expected_context = false;
+		foreach ( $logger->records as $record ) {
+			/** @var array{level:string,context:array{wallet_post_id?:int}} $record */
+			if ( 'info' === $record['level']
+				&& isset( $record['context']['wallet_post_id'] )
+				&& 321 === $record['context']['wallet_post_id'] ) {
+				$has_expected_context = true;
+				break;
+			}
+		}
+
+		$this->assertTrue( $has_expected_context, 'Should log wallet_post_id 321 in info context' );
 	}
 }
