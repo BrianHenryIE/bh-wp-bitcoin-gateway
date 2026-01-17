@@ -82,7 +82,7 @@ class Background_Jobs_Actions_Handler implements Background_Jobs_Actions_Interfa
 			array(
 				'currency'  => $result->requested_exchange_rate_currency,
 				'new_value' => $result->updated_exchange_rate->rate->getAmount()->__toString(),
-				'old_value' => $result->updated_exchange_rate->previous_cached_exchange_rate?->rate->getAmount()->__toString() ?? 'no previous cached exchange rate',
+				'old_value' => $result->updated_exchange_rate->previous_cached_exchange_rate?->rate->getAmount()->__toString() ?? '<null>',
 			)
 		);
 	}
