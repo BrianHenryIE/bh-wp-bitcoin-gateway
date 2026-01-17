@@ -169,4 +169,217 @@ class Background_Jobs_Actions_Handler_Unit_Test extends \Codeception\Test\Unit {
 
 		$sut->update_exchange_rate();
 	}
+
+	/**
+	 * @covers ::update_exchange_rate
+	 */
+	public function test_update_exchange_rate_logs_debug_on_start(): void {
+
+		$logger = new ColorLogger();
+
+		$api = $this->makeEmpty(
+			API_Background_Jobs_Interface::class,
+			array(
+				'update_exchange_rate' => Expected::once(
+					function () {
+						return new Update_Exchange_Rate_Result(
+							requested_exchange_rate_currency: 'USD',
+							source: 'test',
+							updated_exchange_rate: new Exchange_Rate_Service_Result(
+								rate: Money::of( '90000', 'USD' ),
+								api_classname: get_class( $this ),
+								date_saved: new \DateTimeImmutable(),
+							),
+						);
+					}
+				),
+			)
+		);
+
+		$sut = $this->get_sut( api: $api, logger: $logger );
+
+		$sut->update_exchange_rate();
+
+		$this->assertTrue( $logger->hasDebugRecords() );
+		$this->assertTrue( $logger->hasDebugThatContains( 'Starting update_exchange_rate() background job.' ) );
+	}
+
+	/**
+	 * @covers ::update_exchange_rate
+	 */
+	public function test_update_exchange_rate_logs_info_on_completion(): void {
+
+		$logger = new ColorLogger();
+
+		$api = $this->makeEmpty(
+			API_Background_Jobs_Interface::class,
+			array(
+				'update_exchange_rate' => Expected::once(
+					function () {
+						return new Update_Exchange_Rate_Result(
+							requested_exchange_rate_currency: 'USD',
+							source: 'test',
+							updated_exchange_rate: new Exchange_Rate_Service_Result(
+								rate: Money::of( '90000', 'USD' ),
+								api_classname: get_class( $this ),
+								date_saved: new \DateTimeImmutable(),
+							),
+						);
+					}
+				),
+			)
+		);
+
+		$sut = $this->get_sut( api: $api, logger: $logger );
+
+		$sut->update_exchange_rate();
+
+		$this->assertTrue( $logger->hasInfoRecords() );
+		$this->assertTrue( $logger->hasInfoThatContains( 'Finished update_exchange_rate() background job.' ) );
+	}
+
+	/**
+	 * @covers ::update_exchange_rate
+	 */
+	public function test_update_exchange_rate_logs_currency_and_new_value(): void {
+
+		$logger = new ColorLogger();
+
+		$api = $this->makeEmpty(
+			API_Background_Jobs_Interface::class,
+			array(
+				'update_exchange_rate' => Expected::once(
+					function () {
+						return new Update_Exchange_Rate_Result(
+							requested_exchange_rate_currency: 'EUR',
+							source: 'woocommerce',
+							updated_exchange_rate: new Exchange_Rate_Service_Result(
+								rate: Money::of( '85000', 'EUR' ),
+								api_classname: get_class( $this ),
+								date_saved: new \DateTimeImmutable(),
+							),
+						);
+					}
+				),
+			)
+		);
+
+		$sut = $this->get_sut( api: $api, logger: $logger );
+
+		$sut->update_exchange_rate();
+
+		// Debug: check if we have info records
+		$this->assertTrue( $logger->hasInfoRecords(), 'Should have info records' );
+
+		// Check that context contains expected values
+		$has_expected_context = false;
+		foreach ( $logger->records as $record ) {
+			if ( $record['level'] === 'info'
+				&& isset( $record['context']['currency'] )
+				&& $record['context']['currency'] === 'EUR'
+				&& isset( $record['context']['new_value'] )
+				&& $record['context']['new_value'] === '85000.00' ) {
+				$has_expected_context = true;
+				break;
+			}
+		}
+
+		$this->assertTrue( $has_expected_context, 'Should log currency EUR and new_value 85000.00 in context' );
+	}
+
+	/**
+	 * @covers ::update_exchange_rate
+	 */
+	public function test_update_exchange_rate_logs_with_previous_cached_rate(): void {
+
+		$logger = new ColorLogger();
+
+		$api = $this->makeEmpty(
+			API_Background_Jobs_Interface::class,
+			array(
+				'update_exchange_rate' => Expected::once(
+					function () {
+						$previous_rate = new Exchange_Rate_Service_Result(
+							rate: Money::of( '88000', 'USD' ),
+							api_classname: get_class( $this ),
+							date_saved: new \DateTimeImmutable( '-1 hour' ),
+						);
+
+						return new Update_Exchange_Rate_Result(
+							requested_exchange_rate_currency: 'USD',
+							source: 'woocommerce',
+							updated_exchange_rate: new Exchange_Rate_Service_Result(
+								rate: Money::of( '90000', 'USD' ),
+								api_classname: get_class( $this ),
+								date_saved: new \DateTimeImmutable(),
+								previous_cached_exchange_rate: $previous_rate,
+							),
+						);
+					}
+				),
+			)
+		);
+
+		$sut = $this->get_sut( api: $api, logger: $logger );
+
+		$sut->update_exchange_rate();
+
+		$this->assertTrue(
+			$logger->hasInfoThatPasses(
+				function ( $record ) {
+					return isset( $record['context']['currency'] )
+						&& $record['context']['currency'] === 'USD'
+						&& isset( $record['context']['new_value'] )
+						&& $record['context']['new_value'] === '90000.00'
+						&& isset( $record['context']['old_value'] )
+						&& $record['context']['old_value'] === '88000.00';
+				}
+			)
+		);
+	}
+
+	/**
+	 * @covers ::update_exchange_rate
+	 */
+	public function test_update_exchange_rate_logs_without_previous_cached_rate(): void {
+
+		$logger = new ColorLogger();
+
+		$api = $this->makeEmpty(
+			API_Background_Jobs_Interface::class,
+			array(
+				'update_exchange_rate' => Expected::once(
+					function () {
+						return new Update_Exchange_Rate_Result(
+							requested_exchange_rate_currency: 'GBP',
+							source: 'woocommerce',
+							updated_exchange_rate: new Exchange_Rate_Service_Result(
+								rate: Money::of( '75000', 'GBP' ),
+								api_classname: get_class( $this ),
+								date_saved: new \DateTimeImmutable(),
+								previous_cached_exchange_rate: null,
+							),
+						);
+					}
+				),
+			)
+		);
+
+		$sut = $this->get_sut( api: $api, logger: $logger );
+
+		$sut->update_exchange_rate();
+
+		$this->assertTrue(
+			$logger->hasInfoThatPasses(
+				function ( $record ) {
+					return isset( $record['context']['currency'] )
+						&& $record['context']['currency'] === 'GBP'
+						&& isset( $record['context']['new_value'] )
+						&& $record['context']['new_value'] === '75000.00'
+						&& isset( $record['context']['old_value'] )
+						&& $record['context']['old_value'] === 'no previous cached exchange rate';
+				}
+			)
+		);
+	}
 }
