@@ -296,6 +296,8 @@ class BH_WP_Bitcoin_Gateway {
 
 		add_action( 'action_scheduler_run_recurring_actions_schedule_hook', array( $background_jobs_actions_handler, 'add_action_scheduler_repeating_actions' ) );
 
+		add_action( Background_Jobs_Actions_Interface::UPDATE_EXCHANGE_RATE_HOOK, array( $background_jobs_actions_handler, 'update_exchange_rate' ) );
+
 		add_action( Background_Jobs_Actions_Interface::RECURRING_ENSURE_UNUSED_ADDRESSES_HOOK, array( $background_jobs_actions_handler, 'ensure_unused_addresses' ) );
 		add_action( Background_Jobs_Actions_Interface::SINGLE_ENSURE_UNUSED_ADDRESSES_HOOK, array( $background_jobs_actions_handler, 'single_ensure_unused_addresses' ) );
 

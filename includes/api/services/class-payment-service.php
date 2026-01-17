@@ -30,6 +30,10 @@ use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 
+/**
+ * Functions for querying the blockchain height, querying APIs for transactions, then summing the value of those
+ * transactions in context of the number of required confirmations.
+ */
 class Payment_Service implements LoggerAwareInterface {
 	use LoggerAwareTrait;
 
@@ -193,7 +197,7 @@ class Payment_Service implements LoggerAwareInterface {
 			$transactions,
 			function ( Money $carry, Transaction_Interface $transaction ) use ( $raw_address, $blockchain_height, $required_confirmations ) {
 				// TODO: run contract tests to see is this how mempool does behave.
-				if( is_null( $transaction->get_block_height() ) ) {
+				if ( is_null( $transaction->get_block_height() ) ) {
 					return $carry;
 				}
 				if ( ( $blockchain_height - $transaction->get_block_height() ) >= $required_confirmations ) {

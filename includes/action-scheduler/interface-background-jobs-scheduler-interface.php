@@ -50,5 +50,8 @@ interface Background_Jobs_Scheduler_Interface {
 	 */
 	public function schedule_check_newly_generated_bitcoin_addresses_for_transactions( ?DateTimeInterface $datetime = null ): void;
 
-	// schedule exchange rate update.
+	/**
+	 * Schedule a recurring job to update the exchange rate.
+	 */
+	public function schedule_recurring_update_exchange_rate(): void;
 }

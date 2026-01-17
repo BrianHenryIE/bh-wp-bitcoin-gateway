@@ -21,6 +21,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\API_Background_Jobs_Interfa
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduler_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Bitcoin_Transaction;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Update_Exchange_Rate_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address_Status;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Check_Address_For_Payment_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\Rate_Limit_Exception;
@@ -36,6 +37,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Exchange_Rate_Service;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Payment_Service;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Currency;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\MoneyMismatchException;
+use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\UnknownCurrencyException;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Trait;
@@ -49,6 +51,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
 use DateInterval;
 use DateTimeImmutable;
 use Exception;
+use JsonException;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 
@@ -113,11 +116,40 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 	}
 
 	/**
+	 * Update the exchange rate.
 	 *
+	 * Fetches and caches the current BTC exchange rate.
 	 *
-	 * @param string      $xpub
-	 * @param string|null $gateway_id
-	 * @throws BH_WP_Bitcoin_Gateway_Exception
+	 * @used-by Background_Jobs_Actions_Handler::update_exchange_rate()
+	 * @throws UnknownCurrencyException If the currency code is not known by the brick/money library.
+	 * @throws JsonException If the API response cannot be parsed.
+	 * @throws BH_WP_Bitcoin_Gateway_Exception If the request fails or the response !== 2xx.
+	 */
+	public function update_exchange_rate(): Update_Exchange_Rate_Result {
+
+		// If WooCommerce is not active, default to USD.
+		$source        = function_exists( 'get_woocommerce_currency' ) ? 'woocommerce' : 'default-usd';
+		$currency_code = function_exists( 'get_woocommerce_currency' )
+			? get_woocommerce_currency()
+			: 'USD';
+
+		$currency              = Currency::of( $currency_code );
+		$updated_exchange_rate = $this->exchange_rate_service->update_exchange_rate( $currency );
+		$this->logger->debug( 'Exchange rate updated for {currency}.', array( 'currency' => $currency->getCurrencyCode() ) );
+
+		return new Update_Exchange_Rate_Result(
+			requested_exchange_rate_currency: $currency_code,
+			source: $source,
+			updated_exchange_rate: $updated_exchange_rate
+		);
+	}
+
+	/**
+	 * Get or create a Wallet for the given master public key. Optionally, set the gateway id if the wallet is new.
+	 *
+	 * @param string      $xpub Bitcoin master public key.
+	 * @param string|null $gateway_id Gateway id.
+	 * @throws BH_WP_Bitcoin_Gateway_Exception If two wallets for the xpub exist, or if saving fails.
 	 */
 	public function get_wallet_for_master_public_key( string $xpub, ?string $gateway_id = null ): Wallet_Generation_Result {
 		$result = $this->wallet_service->get_wallet_for_xpub( $xpub, $gateway_id );
@@ -217,6 +249,12 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 		$all_wallets_have_enough_addresses_fn = function ( array $unused_addresses_by_wallet, int $required_count ): bool {
 			return array_reduce(
 				$unused_addresses_by_wallet,
+				/**
+				 * This is definitely safe to ignore.
+				 * "Parameter #2 $callback of function array_reduce expects callable(bool, mixed): bool, Closure(bool, array): bool given".
+				 *
+				 * @phpstan-ignore argument.type
+				 */
 				function ( bool $carry, array $addresses ) use ( $required_count ): bool {
 					return $carry && count( $addresses ) >= $required_count;
 				},

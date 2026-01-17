@@ -46,6 +46,34 @@ class Background_Jobs_Scheduler implements Background_Jobs_Scheduler_Interface {
 	}
 
 	/**
+	 * Schedule a recurring job to update the exchange rate every hour.
+	 *
+	 * @used-by Background_Jobs_Actions_Interface::add_action_scheduler_repeating_actions()
+	 */
+	public function schedule_recurring_update_exchange_rate(): void {
+		if ( as_has_scheduled_action( hook: Background_Jobs_Actions_Interface::UPDATE_EXCHANGE_RATE_HOOK ) ) {
+			$this->logger->debug(
+				message: 'Background_Jobs schedule_update_exchange_rate already scheduled.',
+			);
+			return;
+		}
+
+		$result = as_schedule_recurring_action(
+			timestamp: time(),
+			interval_in_seconds: constant( 'HOUR_IN_SECONDS' ),
+			hook: Background_Jobs_Actions_Interface::UPDATE_EXCHANGE_RATE_HOOK,
+			unique: true,
+		);
+
+		if ( 0 === $result ) {
+			$this->logger->error( 'Background_Jobs schedule_update_exchange_rate failed.' );
+			return;
+		}
+
+		$this->logger->info( 'Background_Jobs schedule_update_exchange_rate hourly job added.' );
+	}
+
+	/**
 	 * This is hooked to Action Scheduler's repeating action and schedules the ensure_unused_addresses job for
 	 * once/hour. To schedule it to run immediately, use the below method schedule_single...
 	 *

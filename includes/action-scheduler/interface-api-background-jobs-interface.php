@@ -7,6 +7,7 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler;
 
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Update_Exchange_Rate_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\Rate_Limit_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Addresses_Generation_Result;
@@ -65,4 +66,11 @@ interface API_Background_Jobs_Interface {
 	 * @param int            $required_count The number of available addresses we should have.
 	 */
 	public function ensure_unused_addresses_for_wallet( Bitcoin_Wallet $wallet, int $required_count = 2 ): Ensure_Unused_Addresses_Result;
+
+	/**
+	 * Update the exchange rate for the WooCommerce store currency.
+	 *
+	 * Fetches and caches the current BTC exchange rate.
+	 */
+	public function update_exchange_rate(): Update_Exchange_Rate_Result;
 }

@@ -62,8 +62,29 @@ class Background_Jobs_Actions_Handler implements Background_Jobs_Actions_Interfa
 	 * @see https://github.com/woocommerce/action-scheduler/issues/749
 	 */
 	public function add_action_scheduler_repeating_actions(): void {
+		$this->background_jobs_scheduler->schedule_recurring_update_exchange_rate();
 		$this->background_jobs_scheduler->schedule_recurring_ensure_unused_addresses();
 		$this->background_jobs_scheduler->schedule_single_check_assigned_addresses_for_transactions();
+	}
+
+	/**
+	 * Update the exchange rate for the WooCommerce store currency.
+	 *
+	 * @hooked Background_Jobs_Actions_Interface::UPDATE_EXCHANGE_RATE_HOOK
+	 */
+	public function update_exchange_rate(): void {
+		$this->logger->debug( 'Starting update_exchange_rate() background job.' );
+
+		$result = $this->api->update_exchange_rate();
+
+		$this->logger->info(
+			'Finished update_exchange_rate() background job. Rate for {currency} changed to {new_value} from {old_value}.',
+			array(
+				'currency'  => $result->requested_exchange_rate_currency,
+				'new_value' => $result->updated_exchange_rate->rate->getAmount()->__toString(),
+				'old_value' => $result->updated_exchange_rate->previous_cached_exchange_rate?->rate->getAmount()->__toString() ?? 'no previous cached exchange rate',
+			)
+		);
 	}
 
 	/**

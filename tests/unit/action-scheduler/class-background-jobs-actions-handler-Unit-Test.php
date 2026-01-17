@@ -3,12 +3,13 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Update_Exchange_Rate_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Address_Repository;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Wallet_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Addresses_Generation_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Check_Assigned_Addresses_For_Transactions_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Bitcoin_Wallet_Service;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Results\Exchange_Rate_Service_Result;
+use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use Codeception\Stub\Expected;
 use Psr\Log\LoggerInterface;
 use WP_Mock;
@@ -16,7 +17,7 @@ use WP_Mock;
 /**
  * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Handler
  */
-class Background_Jobs_Unit_Test extends \Codeception\Test\Unit {
+class Background_Jobs_Actions_Handler_Unit_Test extends \Codeception\Test\Unit {
 
 	protected function setUp(): void {
 		parent::setUp();
@@ -56,7 +57,7 @@ class Background_Jobs_Unit_Test extends \Codeception\Test\Unit {
 						return array(
 							new Addresses_Generation_Result(
 								wallet: $this->make( Bitcoin_Wallet::class ),
-								new_addresses: array(),
+								new_addresses: array(), // @phpstan-ignore argument.type
 							),
 						);
 					}
@@ -101,7 +102,7 @@ class Background_Jobs_Unit_Test extends \Codeception\Test\Unit {
 
 		$this->assertTrue( $logger->hasDebugRecords() );
 
-		// $this->markTestIncomplete( 'Assert the function logs a summary of the result.' );
+		// TODO: Assert the function logs a summary of the result.
 	}
 
 	/**
@@ -137,6 +138,35 @@ class Background_Jobs_Unit_Test extends \Codeception\Test\Unit {
 
 		$this->assertTrue( $logger->hasInfoRecords() );
 
-		// $this->markTestIncomplete( 'Assert the function logs a summary of the result.' );
+		// TODO: Assert the function logs a summary of the result.
+	}
+
+	/**
+	 * @covers ::update_exchange_rate
+	 */
+	public function test_update_exchange_rate(): void {
+
+		$api = $this->makeEmpty(
+			API_Background_Jobs_Interface::class,
+			array(
+				'update_exchange_rate' => Expected::once(
+					function () {
+						return new Update_Exchange_Rate_Result(
+							requested_exchange_rate_currency: 'USD',
+							source: 'test',
+							updated_exchange_rate: new Exchange_Rate_Service_Result(
+								rate: Money::of( '90000', 'USD' ),
+								api_classname: get_class( $this ),
+								date_saved: new \DateTimeImmutable(),
+							),
+						);
+					}
+				),
+			)
+		);
+
+		$sut = $this->get_sut( $api );
+
+		$sut->update_exchange_rate();
 	}
 }

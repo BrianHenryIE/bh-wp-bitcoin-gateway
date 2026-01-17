@@ -11,8 +11,8 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Exchange_Rate_API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\JsonMapper\JsonMapper_DateTimeInterface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\JsonMapper\JsonMapper_Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exchange_Rate;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\Rate_Limit_Exception;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Results\Exchange_Rate_Service_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Math\BigDecimal;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Math\Exception\MathException;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Math\RoundingMode;
@@ -53,7 +53,7 @@ class Exchange_Rate_Service implements LoggerAwareInterface {
 	}
 
 	/**
-	 * Get the value of 1 BTC in the requested currency.
+	 * Get the value of 1 BTC in the requested currency, hopefully from cache.
 	 *
 	 * Return the cached exchange rate, or fetch it.
 	 * Caches for one hour.
@@ -73,7 +73,7 @@ class Exchange_Rate_Service implements LoggerAwareInterface {
 		}
 
 		try {
-			$exchange_rate_money = $this->exchange_rate_api->get_exchange_rate( $currency );
+			$exchange_rate_service_result = $this->fetch_exchange_rate( $currency );
 		} catch ( Rate_Limit_Exception $e ) {
 			// TODO: set up background job.
 			return null;
@@ -88,12 +88,44 @@ class Exchange_Rate_Service implements LoggerAwareInterface {
 			return null;
 		}
 
-		$this->set_cached_exchange_rate(
+		return $exchange_rate_service_result->rate;
+	}
+
+	/**
+	 * Synchronously check the exchange rate; include the previous cached value in the result.
+	 *
+	 * @param Currency $currency The currency to fetch the exchange rate for.
+	 *
+	 * @throws BH_WP_Bitcoin_Gateway_Exception If the request fails.
+	 * @throws JsonException If the API response body is not JSON, as expected.
+	 * @throws UnknownCurrencyException Almost impossible… it would mean the brick/money library that created the Currency object does not recognise it.
+	 */
+	public function update_exchange_rate( Currency $currency ): Exchange_Rate_Service_Result {
+
+		$previous                                 = $this->get_cached_exchange_rate( $currency );
+		$updated                                  = (array) $this->fetch_exchange_rate( $currency );
+		$updated['previous_cached_exchange_rate'] = $previous;
+
+		// Allow array destructuring in constructor calls.
+		return new Exchange_Rate_Service_Result( ...$updated ); // @phpstan-ignore argument.type
+	}
+
+	/**
+	 * Synchronously check (then cache) the exchange rate.
+	 *
+	 * @param Currency $currency The currency to fetch the exchange rate for.
+	 *
+	 * @throws BH_WP_Bitcoin_Gateway_Exception If the request fails.
+	 * @throws JsonException If the API response body is not JSON, as expected.
+	 * @throws UnknownCurrencyException Almost impossible… it would mean the brick/money library that created the Currency object does not recognise it.
+	 */
+	protected function fetch_exchange_rate( Currency $currency ): Exchange_Rate_Service_Result {
+		$exchange_rate_money = $this->exchange_rate_api->get_exchange_rate( $currency );
+
+		return $this->set_cached_exchange_rate(
 			rate: $exchange_rate_money,
 			api_classname: get_class( $this->exchange_rate_api )
 		);
-
-		return $exchange_rate_money;
 	}
 
 	/**
@@ -141,9 +173,9 @@ class Exchange_Rate_Service implements LoggerAwareInterface {
 	protected function set_cached_exchange_rate(
 		Money $rate,
 		string $api_classname,
-	): void {
+	): Exchange_Rate_Service_Result {
 
-		$exchange_rate = new Exchange_Rate(
+		$exchange_rate = new Exchange_Rate_Service_Result(
 			rate: $rate,
 			api_classname: $api_classname,
 			date_saved: new DateTimeImmutable(),
@@ -157,6 +189,8 @@ class Exchange_Rate_Service implements LoggerAwareInterface {
 			value: wp_json_encode( $exchange_rate ),
 			expiration: HOUR_IN_SECONDS
 		);
+
+		return $exchange_rate;
 	}
 
 	/**
@@ -164,7 +198,7 @@ class Exchange_Rate_Service implements LoggerAwareInterface {
 	 *
 	 * @param Currency $currency The currency to fetch (mostly for the transient name).
 	 */
-	protected function get_cached_exchange_rate( Currency $currency ): ?Exchange_Rate {
+	protected function get_cached_exchange_rate( Currency $currency ): ?Exchange_Rate_Service_Result {
 
 		/** @var false|string $exchange_rate_stored_transient_json_string */
 		$exchange_rate_stored_transient_json_string = get_transient(
@@ -213,10 +247,10 @@ class Exchange_Rate_Service implements LoggerAwareInterface {
 			return null;
 		}
 
-		/** @var Exchange_Rate $exchange_rate */
+		/** @var Exchange_Rate_Service_Result $exchange_rate */
 		$exchange_rate = $mapper->mapToClassFromString(
 			$exchange_rate_stored_transient_json_string,
-			Exchange_Rate::class
+			Exchange_Rate_Service_Result::class
 		);
 
 		return $exchange_rate;

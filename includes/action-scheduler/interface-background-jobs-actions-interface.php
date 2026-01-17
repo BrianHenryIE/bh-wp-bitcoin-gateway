@@ -7,9 +7,13 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler;
 
+use BrianHenryIE\WP_Bitcoin_Gateway\BH_WP_Bitcoin_Gateway;
+
 /**
  * `do_action( HOOK_NAME )` is called by Action Scheduler / wp_cron to run these tasks.
  * We `add_action( HOOK_NAME )` to our implementations of the functions below to handle them.
+ *
+ * @see BH_WP_Bitcoin_Gateway::define_action_scheduler_hooks()
  */
 interface Background_Jobs_Actions_Interface {
 
@@ -49,6 +53,14 @@ interface Background_Jobs_Actions_Interface {
 	 * @hooked action_scheduler_run_recurring_actions_schedule_hook
 	 */
 	public function add_action_scheduler_repeating_actions(): void;
+
+	/**
+	 * Handler for recurring job to update the exchange rate.
+	 *
+	 * @hooked bh_wp_bitcoin_gateway_update_exchange_rate
+	 * @see self::UPDATE_EXCHANGE_RATE_HOOK
+	 */
+	public function update_exchange_rate(): void;
 
 	/**
 	 * Handler for recurring job to check we have addresses ready for new orders.
