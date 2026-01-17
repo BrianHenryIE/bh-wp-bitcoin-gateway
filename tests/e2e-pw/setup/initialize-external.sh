@@ -17,6 +17,7 @@ echo "Building $PLUGIN_SLUG"
 echo "wp i18n make-pot includes languages/$PLUGIN_SLUG.pot --domain=$PLUGIN_SLUG"
 vendor/bin/wp i18n make-pot includes languages/$PLUGIN_SLUG.pot --domain=$PLUGIN_SLUG
 
+# TODO: delete the existing plugin – it seems to add to the .zip file rather than totally recreating it.
 echo "wp dist-archive . ./tests/e2e-pw/setup --plugin-dirname=$PLUGIN_SLUG --filename-format="{name}.latest" --force"
 vendor/bin/wp dist-archive . ./tests/e2e-pw/setup --plugin-dirname=$PLUGIN_SLUG --filename-format="{name}.latest" --force
 
