@@ -299,7 +299,7 @@ class API_Unit_Test extends \Codeception\Test\Unit {
 		$assert_log = function ( array $record ): bool {
 			/** @var array{context:array{currency?:string}} $record */
 			return isset( $record['context']['currency'] )
-				&& 'GPB' === $record['context']['currency'];
+				&& 'GBP' === $record['context']['currency'];
 		};
 
 		$this->assertTrue( $logger->hasDebugThatPasses( $assert_log ) );
