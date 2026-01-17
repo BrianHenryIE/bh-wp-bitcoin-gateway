@@ -128,10 +128,13 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 	public function update_exchange_rate(): Update_Exchange_Rate_Result {
 
 		// If WooCommerce is not active, default to USD.
-		$source        = function_exists( 'get_woocommerce_currency' ) ? 'woocommerce' : 'default-usd';
-		$currency_code = function_exists( 'get_woocommerce_currency' )
-			? get_woocommerce_currency()
-			: 'USD';
+		if ( function_exists( 'get_woocommerce_currency' ) ) {
+			$source        = 'woocommerce';
+			$currency_code = get_woocommerce_currency();
+		} else {
+			$source        = 'default-usd';
+			$currency_code = 'USD';
+		}
 
 		$currency              = Currency::of( $currency_code );
 		$updated_exchange_rate = $this->exchange_rate_service->update_exchange_rate( $currency );
