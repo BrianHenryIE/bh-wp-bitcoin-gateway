@@ -377,7 +377,7 @@ class Background_Jobs_Actions_Handler_Unit_Test extends \Codeception\Test\Unit {
 				&& isset( $record['context']['new_value'] )
 				&& '75000.00' === $record['context']['new_value']
 				&& isset( $record['context']['old_value'] )
-				&& 'no previous cached exchange rate' === $record['context']['old_value'];
+				&& '<null>' === $record['context']['old_value'];
 		};
 
 		$this->assertTrue( $logger->hasInfoThatPasses( $assert_log ) );
