@@ -278,6 +278,11 @@ class BH_WP_Bitcoin_Gateway_Unit_Test extends \Codeception\Test\Unit {
 			array( new AnyInstance( Background_Jobs_Actions_Handler::class ), 'check_assigned_addresses_for_transactions' )
 		);
 
+		\WP_Mock::expectActionAdded(
+			Background_Jobs_Actions_Interface::UPDATE_EXCHANGE_RATE_HOOK,
+			array( \WP_Mock\Functions::type( Background_Jobs_Actions_Handler::class ), 'update_exchange_rate' )
+		);
+
 		$app = new BH_WP_Bitcoin_Gateway( $this->get_container() );
 		$app->register_hooks();
 	}

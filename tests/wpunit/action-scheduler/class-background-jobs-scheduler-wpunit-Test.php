@@ -19,9 +19,73 @@ class Background_Jobs_Scheduler_WPUnit_Test extends WPTestCase {
 	protected function setUp(): void {
 		parent::setUp();
 
+		as_unschedule_all_actions( Background_Jobs_Actions_Interface::UPDATE_EXCHANGE_RATE_HOOK );
 		as_unschedule_all_actions( Background_Jobs_Actions_Interface::RECURRING_ENSURE_UNUSED_ADDRESSES_HOOK );
 		as_unschedule_all_actions( Background_Jobs_Actions_Interface::CHECK_ASSIGNED_ADDRESSES_TRANSACTIONS_HOOK );
 		as_unschedule_all_actions( Background_Jobs_Actions_Interface::GENERATE_NEW_ADDRESSES_HOOK );
+	}
+
+	/**
+	 * @covers ::schedule_recurring_update_exchange_rate
+	 */
+	public function test_schedule_recurring_update_exchange_rate(): void {
+		$logger                     = new ColorLogger();
+		$bitcoin_address_repository = $this->makeEmpty( Bitcoin_Address_Repository::class );
+
+		/** @var Background_Jobs_Scheduler_Interface $sut */
+		$sut = new Background_Jobs_Scheduler( $bitcoin_address_repository, $logger );
+
+		assert( false === as_has_scheduled_action( Background_Jobs_Actions_Interface::UPDATE_EXCHANGE_RATE_HOOK ) );
+
+		$sut->schedule_recurring_update_exchange_rate();
+
+		$this->assertTrue( as_has_scheduled_action( Background_Jobs_Actions_Interface::UPDATE_EXCHANGE_RATE_HOOK ) );
+
+		$logger->hasInfo( 'Background_Jobs schedule_update_exchange_rate hourly job added.' );
+	}
+
+	/**
+	 * @covers ::schedule_recurring_update_exchange_rate
+	 */
+	public function test_schedule_recurring_update_exchange_rate_already_scheduled(): void {
+		$logger                     = new ColorLogger();
+		$bitcoin_address_repository = $this->makeEmpty( Bitcoin_Address_Repository::class );
+
+		/** @var Background_Jobs_Scheduler_Interface $sut */
+		$sut = new Background_Jobs_Scheduler( $bitcoin_address_repository, $logger );
+
+		as_schedule_recurring_action(
+			timestamp: time(),
+			interval_in_seconds: constant( 'HOUR_IN_SECONDS' ),
+			hook: Background_Jobs_Actions_Interface::UPDATE_EXCHANGE_RATE_HOOK,
+			unique: true,
+		);
+
+		$sut->schedule_recurring_update_exchange_rate();
+
+		$this->assertTrue( as_has_scheduled_action( Background_Jobs_Actions_Interface::UPDATE_EXCHANGE_RATE_HOOK ) );
+
+		$logger->hasDebug( 'Background_Jobs schedule_update_exchange_rate already scheduled.' );
+	}
+
+	/**
+	 * @covers ::schedule_recurring_update_exchange_rate
+	 */
+	public function test_schedule_recurring_update_exchange_rate_failure(): void {
+		$logger                     = new ColorLogger();
+		$bitcoin_address_repository = $this->makeEmpty( Bitcoin_Address_Repository::class );
+
+		/** @var Background_Jobs_Scheduler_Interface $sut */
+		$sut = new Background_Jobs_Scheduler( $bitcoin_address_repository, $logger );
+
+		// FAIL!
+		add_filter( 'pre_as_schedule_recurring_action', fn() => 0 );
+
+		$sut->schedule_recurring_update_exchange_rate();
+
+		$this->assertFalse( as_has_scheduled_action( Background_Jobs_Actions_Interface::UPDATE_EXCHANGE_RATE_HOOK ) );
+
+		$logger->hasDebug( 'Background_Jobs schedule_update_exchange_rate failed.' );
 	}
 
 	/**

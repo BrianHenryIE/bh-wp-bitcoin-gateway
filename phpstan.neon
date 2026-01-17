@@ -70,7 +70,10 @@ parameters:
           identifier: varTag.nativeType
           path: tests
         - # Allow array destructuring in constructor calls
-          path: includes/api/model
+          path: includes/api/model/results
+          message: '#Parameter \#\d+ \$.*? of method .*__construct\(\) expects .*?, mixed given.#'
+        - # Allow array destructuring in constructor calls
+          path: includes/api/services/results
           message: '#Parameter \#\d+ \$.*? of method .*__construct\(\) expects .*?, mixed given.#'
         - # Argument type error is `stdclass` vs `object`.
           identifier: argument.type
@@ -81,3 +84,6 @@ parameters:
         - # Setting properties on empty class made to look like a DateTimeInterface object once encoded.
           identifier: property.notFound
           path: tests/unit/helpers/jsonmapper/class-jsonmapper-datetimeinterface-Unit-Test.php
+        - #
+          message: '#Parameter \#2 \$callback of static method WP_Mock::expectActionAdded\(\) expects#'
+          path: tests/unit

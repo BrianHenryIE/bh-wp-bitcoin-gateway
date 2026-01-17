@@ -38,6 +38,7 @@ class Background_Jobs_Actions_WPUnit_Test extends WPTestCase {
 		$background_jobs_scheduler = $this->makeEmpty(
 			Background_Jobs_Scheduler_Interface::class,
 			array(
+				'schedule_recurring_update_exchange_rate' => Expected::once(),
 				'schedule_recurring_ensure_unused_addresses' => Expected::once(),
 				'schedule_single_check_assigned_addresses_for_transactions' => Expected::once(),
 			)
