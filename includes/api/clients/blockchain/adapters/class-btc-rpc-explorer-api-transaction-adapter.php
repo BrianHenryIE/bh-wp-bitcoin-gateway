@@ -44,7 +44,9 @@ class Btc_Rpc_Explorer_Api_Transaction_Adapter {
 
 	/**
 	 * @see \BrianHenryIE\WP_Bitcoin_Gateway\BtcRpcExplorer\Model\VOut
+	 * @param TXSummary $transaction The transaction object from the API.
 	 * @return Transaction_VOut[]
+	 * @throws \BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\UnknownCurrencyException If BTC has not been added to brick/money.
 	 */
 	public function get_v_out( TXSummary $transaction ): array {
 		return array_map(

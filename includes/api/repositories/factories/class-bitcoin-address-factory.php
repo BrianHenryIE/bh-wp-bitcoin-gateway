@@ -40,8 +40,7 @@ class Bitcoin_Address_Factory {
 	 */
 	public function get_by_wp_post( WP_Post $post ): Bitcoin_Address {
 
-		/** @var array<array|bool|float|int|resource|string|null|mixed> $all_post_meta */
-		// TODO: $all_post_meta = get_post_meta( $post->ID );
+		// TODO: use `array<array|bool|float|int|resource|string|null|mixed>` `get_post_meta( $post->ID )` to avoid db calls.
 
 		$bitcoin_address = new Bitcoin_Address(
 			post_id: $post->ID,

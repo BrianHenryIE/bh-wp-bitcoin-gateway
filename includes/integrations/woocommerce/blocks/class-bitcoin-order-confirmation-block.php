@@ -26,7 +26,8 @@ class Bitcoin_Order_Confirmation_Block {
 	/**
 	 * Constructor.
 	 *
-	 * @param Settings_Interface $settings Plugin settings, plugin url required for serving script.
+	 * @param Settings_Interface        $settings Plugin settings, plugin url required for serving script.
+	 * @param API_WooCommerce_Interface $api Used to get the formatted order details.
 	 */
 	public function __construct(
 		protected Settings_Interface $settings,
@@ -39,7 +40,6 @@ class Bitcoin_Order_Confirmation_Block {
 	 * Hooking on `init` so even if WooCommerce is disabled, the blocks are still available for design.
 	 *
 	 * @hooked init
-	 * @throws BH_WP_Bitcoin_Gateway_Exception
 	 */
 	public function register_block(): void {
 

@@ -427,7 +427,7 @@ class Blockstream_Info_API_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTe
 		$sut->get_transactions_received( $address );
 
 		// Check that context contains the URL with the address.
-		$expected_url       = "https://blockstream.info/api/address/{$address}/txs";
+		$expected_url         = "https://blockstream.info/api/address/{$address}/txs";
 		$has_expected_context = false;
 		foreach ( $logger->records as $record ) {
 			/** @var array{level:string,context:array{url?:string}} $record */
@@ -470,7 +470,7 @@ class Blockstream_Info_API_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTe
 		$sut->get_transactions_received( $address );
 
 		// Check that context contains the URL with the correct address.
-		$expected_url       = "https://blockstream.info/api/address/{$address}/txs";
+		$expected_url         = "https://blockstream.info/api/address/{$address}/txs";
 		$has_expected_context = false;
 		foreach ( $logger->records as $record ) {
 			/** @var array{level:string,context:array{url?:string}} $record */

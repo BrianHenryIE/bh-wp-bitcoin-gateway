@@ -24,6 +24,9 @@ use InvalidArgumentException;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 
+/**
+ * Local functions to create addresses; query addresses; update addresses.
+ */
 class Bitcoin_Wallet_Service implements LoggerAwareInterface {
 	use LoggerAwareTrait;
 

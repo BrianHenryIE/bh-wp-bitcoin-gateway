@@ -19,51 +19,10 @@ use InvalidArgumentException;
  */
 class Bitcoin_Address implements Bitcoin_Address_Interface {
 
-	// **
-	// * The wp_post database row, as a WordPress post object, for the custom post type used to store the data.
-	// */
-	// protected WP_Post $post;
-	//
-	// **
-	// * Current status of the address, used, unused, assigned...
-	// */
-	// protected Bitcoin_Address_Status $status;
-	//
-	// **
-	// * The wp_post.id for the {@see Bitcoin_Wallet} the address was derived from.
-	// */
-	// protected int $wallet_parent_post_id;
-	//
-	// **
-	// * The nth address generated from the wallet.
-	// *
-	// * TODO: Why is this nullable
-	// */
-	// protected ?int $derivation_path_sequence_number;
-	//
-	// ** The Bitcoin xpub address shared with the customer for payment. */
-	// protected string $raw_address;
-	//
-	// ** @var array<string,Transaction_Interface> */
-	// protected ?array $transactions = null;
-	//
-	// ** The address will be considered paid when this amount has been received */
-	// protected ?Money $target_amount;
-	//
-	// TODO: Add `protected ?int $required_number_of_confirmations`.
-	//
-	// **
-	// * The saved balance. Really be a calculation on the transactions.
-	// */
-	// protected ?Money $balance;
-	//
-	// **
-	// * The wp post_id of the associated order this address has been assigned to.
-	// */
-	// protected ?int $order_id;
-
 	/**
 	 * Constructor
+	 *
+	 * TODO: allow setting `required_confirmations`.
 	 *
 	 * @param int                    $post_id The WordPress post ID for this address.
 	 * @param int                    $wallet_parent_post_id The post ID of the parent wallet.
@@ -84,7 +43,6 @@ class Bitcoin_Address implements Bitcoin_Address_Interface {
 		protected ?int $derivation_path_sequence_number = null,
 		protected Bitcoin_Address_Status $status = Bitcoin_Address_Status::UNKNOWN,
 		protected ?Money $target_amount = null,
-		// protected ?int $required_confirmations.
 		protected ?int $order_id = null,
 		protected ?array $tx_ids = null,
 		protected ?Money $balance = null,

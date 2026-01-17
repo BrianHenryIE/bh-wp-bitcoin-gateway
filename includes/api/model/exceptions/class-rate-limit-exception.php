@@ -14,6 +14,9 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions;
 use DateTimeInterface;
 use Throwable;
 
+/**
+ * Internal class to hopefully communicate when the external API calls can be attempted again.
+ */
 class Rate_Limit_Exception extends BH_WP_Bitcoin_Gateway_Exception {
 
 	/**

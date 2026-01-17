@@ -166,7 +166,13 @@ class CLI extends WP_CLI_Command {
 					}
 					$bitcoin_address_post_id = $bitcoin_address_repository->get_post_id_for_address( $address );
 					if ( is_null( $bitcoin_address_post_id ) ) {
-						$this->logger->error( 'Could not find Bitcoin address object for address {address} from order id {input}.', array( 'address' => $address, 'input' => $input ) );
+						$this->logger->error(
+							'Could not find Bitcoin address object for address {address} from order id {input}.',
+							array(
+								'address' => $address,
+								'input'   => $input,
+							)
+						);
 						return;
 					}
 					$bitcoin_address = $bitcoin_address_repository->get_by_post_id( $bitcoin_address_post_id );
