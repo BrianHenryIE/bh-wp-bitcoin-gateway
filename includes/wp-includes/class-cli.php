@@ -143,12 +143,12 @@ class CLI extends WP_CLI_Command {
 		try {
 			switch ( get_post_type( intval( $input ) ) ) {
 				case Bitcoin_Address_WP_Post_Interface::POST_TYPE:
-					$this->logger->debug( "CLI input was `bh-bitcoin-address:{$input}`" );
+					$this->logger->debug( 'CLI input was `bh-bitcoin-address:{input}`', array( 'input' => $input ) );
 					$bitcoin_address = $bitcoin_address_factory->get_by_wp_post_id( intval( $input ) );
 					break;
 				case 'shop_order':
 					$order_id = intval( $input );
-					$this->logger->debug( "CLI input was WooCommerce `shop_order:{$order_id}`" );
+					$this->logger->debug( 'CLI input was WooCommerce `shop_order:{order_id}`', array( 'order_id' => $order_id ) );
 					/**
 					 * This was already determined to be an order!
 					 *
@@ -156,7 +156,7 @@ class CLI extends WP_CLI_Command {
 					 */
 					$order = wc_get_order( $order_id );
 					if ( ! $this->api->is_order_has_bitcoin_gateway( $order_id ) ) {
-						$this->logger->error( "`shop_order:{$order_id}` is not a Bitcoin order" );
+						$this->logger->error( '`shop_order:{order_id}` is not a Bitcoin order', array( 'order_id' => $order_id ) );
 						return;
 					}
 					/** @var string|null $address */
@@ -166,7 +166,7 @@ class CLI extends WP_CLI_Command {
 					}
 					$bitcoin_address_post_id = $bitcoin_address_repository->get_post_id_for_address( $address );
 					if ( is_null( $bitcoin_address_post_id ) ) {
-						$this->logger->error( "Could not find Bitcoin address object for address {$address} from order id {$input}." );
+						$this->logger->error( 'Could not find Bitcoin address object for address {address} from order id {input}.', array( 'address' => $address, 'input' => $input ) );
 						return;
 					}
 					$bitcoin_address = $bitcoin_address_repository->get_by_post_id( $bitcoin_address_post_id );
@@ -175,7 +175,7 @@ class CLI extends WP_CLI_Command {
 					// Assuming a raw address has been input.
 					$bitcoin_address_post_id = $bitcoin_address_repository->get_post_id_for_address( $input );
 					if ( is_null( $bitcoin_address_post_id ) ) {
-						$this->logger->error( "Could not find Bitcoin address object for {$input}." );
+						$this->logger->error( 'Could not find Bitcoin address object for {input}.', array( 'input' => $input ) );
 						return;
 					}
 					$bitcoin_address = $bitcoin_address_repository->get_by_post_id( $bitcoin_address_post_id );

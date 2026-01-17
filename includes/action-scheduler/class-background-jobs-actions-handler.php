@@ -111,15 +111,15 @@ class Background_Jobs_Actions_Handler implements Background_Jobs_Actions_Interfa
 	 * @param int $wallet_post_id Deserialised argument passed from Action Scheduler.
 	 */
 	public function single_ensure_unused_addresses( int $wallet_post_id ): void {
-		$this->logger->debug( 'Starting `single_ensure_unused_addresses()` background job for `wallet_post_id:' . $wallet_post_id . '`.' );
+		$this->logger->debug( 'Starting `single_ensure_unused_addresses()` background job for `wallet_post_id:{wallet_post_id}`.', array( 'wallet_post_id' => $wallet_post_id ) );
 
 		$wallet = $this->wallet_service->get_wallet_by_wp_post_id( $wallet_post_id );
 
 		$result = $this->api->ensure_unused_addresses_for_wallet( $wallet );
 
 		$this->logger->info(
-			'Finished `single_ensure_unused_addresses()` background job for `wallet_post_id:' . $wallet_post_id . '`.',
-			(array) $result
+			'Finished `single_ensure_unused_addresses()` background job for `wallet_post_id:{wallet_post_id}`.',
+			array_merge( array( 'wallet_post_id' => $wallet_post_id ), (array) $result )
 		);
 	}
 

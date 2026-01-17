@@ -63,7 +63,7 @@ class Blockstream_Info_API implements Blockchain_API_Interface, LoggerAwareInter
 
 		$address_info_url_bs = "https://blockstream.info/api/address/{$btc_address}/txs";
 
-		$this->logger->debug( 'URL: ' . $address_info_url_bs );
+		$this->logger->debug( 'URL: {url}', array( 'url' => $address_info_url_bs ) );
 
 		$request_response = wp_remote_get( $address_info_url_bs );
 

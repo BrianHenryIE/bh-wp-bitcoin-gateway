@@ -367,4 +367,121 @@ class Blockstream_Info_API_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTe
 		// TODO: Move the above JSON to a fixture. And write a real test.
 		$this->assertEquals( '8e5e6b898750a7afbe683a953fbf30bd990bb57ccd2d904c76df29f61054e743', $first->get_txid() );
 	}
+
+	/**
+	 * @covers ::get_transactions_received
+	 */
+	public function test_get_transactions_received_logs_debug_with_url(): void {
+
+		$logger = new ColorLogger();
+
+		$sut = new Blockstream_Info_API( $logger );
+
+		$request_response = array(
+			'body'     => wp_json_encode( array() ),
+			'response' => array(
+				'code' => 200,
+			),
+		);
+
+		add_filter(
+			'pre_http_request',
+			function () use ( $request_response ) {
+				return $request_response;
+			}
+		);
+
+		$address = '1AJbsFZ64EpEfS5UAjAfcUG8pH8Jn3rn1F';
+
+		$sut->get_transactions_received( $address );
+
+		$this->assertTrue( $logger->hasDebugRecords() );
+		$this->assertTrue( $logger->hasDebugThatContains( 'URL:' ) );
+	}
+
+	/**
+	 * @covers ::get_transactions_received
+	 */
+	public function test_get_transactions_received_logs_debug_with_url_in_context(): void {
+
+		$logger = new ColorLogger();
+
+		$sut = new Blockstream_Info_API( $logger );
+
+		$request_response = array(
+			'body'     => wp_json_encode( array() ),
+			'response' => array(
+				'code' => 200,
+			),
+		);
+
+		add_filter(
+			'pre_http_request',
+			function () use ( $request_response ) {
+				return $request_response;
+			}
+		);
+
+		$address = '1AJbsFZ64EpEfS5UAjAfcUG8pH8Jn3rn1F';
+
+		$sut->get_transactions_received( $address );
+
+		// Check that context contains the URL with the address.
+		$expected_url       = "https://blockstream.info/api/address/{$address}/txs";
+		$has_expected_context = false;
+		foreach ( $logger->records as $record ) {
+			/** @var array{level:string,context:array{url?:string}} $record */
+			if ( 'debug' === $record['level']
+				&& isset( $record['context']['url'] )
+				&& $expected_url === $record['context']['url'] ) {
+				$has_expected_context = true;
+				break;
+			}
+		}
+
+		$this->assertTrue( $has_expected_context, 'Should log URL in debug context with value: ' . $expected_url );
+	}
+
+	/**
+	 * @covers ::get_transactions_received
+	 */
+	public function test_get_transactions_received_logs_debug_with_correct_url_for_different_address(): void {
+
+		$logger = new ColorLogger();
+
+		$sut = new Blockstream_Info_API( $logger );
+
+		$request_response = array(
+			'body'     => wp_json_encode( array() ),
+			'response' => array(
+				'code' => 200,
+			),
+		);
+
+		add_filter(
+			'pre_http_request',
+			function () use ( $request_response ) {
+				return $request_response;
+			}
+		);
+
+		$address = 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh';
+
+		$sut->get_transactions_received( $address );
+
+		// Check that context contains the URL with the correct address.
+		$expected_url       = "https://blockstream.info/api/address/{$address}/txs";
+		$has_expected_context = false;
+		foreach ( $logger->records as $record ) {
+			/** @var array{level:string,context:array{url?:string}} $record */
+			if ( 'debug' === $record['level']
+				&& isset( $record['context']['url'] )
+				&& $expected_url === $record['context']['url'] ) {
+				$has_expected_context = true;
+				break;
+			}
+		}
+
+		$this->assertTrue( $has_expected_context, 'Should log URL in debug context with value: ' . $expected_url );
+	}
 }
