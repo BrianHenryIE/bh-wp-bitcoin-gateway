@@ -38,5 +38,7 @@ wp-cli.wp-env.yml
 wp-cli.yml
 xdebug.sh
 7.4linux.sh
-/*todo*
+/specstodo.md
 /CONTRIBUTING.md
+/src
+
