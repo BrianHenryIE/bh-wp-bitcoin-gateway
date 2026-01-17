@@ -4,7 +4,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Services;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Exchange_Rate_API_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exchange_Rate;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Results\Exchange_Rate_Service_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Currency;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\phpDocumentor\Reflection\DocBlock\StandardTagFactory;
@@ -20,6 +20,9 @@ class Exchange_Rate_Service_Unit_Test extends \Codeception\Test\Unit {
 
 	protected function setUp(): void {
 
+		/**
+		 * @see https://github.com/10up/wp_mock/pull/264
+		 */
 		$this->markTestSkipped( 'Needs changes to WP_Mock to support named parameters.' );
 
 		parent::setUp();
@@ -82,7 +85,7 @@ class Exchange_Rate_Service_Unit_Test extends \Codeception\Test\Unit {
 					'transient' => 'bh_wp_bitcoin_gateway_exchange_rate_USD',
 				),
 				'return' => json_encode(
-					new Exchange_Rate(
+					new Exchange_Rate_Service_Result(
 						rate: Money::of( '65535', 'USD' ),
 						api_classname: get_class( $this ),
 						date_saved: new DateTimeImmutable(),

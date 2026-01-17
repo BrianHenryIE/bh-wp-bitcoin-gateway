@@ -11,6 +11,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Bitcoin_Wallet_Service;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Results\Exchange_Rate_Service_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use Codeception\Stub\Expected;
+use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
 use WP_Mock;
 
@@ -157,7 +158,7 @@ class Background_Jobs_Actions_Handler_Unit_Test extends \Codeception\Test\Unit {
 							updated_exchange_rate: new Exchange_Rate_Service_Result(
 								rate: Money::of( '90000', 'USD' ),
 								api_classname: get_class( $this ),
-								date_saved: new \DateTimeImmutable(),
+								date_saved: new DateTimeImmutable(),
 							),
 						);
 					}
@@ -188,7 +189,7 @@ class Background_Jobs_Actions_Handler_Unit_Test extends \Codeception\Test\Unit {
 							updated_exchange_rate: new Exchange_Rate_Service_Result(
 								rate: Money::of( '90000', 'USD' ),
 								api_classname: get_class( $this ),
-								date_saved: new \DateTimeImmutable(),
+								date_saved: new DateTimeImmutable(),
 							),
 						);
 					}
@@ -222,7 +223,7 @@ class Background_Jobs_Actions_Handler_Unit_Test extends \Codeception\Test\Unit {
 							updated_exchange_rate: new Exchange_Rate_Service_Result(
 								rate: Money::of( '90000', 'USD' ),
 								api_classname: get_class( $this ),
-								date_saved: new \DateTimeImmutable(),
+								date_saved: new DateTimeImmutable(),
 							),
 						);
 					}
@@ -256,7 +257,7 @@ class Background_Jobs_Actions_Handler_Unit_Test extends \Codeception\Test\Unit {
 							updated_exchange_rate: new Exchange_Rate_Service_Result(
 								rate: Money::of( '85000', 'EUR' ),
 								api_classname: get_class( $this ),
-								date_saved: new \DateTimeImmutable(),
+								date_saved: new DateTimeImmutable(),
 							),
 						);
 					}
@@ -268,17 +269,18 @@ class Background_Jobs_Actions_Handler_Unit_Test extends \Codeception\Test\Unit {
 
 		$sut->update_exchange_rate();
 
-		// Debug: check if we have info records
+		// Debug: check if we have info records.
 		$this->assertTrue( $logger->hasInfoRecords(), 'Should have info records' );
 
-		// Check that context contains expected values
+		// Check that context contains expected values.
 		$has_expected_context = false;
 		foreach ( $logger->records as $record ) {
-			if ( $record['level'] === 'info'
+			/** @var array{level:string,context:array{currency?:string,new_value?:string,old_value?:string}} $record */
+			if ( 'info' === $record['level']
 				&& isset( $record['context']['currency'] )
-				&& $record['context']['currency'] === 'EUR'
+				&& 'EUR' === $record['context']['currency']
 				&& isset( $record['context']['new_value'] )
-				&& $record['context']['new_value'] === '85000.00' ) {
+				&& '85000.00' === $record['context']['new_value'] ) {
 				$has_expected_context = true;
 				break;
 			}
@@ -302,7 +304,7 @@ class Background_Jobs_Actions_Handler_Unit_Test extends \Codeception\Test\Unit {
 						$previous_rate = new Exchange_Rate_Service_Result(
 							rate: Money::of( '88000', 'USD' ),
 							api_classname: get_class( $this ),
-							date_saved: new \DateTimeImmutable( '-1 hour' ),
+							date_saved: new DateTimeImmutable( '-1 hour' ),
 						);
 
 						return new Update_Exchange_Rate_Result(
@@ -311,7 +313,7 @@ class Background_Jobs_Actions_Handler_Unit_Test extends \Codeception\Test\Unit {
 							updated_exchange_rate: new Exchange_Rate_Service_Result(
 								rate: Money::of( '90000', 'USD' ),
 								api_classname: get_class( $this ),
-								date_saved: new \DateTimeImmutable(),
+								date_saved: new DateTimeImmutable(),
 								previous_cached_exchange_rate: $previous_rate,
 							),
 						);
@@ -324,18 +326,17 @@ class Background_Jobs_Actions_Handler_Unit_Test extends \Codeception\Test\Unit {
 
 		$sut->update_exchange_rate();
 
-		$this->assertTrue(
-			$logger->hasInfoThatPasses(
-				function ( $record ) {
-					return isset( $record['context']['currency'] )
-						&& $record['context']['currency'] === 'USD'
-						&& isset( $record['context']['new_value'] )
-						&& $record['context']['new_value'] === '90000.00'
-						&& isset( $record['context']['old_value'] )
-						&& $record['context']['old_value'] === '88000.00';
-				}
-			)
-		);
+		$assert_log = function ( $record ) {
+			/** @var array{context:array{currency?:string,new_value?:string,old_value?:string}} $record */
+			return isset( $record['context']['currency'] )
+				&& 'USD' === $record['context']['currency']
+				&& isset( $record['context']['new_value'] )
+				&& '90000.00' === $record['context']['new_value']
+				&& isset( $record['context']['old_value'] )
+				&& '88000.00' === $record['context']['old_value'];
+		};
+
+		$this->assertTrue( $logger->hasInfoThatPasses( $assert_log ) );
 	}
 
 	/**
@@ -356,7 +357,7 @@ class Background_Jobs_Actions_Handler_Unit_Test extends \Codeception\Test\Unit {
 							updated_exchange_rate: new Exchange_Rate_Service_Result(
 								rate: Money::of( '75000', 'GBP' ),
 								api_classname: get_class( $this ),
-								date_saved: new \DateTimeImmutable(),
+								date_saved: new DateTimeImmutable(),
 								previous_cached_exchange_rate: null,
 							),
 						);
@@ -369,17 +370,16 @@ class Background_Jobs_Actions_Handler_Unit_Test extends \Codeception\Test\Unit {
 
 		$sut->update_exchange_rate();
 
-		$this->assertTrue(
-			$logger->hasInfoThatPasses(
-				function ( $record ) {
-					return isset( $record['context']['currency'] )
-						&& $record['context']['currency'] === 'GBP'
-						&& isset( $record['context']['new_value'] )
-						&& $record['context']['new_value'] === '75000.00'
-						&& isset( $record['context']['old_value'] )
-						&& $record['context']['old_value'] === 'no previous cached exchange rate';
-				}
-			)
-		);
+		$assert_log = function ( array $record ): bool {
+			/** @var array{context:array{currency?:string,new_value?:string,old_value?:string}} $record */
+			return isset( $record['context']['currency'] )
+				&& 'GBP' === $record['context']['currency']
+				&& isset( $record['context']['new_value'] )
+				&& '75000.00' === $record['context']['new_value']
+				&& isset( $record['context']['old_value'] )
+				&& 'no previous cached exchange rate' === $record['context']['old_value'];
+		};
+
+		$this->assertTrue( $logger->hasInfoThatPasses( $assert_log ) );
 	}
 }
