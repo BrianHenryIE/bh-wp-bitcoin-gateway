@@ -10,7 +10,7 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Blockchain;
 
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Blockchain_API_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Blockchain_API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Blockchain\Adapters\Btc_Rpc_Explorer_Api_Transaction_Adapter;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\BtcRpcExplorer\BtcRpcExplorerApi;
