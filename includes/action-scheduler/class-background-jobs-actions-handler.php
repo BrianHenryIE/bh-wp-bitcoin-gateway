@@ -87,7 +87,7 @@ class Background_Jobs_Actions_Handler implements Background_Jobs_Actions_Interfa
 		);
 	}
 
-	/*
+	/**
 	 * TODO: add the add_action code!
 	 *
 	 * @hooked Background_Jobs_Actions_Interface::RECURRING_ENSURE_UNUSED_ADDRESSES_HOOK
