@@ -42,8 +42,8 @@ jobs:
       - name: Run tests without coverage
         if: ${{ matrix.php != '8.4' }}
         run: |
-          XDEBUG_MODE=coverage vendor/bin/codecept run unit --coverage unit.cov --debug
-          XDEBUG_MODE=coverage vendor/bin/codecept run wpunit --coverage wpunit.cov --debug
+          vendor/bin/codecept run unit --debug
+          vendor/bin/codecept run wpunit --debug
 
       - name: Run tests with coverage
         if: ${{ matrix.php == '8.4' }} # We only need the coverage once
