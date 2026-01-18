@@ -31,7 +31,9 @@ jobs:
         run: composer install
 
       - name: Run tests with coverage
-        run: XDEBUG_MODE=coverage vendor/bin/phpunit --coverage-php coverage.cov
+        run: |
+          XDEBUG_MODE=coverage vendor/bin/codecept run unit --coverage coverage.cov
+          mv tests/_output/coverage.cov . || true
 
       - name: Get changed files
         id: changed-files
