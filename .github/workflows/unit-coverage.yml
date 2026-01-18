@@ -27,8 +27,14 @@ jobs:
       - name: Install sponge
         run: sudo apt-get install moreutils
 
-      - name: Install dependencies
-        run: composer install
+      - name: Install PHP dependencies
+        run: composer install --verbose
+
+      - name: Install JS dependencies
+        run: npm install
+
+      - name: Build JS
+        run: npm run build
 
       - name: Run tests with coverage
         run: |
