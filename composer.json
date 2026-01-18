@@ -169,7 +169,6 @@
     "impress-org/givewp-example-gateway": "dev-master",
     "jaschilz/php-coverage-badger": "^2",
     "johnpbloch/wordpress": "*",
-    "kporras07/composer-symlinks": "dev-master",
     "lucatume/wp-browser": "^4.5.10",
     "php-stubs/woocommerce-stubs": "*",
     "phpcompatibility/phpcompatibility-wp": "^2|^3",
@@ -252,21 +251,16 @@
         }
       }
     },
-    "symlinks": {
-      "vendor/woocommerce/woocommerce-gateway-dummy/woocommerce-gateway-dummy": "wp-content/plugins/woocommerce-gateway-dummy"
-    },
     "enable-patching": "true"
   },
   "scripts": {
     "post-install-cmd": [
       "strauss --info",
-      "Kporras07\\ComposerSymlinks\\ScriptHandler::createSymlinks",
       "@sync-composer-wpenv",
       "@add-btc-to-brick-money"
     ],
     "post-update-cmd": [
       "strauss --info",
-      "Kporras07\\ComposerSymlinks\\ScriptHandler::createSymlinks",
       "@sync-composer-wpenv",
       "@add-btc-to-brick-money"
     ],
