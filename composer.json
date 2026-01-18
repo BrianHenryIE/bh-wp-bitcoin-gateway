@@ -303,7 +303,7 @@
       "sed -i '' \"s/return \\[/return \\[\\n    'BTC' => \\['BTC', 0, 'Bitcoin', 8\\],/\" vendor-prefixed/brick/money/data/iso-currencies.php"
     ],
     "sync-composer-wpenv": [
-      "for name in $(cat .wp-env.json | jq '.mappings | values[]' | sed -r 's/^\\\"|\\\"$//g'); do [ ! -d $name ] && [ ! -f $name ] && echo $name && jq 'del(.. | select(. ==\"'$name'\"))' .wp-env.json | sponge .wp-env.json; done; exit 0;",
+      "for name in $(cat .wp-env.json | jq '.mappings | values[]' | sed -r 's/^\\\"|\\\"$//g'); do [ ! -d $name ] && [ ! -f $name ] && echo $name && jq 'del(.. | select(. ==\"'$name'\"))' .wp-env.json | sponge .wp-env.json || true; done; exit 0;",
       "find wp-content/plugins -type d -depth 1 ! -type l | sort -h | jq -Rn '[inputs]' | jq 'reduce .[] as $item ({}; . + {$item:$item})' | jq '.[] |= \"./\\(.)\"' | jq '. | {mappings: .}' | jq --sort-keys -s '.[] * $existing[]' --slurpfile existing .wp-env.json | sponge .wp-env.json "
     ]
   },
