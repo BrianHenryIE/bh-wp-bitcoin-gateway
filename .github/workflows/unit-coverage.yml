@@ -21,7 +21,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: 8.2
+          php-version: ${{ matrix.php }}
           coverage: xdebug
 
       - name: Install dependencies
@@ -38,7 +38,7 @@ jobs:
           files: '**/**.php'
 
       - name: Generate markdown report
-        if: ${{ matrix.php == '8.1' }} # We only need it added once
+        if: ${{ matrix.php == '8.4' }} # We only need it added once
         run: |
           vendor/bin/php-codecoverage-markdown \
             --input-file coverage.cov \
@@ -48,7 +48,7 @@ jobs:
 
       - name: Comment on PR
         uses: mshick/add-pr-comment@v2
-        if: ${{ matrix.php == '8.1' }} # We only need it added once
+        if: ${{ matrix.php == '8.4' }} # We only need it added once
         with:
           message-id: coverage-report
           message-path: coverage-report.md
