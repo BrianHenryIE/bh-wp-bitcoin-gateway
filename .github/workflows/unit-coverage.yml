@@ -37,13 +37,16 @@ jobs:
         run: npm run build
 
       - name: Start wp-env
+        run: npx wp-env start --debug;
+
+      - name: Run tests without coverage
+        if: ${{ matrix.php != '8.4' }}
         run: |
-          npx wp-env start --debug;
-#          sudo chmod -R a+w wordpress/wp-content;
-#          mkdir wordpress/wp-content/uploads || true;
-#          sudo chmod -R a+w wordpress/wp-content/uploads;
+          XDEBUG_MODE=coverage vendor/bin/codecept run unit --coverage unit.cov --debug
+          XDEBUG_MODE=coverage vendor/bin/codecept run wpunit --coverage wpunit.cov --debug
 
       - name: Run tests with coverage
+        if: ${{ matrix.php == '8.4' }} # We only need the coverage once
         run: |
           XDEBUG_MODE=coverage vendor/bin/codecept run unit --coverage unit.cov --debug
           XDEBUG_MODE=coverage vendor/bin/codecept run wpunit --coverage wpunit.cov --debug
