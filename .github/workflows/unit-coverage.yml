@@ -82,3 +82,7 @@ jobs:
           message-id: coverage-report
           message-path: coverage-report.md
         continue-on-error: true # When a PR is opened by a non-member, there are no write permissions (and no access to secrets), so this step will always fail.
+
+      - name: Cleanup wp-env
+        if: always()
+        run: npx wp-env stop
