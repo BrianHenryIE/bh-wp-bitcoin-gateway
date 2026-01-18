@@ -40,7 +40,7 @@ jobs:
         run: npm run build
 
       - name: Start wp-env
-        run: npx wp-env start --debug;
+        run: npx wp-env start --debug
 
       - name: Run tests without coverage
         if: ${{ matrix.php != env.COVERAGE_PHP_VERSION }}
@@ -56,7 +56,7 @@ jobs:
 
       - name: Merge code coverage
         if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }}
-        run: vendor/bin/phpcov merge --clover tests/_output/clover.xml --html tests/_output/html --php coverage.cov tests/_output;
+        run: vendor/bin/phpcov merge --clover tests/_output/clover.xml --html tests/_output/html --php coverage.cov tests/_output
 
       - name: Get changed files
         if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }}
