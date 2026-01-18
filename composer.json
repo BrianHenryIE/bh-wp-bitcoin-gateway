@@ -161,6 +161,7 @@
     "10up/wp_mock": "^1.1.0",
     "antecedent/patchwork": "^2.2.3",
     "brianhenryie/color-logger": "*",
+    "brianhenryie/php-codecoverage-markdown": "^0.1.0",
     "brianhenryie/strauss": "^0.26.3",
     "cweagans/composer-patches": "^2",
     "dealerdirect/phpcodesniffer-composer-installer": "^1.2",
