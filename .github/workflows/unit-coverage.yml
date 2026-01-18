@@ -52,9 +52,11 @@ jobs:
           XDEBUG_MODE=coverage vendor/bin/codecept run wpunit --coverage wpunit.cov --debug
 
       - name: Merge code coverage
+        if: ${{ matrix.php == '8.4' }}
         run: vendor/bin/phpcov merge --clover tests/_output/clover.xml --html tests/_output/html --php coverage.cov tests/_output;
 
       - name: Get changed files
+        if: ${{ matrix.php == '8.4' }}
         id: changed-files
         uses: tj-actions/changed-files@v47
         with:
