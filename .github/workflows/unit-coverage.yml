@@ -104,7 +104,7 @@ jobs:
 
       - name: Copy badge for PR comment display
         if: ${{ matrix.php == env.COVERAGE_PHP_VERSION && github.ref != 'refs/heads/master' }}
-        run: cp .github/coverage.svg.svg gh-pages/${{ github.sha }}/phpunit/coverage.svg
+        run: cp .github/coverage.svg gh-pages/${{ github.sha }}/phpunit/coverage.svg
 
       - name: Commit code coverage badge
         if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }}
@@ -131,18 +131,20 @@ jobs:
             --output-file coverage-report.md
 
       - name: Add to the PR message
+        if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }}
         run: |
-          echo "[![Code Coverage ](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ github.event.pull_request.head.sha }}/phpunit/coverage.svg)](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ github.event.pull_request.head.sha }}/phpunit/html/)" >> coverage-comment-header.md
-          echo "" >> coverage-comment-header.md # Add new lines to the end of coverage-comment-header.md
-          echo "" >> coverage-comment-header.md # Add new lines to the end of coverage-comment-header.md
-          echo "$(cat coverage-comment-header.md) $(cat coverage-report.md)" > coverage-report.md
+          echo "[![Code Coverage ](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ github.event.pull_request.head.sha }}/phpunit/coverage.svg)](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ github.event.pull_request.head.sha }}/phpunit/html/)" > coverage-comment-header.md
+          echo "$(cat coverage-comment-header.md)" > coverage-comment.md
+          echo "" >> coverage-comment.md # Add new line to coverage-comment.md
+          echo "" >> coverage-comment.md # Add new line to coverage-comment.md
+          echo "$(cat coverage-report.md)" >> coverage-comment.md
 
       - name: Comment on PR
         uses: mshick/add-pr-comment@v2
         if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }} # We only need it added once
         with:
           message-id: coverage-report
-          message-path: coverage-report.md
+          message-path: coverage-comment.md
         continue-on-error: true # When a PR is opened by a non-member, there are no write permissions (and no access to secrets), so this step will always fail.
 
       - name: Cleanup wp-env
