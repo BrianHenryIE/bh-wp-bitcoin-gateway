@@ -1,0 +1,88 @@
+name: Code Coverage Report Comment
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+env:
+  COVERAGE_PHP_VERSION: '8.4'
+
+jobs:
+  php-tests:
+    runs-on: ubuntu-latest
+
+    permissions:
+      pull-requests: write
+
+    strategy:
+      matrix:
+        php: [ '8.4', '8.5' ]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: ${{ matrix.php == env.COVERAGE_PHP_VERSION && 'xdebug' || 'none' }}
+
+      - name: Install sponge
+        run: sudo apt-get install moreutils
+
+      - name: Install PHP dependencies
+        run: composer install --verbose
+
+      - name: Install JS dependencies
+        run: npm install
+
+      - name: Build JS
+        run: npm run build
+
+      - name: Start wp-env
+        run: npx wp-env start --debug
+
+      - name: Run tests without coverage
+        if: ${{ matrix.php != env.COVERAGE_PHP_VERSION }}
+        run: |
+          vendor/bin/codecept run unit --debug
+          vendor/bin/codecept run wpunit --debug
+
+      - name: Run tests with coverage
+        if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }} # We only need the coverage once
+        run: |
+          XDEBUG_MODE=coverage vendor/bin/codecept run unit --coverage unit.cov --debug
+          XDEBUG_MODE=coverage vendor/bin/codecept run wpunit --coverage wpunit.cov --debug
+
+      - name: Merge code coverage
+        if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }}
+        run: vendor/bin/phpcov merge --clover tests/_output/clover.xml --html tests/_output/html --php coverage.cov tests/_output
+
+      - name: Get changed files
+        if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }}
+        id: changed-files
+        uses: tj-actions/changed-files@v47
+        with:
+          separator: ','
+          files: '**/**.php'
+
+      - name: Generate markdown report
+        if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }} # We only need it added once
+        run: |
+          vendor/bin/php-codecoverage-markdown \
+            --input-file coverage.cov \
+            --covered-files=${{ steps.changed-files.outputs.all_changed_files }} \
+            --base-url "https://github.com/${{ github.repository }}/blob/${{ github.event.pull_request.head.sha }}/%s" \
+            --output-file coverage-report.md
+
+      - name: Comment on PR
+        uses: mshick/add-pr-comment@v2
+        if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }} # We only need it added once
+        with:
+          message-id: coverage-report
+          message-path: coverage-report.md
+        continue-on-error: true # When a PR is opened by a non-member, there are no write permissions (and no access to secrets), so this step will always fail.
+
+      - name: Cleanup wp-env
+        if: always()
+        run: npx wp-env stop

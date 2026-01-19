@@ -161,6 +161,7 @@
     "10up/wp_mock": "^1.1.0",
     "antecedent/patchwork": "^2.2.3",
     "brianhenryie/color-logger": "*",
+    "brianhenryie/php-codecoverage-markdown": "^0.1|^1",
     "brianhenryie/strauss": "^0.26.3",
     "cweagans/composer-patches": "^2",
     "dealerdirect/phpcodesniffer-composer-installer": "^1.2",
@@ -168,12 +169,11 @@
     "impress-org/givewp-example-gateway": "dev-master",
     "jaschilz/php-coverage-badger": "^2",
     "johnpbloch/wordpress": "*",
-    "kporras07/composer-symlinks": "dev-master",
     "lucatume/wp-browser": "^4.5.10",
     "php-stubs/woocommerce-stubs": "*",
     "phpcompatibility/phpcompatibility-wp": "^2|^3",
     "phpstan/extension-installer": "^1.4.3",
-    "phpunit/phpcov": "^8.2.1",
+    "phpunit/phpcov": "^8.2",
     "szepeviktor/phpstan-wordpress": "^2.0.3",
     "woocommerce/woocommerce": "dev-trunk",
     "woocommerce/woocommerce-gateway-dummy": "*",
@@ -251,21 +251,16 @@
         }
       }
     },
-    "symlinks": {
-      "vendor/woocommerce/woocommerce-gateway-dummy/woocommerce-gateway-dummy": "wp-content/plugins/woocommerce-gateway-dummy"
-    },
     "enable-patching": "true"
   },
   "scripts": {
     "post-install-cmd": [
       "strauss --info",
-      "Kporras07\\ComposerSymlinks\\ScriptHandler::createSymlinks",
       "@sync-composer-wpenv",
       "@add-btc-to-brick-money"
     ],
     "post-update-cmd": [
       "strauss --info",
-      "Kporras07\\ComposerSymlinks\\ScriptHandler::createSymlinks",
       "@sync-composer-wpenv",
       "@add-btc-to-brick-money"
     ],
@@ -305,11 +300,12 @@
       "act -P ubuntu-latest=shivammathur/node:latest"
     ],
     "add-btc-to-brick-money": [
-      "sed -i '' \"s/return \\[/return \\[\\n    'BTC' => \\['BTC', 0, 'Bitcoin', 8\\],/\" vendor-prefixed/brick/money/data/iso-currencies.php"
+      "if [ \"$GITHUB_ACTIONS\" ]; then sed -i \"s/return \\[/return \\[\\n    'BTC' => \\['BTC', 0, 'Bitcoin', 8\\],/\" vendor-prefixed/brick/money/data/iso-currencies.php; fi",
+      "if [ ! \"$GITHUB_ACTIONS\" ]; then sed -i '' \"s/return \\[/return \\[\\n    'BTC' => \\['BTC', 0, 'Bitcoin', 8\\],/\" vendor-prefixed/brick/money/data/iso-currencies.php; fi"
     ],
     "sync-composer-wpenv": [
-      "for name in $(cat .wp-env.json | jq '.mappings | values[]' | sed -r 's/^\\\"|\\\"$//g'); do [ ! -d $name ] && [ ! -f $name ] && echo $name && jq 'del(.. | select(. ==\"'$name'\"))' .wp-env.json | sponge .wp-env.json; done; exit 0;",
-      "find wp-content/plugins -type d -depth 1 ! -type l | sort -h | jq -Rn '[inputs]' | jq 'reduce .[] as $item ({}; . + {$item:$item})' | jq '.[] |= \"./\\(.)\"' | jq '. | {mappings: .}' | jq --sort-keys -s '.[] * $existing[]' --slurpfile existing .wp-env.json | sponge .wp-env.json "
+      "for name in $(cat .wp-env.json | jq '.mappings | values[]' | sed -r 's/^\\\"|\\\"$//g'); do [ ! -d $name ] && [ ! -f $name ] && echo $name && jq 'del(.. | select(. ==\"'$name'\"))' .wp-env.json | sponge .wp-env.json || true; done",
+      "find wp-content/plugins -type d -depth 1 ! -type l | sort -h | jq -Rn '[inputs]' | jq 'reduce .[] as $item ({}; . + {$item:$item})' | jq '.[] |= \"./\\(.)\"' | jq '. | {mappings: .}' | jq --sort-keys -s '.[] * $existing[]' --slurpfile existing .wp-env.json | sponge .wp-env.json"
     ]
   },
   "provide": {
