@@ -22,9 +22,10 @@ jobs:
         php: [ '8.4', '8.5' ]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
       - name: Checkout GitHub Pages branch for code coverage report
+        if: ${{ github.ref == 'refs/heads/master' }}
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           ref: gh-pages
@@ -33,10 +34,10 @@ jobs:
       # https://github.blog/news-insights/bypassing-jekyll-on-github-pages/
       # https://docs.github.com/en/pages/setting-up-a-github-pages-site-with-jekyll/about-github-pages-and-jekyll
       - name: Disable Jekyll for GitHub Pages
+        if: ${{ matrix.php == env.COVERAGE_PHP_VERSION && github.ref == 'refs/heads/master' }}
         run: |
           if [ ! -f "gh-pages/.nojekyll" ]; then
             touch gh-pages/.nojekyll
-            git add gh-pages/.nojekyll
           fi
 
       - name: Setup PHP
@@ -74,6 +75,7 @@ jobs:
           XDEBUG_MODE=coverage vendor/bin/codecept run unit --coverage unit.cov --debug
           XDEBUG_MODE=coverage vendor/bin/codecept run wpunit --coverage wpunit.cov --debug
 
+      # If this fails, let if fail hard (Claude keeps highlighting failing as a problem).
       - name: Merge code coverage
         if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }}
         run: |
@@ -86,7 +88,7 @@ jobs:
       - name: Update root gh pages to redirect to commit for master
         if: ${{ (matrix.php == env.COVERAGE_PHP_VERSION ) && (github.ref == 'refs/heads/master') }}
         run: |
-          echo '<script>window.location.href="https://${{ github.event.repository_owner }}.github.io/${{ github.event.repository.name }}/gh-pages/${{ github.sha }}/phpunit/index.html";</script><a href="https://${{ github.event.repository_owner }}.github.io/${{ github.event.repository.name }}/gh-pages/${{ github.sha }}/phpunit/index.html">Coverage at ${{ github.sha }}</a>' > gh-pages/index.html
+          echo '<script>window.location.href="https://${{ github.event.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ github.sha }}/phpunit/index.html";</script><a href="https://${{ github.event.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ github.sha }}/phpunit/index.html">Coverage at ${{ github.sha }}</a>' > gh-pages/index.html
 
       - name: Commit code coverage to gh-pages
         uses: stefanzweifel/git-auto-commit-action@v4
@@ -94,8 +96,6 @@ jobs:
           repository: gh-pages
           branch: gh-pages
           commit_message: "🤖 Commit code coverage to gh-pages"
-        env:
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
       - name: Get changed files
         if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }}
