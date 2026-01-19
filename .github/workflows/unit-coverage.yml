@@ -21,6 +21,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Checkout GitHub Pages branch for code coverage report
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          ref: gh-pages
+          path: gh-pages
+
+      # https://github.blog/news-insights/bypassing-jekyll-on-github-pages/
+      # https://docs.github.com/en/pages/setting-up-a-github-pages-site-with-jekyll/about-github-pages-and-jekyll
+      - name: Disable Jekyll for GitHub Pages
+        run: |
+          if [ ! -f .nojekyll ]; then
+            touch .nojekyll
+            git add .nojekyll
+          fi
+
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -29,6 +44,8 @@ jobs:
 
       - name: Install sponge
         run: sudo apt-get install moreutils
+
+      # TODO: merge master.
 
       - name: Install PHP dependencies
         run: composer install --verbose
@@ -56,7 +73,27 @@ jobs:
 
       - name: Merge code coverage
         if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }}
-        run: vendor/bin/phpcov merge --clover tests/_output/clover.xml --html tests/_output/html --php coverage.cov tests/_output
+        run: |
+          vendor/bin/phpcov merge \
+            --clover tests/_output/clover.xml \
+            --php gh-pages/${{ github.event.pull_request.head.sha }}/phpunit/coveragephp.cov \
+            --html gh-pages/${{ github.event.pull_request.head.sha }}/phpunit/ \
+            tests/_output
+          cp gh-pages/${{ github.event.pull_request.head.sha }}/phpunit/coveragephp.cov coveragephp.cov
+
+      - name: Update root gh pages to redirect to commit for master
+        if: ${{ (matrix.php == env.COVERAGE_PHP_VERSION ) && (github.ref == 'refs/heads/master') }}
+        run: |
+          echo '<script>window.location.href="https://${{ github.event.repository_owner }}.github.io/${{ github.event.repository.name }}/gh-pages/${{ github.event.pull_request.head.sha }}/phpunit/index.html";</script><a href="https://${{ github.event.repository_owner }}.github.io/${{ github.event.repository.name }}/gh-pages/${{ github.event.pull_request.head.sha }}/phpunit/index.html">Coverage at ${{ github.event.pull_request.head.sha }}</a>' > gh-pages/index.php
+
+      - name: Commit code coverage to gh-pages
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          repository: tests/_output/html
+          branch: gh-pages
+          commit_message: "🤖 Commit code coverage to gh-pages"
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
       - name: Get changed files
         if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }}
@@ -70,7 +107,7 @@ jobs:
         if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }} # We only need it added once
         run: |
           vendor/bin/php-codecoverage-markdown \
-            --input-file coverage.cov \
+            --input-file coveragephp.cov \
             --covered-files=${{ steps.changed-files.outputs.all_changed_files }} \
             --base-url "https://github.com/${{ github.repository }}/blob/${{ github.event.pull_request.head.sha }}/%s" \
             --output-file coverage-report.md
@@ -82,6 +119,17 @@ jobs:
           message-id: coverage-report
           message-path: coverage-report.md
         continue-on-error: true # When a PR is opened by a non-member, there are no write permissions (and no access to secrets), so this step will always fail.
+
+      - name: Update README badge
+        if: ${{ matrix.php == env.COVERAGE_PHP_VERSION && github.ref == 'refs/heads/master' }}
+        run: vendor/bin/php-coverage-badger tests/_output/clover.xml .github/coverage.svg PHPUnit
+
+      - name: Commit code coverage badge
+        if: ${{ matrix.php == env.COVERAGE_PHP_VERSION && github.ref == 'refs/heads/master' }}
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "🤖 Commit code coverage badge"
+          file_pattern: .github/coverage.svg
 
       - name: Cleanup wp-env
         if: always()
