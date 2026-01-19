@@ -98,6 +98,21 @@ jobs:
           branch: gh-pages
           commit_message: "🤖 Commit code coverage to gh-pages"
 
+      - name: Update README badge
+        if: ${{ matrix.php == env.COVERAGE_PHP_VERSION && github.ref == 'refs/heads/master' }}
+        run: vendor/bin/php-coverage-badger tests/_output/clover.xml .github/coverage.svg PHPUnit
+
+      - name: Copy badge for PR comment display
+        if: ${{ matrix.php == env.COVERAGE_PHP_VERSION && github.ref != 'refs/heads/master' }}
+        run: cp .github/coverage.svg.svg gh-pages/${{ github.sha }}/phpunit/coverage.svg
+
+      - name: Commit code coverage badge
+        if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }}
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "🤖 Commit code coverage badge"
+          file_pattern: .github/coverage.svg
+
       - name: Get changed files
         if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }}
         id: changed-files
@@ -115,6 +130,13 @@ jobs:
             --base-url "https://github.com/${{ github.repository }}/blob/${{ github.sha }}/%s" \
             --output-file coverage-report.md
 
+      - name: Add to the PR message
+        run: |
+          echo "[![Code Coverage ](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ github.event.pull_request.head.sha }}/phpunit/coverage.svg)](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ github.event.pull_request.head.sha }}/phpunit/html/)" >> coverage-comment-header.md
+          echo "" >> coverage-comment-header.md # Add new lines to the end of coverage-comment-header.md
+          echo "" >> coverage-comment-header.md # Add new lines to the end of coverage-comment-header.md
+          echo "$(cat coverage-comment-header.md) $(cat coverage-report.md)" > coverage-report.md
+
       - name: Comment on PR
         uses: mshick/add-pr-comment@v2
         if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }} # We only need it added once
@@ -122,17 +144,6 @@ jobs:
           message-id: coverage-report
           message-path: coverage-report.md
         continue-on-error: true # When a PR is opened by a non-member, there are no write permissions (and no access to secrets), so this step will always fail.
-
-      - name: Update README badge
-        if: ${{ matrix.php == env.COVERAGE_PHP_VERSION && github.ref == 'refs/heads/master' }}
-        run: vendor/bin/php-coverage-badger tests/_output/clover.xml .github/coverage.svg PHPUnit
-
-      - name: Commit code coverage badge
-        if: ${{ matrix.php == env.COVERAGE_PHP_VERSION && github.ref == 'refs/heads/master' }}
-        uses: stefanzweifel/git-auto-commit-action@v4
-        with:
-          commit_message: "🤖 Commit code coverage badge"
-          file_pattern: .github/coverage.svg
 
       - name: Cleanup wp-env
         if: always()
