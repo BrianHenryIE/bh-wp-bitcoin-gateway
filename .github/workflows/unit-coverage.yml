@@ -99,7 +99,7 @@ jobs:
           commit_message: "🤖 Commit code coverage to gh-pages"
 
       - name: Update README badge
-        if: ${{ matrix.php == env.COVERAGE_PHP_VERSION && github.ref == 'refs/heads/master' }}
+        if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }}
         run: vendor/bin/php-coverage-badger tests/_output/clover.xml .github/coverage.svg PHPUnit
 
       - name: Copy badge for PR comment display
