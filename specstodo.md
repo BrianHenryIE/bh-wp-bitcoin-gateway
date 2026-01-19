@@ -13,7 +13,7 @@ A list of tests that should be written.
 * Wallet post list table entries should link to filtered Bitcoin Address list
 * Gateway settings page correctly links to order confirmation edit page (blocks)
 * Checking for transactions should log as comments on a Bitcoin_Address page
-* Is Bitcoin_Address modified time changed after querying for trandsactaions?
+* Is Bitcoin_Address modified time changed after querying for transactaions?
 * What should happen on activation?
 * What should happen on deactivation?
 * Test I18n
