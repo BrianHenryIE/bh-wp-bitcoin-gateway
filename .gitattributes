@@ -1,4 +1,4 @@
 
 
 # When merging into a branch, ignore the coverage percentage, that should be re-calculated immediately anyway.
-./github/coverage.svg merge=ours
+/.github/coverage.svg merge=ours
