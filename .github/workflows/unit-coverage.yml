@@ -25,7 +25,7 @@ jobs:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
       - name: Checkout GitHub Pages branch for code coverage report
-        if: ${{ github.ref == 'refs/heads/master' }}
+        if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }}
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           ref: gh-pages
@@ -34,7 +34,7 @@ jobs:
       # https://github.blog/news-insights/bypassing-jekyll-on-github-pages/
       # https://docs.github.com/en/pages/setting-up-a-github-pages-site-with-jekyll/about-github-pages-and-jekyll
       - name: Disable Jekyll for GitHub Pages
-        if: ${{ matrix.php == env.COVERAGE_PHP_VERSION && github.ref == 'refs/heads/master' }}
+        if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }}
         run: |
           if [ ! -f "gh-pages/.nojekyll" ]; then
             touch gh-pages/.nojekyll
@@ -49,7 +49,7 @@ jobs:
       - name: Install sponge
         run: sudo apt-get install moreutils
 
-      # TODO: merge master.
+      # TODO: merge master into this branch and run tests against what master will become, not just the isolated branch.
 
       - name: Install PHP dependencies
         run: composer install --verbose
@@ -82,36 +82,29 @@ jobs:
           vendor/bin/phpcov merge \
             --clover tests/_output/clover.xml \
             --php gh-pages/${{ github.sha }}/phpunit/coveragephp.cov \
-            --html gh-pages/${{ github.sha }}/phpunit/ \
+            --html gh-pages/${{ github.sha }}/phpunit/html/ \
             tests/_output
-
-      - name: Update root gh pages to redirect to commit for master
-        if: ${{ (matrix.php == env.COVERAGE_PHP_VERSION ) && (github.ref == 'refs/heads/master') }}
-        run: |
-          echo '<script>window.location.href="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ github.sha }}/phpunit/index.html";</script><a href="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ github.sha }}/phpunit/index.html">Coverage at ${{ github.sha }}</a>' > gh-pages/index.html
 
       - name: Update README badge
         if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }}
         run: vendor/bin/php-coverage-badger tests/_output/clover.xml .github/coverage.svg PHPUnit
 
       - name: Copy badge for PR comment display
-        if: ${{ matrix.php == env.COVERAGE_PHP_VERSION && github.ref != 'refs/heads/master' }}
+        if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }}
         run: cp .github/coverage.svg gh-pages/${{ github.sha }}/phpunit/coverage.svg
 
-      - name: Commit HTML code coverage + badge to gh-pages
+      - name: Update root gh pages to redirect to commit for master
         if: ${{ matrix.php == env.COVERAGE_PHP_VERSION && github.ref == 'refs/heads/master' }}
+        run: |
+          echo '<script>window.location.href="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ github.sha }}/phpunit/html/index.html";</script><a href="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ github.sha }}/phpunit/html/index.html">Coverage at ${{ github.sha }}</a>' > gh-pages/index.html
+
+      - name: Commit HTML code coverage + badge to gh-pages
+        if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }}
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
           repository: gh-pages
           branch: gh-pages
           commit_message: "🤖 Commit code coverage to gh-pages"
-
-      - name: Commit code coverage badge
-        if: ${{ matrix.php == env.COVERAGE_PHP_VERSION && github.ref == 'refs/heads/master' }}
-        uses: stefanzweifel/git-auto-commit-action@v4
-        with:
-          commit_message: "🤖 Commit code coverage badge"
-          file_pattern: .github/coverage.svg
 
       - name: Get changed files
         if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }}
@@ -133,7 +126,7 @@ jobs:
       - name: Add to the PR message
         if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }}
         run: |
-          echo "[![Code Coverage ](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ github.event.pull_request.head.sha }}/phpunit/coverage.svg)](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ github.event.pull_request.head.sha }}/phpunit/html/)" > coverage-comment-header.md
+          echo "[![Code Coverage ](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ github.sha }}/phpunit/coverage.svg)](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ github.head.sha }}/phpunit/html/index.html)" > coverage-comment-header.md
           echo "$(cat coverage-comment-header.md)" > coverage-comment.md
           echo "" >> coverage-comment.md # Add new line to coverage-comment.md
           echo "" >> coverage-comment.md # Add new line to coverage-comment.md
