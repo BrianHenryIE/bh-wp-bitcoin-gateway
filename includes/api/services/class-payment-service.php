@@ -214,10 +214,11 @@ class Payment_Service implements LoggerAwareInterface {
 	 *
 	 * @param string                $to_address The Bitcoin address to calculate value for.
 	 * @param Transaction_Interface $transaction The transaction to calculate value from.
+	 * @throws UnknownCurrencyException
 	 */
 	protected function get_value_for_transaction( string $to_address, Transaction_Interface $transaction ): Money {
 
-		$value_including_fee = array_reduce(
+		return array_reduce(
 			$transaction->get_v_out(),
 			function ( Money $carry, Transaction_VOut $out ) use ( $to_address ) {
 				if ( $to_address === $out->scriptpubkey_address ) {
@@ -227,8 +228,6 @@ class Payment_Service implements LoggerAwareInterface {
 			},
 			Money::of( 0, 'BTC' )
 		);
-
-		return $value_including_fee->dividedBy( 100_000_000 );
 	}
 
 	/**
