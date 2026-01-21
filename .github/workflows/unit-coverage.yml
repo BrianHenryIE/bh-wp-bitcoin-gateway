@@ -89,6 +89,17 @@ jobs:
             --html gh-pages/${{ github.sha }}/phpunit/html/ \
             tests/_output
 
+      # This makes the coverage percentage available in `{{ steps.coverage-percentage.outputs.coverage }}`.
+      - name: Check test coverage
+        if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }}
+        uses: johanvanhelden/gha-clover-test-coverage-check@2543c79a701f179bd63aa14c16c6938c509b2cec # v1
+        id: coverage-percentage
+        with:
+          percentage: 25
+          exit: false
+          filename: tests/_output/clover.xml
+          rounded-precision: "0"
+
       - name: Update README badge
         if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }}
         run: vendor/bin/php-coverage-badger tests/_output/clover.xml .github/coverage.svg PHPUnit
@@ -137,11 +148,25 @@ jobs:
       - name: Add to the PR message
         if: ${{ matrix.php == env.COVERAGE_PHP_VERSION && github.event_name == 'pull_request' }}
         run: |
-          echo "Project coverage: [![Project Code Coverage](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ github.sha }}/phpunit/coverage.svg)](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ github.sha }}/phpunit/html/index.html)" > coverage-comment-header.md
+          echo "[![Project Code Coverage](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ github.sha }}/phpunit/coverage.svg)](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ github.sha }}/phpunit/html/index.html)" > coverage-comment-header.md
+          echo "${{ format('[project coverage report {0}%](https://{1}.github.io/{2}/{3}/phpunit/html/) @ {4}', steps.coverage-percentage.outputs.coverage-rounded, github.repository_owner, github.event.repository.name, github.sha, steps.coverage-percentage.outputs.coverage-rounded) }}" >> coverage-comment-header.md
           echo "$(cat coverage-comment-header.md)" > coverage-comment.md
           echo "" >> coverage-comment.md
           echo "" >> coverage-comment.md
           echo "$(cat coverage-report.md)" >> coverage-comment.md
+
+      - name: Add phpcov uncovered lines report to PR comment
+        if: ${{ matrix.php == env.COVERAGE_PHP_VERSION && github.event_name == 'pull_request' }}
+        continue-on-error: true # phpcov can fail if there are no uncovered lines
+        run: |
+          BRANCHED_COMMIT=$(git rev-list origin..HEAD | tail -n 1);
+          echo "BRANCHED_COMMIT=$BRANCHED_COMMIT"
+          git diff $BRANCHED_COMMIT...${{ github.event.pull_request.head.sha }} > branch.diff
+          cat branch.diff
+          OUTPUT=${vendor/bin/phpcov patch-coverage --path-prefix $(pwd) ./gh-pages/${{ github.event.pull_request.head.sha }}/phpunit/phpunit.cov branch.diff || true}
+          echo $OUTPUT
+          echo "" >> coverage-comment.md
+          echo "$OUTPUT" >> coverage-comment.md
 
       - name: Comment on PR
         uses: mshick/add-pr-comment@v2
