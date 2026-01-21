@@ -157,7 +157,7 @@ jobs:
         if: ${{ matrix.php == env.COVERAGE_PHP_VERSION && github.event_name == 'pull_request' }}
         run: |
           echo "[![Project Code Coverage](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ github.sha }}/phpunit/coverage.svg)](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ github.sha }}/phpunit/html/index.html)" > coverage-comment-header.md
-          echo "${{ format('[project coverage report {0}%](https://{1}.github.io/{2}/{3}/phpunit/html/) @ {4}', steps.coverage-percentage.outputs.coverage-rounded, github.repository_owner, github.event.repository.name, github.sha, steps.coverage-percentage.outputs.coverage-rounded) }}" >> coverage-comment-header.md
+          echo "${{ format('[project coverage report {0}%](https://{1}.github.io/{2}/{3}/phpunit/html/) @ {4}', steps.coverage-percentage.outputs.coverage-rounded, github.repository_owner, github.event.repository.name, github.sha, github.sha) }}" >> coverage-comment-header.md
           echo "$(cat coverage-comment-header.md)" > coverage-comment.md
           echo "" >> coverage-comment.md
           echo "" >> coverage-comment.md
