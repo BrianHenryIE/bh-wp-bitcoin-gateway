@@ -31,14 +31,17 @@
     ]
   },
   "autoload-dev": {
-      "psr-4": {
-        "BrianHenryIE\\WP_Bitcoin_Gateway\\": [
-          "tests/contract",
-          "tests/integration",
-          "tests/wpunit",
-          "tests/unit"
-        ]
-      }
+    "psr-4": {
+      "BrianHenryIE\\WP_Bitcoin_Gateway\\": [
+        "tests/contract",
+        "tests/integration",
+        "tests/wpunit",
+        "tests/unit"
+      ]
+    },
+    "classmap": [
+      "tests/_support"
+    ]
   },
   "repositories": {
     "wordpress/wordpress": {
