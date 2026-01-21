@@ -343,7 +343,7 @@ class Bitcoin_Wallet_Service implements LoggerAwareInterface {
 			}
 		}
 
-		$updated_transactions_post_ids = array_merge( $existing_meta_transactions_post_ids, $new_transactions_post_ids );
+		$updated_transactions_post_ids = $existing_meta_transactions_post_ids + $new_transactions_post_ids;
 
 		// We do want to set an empty array once to indicate we have checked the address for transactions, but if there are still none, skip the save operation.
 		if ( ! is_null( $address->get_tx_ids() ) && empty( $updated_transactions_post_ids ) ) {
