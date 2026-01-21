@@ -112,6 +112,10 @@ jobs:
             || steps.coverage.outputs.coverage > 50 && 'orange'
             || 'red' }}
 
+      - name: Copy badge for PR comment display
+        if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }}
+        run: cp .github/coverage.svg gh-pages/${{ github.sha }}/phpunit/coverage.svg
+
       - name: Update root gh pages to redirect to commit for master
         if: ${{ matrix.php == env.COVERAGE_PHP_VERSION && github.ref == 'refs/heads/master' }}
         run: |
