@@ -316,4 +316,25 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 			)
 		);
 	}
+
+	/**
+	 * Set the post meta on an address to link to its transactions.
+	 *
+	 * Conversely, elsewhere, the address post_id will be linked on the transaction.
+	 *
+	 * @param Bitcoin_Address    $address The Bitcoin address set the transactions list for.
+	 * @param array<int, string> $updated_transactions_post_ids Key/value: <post_id, transaction_id>.
+	 */
+	public function set_transactions_post_ids_to_address(
+		Bitcoin_Address $address,
+		array $updated_transactions_post_ids,
+	): void {
+
+		$this->update(
+			model: $address,
+			query: new Bitcoin_Address_Query(
+				updated_transactions_post_ids: $updated_transactions_post_ids,
+			)
+		);
+	}
 }
