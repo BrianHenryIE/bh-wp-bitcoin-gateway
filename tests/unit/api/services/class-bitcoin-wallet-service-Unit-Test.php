@@ -663,7 +663,7 @@ class Bitcoin_Wallet_Service_Unit_Test extends \Codeception\Test\Unit {
 		$bitcoin_address_repository = $this->makeEmpty(
 			Bitcoin_Address_Repository::class,
 			array(
-				'set_transactions_post_ids_to_address' => Expected::never()
+				'set_transactions_post_ids_to_address' => Expected::never(),
 			)
 		);
 
