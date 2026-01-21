@@ -55,6 +55,7 @@ jobs:
         run: sudo apt-get install moreutils
 
       # TODO: merge master into this branch and run tests against what master will become, not just the isolated branch.
+      # NB: how would that affect tj-actions/changed-files?
 
       - name: Install PHP dependencies
         run: composer install --verbose
