@@ -87,13 +87,15 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 	 *
 	 * TODO: How to indicate if this was newly saved or already existed.
 	 *
-	 * @param Transaction $transaction The blockchain transaction object to save or retrieve from WordPress posts.
+	 * @param Transaction       $transaction The blockchain transaction object to save or retrieve from WordPress posts.
+	 * @param array<int,string> $bitcoin_addresses_indexed_by_post_ids Bitcoin addresses as post_id:bitcoin_address pairs.
 	 *
 	 * @throws RuntimeException When the transaction already exists in the database with a different post ID.
 	 * @throws BH_WP_Bitcoin_Gateway_Exception When WordPress fails to create the new transaction post.
 	 */
 	protected function save_post(
 		Transaction $transaction,
+		array $bitcoin_addresses_indexed_by_post_ids,
 	): WP_Post {
 		$transaction_post = $this->get_post_by_transaction_id( $transaction->get_txid() );
 		// What if the transaction already exists? Potentially it is from a chain that has been discarded. When else might it be updated?
@@ -104,6 +106,7 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 				transaction_object: $transaction,
 				block_height: $transaction->get_block_height(),
 				block_datetime: $transaction->get_block_time(),
+				updated_transaction_meta_bitcoin_address_post_ids: $bitcoin_addresses_indexed_by_post_ids,
 			);
 
 			/** @var WpUpdatePostArray $args */
@@ -136,7 +139,12 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 		Bitcoin_Address $address,
 	): Bitcoin_Transaction {
 
-		$transaction_post = $this->save_post( $transaction );
+		$transaction_post = $this->save_post(
+			transaction: $transaction,
+			bitcoin_addresses_indexed_by_post_ids: array(
+				$address->get_post_id() => $address->get_raw_address(),
+			)
+		);
 
 		// Using wp_post->ID here so it refreshes rather than just maps.
 		return $this->bitcoin_transaction_factory->get_by_wp_post_id( $transaction_post->ID );
