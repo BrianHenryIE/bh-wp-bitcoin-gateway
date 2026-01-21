@@ -147,9 +147,15 @@ class Payment_Service implements LoggerAwareInterface {
 		/** @var array<int, string> $tx_ids_by_post_ids */
 		$tx_ids_by_post_ids = array();
 
+		// $existing_transactions = $this->get_saved_transactions( array_keys( $address->get_tx_ids() ) ?? array() );
+
 		$updated_transactions = $this->blockchain_api->get_transactions_received( btc_address: $address->get_raw_address() );
 
 		foreach ( $updated_transactions as $transaction ) {
+
+			// $this->bitcoin_transaction_repository->get_by_transaction_id()
+
+			// TODO: Don't overwrite an existing one. associate_bitcoin_address_post_ids_to_transaction().
 			$saved_transaction                                       = $this->bitcoin_transaction_repository->save_new(
 				$transaction,
 				$address
