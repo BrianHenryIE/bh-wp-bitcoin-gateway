@@ -97,8 +97,9 @@ class API_Unit_Test extends \Codeception\Test\Unit {
 		$wallet_service_mock = $this->make(
 			Bitcoin_Wallet_Service::class,
 			array(
-				'get_unknown_bitcoin_addresses' => Expected::once( $addresses ),
-				'set_payment_address_status'    => Expected::once(),
+				'get_unknown_bitcoin_addresses'     => Expected::once( $addresses ),
+				'set_payment_address_status'        => Expected::once(),
+				'update_address_transactions_posts' => Expected::once(),
 			)
 		);
 
