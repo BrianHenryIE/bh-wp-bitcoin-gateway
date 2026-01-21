@@ -3,6 +3,9 @@ name: Code Coverage Report Comment
 on:
   pull_request:
     types: [opened, synchronize]
+  push:
+    branches:
+      - master
 
 env:
   COVERAGE_PHP_VERSION: '8.4'
@@ -12,14 +15,34 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      pull-requests: write
+      pull-requests: write # To add coverage comment
+      contents: write # To commit coverage badge & report
 
     strategy:
       matrix:
         php: [ '8.4', '8.5' ]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          # Value already defaults to true, but `persist-credentials` is required to push new commits to the repository.
+          persist-credentials: true
+
+      - name: Checkout GitHub Pages branch for code coverage report
+        if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }}
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          ref: gh-pages
+          path: gh-pages
+
+      # https://github.blog/news-insights/bypassing-jekyll-on-github-pages/
+      # https://docs.github.com/en/pages/setting-up-a-github-pages-site-with-jekyll/about-github-pages-and-jekyll
+      - name: Disable Jekyll for GitHub Pages
+        if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }}
+        run: |
+          if [ ! -f "gh-pages/.nojekyll" ]; then
+            touch gh-pages/.nojekyll
+          fi
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -29,6 +52,9 @@ jobs:
 
       - name: Install sponge
         run: sudo apt-get install moreutils
+
+      # TODO: merge master into this branch and run tests against what master will become, not just the isolated branch.
+      # NB: how would that affect tj-actions/changed-files?
 
       - name: Install PHP dependencies
         run: composer install --verbose
@@ -56,10 +82,43 @@ jobs:
 
       - name: Merge code coverage
         if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }}
-        run: vendor/bin/phpcov merge --clover tests/_output/clover.xml --html tests/_output/html --php coverage.cov tests/_output
+        run: |
+          vendor/bin/phpcov merge \
+            --clover tests/_output/clover.xml \
+            --php gh-pages/${{ github.sha }}/phpunit/coveragephp.cov \
+            --html gh-pages/${{ github.sha }}/phpunit/html/ \
+            tests/_output
+
+      - name: Update README badge
+        if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }}
+        run: vendor/bin/php-coverage-badger tests/_output/clover.xml .github/coverage.svg PHPUnit
+
+      - name: Copy badge for PR comment display
+        if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }}
+        run: cp .github/coverage.svg gh-pages/${{ github.sha }}/phpunit/coverage.svg
+
+      - name: Update root gh pages to redirect to commit for master
+        if: ${{ matrix.php == env.COVERAGE_PHP_VERSION && github.ref == 'refs/heads/master' }}
+        run: |
+          echo '<script>window.location.href="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ github.sha }}/phpunit/html/index.html";</script><a href="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ github.sha }}/phpunit/html/index.html">Coverage at ${{ github.sha }}</a>' > gh-pages/index.html
+
+      - name: Commit HTML code coverage + badge to gh-pages
+        if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }}
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          repository: gh-pages
+          branch: gh-pages
+          commit_message: "🤖 Commit code coverage to gh-pages"
+
+      - name: Commit code coverage badge to master/main
+        if: ${{ matrix.php == env.COVERAGE_PHP_VERSION && github.ref == 'refs/heads/master' }}
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          file_pattern: .github/coverage.svg
+          commit_message: "🤖 Commit code coverage badge"
 
       - name: Get changed files
-        if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }}
+        if: ${{ matrix.php == env.COVERAGE_PHP_VERSION && github.event_name == 'pull_request' }}
         id: changed-files
         uses: tj-actions/changed-files@v47
         with:
@@ -67,22 +126,32 @@ jobs:
           files: '**/**.php'
 
       - name: Generate markdown report
-        if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }} # We only need it added once
+        if: ${{ matrix.php == env.COVERAGE_PHP_VERSION && github.event_name == 'pull_request' }} # We only need it added once
         run: |
           vendor/bin/php-codecoverage-markdown \
-            --input-file coverage.cov \
+            --input-file gh-pages/${{ github.sha }}/phpunit/coveragephp.cov \
             --covered-files=${{ steps.changed-files.outputs.all_changed_files }} \
-            --base-url "https://github.com/${{ github.repository }}/blob/${{ github.event.pull_request.head.sha }}/%s" \
+            --base-url "https://github.com/${{ github.repository }}/blob/${{ github.sha }}/%s" \
             --output-file coverage-report.md
+
+      - name: Add to the PR message
+        if: ${{ matrix.php == env.COVERAGE_PHP_VERSION && github.event_name == 'pull_request' }}
+        run: |
+          echo "Project coverage: [![Project Code Coverage](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ github.sha }}/phpunit/coverage.svg)](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ github.sha }}/phpunit/html/index.html)" > coverage-comment-header.md
+          echo "$(cat coverage-comment-header.md)" > coverage-comment.md
+          echo "" >> coverage-comment.md
+          echo "" >> coverage-comment.md
+          echo "$(cat coverage-report.md)" >> coverage-comment.md
 
       - name: Comment on PR
         uses: mshick/add-pr-comment@v2
-        if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }} # We only need it added once
+        if: ${{ matrix.php == env.COVERAGE_PHP_VERSION && github.event_name == 'pull_request' }} # We only need it added once
         with:
           message-id: coverage-report
-          message-path: coverage-report.md
+          message-path: coverage-comment.md
         continue-on-error: true # When a PR is opened by a non-member, there are no write permissions (and no access to secrets), so this step will always fail.
 
       - name: Cleanup wp-env
         if: always()
         run: npx wp-env stop
+        continue-on-error: true
