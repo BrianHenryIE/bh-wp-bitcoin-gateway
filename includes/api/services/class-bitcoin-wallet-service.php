@@ -22,6 +22,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Wallet_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Results\Get_Wallet_For_Xpub_Service_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use InvalidArgumentException;
+use JsonException;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 
@@ -105,6 +106,7 @@ class Bitcoin_Wallet_Service implements LoggerAwareInterface {
 	 * @see API_Interface::generate_new_addresses()
 	 * @used-by CLI::generate_new_addresses()
 	 * @used-by Background_Jobs_Actions_Handler::generate_new_addresses()
+	 * @throws BH_WP_Bitcoin_Gateway_Exception
 	 */
 	public function generate_new_addresses(): array {
 
@@ -248,6 +250,7 @@ class Bitcoin_Wallet_Service implements LoggerAwareInterface {
 	 * @param Bitcoin_Address $address The Bitcoin address to get transaction IDs for.
 	 *
 	 * @return int[]|null Array of post IDs or null.
+	 * @throws JsonException
 	 */
 	public function get_transactions_wp_post_ids_for_address(
 		Bitcoin_Address $address,
