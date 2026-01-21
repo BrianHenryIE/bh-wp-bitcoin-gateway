@@ -16,6 +16,7 @@ jobs:
 
     permissions:
       pull-requests: write
+      contents: write
 
     strategy:
       matrix:
@@ -23,6 +24,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          ref: ${{ github.head_ref }}
+          # Value already defaults to true, but `persist-credentials` is required to push new commits to the repository.
+          persist-credentials: true
 
       - name: Checkout GitHub Pages branch for code coverage report
         if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }}
@@ -106,6 +111,12 @@ jobs:
           branch: gh-pages
           commit_message: "🤖 Commit code coverage to gh-pages"
 
+      - name: Commit code coverage badge to master/main
+        if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }}
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "🤖 Commit code coverage badge"
+
       - name: Get changed files
         if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }}
         id: changed-files
@@ -126,7 +137,7 @@ jobs:
       - name: Add to the PR message
         if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }}
         run: |
-          echo "[![Code Coverage ](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ github.sha }}/phpunit/coverage.svg)](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ github.head.sha }}/phpunit/html/index.html)" > coverage-comment-header.md
+          echo "[![Code Coverage ](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ github.sha }}/phpunit/coverage.svg)](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ github.sha }}/phpunit/html/index.html)" > coverage-comment-header.md
           echo "$(cat coverage-comment-header.md)" > coverage-comment.md
           echo "" >> coverage-comment.md # Add new line to coverage-comment.md
           echo "" >> coverage-comment.md # Add new line to coverage-comment.md
