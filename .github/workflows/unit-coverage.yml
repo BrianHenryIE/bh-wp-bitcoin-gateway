@@ -137,7 +137,7 @@ jobs:
       - name: Add to the PR message
         if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }}
         run: |
-          echo "[![Code Coverage ](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ github.sha }}/phpunit/coverage.svg)](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ github.sha }}/phpunit/html/index.html)" > coverage-comment-header.md
+          echo "Project coverage: [![Project Code Coverage](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ github.sha }}/phpunit/coverage.svg)](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ github.sha }}/phpunit/html/index.html)" > coverage-comment-header.md
           echo "$(cat coverage-comment-header.md)" > coverage-comment.md
           echo "" >> coverage-comment.md # Add new line to coverage-comment.md
           echo "" >> coverage-comment.md # Add new line to coverage-comment.md
