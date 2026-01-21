@@ -100,13 +100,17 @@ jobs:
           filename: tests/_output/clover.xml
           rounded-precision: "0"
 
-      - name: Update README badge
+      - name: Generate the badge SVG image
         if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }}
-        run: vendor/bin/php-coverage-badger tests/_output/clover.xml .github/coverage.svg PHPUnit
-
-      - name: Copy badge for PR comment display
-        if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }}
-        run: cp .github/coverage.svg gh-pages/${{ github.sha }}/phpunit/coverage.svg
+        uses: emibcn/badge-action@v1
+        id: badge
+        with:
+          label: 'PHPUnit'
+          status: ${{ steps.coverage.outputs.coverage }}
+          path: .github/coverage.svg
+          color: ${{ steps.coverage.outputs.coverage > 90 && 'green'
+            || steps.coverage.outputs.coverage > 50 && 'orange'
+            || 'red' }}
 
       - name: Update root gh pages to redirect to commit for master
         if: ${{ matrix.php == env.COVERAGE_PHP_VERSION && github.ref == 'refs/heads/master' }}

@@ -16,7 +16,6 @@
     "sort-packages": true,
     "allow-plugins": {
       "composer/installers": true,
-      "cweagans/composer-patches": true,
       "dealerdirect/phpcodesniffer-composer-installer": true,
       "johnpbloch/wordpress-core-installer": true,
       "phpstan/extension-installer": true
@@ -166,11 +165,9 @@
     "brianhenryie/color-logger": "*",
     "brianhenryie/php-codecoverage-markdown": "^0.1|^1",
     "brianhenryie/strauss": "^0.26.3",
-    "cweagans/composer-patches": "^2",
     "dealerdirect/phpcodesniffer-composer-installer": "^1.2",
     "impress-org/give-next-gen": "^0.2",
     "impress-org/givewp-example-gateway": "dev-master",
-    "jaschilz/php-coverage-badger": "^2",
     "johnpbloch/wordpress": "*",
     "lucatume/wp-browser": "^4.5.10",
     "php-stubs/woocommerce-stubs": "*",
@@ -204,11 +201,6 @@
     "wpackagist-theme/twentytwentyfive": "*"
   },
   "extra": {
-    "patches": {
-      "jaschilz/php-coverage-badger": {
-        "Allow customising the text": "https://github.com/JASchilz/PHPCoverageBadge/pull/1.patch"
-      }
-    },
     "strauss": {
       "namespace_prefix": "BrianHenryIE\\WP_Bitcoin_Gateway\\",
       "target_directory": "/vendor-prefixed/",
@@ -253,8 +245,7 @@
           ]
         }
       }
-    },
-    "enable-patching": "true"
+    }
   },
   "scripts": {
     "post-install-cmd": [
