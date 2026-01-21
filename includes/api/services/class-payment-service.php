@@ -161,7 +161,6 @@ class Payment_Service implements LoggerAwareInterface {
 		/**
 		 * Save an array of post_id:tx_id to the address object for quick reference, e.g. before/after checks.
 		 */
-		$this->bitcoin_transaction_repository->associate_transactions_post_ids_to_address( $tx_ids_by_post_ids, $address );
 		// TODO: refresh. make sure to record changes for the result object.
 		// $address = $this->bitcoin_address_repository->refresh($address).
 
