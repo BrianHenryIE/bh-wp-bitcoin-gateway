@@ -239,12 +239,12 @@ class WP_Posts_Query_Order_Unit_Test extends \Codeception\Test\Unit {
 	 * @covers ::to_query_array
 	 */
 	public function test_asc_and_desc_order_directions(): void {
-		$sut_asc          = new WP_Posts_Query_Order( order_direction: 'ASC' );
-		$query_array_asc  = $sut_asc->to_query_array();
+		$sut_asc         = new WP_Posts_Query_Order( order_direction: 'ASC' );
+		$query_array_asc = $sut_asc->to_query_array();
 		$this->assertEquals( 'ASC', $query_array_asc['order'] );
 
-		$sut_desc          = new WP_Posts_Query_Order( order_direction: 'DESC' );
-		$query_array_desc  = $sut_desc->to_query_array();
+		$sut_desc         = new WP_Posts_Query_Order( order_direction: 'DESC' );
+		$query_array_desc = $sut_desc->to_query_array();
 		$this->assertEquals( 'DESC', $query_array_desc['order'] );
 	}
 

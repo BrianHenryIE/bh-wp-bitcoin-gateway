@@ -30,7 +30,7 @@ readonly class WP_Posts_Query_Order {
 	 * @return array{order?:string,numberposts?:int,orderby?:string}
 	 */
 	public function to_query_array(): array {
-		$query_args = [];
+		$query_args = array();
 
 		if ( ! is_null( $this->count ) ) {
 			$query_args['numberposts'] = $this->count;
