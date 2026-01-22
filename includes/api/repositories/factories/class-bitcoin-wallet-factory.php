@@ -12,6 +12,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet_Status;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet_WP_Post_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\UnknownCurrencyException;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use InvalidArgumentException;
 use WP_Post;
@@ -27,6 +28,7 @@ class Bitcoin_Wallet_Factory {
 	 * @param int $post_id The WordPress post id this wallet is stored under.
 	 *
 	 * @throws InvalidArgumentException When the supplied post_id is not a post of this type.
+	 * @throws UnknownCurrencyException
 	 */
 	public function get_by_wp_post_id( int $post_id ): Bitcoin_Wallet {
 		$post = get_post( $post_id );
@@ -42,18 +44,16 @@ class Bitcoin_Wallet_Factory {
 	 *
 	 * @param WP_Post $post The WordPress post representing the wallet.
 	 * @return Bitcoin_Wallet The Bitcoin wallet object.
+	 * @throws UnknownCurrencyException
 	 */
 	public function get_by_wp_post( WP_Post $post ): Bitcoin_Wallet {
-
-		$bitcoin_wallet = new Bitcoin_Wallet(
+		return new Bitcoin_Wallet(
 			post_id: $post->ID,
 			xpub: $post->post_title,
 			status: Bitcoin_Wallet_Status::from( $post->post_status ),
 			address_index: $this->get_address_index( $post ),
 			balance: $this->get_balance( $post ),
 		);
-
-		return $bitcoin_wallet;
 	}
 
 	/**
@@ -63,6 +63,7 @@ class Bitcoin_Wallet_Factory {
 	 *
 	 * @param WP_Post $post The WordPress post representing the wallet.
 	 * @return Money|null The wallet balance or null if never checked.
+	 * @throws UnknownCurrencyException
 	 */
 	protected function get_balance( WP_Post $post ): ?Money {
 		$balance = get_post_meta( $post->ID, Bitcoin_Wallet_WP_Post_Interface::BALANCE_META_KEY, true );
