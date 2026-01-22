@@ -90,17 +90,19 @@ class Bitcoin_Address_Factory {
 	 * @return array<int,string>|null
 	 */
 	protected function get_tx_ids_from_post( WP_Post $post ): ?array {
-		/** @var array<int,string>|null|mixed $tx_ids_meta */
+		/** @var string|null|mixed $tx_ids_meta */
 		$tx_ids_meta = get_post_meta( $post->ID, Bitcoin_Address_WP_Post_Interface::TRANSACTIONS_META_KEY, true );
-		if ( is_array( $tx_ids_meta ) ) {
-			foreach ( $tx_ids_meta as $post_id => $tx_id ) {
+		/** @var array<int,string>|null|mixed $tx_ids_meta_array */
+		$tx_ids_meta_array = json_decode( $tx_ids_meta, true );
+		if ( is_array( $tx_ids_meta_array ) ) {
+			foreach ( $tx_ids_meta_array as $post_id => $tx_id ) {
 				if ( ! is_int( $post_id ) || ! is_string( $tx_id ) ) {
 					// TODO: Log error? Add a fail-hard debug flag?
 					return null;
 				}
 			}
-			/** @var array<int,string> $tx_ids_meta */
-			return $tx_ids_meta;
+			/** @var array<int,string> $tx_ids_meta_array */
+			return $tx_ids_meta_array;
 		}
 		return null;
 	}

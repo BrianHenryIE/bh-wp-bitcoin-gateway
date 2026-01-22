@@ -106,13 +106,12 @@ abstract readonly class WP_Post_Query_Abstract {
 			if ( $value instanceof \BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money ) {
 				return $value->jsonSerialize();
 			}
-				return $value;
+			if ( is_array( $value ) ) {
+				return json_encode( $value );
+			}
+			// TODO: if DateTimeInterface serialize as something legible, if we're using it.
+			return $value;
 		};
-
-		$wp_post_fields['meta_input'] = array_map(
-			$mapper,
-			$this->get_meta_input()
-		);
 
 		/** @var WpUpdatePostArray $wp_post_fields */
 		$wp_post_fields = array_map(
@@ -121,7 +120,14 @@ abstract readonly class WP_Post_Query_Abstract {
 			array_filter( $wp_post_fields )
 		);
 
-		// TODO: if DateTimeInterface serialize as something legible.
+		$wp_post_fields['meta_input'] = array_map(
+			$mapper,
+			$this->get_meta_input()
+		);
+
+		if ( empty( $wp_post_fields['meta_input'] ) ) {
+			unset( $wp_post_fields['meta_input'] );
+		}
 
 		return $wp_post_fields;
 	}
