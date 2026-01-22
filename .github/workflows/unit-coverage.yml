@@ -62,7 +62,7 @@ jobs:
 
       - name: Test MySQL connection3
         run: |
-          mysql -h 127.0.0.1 -port ${{ job.services.mysql.ports['33061'] }} -u root -ppassword -e "SELECT 1;"
+          mysql -h 127.0.0.1 -port 33061 -u root -ppassword -e "SELECT 1;"
           if [ 0 != $0 ]; then exit 1; fi
 
       - name: Update .env.testing config for GitHub Actions
