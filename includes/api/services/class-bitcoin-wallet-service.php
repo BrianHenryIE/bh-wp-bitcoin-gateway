@@ -108,7 +108,7 @@ class Bitcoin_Wallet_Service implements LoggerAwareInterface {
 	 * @see API_Interface::generate_new_addresses()
 	 * @used-by CLI::generate_new_addresses()
 	 * @used-by Background_Jobs_Actions_Handler::generate_new_addresses()
-	 * @throws BH_WP_Bitcoin_Gateway_Exception
+	 * @throws BH_WP_Bitcoin_Gateway_Exception When address derivation fails or addresses cannot be saved to the database.
 	 */
 	public function generate_new_addresses(): array {
 
