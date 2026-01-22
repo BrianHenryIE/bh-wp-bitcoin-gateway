@@ -80,7 +80,6 @@ class Bitcoin_Wallet_Repository extends WP_Post_Repository_Abstract {
 		return null;
 	}
 
-
 	/**
 	 * Given the id of the wp_posts row storing the bitcoin wallet, return the typed Bitcoin_Wallet object.
 	 *
