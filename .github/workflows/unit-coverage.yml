@@ -106,7 +106,7 @@ jobs:
         id: badge
         with:
           label: 'PHPUnit'
-          status: ${{ steps.coverage.outputs.coverage }}
+          status: ${{ format('{0}%', steps.coverage-percentage.outputs.coverage-rounded) }}
           path: .github/coverage.svg
           color: ${{ steps.coverage.outputs.coverage > 90 && 'green'
             || steps.coverage.outputs.coverage > 50 && 'orange'
