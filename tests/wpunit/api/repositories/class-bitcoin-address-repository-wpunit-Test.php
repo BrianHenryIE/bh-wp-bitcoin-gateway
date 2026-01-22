@@ -356,9 +356,11 @@ class Bitcoin_Address_Repository_WPUnit_Test extends WPTestCase {
 		$address1 = $this->sut->save_new( $wallet, 0, 'bc1qgetall1' );
 		$address2 = $this->sut->save_new( $wallet, 1, 'bc1qgetall2' );
 
+		$result = $this->sut->get_addresses();
+
 		// Verify addresses were created and can be retrieved individually.
-		$retrieved1 = $this->sut->get_by_post_id( $address1->get_post_id() );
-		$retrieved2 = $this->sut->get_by_post_id( $address2->get_post_id() );
+		$retrieved1 = $result[0];
+		$retrieved2 = $result[1];
 		$this->assertEquals( $address1->get_raw_address(), $retrieved1->get_raw_address() );
 		$this->assertEquals( $address2->get_raw_address(), $retrieved2->get_raw_address() );
 		$this->assertEquals( $wallet->get_post_id(), $retrieved1->get_wallet_parent_post_id() );

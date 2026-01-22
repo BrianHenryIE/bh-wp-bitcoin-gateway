@@ -178,7 +178,7 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 		return $this->get_addresses_query(
 			new Bitcoin_Address_Query(
 				wallet_wp_post_parent_id: $wallet?->get_post_id(),
-				status: $status, // TODO: Should this null-coalesce to 'all'?
+				status: $status ?? Bitcoin_Address_Status::ALL,
 			)
 		);
 	}
