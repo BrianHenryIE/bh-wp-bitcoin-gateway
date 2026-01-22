@@ -73,7 +73,7 @@ class Bitcoin_Wallet_Repository extends WP_Post_Repository_Abstract {
 
 		if ( is_numeric( $post_id ) ) {
 			$post_id = intval( $post_id );
-			wp_cache_add( $master_public_key, $post_id, Bitcoin_Wallet_WP_Post_Interface::POST_TYPE );
+			wp_cache_set( $master_public_key, $post_id, Bitcoin_Wallet_WP_Post_Interface::POST_TYPE );
 			return $post_id;
 		}
 

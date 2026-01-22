@@ -68,7 +68,7 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 
 		if ( is_numeric( $post_id ) ) {
 			$post_id = intval( $post_id );
-			wp_cache_add( $address, $post_id, Bitcoin_Address_WP_Post_Interface::POST_TYPE );
+			wp_cache_set( $address, $post_id, Bitcoin_Address_WP_Post_Interface::POST_TYPE );
 			return $post_id;
 		}
 
