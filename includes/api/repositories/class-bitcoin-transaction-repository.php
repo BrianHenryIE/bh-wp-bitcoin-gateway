@@ -75,7 +75,7 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 		}
 
 		if ( count( $wp_posts ) === 1 ) {
-			return array_first( $wp_posts );
+			return $wp_posts[0];
 		}
 
 		throw new RuntimeException( 'Unexpectedly found more than one post for txid: ' . $tx_id );

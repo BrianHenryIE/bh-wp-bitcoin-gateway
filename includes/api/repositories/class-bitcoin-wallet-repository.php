@@ -71,7 +71,7 @@ class Bitcoin_Wallet_Repository extends WP_Post_Repository_Abstract {
 		/**
 		 * phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
 		 *
-		 * @var int[] $post_ids
+		 * @var array<int|numeric-string> $post_ids
 		 */
 		$post_ids = $wpdb->get_col(
 			$wpdb->prepare(
@@ -86,7 +86,7 @@ class Bitcoin_Wallet_Repository extends WP_Post_Repository_Abstract {
 			case 0:
 				return null;
 			case 1:
-				$post_id = intval( array_first( $post_ids ) );
+				$post_id = intval( $post_ids[ array_key_first( $post_ids ) ] );
 				wp_cache_set( $master_public_key, $post_id, Bitcoin_Wallet_WP_Post_Interface::POST_TYPE );
 				return $post_id;
 			default:

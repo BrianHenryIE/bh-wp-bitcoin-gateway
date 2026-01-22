@@ -273,7 +273,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 			foreach ( $wallets as $wallet ) {
 				if ( count( $actual_unused_addresses_by_wallet[ $wallet->get_post_id() ] ) < $required_count ) {
 					$address_generation_result = $this->generate_new_addresses_for_wallet( $wallet, 1 );
-					$new_address               = array_first( $address_generation_result->new_addresses );
+					$new_address               = $address_generation_result->new_addresses[ array_key_first( $address_generation_result->new_addresses ) ];
 
 					$address_transactions_result = $this->payment_service->update_address_transactions( $new_address );
 					$this->wallet_service->update_address_transactions_posts( $new_address, $address_transactions_result->all_transactions );
