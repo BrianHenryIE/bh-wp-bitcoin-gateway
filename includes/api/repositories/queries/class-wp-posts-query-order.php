@@ -30,23 +30,18 @@ readonly class WP_Posts_Query_Order {
 	 * @return array{order?:string,numberposts?:int,orderby?:string}
 	 */
 	public function to_query_array(): array {
+		$query_args = [];
 
-		$as_array = (array) $this;
-
-		$map_from_to = array(
-			'order_by'        => 'orderby',
-			'order_direction' => 'order',
-			'count'           => 'numberposts',
-		);
-
-		foreach ( $map_from_to as $from => $to ) {
-			if ( isset( $as_array[ $from ] ) ) {
-				$as_array[ $to ] = $as_array[ $from ];
-				unset( $as_array[ $from ] );
-			}
+		if ( ! is_null( $this->count ) ) {
+			$query_args['numberposts'] = $this->count;
+		}
+		if ( ! is_null( $this->order_by ) ) {
+			$query_args['orderby'] = $this->order_by;
+		}
+		if ( ! is_null( $this->order_direction ) ) {
+			$query_args['order'] = $this->order_direction;
 		}
 
-		/** @var array{order?:string,numberposts?:int,orderby?:string} $as_array */
-		return array_filter( $as_array );
+		return $query_args;
 	}
 }
