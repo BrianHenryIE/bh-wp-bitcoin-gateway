@@ -77,6 +77,13 @@ jobs:
 #          mysql -h 127.0.0.1 --port ${{ job.services.mysql.ports['33066'] }} -u root -ppassword -e "CREATE DATABASE "$TEST_SITE_DB_NAME"; USE "$TEST_SITE_DB_NAME"; GRANT ALL PRIVILEGES ON "$TEST_SITE_DB_NAME".* TO '"$TEST_DB_USER"'@'%';";
 #          mysql -h 127.0.0.1 --port ${{ job.services.mysql.ports['33066'] }} -u root -ppassword -e "CREATE DATABASE "$TEST_DB_NAME"; USE "$TEST_DB_NAME"; GRANT ALL PRIVILEGES ON "$TEST_DB_NAME".* TO '"$TEST_DB_USER"'@'%';";
 
+#// mysql -u root -h 127.0.0.1 -P 33066 -ppasswasdord -e "SELECT 1;"
+
+      - name: Test MySQL connection
+        run: |
+          mysql -u root -h 127.0.0.1 -P ${{ job.services.mysql.ports['33066'] }} -ppassword -e "SELECT 1;"
+          if [ 1 == $0 ]; then exit 1; fi
+
       - name: Install sponge
         run: sudo apt-get install moreutils
 
@@ -215,7 +222,7 @@ jobs:
           message-path: coverage-comment.md
         continue-on-error: true # When a PR is opened by a non-member, there are no write permissions (and no access to secrets), so this step will always fail.
 
-      - name: Cleanup wp-env
-        if: always()
-        run: npx wp-env stop
-        continue-on-error: true
+#      - name: Cleanup wp-env
+#        if: always()
+#        run: npx wp-env stop
+#        continue-on-error: true
