@@ -10,6 +10,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Blockchain\Adapters;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_VOut;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Exchange_Rate_Service;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\BtcRpcExplorer\Model\TXSummary;
 use BrianHenryIE\WP_Bitcoin_Gateway\BtcRpcExplorer\Model\VOut;
@@ -51,7 +52,7 @@ class Btc_Rpc_Explorer_Api_Transaction_Adapter {
 	public function get_v_out( TXSummary $transaction ): array {
 		return array_map(
 			fn( VOut $v_out ) => new Transaction_VOut(
-				value: Money::of( $v_out->value / 100000000, 'BTC' ),
+				value: Money::of( $v_out->value / Exchange_Rate_Service::SATOSHI_RATE, 'BTC' ),
 				scriptpubkey_address: $v_out->scriptPubKey->address,
 			),
 			$transaction->vOut

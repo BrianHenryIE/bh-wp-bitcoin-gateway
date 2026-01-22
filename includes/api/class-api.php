@@ -231,6 +231,8 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 
 			// TODO: handle rate limits.
 			$address_transactions_result = $this->payment_service->update_address_transactions( $address );
+			$this->wallet_service->update_address_transactions_posts( $address, $address_transactions_result->all_transactions );
+
 			if ( $address_transactions_result->is_unused() ) {
 				$actual_unused_addresses_by_wallet[ $address_wallet_id ][] = $address;
 			} else {
@@ -270,9 +272,11 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 		while ( ! $all_wallets_have_enough_addresses_fn( $actual_unused_addresses_by_wallet, $required_count ) ) {
 			foreach ( $wallets as $wallet ) {
 				if ( count( $actual_unused_addresses_by_wallet[ $wallet->get_post_id() ] ) < $required_count ) {
-					$address_generation_result   = $this->generate_new_addresses_for_wallet( $wallet, 1 );
-					$new_address                 = array_first( $address_generation_result->new_addresses );
+					$address_generation_result = $this->generate_new_addresses_for_wallet( $wallet, 1 );
+					$new_address               = array_first( $address_generation_result->new_addresses );
+
 					$address_transactions_result = $this->payment_service->update_address_transactions( $new_address );
+					$this->wallet_service->update_address_transactions_posts( $new_address, $address_transactions_result->all_transactions );
 
 					$is_used_status = $address_transactions_result->is_unused() ? Bitcoin_Address_Status::UNUSED : Bitcoin_Address_Status::USED;
 
@@ -378,6 +382,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 		try {
 			foreach ( $addresses as $bitcoin_address ) {
 				$update_result = $this->payment_service->update_address_transactions( $bitcoin_address );
+				$this->wallet_service->update_address_transactions_posts( $bitcoin_address, $update_result->all_transactions );
 
 				if ( $bitcoin_address->get_status() === Bitcoin_Address_Status::UNKNOWN ) {
 					$this->wallet_service->set_payment_address_status(

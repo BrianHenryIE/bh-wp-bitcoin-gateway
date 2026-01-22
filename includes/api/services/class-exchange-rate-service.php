@@ -37,6 +37,11 @@ use Psr\Log\LoggerInterface;
 class Exchange_Rate_Service implements LoggerAwareInterface {
 	use LoggerAwareTrait;
 
+	/**
+	 * 1 BTC = 100_000_000 (10^8) Sats (Satoshis).
+	 */
+	public const int SATOSHI_RATE = 100_000_000;
+
 	protected const string TRANSIENT_BASE = 'bh_wp_bitcoin_gateway_exchange_rate_';
 
 	/**

@@ -100,9 +100,17 @@ jobs:
           filename: tests/_output/clover.xml
           rounded-precision: "0"
 
-      - name: Update README badge
+      - name: Generate the badge SVG image
         if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }}
-        run: vendor/bin/php-coverage-badger tests/_output/clover.xml .github/coverage.svg PHPUnit
+        uses: emibcn/badge-action@v1
+        id: badge
+        with:
+          label: 'PHPUnit'
+          status: ${{ format('{0}%', steps.coverage-percentage.outputs.coverage-rounded) }}
+          path: .github/coverage.svg
+          color: ${{ steps.coverage.outputs.coverage > 90 && 'green'
+            || steps.coverage.outputs.coverage > 50 && 'orange'
+            || 'red' }}
 
       - name: Copy badge for PR comment display
         if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }}
@@ -142,14 +150,14 @@ jobs:
           vendor/bin/php-codecoverage-markdown \
             --input-file gh-pages/${{ github.sha }}/phpunit/coveragephp.cov \
             --covered-files=${{ steps.changed-files.outputs.all_changed_files }} \
-            --base-url "https://github.com/${{ github.repository }}/blob/${{ github.sha }}/%s" \
+            --base-url ${{ format('https://{0}.github.io/{1}/{2}/phpunit/html/', github.repository_owner, github.event.repository.name, github.sha) }} \
             --output-file coverage-report.md
 
       - name: Add to the PR message
         if: ${{ matrix.php == env.COVERAGE_PHP_VERSION && github.event_name == 'pull_request' }}
         run: |
           echo "[![Project Code Coverage](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ github.sha }}/phpunit/coverage.svg)](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ github.sha }}/phpunit/html/index.html)" > coverage-comment-header.md
-          echo "${{ format('[project coverage report {0}%](https://{1}.github.io/{2}/{3}/phpunit/html/) @ {4}', steps.coverage-percentage.outputs.coverage-rounded, github.repository_owner, github.event.repository.name, github.sha, steps.coverage-percentage.outputs.coverage-rounded) }}" >> coverage-comment-header.md
+          echo "${{ format('[project coverage report {0}%](https://{1}.github.io/{2}/{3}/phpunit/html/) @ {4}', steps.coverage-percentage.outputs.coverage-rounded, github.repository_owner, github.event.repository.name, github.sha, github.sha) }}" >> coverage-comment-header.md
           echo "$(cat coverage-comment-header.md)" > coverage-comment.md
           echo "" >> coverage-comment.md
           echo "" >> coverage-comment.md

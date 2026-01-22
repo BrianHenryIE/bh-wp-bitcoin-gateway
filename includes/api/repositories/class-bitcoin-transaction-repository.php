@@ -12,8 +12,6 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Queries\Bitcoin_Address_Query;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address_WP_Post_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Bitcoin_Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories\Bitcoin_Transaction_Factory;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Bitcoin_Transaction_WP_Post_Interface;
@@ -89,13 +87,15 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 	 *
 	 * TODO: How to indicate if this was newly saved or already existed.
 	 *
-	 * @param Transaction $transaction The blockchain transaction object to save or retrieve from WordPress posts.
+	 * @param Transaction       $transaction The blockchain transaction object to save or retrieve from WordPress posts.
+	 * @param array<int,string> $bitcoin_addresses_indexed_by_post_ids Bitcoin addresses as post_id:bitcoin_address pairs.
 	 *
 	 * @throws RuntimeException When the transaction already exists in the database with a different post ID.
 	 * @throws BH_WP_Bitcoin_Gateway_Exception When WordPress fails to create the new transaction post.
 	 */
 	protected function save_post(
 		Transaction $transaction,
+		array $bitcoin_addresses_indexed_by_post_ids,
 	): WP_Post {
 		$transaction_post = $this->get_post_by_transaction_id( $transaction->get_txid() );
 		// What if the transaction already exists? Potentially it is from a chain that has been discarded. When else might it be updated?
@@ -106,6 +106,7 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 				transaction_object: $transaction,
 				block_height: $transaction->get_block_height(),
 				block_datetime: $transaction->get_block_time(),
+				updated_transaction_meta_bitcoin_address_post_ids: $bitcoin_addresses_indexed_by_post_ids,
 			);
 
 			/** @var WpUpdatePostArray $args */
@@ -131,7 +132,6 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 	 * @param Bitcoin_Address $address The Bitcoin address that received funds in this transaction, used to create bidirectional links in post meta.
 	 *
 	 * @throws BH_WP_Bitcoin_Gateway_Exception When WordPress fails to create the transaction post or the address cannot be linked.
-	 * @throws JsonException When JSON encoding/decoding of transaction data or address associations fails.
 	 * @throws RuntimeException When multiple posts are found for the same transaction ID during the save operation.
 	 */
 	public function save_new(
@@ -139,77 +139,15 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 		Bitcoin_Address $address,
 	): Bitcoin_Transaction {
 
-		$transaction_post = $this->save_post( $transaction );
-
-		$this->associate_transaction_post_id_and_address( array( $transaction_post->ID => $transaction->get_txid() ), $address );
+		$transaction_post = $this->save_post(
+			transaction: $transaction,
+			bitcoin_addresses_indexed_by_post_ids: array(
+				$address->get_post_id() => $address->get_raw_address(),
+			)
+		);
 
 		// Using wp_post->ID here so it refreshes rather than just maps.
 		return $this->bitcoin_transaction_factory->get_by_wp_post_id( $transaction_post->ID );
-	}
-
-	/**
-	 * Associate a transaction with a Bitcoin payment address in their respective post_metas.
-	 *
-	 * TODO: feels this should move into a service and keep this class dumber.
-	 *
-	 * @param array<int,string> $transaction_post_id_and_txid Transaction post_id:tx_id pairs.
-	 * @param Bitcoin_Address   $address The Bitcoin address to associate with.
-	 */
-	protected function associate_transaction_post_id_and_address(
-		array $transaction_post_id_and_txid,
-		Bitcoin_Address $address,
-	): void {
-		$this->associate_transactions_post_ids_to_address( $transaction_post_id_and_txid, $address );
-		$this->associate_bitcoin_address_post_ids_to_transaction( $address, $transaction_post_id_and_txid );
-	}
-
-	/**
-	 * Set the post meta on an address to link the transaction.
-	 *
-	 * Conversely, elsewhere, the address post_id will be linked on the transaction.
-	 *
-	 * @param array<int, string> $transactions_post_ids Key/value: <post_id, transaction_id>.
-	 * @param Bitcoin_Address    $address The Bitcoin address to link transactions to.
-	 *
-	 * @return void TODO: return something meaningful.
-	 */
-	public function associate_transactions_post_ids_to_address(
-		array $transactions_post_ids,
-		Bitcoin_Address $address,
-	): void {
-
-		$address_post_id = $address->get_post_id();
-
-		/**
-		 * @see Bitcoin_Address::get_tx_ids() Should we use this?!
-		 * @var array<int,string> $existing_meta_transactions_post_ids
-		 */
-		$existing_meta_transactions_post_ids = get_post_meta( $address_post_id, Bitcoin_Address_WP_Post_Interface::TRANSACTIONS_META_KEY, true );
-
-		if ( empty( $existing_meta_transactions_post_ids ) ) {
-			$existing_meta_transactions_post_ids = array();
-		}
-
-		$updated_transactions_post_ids = $existing_meta_transactions_post_ids;
-		$new_transactions_post_ids     = array();
-
-		foreach ( $transactions_post_ids as $post_id => $transaction_id ) {
-			if ( ! isset( $existing_meta_transactions_post_ids[ $post_id ] ) ) {
-				$updated_transactions_post_ids[ $post_id ] = $transaction_id;
-				$new_transactions_post_ids[ $post_id ]     = $transaction_id;
-			}
-		}
-
-		if ( empty( $updated_transactions_post_ids ) ) {
-			return;
-		}
-
-		$this->update(
-			model: $address,
-			query:new Bitcoin_Address_Query(
-				updated_transactions_post_ids: $updated_transactions_post_ids,
-			)
-		);
 	}
 
 	/**
@@ -259,7 +197,6 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 						updated_transaction_meta_bitcoin_address_post_ids: $updated_transaction_meta_bitcoin_address_post_ids
 					)
 				);
-
 			}
 		}
 	}

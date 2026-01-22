@@ -12,6 +12,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_VIn;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_VOut;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Exchange_Rate_Service;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\UnknownCurrencyException;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use DateTimeImmutable;
@@ -55,7 +56,7 @@ class BlockStream_Info_API_Transaction_Adapter {
 			scriptsig: $v_in['scriptsig'],
 			address: $v_in['prevout']['scriptpubkey_address'],
 			prevout_scriptpubkey: $v_in['prevout']['scriptpubkey'],
-			value: Money::of( $v_in['prevout']['value'] / 100000000, 'BTC' ),
+			value: Money::of( $v_in['prevout']['value'] / Exchange_Rate_Service::SATOSHI_RATE, 'BTC' ),
 			prev_out_n: $v_in['vout'],
 		);
 	}
@@ -69,7 +70,7 @@ class BlockStream_Info_API_Transaction_Adapter {
 	 */
 	protected function map_v_out( array $v_out ): Transaction_VOut {
 		return new Transaction_VOut(
-			value: Money::of( $v_out['value'] / 100000000, 'BTC' ),
+			value: Money::of( $v_out['value'] / Exchange_Rate_Service::SATOSHI_RATE, 'BTC' ),
 			scriptpubkey_address: $v_out['scriptpubkey_address'],
 		);
 	}

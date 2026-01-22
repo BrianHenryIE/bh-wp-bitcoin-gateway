@@ -436,7 +436,7 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 			v_in: array(),
 			v_out: array(
 				new Transaction_VOut(
-					value: Money::of( 100000000, 'BTC' ),
+					value: Money::of( 1, 'BTC' ),
 					scriptpubkey_address: $raw_address,
 				),
 			),
@@ -473,7 +473,7 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 			v_in: array(),
 			v_out: array(
 				new Transaction_VOut(
-					value: Money::of( 50000000, 'BTC' ),
+					value: Money::of( 0.5, 'BTC' ),
 					scriptpubkey_address: $raw_address,
 				),
 			),
@@ -562,7 +562,7 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 			v_in: array(),
 			v_out: array(
 				new Transaction_VOut(
-					value: Money::of( 100000000, 'BTC' ),
+					value: Money::of( 1, 'BTC' ),
 					scriptpubkey_address: $raw_address,
 				),
 			),
@@ -577,7 +577,7 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 			v_in: array(),
 			v_out: array(
 				new Transaction_VOut(
-					value: Money::of( 50000000, 'BTC' ),
+					value: Money::of( 0.5, 'BTC' ),
 					scriptpubkey_address: $raw_address,
 				),
 			),
@@ -592,7 +592,7 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 			v_in: array(),
 			v_out: array(
 				new Transaction_VOut(
-					value: Money::of( 25000000, 'BTC' ),
+					value: Money::of( 0.025, 'BTC' ),
 					scriptpubkey_address: $raw_address,
 				),
 			),
@@ -629,7 +629,7 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 			v_in: array(),
 			v_out: array(
 				new Transaction_VOut(
-					value: Money::of( 100000000, 'BTC' ),
+					value: Money::of( 10, 'BTC' ),
 					scriptpubkey_address: $raw_address,
 				),
 			),
@@ -644,7 +644,7 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 			v_in: array(),
 			v_out: array(
 				new Transaction_VOut(
-					value: Money::of( 50000000, 'BTC' ),
+					value: Money::of( 50, 'BTC' ),
 					scriptpubkey_address: $other_address,
 				),
 			),
@@ -656,7 +656,7 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 		$balance = $sut->get_address_confirmed_balance( $raw_address, $blockchain_height, $required_confirmations, $transactions );
 
 		// Should only count transaction1.
-		$this->assertEquals( '1.00000000', $balance->getAmount()->__toString() );
+		$this->assertEquals( '10.00000000', $balance->getAmount()->__toString() );
 		$this->assertEquals( 'BTC', $balance->getCurrency()->getCurrencyCode() );
 	}
 }

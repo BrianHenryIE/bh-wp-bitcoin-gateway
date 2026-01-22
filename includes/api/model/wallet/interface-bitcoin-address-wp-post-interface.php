@@ -7,6 +7,10 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet;
 
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Bitcoin_Transaction;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Bitcoin_Wallet_Service;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Payment_Service;
+
 interface Bitcoin_Address_WP_Post_Interface {
 
 	const string POST_TYPE                                = 'bh-bitcoin-address';
@@ -15,7 +19,10 @@ interface Bitcoin_Address_WP_Post_Interface {
 	/**
 	 * Saved in meta as array<int, string> <wp_post_id, tx_id>.
 	 *
-	 * @see Bitcoin_Transaction_Repository::associate_transactions_post_ids_to_address()
+	 * @see Bitcoin_Transaction::get_txid()
+	 * @see Bitcoin_Address::get_tx_ids()
+	 * @see Bitcoin_Wallet_Service::update_address_transactions_posts()
+	 * @see Payment_Service::update_address_transactions()
 	 */
 	const string TRANSACTIONS_META_KEY  = 'address_transactions';
 	const string BALANCE_META_KEY       = 'balance';

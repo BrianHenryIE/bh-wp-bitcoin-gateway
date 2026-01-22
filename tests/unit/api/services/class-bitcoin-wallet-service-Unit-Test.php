@@ -7,6 +7,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\Generate_Address_API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Address_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Wallet_Repository;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_Interface;
 use Codeception\Stub\Expected;
 use WP_Mock;
 
@@ -490,5 +491,344 @@ class Bitcoin_Wallet_Service_Unit_Test extends \Codeception\Test\Unit {
 		$this->assertCount( 1, $result->new_addresses );
 		$this->assertEquals( 0, $result->get_highest_address_index() );
 		$this->assertEquals( 'bc1qaddress0', $result->new_addresses[0]->get_raw_address() );
+	}
+
+	/**
+	 * Test updating address with first transactions when address has never been checked (get_tx_ids() returns null).
+	 *
+	 * @covers ::update_address_transactions_posts
+	 */
+	public function test_update_address_transactions_posts_first_time_with_transactions(): void {
+		$address = $this->make(
+			Bitcoin_Address::class,
+			array(
+				'get_tx_ids' => Expected::exactly( 2, null ),
+			)
+		);
+
+		$transaction1 = $this->makeEmpty(
+			Transaction_Interface::class,
+			array(
+				'get_txid' => Expected::once( 'txid123' ),
+			)
+		);
+
+		$transaction2 = $this->makeEmpty(
+			Transaction_Interface::class,
+			array(
+				'get_txid' => Expected::once( 'txid456' ),
+			)
+		);
+
+		$all_transactions = array(
+			101 => $transaction1,
+			102 => $transaction2,
+		);
+
+		$bitcoin_address_repository = $this->makeEmpty(
+			Bitcoin_Address_Repository::class,
+			array(
+				'set_transactions_post_ids_to_address' => Expected::once(
+					function ( Bitcoin_Address $addr, array $tx_ids ): void {
+						$this->assertEquals(
+							array(
+								101 => 'txid123',
+								102 => 'txid456',
+							),
+							$tx_ids
+						);
+					}
+				),
+			)
+		);
+
+		$sut = $this->get_sut( bitcoin_address_repository: $bitcoin_address_repository );
+
+		$sut->update_address_transactions_posts( $address, $all_transactions );
+	}
+
+	/**
+	 * Test updating address with no transactions when address has never been checked (get_tx_ids() returns null).
+	 * Should save an empty array to indicate the address has been checked.
+	 *
+	 * @covers ::update_address_transactions_posts
+	 */
+	public function test_update_address_transactions_posts_first_time_no_transactions(): void {
+		$address = $this->make(
+			Bitcoin_Address::class,
+			array(
+				'get_tx_ids' => Expected::exactly( 2, null ),
+			)
+		);
+
+		$all_transactions = array();
+
+		$bitcoin_address_repository = $this->makeEmpty(
+			Bitcoin_Address_Repository::class,
+			array(
+				'set_transactions_post_ids_to_address' => Expected::once(
+					function ( Bitcoin_Address $addr, array $tx_ids ): void {
+						$this->assertEquals( array(), $tx_ids );
+					}
+				),
+			)
+		);
+
+		$sut = $this->get_sut( bitcoin_address_repository: $bitcoin_address_repository );
+
+		$sut->update_address_transactions_posts( $address, $all_transactions );
+	}
+
+	/**
+	 * Test adding new transactions to an address that has existing transactions.
+	 *
+	 * @covers ::update_address_transactions_posts
+	 */
+	public function test_update_address_transactions_posts_add_new_to_existing(): void {
+		$address = $this->make(
+			Bitcoin_Address::class,
+			array(
+				'get_tx_ids' => Expected::exactly(
+					2,
+					array(
+						100 => 'txid_existing',
+					)
+				),
+			)
+		);
+
+		$transaction_new = $this->makeEmpty(
+			Transaction_Interface::class,
+			array(
+				'get_txid' => Expected::once( 'txid_new' ),
+			)
+		);
+
+		$all_transactions = array(
+			101 => $transaction_new,
+		);
+
+		$bitcoin_address_repository = $this->makeEmpty(
+			Bitcoin_Address_Repository::class,
+			array(
+				'set_transactions_post_ids_to_address' => Expected::once(
+					function ( Bitcoin_Address $addr, array $tx_ids ): void {
+						$this->assertEquals(
+							array(
+								100 => 'txid_existing',
+								101 => 'txid_new',
+							),
+							$tx_ids
+						);
+					}
+				),
+			)
+		);
+
+		$sut = $this->get_sut( bitcoin_address_repository: $bitcoin_address_repository );
+
+		$sut->update_address_transactions_posts( $address, $all_transactions );
+	}
+
+	/**
+	 * Test when all transactions already exist - no new transactions to add.
+	 *
+	 * @covers ::update_address_transactions_posts
+	 */
+	public function test_update_address_transactions_posts_no_new_transactions(): void {
+		$address = $this->make(
+			Bitcoin_Address::class,
+			array(
+				'get_tx_ids' => Expected::exactly(
+					2,
+					array(
+						100 => 'txid_existing',
+					)
+				),
+			)
+		);
+
+		$transaction_existing = $this->makeEmpty(
+			Transaction_Interface::class,
+			array(
+				'get_txid' => Expected::never(),
+			)
+		);
+
+		// Pass the same transaction that already exists.
+		$all_transactions = array(
+			100 => $transaction_existing,
+		);
+
+		$bitcoin_address_repository = $this->makeEmpty(
+			Bitcoin_Address_Repository::class,
+			array(
+				'set_transactions_post_ids_to_address' => Expected::never(),
+			)
+		);
+
+		$sut = $this->get_sut( bitcoin_address_repository: $bitcoin_address_repository );
+
+		$sut->update_address_transactions_posts( $address, $all_transactions );
+	}
+
+	/**
+	 * Test edge case: when get_tx_ids() is not null (address has been checked) but returns empty array,
+	 * and there are still no transactions to add, should skip the save operation.
+	 *
+	 * @covers ::update_address_transactions_posts
+	 */
+	public function test_update_address_transactions_posts_skip_save_when_already_checked_and_still_empty(): void {
+		$address = $this->make(
+			Bitcoin_Address::class,
+			array(
+				'get_tx_ids' => Expected::exactly( 2, array() ),
+			)
+		);
+
+		$all_transactions = array();
+
+		$bitcoin_address_repository = $this->makeEmpty(
+			Bitcoin_Address_Repository::class,
+			array(
+				'set_transactions_post_ids_to_address' => Expected::never(),
+			)
+		);
+
+		$sut = $this->get_sut( bitcoin_address_repository: $bitcoin_address_repository );
+
+		$sut->update_address_transactions_posts( $address, $all_transactions );
+	}
+
+	/**
+	 * Test adding multiple new transactions to an address with existing transactions.
+	 *
+	 * @covers ::update_address_transactions_posts
+	 */
+	public function test_update_address_transactions_posts_multiple_new_transactions(): void {
+		$address = $this->make(
+			Bitcoin_Address::class,
+			array(
+				'get_tx_ids' => Expected::exactly(
+					2,
+					array(
+						100 => 'txid_existing1',
+						101 => 'txid_existing2',
+					)
+				),
+			)
+		);
+
+		$transaction1 = $this->makeEmpty(
+			Transaction_Interface::class,
+			array(
+				'get_txid' => Expected::once( 'txid_new1' ),
+			)
+		);
+
+		$transaction2 = $this->makeEmpty(
+			Transaction_Interface::class,
+			array(
+				'get_txid' => Expected::once( 'txid_new2' ),
+			)
+		);
+
+		$transaction3 = $this->makeEmpty(
+			Transaction_Interface::class,
+			array(
+				'get_txid' => Expected::once( 'txid_new3' ),
+			)
+		);
+
+		$all_transactions = array(
+			102 => $transaction1,
+			103 => $transaction2,
+			104 => $transaction3,
+		);
+
+		$bitcoin_address_repository = $this->makeEmpty(
+			Bitcoin_Address_Repository::class,
+			array(
+				'set_transactions_post_ids_to_address' => Expected::once(
+					function ( Bitcoin_Address $addr, array $tx_ids ): void {
+						$this->assertEquals(
+							array(
+								100 => 'txid_existing1',
+								101 => 'txid_existing2',
+								102 => 'txid_new1',
+								103 => 'txid_new2',
+								104 => 'txid_new3',
+							),
+							$tx_ids
+						);
+					}
+				),
+			)
+		);
+
+		$sut = $this->get_sut( bitcoin_address_repository: $bitcoin_address_repository );
+
+		$sut->update_address_transactions_posts( $address, $all_transactions );
+	}
+
+	/**
+	 * Test mixed scenario: some existing transactions, some new ones.
+	 *
+	 * @covers ::update_address_transactions_posts
+	 */
+	public function test_update_address_transactions_posts_mixed_existing_and_new(): void {
+		$address = $this->make(
+			Bitcoin_Address::class,
+			array(
+				'get_tx_ids' => Expected::exactly(
+					2,
+					array(
+						100 => 'txid_existing',
+						101 => 'txid_existing2',
+					)
+				),
+			)
+		);
+
+		$transaction_existing = $this->makeEmpty(
+			Transaction_Interface::class,
+			array(
+				'get_txid' => Expected::never(),
+			)
+		);
+
+		$transaction_new = $this->makeEmpty(
+			Transaction_Interface::class,
+			array(
+				'get_txid' => Expected::once( 'txid_new' ),
+			)
+		);
+
+		$all_transactions = array(
+			100 => $transaction_existing, // Already exists.
+			102 => $transaction_new,       // New transaction.
+		);
+
+		$bitcoin_address_repository = $this->makeEmpty(
+			Bitcoin_Address_Repository::class,
+			array(
+				'set_transactions_post_ids_to_address' => Expected::once(
+					function ( Bitcoin_Address $addr, array $tx_ids ): void {
+						$this->assertEquals(
+							array(
+								100 => 'txid_existing',
+								101 => 'txid_existing2',
+								102 => 'txid_new',
+							),
+							$tx_ids
+						);
+					}
+				),
+			)
+		);
+
+		$sut = $this->get_sut( bitcoin_address_repository: $bitcoin_address_repository );
+
+		$sut->update_address_transactions_posts( $address, $all_transactions );
 	}
 }

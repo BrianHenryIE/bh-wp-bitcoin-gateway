@@ -1,6 +1,6 @@
 <?php
 /**
- * Save xpub as Wallet object, create new addresses for wallets.
+ * Save xpub as Wallet object, create new payment addresses for wallets, associate transactions with payment address.
  *
  * @package brianhenryie/bh-wp-bitcoin-gateway
  */
@@ -8,6 +8,7 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Services;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Handler;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address_Status;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address_WP_Post_Interface;
@@ -21,6 +22,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Wallet_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Results\Get_Wallet_For_Xpub_Service_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use InvalidArgumentException;
+use JsonException;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 
@@ -104,6 +106,7 @@ class Bitcoin_Wallet_Service implements LoggerAwareInterface {
 	 * @see API_Interface::generate_new_addresses()
 	 * @used-by CLI::generate_new_addresses()
 	 * @used-by Background_Jobs_Actions_Handler::generate_new_addresses()
+	 * @throws BH_WP_Bitcoin_Gateway_Exception
 	 */
 	public function generate_new_addresses(): array {
 
@@ -247,6 +250,7 @@ class Bitcoin_Wallet_Service implements LoggerAwareInterface {
 	 * @param Bitcoin_Address $address The Bitcoin address to get transaction IDs for.
 	 *
 	 * @return int[]|null Array of post IDs or null.
+	 * @throws JsonException
 	 */
 	public function get_transactions_wp_post_ids_for_address(
 		Bitcoin_Address $address,
@@ -314,5 +318,41 @@ class Bitcoin_Wallet_Service implements LoggerAwareInterface {
 			throw new BH_WP_Bitcoin_Gateway_Exception( 'No saved payment address found for: ' . $assigned_payment_address );
 		}
 		return $this->bitcoin_address_repository->get_by_post_id( $post_id );
+	}
+
+	/**
+	 * Update a payment addresses to link to its related transactions.
+	 *
+	 * @see Bitcoin_Address::get_tx_ids()
+	 *
+	 * @param Bitcoin_Address                   $address The Bitcoin address the transactions relate to.
+	 * @param array<int, Transaction_Interface> $all_transactions The transactions, indexed by their post_ids.
+	 */
+	public function update_address_transactions_posts( Bitcoin_Address $address, array $all_transactions ): void {
+		/**
+		 * @var array<int,string> $existing_meta_transactions_post_ids
+		 */
+		$existing_meta_transactions_post_ids = $address->get_tx_ids();
+
+		if ( empty( $existing_meta_transactions_post_ids ) ) {
+			$existing_meta_transactions_post_ids = array();
+		}
+
+		$new_transactions_post_ids = array();
+
+		foreach ( $all_transactions as $post_id => $transaction ) {
+			if ( ! isset( $existing_meta_transactions_post_ids[ $post_id ] ) ) {
+				$new_transactions_post_ids[ $post_id ] = $transaction->get_txid();
+			}
+		}
+
+		$updated_transactions_post_ids = $existing_meta_transactions_post_ids + $new_transactions_post_ids;
+
+		// We do want to set an empty array once to indicate we have checked the address for transactions, but if there are still none, skip the save operation.
+		if ( ! is_null( $address->get_tx_ids() ) && empty( $new_transactions_post_ids ) ) {
+			return;
+		}
+
+		$this->bitcoin_address_repository->set_transactions_post_ids_to_address( $address, $updated_transactions_post_ids );
 	}
 }

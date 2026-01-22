@@ -147,9 +147,15 @@ class Payment_Service implements LoggerAwareInterface {
 		/** @var array<int, string> $tx_ids_by_post_ids */
 		$tx_ids_by_post_ids = array();
 
+		// $existing_transactions = $this->get_saved_transactions( array_keys( $address->get_tx_ids() ) ?? array() );
+
 		$updated_transactions = $this->blockchain_api->get_transactions_received( btc_address: $address->get_raw_address() );
 
 		foreach ( $updated_transactions as $transaction ) {
+
+			// $this->bitcoin_transaction_repository->get_by_transaction_id()
+
+			// TODO: Don't overwrite an existing one. associate_bitcoin_address_post_ids_to_transaction().
 			$saved_transaction                                       = $this->bitcoin_transaction_repository->save_new(
 				$transaction,
 				$address
@@ -161,7 +167,6 @@ class Payment_Service implements LoggerAwareInterface {
 		/**
 		 * Save an array of post_id:tx_id to the address object for quick reference, e.g. before/after checks.
 		 */
-		$this->bitcoin_transaction_repository->associate_transactions_post_ids_to_address( $tx_ids_by_post_ids, $address );
 		// TODO: refresh. make sure to record changes for the result object.
 		// $address = $this->bitcoin_address_repository->refresh($address).
 
@@ -214,10 +219,11 @@ class Payment_Service implements LoggerAwareInterface {
 	 *
 	 * @param string                $to_address The Bitcoin address to calculate value for.
 	 * @param Transaction_Interface $transaction The transaction to calculate value from.
+	 * @throws UnknownCurrencyException
 	 */
 	protected function get_value_for_transaction( string $to_address, Transaction_Interface $transaction ): Money {
 
-		$value_including_fee = array_reduce(
+		return array_reduce(
 			$transaction->get_v_out(),
 			function ( Money $carry, Transaction_VOut $out ) use ( $to_address ) {
 				if ( $to_address === $out->scriptpubkey_address ) {
@@ -227,8 +233,6 @@ class Payment_Service implements LoggerAwareInterface {
 			},
 			Money::of( 0, 'BTC' )
 		);
-
-		return $value_including_fee->dividedBy( 100_000_000 );
 	}
 
 	/**
