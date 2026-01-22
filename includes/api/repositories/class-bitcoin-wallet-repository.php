@@ -55,6 +55,8 @@ class Bitcoin_Wallet_Repository extends WP_Post_Repository_Abstract {
 	 * @see wordpress/wp-admin/includes/schema.php:184
 	 *
 	 * @param string $master_public_key The Wallet address we may have saved.
+	 *
+	 * @throws BH_WP_Bitcoin_Gateway_Exception If there is more than one db entry for the same wallet (v.unlikely).
 	 */
 	protected function get_post_id_for_master_public_key( string $master_public_key ): ?int {
 
@@ -66,18 +68,30 @@ class Bitcoin_Wallet_Repository extends WP_Post_Repository_Abstract {
 		/** @var wpdb $wpdb */
 		global $wpdb;
 
-		// TODO: Update query to check for two entries.
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
-		// @phpstan-ignore-next-line
-		$post_id = $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE post_name=%s AND post_type=%s", sanitize_title( $master_public_key ), Bitcoin_Wallet_WP_Post_Interface::POST_TYPE ) );
+		/**
+		 * phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		 *
+		 * @var int[] $post_ids
+		 */
+		$post_ids = $wpdb->get_col(
+			$wpdb->prepare(
+				'SELECT ID FROM %i WHERE post_name=%s AND post_type=%s',
+				$wpdb->posts,
+				sanitize_title( $master_public_key ),
+				Bitcoin_Wallet_WP_Post_Interface::POST_TYPE
+			)
+		);
 
-		if ( is_numeric( $post_id ) ) {
-			$post_id = intval( $post_id );
-			wp_cache_set( $master_public_key, $post_id, Bitcoin_Wallet_WP_Post_Interface::POST_TYPE );
-			return $post_id;
+		switch ( count( $post_ids ) ) {
+			case 0:
+				return null;
+			case 1:
+				$post_id = intval( array_first( $post_ids ) );
+				wp_cache_set( $master_public_key, $post_id, Bitcoin_Wallet_WP_Post_Interface::POST_TYPE );
+				return $post_id;
+			default:
+				throw new BH_WP_Bitcoin_Gateway_Exception( count( $post_ids ) . ' Bitcoin_Wallets found, only one expected, for ' . $master_public_key );
 		}
-
-		return null;
 	}
 
 	/**
