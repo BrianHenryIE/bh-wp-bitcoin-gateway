@@ -247,34 +247,6 @@ class Bitcoin_Wallet_Service implements LoggerAwareInterface {
 	}
 
 	/**
-	 * Get the WordPress post IDs for all transactions associated with an address.
-	 *
-	 * @param Bitcoin_Address $address The Bitcoin address to get transaction IDs for.
-	 *
-	 * @return int[]|null Array of post IDs or null.
-	 * @throws JsonException
-	 */
-	public function get_transactions_wp_post_ids_for_address(
-		Bitcoin_Address $address,
-	): ?array {
-		$saved_post_meta = get_post_meta( $address->get_post_id(), Bitcoin_Address_WP_Post_Interface::TRANSACTIONS_META_KEY, true );
-
-		if ( empty( $saved_post_meta ) ) {
-			return null;
-		}
-
-		if ( ! is_string( $saved_post_meta ) ) {
-			// TODO: throw an exception – data corrupt.
-			return null;
-		}
-
-		/** @var array<int, string> $saved_meta_array <post_id : transaction id>. */
-		$saved_meta_array = json_decode( json: $saved_post_meta, associative: true, flags: JSON_THROW_ON_ERROR );
-
-		return array_keys( $saved_meta_array );
-	}
-
-	/**
 	 * Associate the Bitcoin Address with an order's post_id, set the expected amount to be paid, change the status
 	 * to "assigned".
 	 *

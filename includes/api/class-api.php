@@ -528,7 +528,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 	 */
 	public function get_saved_transactions( Bitcoin_Address $bitcoin_address ): ?array {
 
-		$transaction_post_ids = $this->wallet_service->get_transactions_wp_post_ids_for_address( $bitcoin_address );
+		$transaction_post_ids = $bitcoin_address->get_tx_ids();
 
 		if ( is_null( $transaction_post_ids ) ) {
 			return null;
