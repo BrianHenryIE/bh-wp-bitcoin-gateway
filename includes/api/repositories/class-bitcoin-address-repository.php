@@ -57,7 +57,7 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 		global $wpdb;
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
 		// @phpstan-ignore-next-line
-		$post_id = $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE post_name=%s", sanitize_title( $address ) ) );
+		$post_id = $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE post_name=%s AND post_type=%s", sanitize_title( $address ), Bitcoin_Address_WP_Post_Interface::POST_TYPE ) );
 
 		if ( is_numeric( $post_id ) ) {
 			$post_id = intval( $post_id );
