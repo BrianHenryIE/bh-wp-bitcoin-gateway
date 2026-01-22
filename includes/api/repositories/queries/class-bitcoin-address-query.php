@@ -45,7 +45,7 @@ readonly class Bitcoin_Address_Query extends WP_Post_Query_Abstract {
 		return array_filter(
 			array(
 				Bitcoin_Address_WP_Post_Interface::DERIVATION_PATH_SEQUENCE_NUMBER_META_KEY => $this->derivation_path_sequence_index,
-				Bitcoin_Address_WP_Post_Interface::TRANSACTIONS_META_KEY => $this->updated_transactions_post_ids,
+				Bitcoin_Address_WP_Post_Interface::TRANSACTIONS_META_KEY => $this->transactions_post_ids,
 				Bitcoin_Address_WP_Post_Interface::ORDER_ID_META_KEY => $this->associated_order_id,
 				Bitcoin_Address_WP_Post_Interface::TARGET_AMOUNT_META_KEY => $this->target_amount,
 			)
@@ -57,7 +57,7 @@ readonly class Bitcoin_Address_Query extends WP_Post_Query_Abstract {
 	 * @param ?Bitcoin_Address_Status $status Is the Bitcoin_Address available etc.
 	 * @param ?string                 $xpub The public key for the address.
 	 * @param ?int                    $derivation_path_sequence_index This Bitcoin Address is the nth one derived from the Bitcoin_Wallet.
-	 * @param array<int, string>|null $updated_transactions_post_ids post_id:tx_id.
+	 * @param array<int, string>|null $transactions_post_ids post_id:tx_id.
 	 * @param ?int                    $associated_order_id The wp_post ID for the order associated with the address.
 	 * @param ?Money                  $target_amount The target amount of bitcoin to receive for the order the address is associated with. Saved in post_meta as `array{amount:string,currency:string}`.
 	 */
@@ -66,7 +66,7 @@ readonly class Bitcoin_Address_Query extends WP_Post_Query_Abstract {
 		public ?Bitcoin_Address_Status $status = null,
 		public ?string $xpub = null,
 		public ?int $derivation_path_sequence_index = null,
-		public ?array $updated_transactions_post_ids = null,
+		public ?array $transactions_post_ids = null,
 		public ?int $associated_order_id = null,
 		public ?Money $target_amount = null,
 	) {

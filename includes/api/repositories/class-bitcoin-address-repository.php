@@ -326,7 +326,7 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 		$this->update(
 			model: $address,
 			query: new Bitcoin_Address_Query(
-				updated_transactions_post_ids: $updated_transactions_post_ids,
+				transactions_post_ids: $updated_transactions_post_ids,
 			)
 		);
 	}
