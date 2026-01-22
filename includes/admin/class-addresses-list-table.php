@@ -126,7 +126,7 @@ class Addresses_List_Table extends \WP_Posts_List_Table {
 	 *
 	 * @param WP_Post $post The post this row is being rendered for.
 	 *
-	 * @return void Echos HTML.
+	 * @return string The return of this gets `echo`d by {@see WP_Posts_List_Table::_column_title()}.
 	 */
 	public function column_title( $post ) {
 		ob_start();
@@ -141,7 +141,7 @@ class Addresses_List_Table extends \WP_Posts_List_Table {
 
 		$render = (string) preg_replace( '/<a\s/', '<a target="_blank" ', $render, 1 );
 
-		echo $render;
+		return wp_kses_post( $render );
 	}
 
 	/**
