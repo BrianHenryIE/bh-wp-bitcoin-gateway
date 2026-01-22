@@ -18,18 +18,16 @@ readonly class WP_Posts_Query_Order {
 	 * @param ?int    $count The number of posts to return in the query (max 200).
 	 * @param ?string $order_by Which field to order the results by.
 	 * @param ?string $order_direction Order the results ASC or DESC.
-	 * @param ?int    $posts_per_page TODO: What's the difference between this and `numberposts`.
 	 */
 	public function __construct(
 		public ?int $count = null,
 		public ?string $order_by = null,
 		public ?string $order_direction = null,
-		public ?int $posts_per_page = null,
 	) {
 	}
 
 	/**
-	 * @return array{order?:string,numberposts?:int,orderby?:string,posts_per_page?:int}
+	 * @return array{order?:string,numberposts?:int,orderby?:string}
 	 */
 	public function to_query_array(): array {
 
@@ -48,7 +46,7 @@ readonly class WP_Posts_Query_Order {
 			}
 		}
 
-		/** @var array{order?:string,numberposts?:int,orderby?:string,posts_per_page?:int} $as_array */
-		return array_filter($as_array);
+		/** @var array{order?:string,numberposts?:int,orderby?:string} $as_array */
+		return array_filter( $as_array );
 	}
 }
