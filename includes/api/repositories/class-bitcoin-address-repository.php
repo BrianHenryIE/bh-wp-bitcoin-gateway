@@ -16,6 +16,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use WP_Post;
+use wpdb;
 
 /**
  * Interface for creating/getting Bitcoin_Address objects stored in wp_posts table.
@@ -51,6 +52,7 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 			return intval( $cached );
 		}
 
+		/** @var wpdb $wpdb */
 		global $wpdb;
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
 		// @phpstan-ignore-next-line
@@ -63,26 +65,6 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 		}
 
 		return null;
-
-		// TODO: why does this not work?!
-
-		$posts = get_posts(
-			array(
-				'post_type'   => Bitcoin_Address_WP_Post_Interface::POST_TYPE,
-				'post_status' => 'any',
-				'post_title'  => $address, // post_name is slug which is indexed.
-			)
-		);
-
-		if ( empty( $posts ) ) {
-			return null;
-		}
-
-		if ( count( $posts ) > 1 ) {
-			throw new BH_WP_Bitcoin_Gateway_Exception( 'more than one wp_post found for bitcoin address ' . $address );
-		}
-
-		return $posts[0]->ID;
 	}
 
 	/**
