@@ -32,8 +32,6 @@ class Plugin_Unit_Test extends \Codeception\Test\Unit {
 	 */
 	public function test_plugin_include(): void {
 
-		$this->markTestSkipped( 'Failing because the container fails to resolve some classes' );
-
 		if ( ! function_exists( '\Patchwork\redefine' ) ) {
 			$this->markTestSkipped( 'Patchwork not loaded' );
 		}
