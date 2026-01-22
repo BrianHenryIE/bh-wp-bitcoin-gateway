@@ -61,6 +61,10 @@
         <exclude-pattern>*</exclude-pattern>
     </rule>
 
+	<!-- Often getting an error that disagrees with PhpStorm's determination. -->
+	<rule ref="Squiz.Commenting.FunctionCommentThrowTag.WrongNumber">
+        <exclude-pattern>*</exclude-pattern>
+	</rule>
 
     <!-- Enforce fewer rules on tests -->
     <rule ref="Generic.Commenting.DocComment.MissingShort">
