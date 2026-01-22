@@ -144,8 +144,6 @@ class Bitcoin_Wallet_Repository extends WP_Post_Repository_Abstract {
 	 */
 	public function save_new( string $master_public_key, ?string $gateway_id = null ): Bitcoin_Wallet {
 
-		// TODO: Validate xpub, throw exception.
-
 		$existing = $this->get_by_xpub( $master_public_key );
 		if ( $existing ) {
 			return $existing;

@@ -65,6 +65,8 @@ class Bitcoin_Wallet_Service implements LoggerAwareInterface {
 			);
 		}
 
+		// TODO: Validate xpub, throw exception.
+
 		$new_wallet = $this->bitcoin_wallet_repository->save_new( $xpub, $gateway_id );
 
 		return new Get_Wallet_For_Xpub_Service_Result(
