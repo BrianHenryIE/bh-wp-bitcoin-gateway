@@ -4,6 +4,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address_Status;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address_WP_Post_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories\Bitcoin_Address_Factory;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories\Bitcoin_Wallet_Factory;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
@@ -313,7 +314,7 @@ class Bitcoin_Address_Repository_WPUnit_Test extends WPTestCase {
 		 * @var wpdb $wpdb
 		 */
 		global $wpdb;
-		$wpdb->query( "DELETE FROM $wpdb->posts WHERE post_type = 'bh_btc_address' AND post_status = 'assigned'" );
+		$wpdb->query( "DELETE FROM $wpdb->posts WHERE post_type = '" . Bitcoin_Address_WP_Post_Interface::POST_TYPE . "' AND post_status = 'assigned'" );
 
 		$this->assertFalse( $this->sut->has_assigned_bitcoin_addresses() );
 	}
