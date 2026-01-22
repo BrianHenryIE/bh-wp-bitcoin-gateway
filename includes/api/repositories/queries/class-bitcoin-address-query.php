@@ -34,10 +34,10 @@ readonly class Bitcoin_Address_Query extends WP_Post_Query_Abstract {
 	 */
 	protected function get_wp_post_fields(): array {
 		return array(
-			'post_name'    => $this->xpub, // slug.
-			'post_title'   => $this->xpub, // post_title.
-			'post_status'  => $this->status,
-			'post_parent'  => $this->wallet_wp_post_parent_id,
+			'post_name'   => $this->xpub, // slug.
+			'post_title'  => $this->xpub, // post_title.
+			'post_status' => $this->status,
+			'post_parent' => $this->wallet_wp_post_parent_id,
 		);
 	}
 
