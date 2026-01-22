@@ -36,11 +36,11 @@ class Bitcoin_Address_Factory {
 	/**
 	 * Takes a WP_Post and gets the values (primitives?) to create a Bitcoin_Address.
 	 *
+	 * The first call to {@see get_post_meta()} caches all meta for the object, {@see get_metadata_raw()}.
+	 *
 	 * @param WP_Post $post The backing WP_Post for this Bitcoin_Address.
 	 */
 	public function get_by_wp_post( WP_Post $post ): Bitcoin_Address {
-
-		// TODO: use `array<array|bool|float|int|resource|string|null|mixed>` `get_post_meta( $post->ID )` to avoid db calls.
 
 		$bitcoin_address = new Bitcoin_Address(
 			post_id: $post->ID,
@@ -65,8 +65,19 @@ class Bitcoin_Address_Factory {
 			tx_ids: ( function () use ( $post ): ?array {
 				/** @var array<int,string>|null|mixed $tx_ids_meta */
 				$tx_ids_meta = get_post_meta( $post->ID, Bitcoin_Address_WP_Post_Interface::TRANSACTIONS_META_KEY, true );
-				return is_array( $tx_ids_meta ) ? $tx_ids_meta : null;
+				if ( is_array( $tx_ids_meta ) ) {
+					foreach ( $tx_ids_meta as $post_id => $tx_id ) {
+						if ( ! is_int( $post_id ) || ! is_string( $tx_id ) ) {
+							// TODO: Log error? Add a fail-hard debug flag?
+							return null;
+						}
+					}
+					/** @var array<int,string> $tx_ids_meta */
+					return $tx_ids_meta;
+				}
+				return null;
 			} )(),
+			// TODO: Use "received", not balance.
 			balance: ( function () use ( $post ): ?Money {
 				/** @var MoneySerializedArray|array{} $balance_meta */
 				$balance_meta = array_filter( (array) get_post_meta( $post->ID, Bitcoin_Address_WP_Post_Interface::BALANCE_META_KEY, true ) );
