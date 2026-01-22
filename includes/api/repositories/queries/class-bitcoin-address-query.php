@@ -53,6 +53,10 @@ readonly class Bitcoin_Address_Query extends WP_Post_Query_Abstract {
 	}
 
 	/**
+	 * Constructor
+	 *
+	 * Sometimes these fields are used to fetch, but some are only used to update.
+	 *
 	 * @param ?int                    $wallet_wp_post_parent_id The wp_posts id of the Bitcoin_Wallet this Bitcoin_Address belongs to.
 	 * @param ?Bitcoin_Address_Status $status Is the Bitcoin_Address available etc.
 	 * @param ?string                 $xpub The public key for the address.
