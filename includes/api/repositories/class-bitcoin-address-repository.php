@@ -14,6 +14,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address_Status;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address_WP_Post_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Queries\WP_Posts_Query_Order;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use WP_Post;
 use wpdb;
@@ -98,7 +99,9 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 		return $this->get_addresses_query(
 			new Bitcoin_Address_Query(
 				status: Bitcoin_Address_Status::ASSIGNED,
-				numberposts: 200,
+			),
+			new WP_Posts_Query_Order(
+				count: 200,
 			)
 		);
 	}
@@ -116,8 +119,10 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 			new Bitcoin_Address_Query(
 				wallet_wp_post_parent_id: $wallet?->get_post_id(),
 				status: Bitcoin_Address_Status::UNUSED,
-				numberposts: 200,
-				orderby: 'post_modified',
+			),
+			new WP_Posts_Query_Order(
+				count: 200,
+				order_by: 'post_modified',
 				order_direction: 'ASC',
 			)
 		);
@@ -133,7 +138,9 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 			$this->get_addresses_query(
 				new Bitcoin_Address_Query(
 					status: Bitcoin_Address_Status::ASSIGNED,
-					numberposts: 1,
+				),
+				new WP_Posts_Query_Order(
+					count: 1,
 				)
 			)
 		);
@@ -179,12 +186,16 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 	/**
 	 * Get addresses matching a query.
 	 *
-	 * @param Bitcoin_Address_Query $filter The query filter to apply.
+	 * @param Bitcoin_Address_Query $query The query filter to apply.
+	 * @param ?WP_Posts_Query_Order $order Common WP_Posts number/order by/direction.
 	 * @return Bitcoin_Address[]
 	 */
-	protected function get_addresses_query( Bitcoin_Address_Query $filter ): array {
+	protected function get_addresses_query(
+		Bitcoin_Address_Query $query,
+		?WP_Posts_Query_Order $order = null,
+	): array {
 		/** @var WP_Post[] $posts */
-		$posts = get_posts( $filter->to_query_array() );
+		$posts = get_posts( $query->to_query_array() + ( $order?->to_query_array() ?? array() ) );
 
 		return array_map(
 			fn( WP_Post $wp_post ) => $this->bitcoin_address_factory->get_by_wp_post( $wp_post ),
