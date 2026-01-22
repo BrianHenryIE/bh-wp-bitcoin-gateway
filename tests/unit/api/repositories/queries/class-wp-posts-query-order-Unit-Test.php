@@ -211,6 +211,7 @@ class WP_Posts_Query_Order_Unit_Test extends \Codeception\Test\Unit {
 		$this->expectExceptionMessage( 'Cannot modify readonly property' );
 
 		// Attempt to modify readonly property should throw Error.
+		/* @phpstan-ignore property.readOnlyAssignOutOfClass */
 		$sut->count = 20;
 	}
 
