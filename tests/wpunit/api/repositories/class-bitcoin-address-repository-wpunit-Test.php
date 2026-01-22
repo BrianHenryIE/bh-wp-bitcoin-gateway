@@ -314,7 +314,13 @@ class Bitcoin_Address_Repository_WPUnit_Test extends WPTestCase {
 		 * @var wpdb $wpdb
 		 */
 		global $wpdb;
-		$wpdb->query( "DELETE FROM $wpdb->posts WHERE post_type = '" . Bitcoin_Address_WP_Post_Interface::POST_TYPE . "' AND post_status = 'assigned'" );
+		$wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM %i WHERE post_type = %s AND post_status = 'assigned'",
+				$wpdb->posts,
+				Bitcoin_Address_WP_Post_Interface::POST_TYPE,
+			)
+		);
 
 		$this->assertFalse( $this->sut->has_assigned_bitcoin_addresses() );
 	}
