@@ -62,6 +62,7 @@ jobs:
 
       - name: Test MySQL connection
         run: |
+          mysql -u root -ppassword -e "SHOW variables LIKE 'port';"
           mysql -h 127.0.0.1 -port ${{ job.services.mysql.ports['3306'] }} -u root -ppassword -e "SELECT 1;"
           if [ 0 != $0 ]; then exit 1; fi
 
