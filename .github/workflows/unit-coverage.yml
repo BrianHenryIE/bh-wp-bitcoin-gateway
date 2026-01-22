@@ -62,24 +62,6 @@ jobs:
         with:
           env-file: .env.testing
 
-#      - name: Test MySQL connection
-#        run: |
-#          mysql -h 127.0.0.1 -port 33061 -u root -ppassword -e "SELECT 1;"
-#          if [ 0 != $0 ]; then exit 1; fi
-
-      #      - name: Read .env.testing
-      #        uses: c-py/action-dotenv-to-setenv@v2
-      #        with:
-      #          env-file: .env.testing
-
-      #      - name: Configure MySQL
-      #        run: |
-      #          mysql -h 127.0.0.1 --port ${{ job.services.mysql.ports['33066'] }} -u root -ppassword -e "CREATE USER '"$TEST_DB_USER"'@'%' IDENTIFIED WITH mysql_native_password BY '"$TEST_DB_PASSWORD"';";
-      #          mysql -h 127.0.0.1 --port ${{ job.services.mysql.ports['33066'] }} -u root -ppassword -e "CREATE DATABASE "$TEST_SITE_DB_NAME"; USE "$TEST_SITE_DB_NAME"; GRANT ALL PRIVILEGES ON "$TEST_SITE_DB_NAME".* TO '"$TEST_DB_USER"'@'%';";
-      #          mysql -h 127.0.0.1 --port ${{ job.services.mysql.ports['33066'] }} -u root -ppassword -e "CREATE DATABASE "$TEST_DB_NAME"; USE "$TEST_DB_NAME"; GRANT ALL PRIVILEGES ON "$TEST_DB_NAME".* TO '"$TEST_DB_USER"'@'%';";
-
-      #// mysql -u root -h 127.0.0.1 -P 33066 -ppasswasdord -e "SELECT 1;"
-
       - name: Install sponge
         run: sudo apt-get install moreutils
 
@@ -95,9 +77,13 @@ jobs:
       - name: Build JS
         run: npm run build
 
-# This takes 10 minutes+ so let's try to use services.mysql instead.
-#      - name: Start wp-env
-#        run: npx wp-env start --debug
+      # with wp-env: 6:41 | 14:35
+      # without wp-env: 8:15 | 4:40
+      # presumably because of the setup script.
+      # @see https://github.com/wp-cli/dist-archive-command/pull/116
+      # This takes 10 minutes+ so let's try to use services.mysql instead.
+      #      - name: Start wp-env
+      #        run: npx wp-env start --debug
 
       - name: Setup test environment
         run: cp .env.testing .env
