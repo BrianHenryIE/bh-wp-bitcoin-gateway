@@ -122,7 +122,7 @@ abstract readonly class WP_Post_Query_Abstract {
 
 		$wp_post_fields['meta_input'] = array_map(
 			$mapper,
-			$this->get_meta_input()
+			array_filter( $this->get_meta_input() )
 		);
 
 		if ( empty( $wp_post_fields['meta_input'] ) ) {
