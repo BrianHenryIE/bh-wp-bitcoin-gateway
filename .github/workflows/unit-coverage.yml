@@ -60,10 +60,16 @@ jobs:
           php-version: ${{ matrix.php }}
           coverage: ${{ matrix.php == env.COVERAGE_PHP_VERSION && 'xdebug' || 'none' }}
 
-      - name: Test MySQL connection
+      - name: Test MySQL connection1
         run: |
           lsof -i -n -P | grep mysql
+
+      - name: Test MySQL connection2
+        run: |
           mysql -u root -ppassword -e "SHOW variables LIKE 'port';"
+
+      - name: Test MySQL connection3
+        run: |
           mysql -h 127.0.0.1 -port ${{ job.services.mysql.ports['3306'] }} -u root -ppassword -e "SELECT 1;"
           if [ 0 != $0 ]; then exit 1; fi
 
