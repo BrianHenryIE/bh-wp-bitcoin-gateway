@@ -233,7 +233,7 @@ class Addresses_List_Table extends \WP_Posts_List_Table {
 			// TODO: echo/log error.
 			return;
 		}
-		$wallet_address = $wallet_post->post_excerpt;
+		$wallet_address = $wallet_post->post_title;
 		$abbreviated    = substr( $wallet_address, 0, 7 ) . '...' . substr( $wallet_address, -3 );
 
 		// Is this wallet being used by a gateway?

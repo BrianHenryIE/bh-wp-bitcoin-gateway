@@ -45,7 +45,7 @@ class Bitcoin_Address_Factory {
 		$bitcoin_address = new Bitcoin_Address(
 			post_id: $post->ID,
 			wallet_parent_post_id: $post->post_parent,
-			raw_address: $post->post_excerpt,
+			raw_address: $post->post_title,
 			derivation_path_sequence_number: ( function () use ( $post ) {
 				/** @var array|bool|float|int|resource|string|null|mixed $meta_value */
 				$meta_value = get_post_meta( $post->ID, Bitcoin_Address_WP_Post_Interface::DERIVATION_PATH_SEQUENCE_NUMBER_META_KEY, true );

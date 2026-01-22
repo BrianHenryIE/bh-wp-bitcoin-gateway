@@ -213,7 +213,7 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 	}
 
 	/**
-	 * Wrapper on wp_insert_post(), sets the address as the post_title, post_excerpt and post_name.
+	 * Wrapper on wp_insert_post(), sets the address as the post_title and post_name.
 	 *
 	 * @param Bitcoin_Wallet $wallet The wallet this address belongs to.
 	 * @param int            $derivation_path_sequence_index The derivation path index for this address.
