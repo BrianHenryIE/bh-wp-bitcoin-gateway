@@ -77,8 +77,8 @@ jobs:
       - name: Build JS
         run: npm run build
 
-      # with wp-env: 6:41 | 14:35
-      # without wp-env: 8:15 | 4:40
+      # wp-env 8.4 w/xdebug, 8.5 : 6:41 | 14:35
+      # MySQL: 8/4 w/xdebug, 8.5 : 8:15 | 4:40
       # presumably because of the setup script.
       # @see https://github.com/wp-cli/dist-archive-command/pull/116
       # This takes 10 minutes+ so let's try to use services.mysql instead.
