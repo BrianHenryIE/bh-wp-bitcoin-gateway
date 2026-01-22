@@ -81,7 +81,7 @@ interface API_WooCommerce_Interface extends API_Interface {
 	 *
 	 * @param Bitcoin_Gateway $gateway The Bitcoin payment gateway.
 	 *
-	 * @throws BH_WP_Bitcoin_Gateway_Exception
+	 * @throws BH_WP_Bitcoin_Gateway_Exception When the wallet cannot be created/retrieved or unused addresses cannot be generated.
 	 */
 	public function get_fresh_address_for_gateway( Bitcoin_Gateway $gateway ): ?Bitcoin_Address;
 

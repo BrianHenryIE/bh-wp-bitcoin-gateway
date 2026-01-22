@@ -65,6 +65,8 @@ class Bitcoin_Wallet_Service implements LoggerAwareInterface {
 			);
 		}
 
+		// TODO: Validate xpub, throw exception.
+
 		$new_wallet = $this->bitcoin_wallet_repository->save_new( $xpub, $gateway_id );
 
 		return new Get_Wallet_For_Xpub_Service_Result(
@@ -106,7 +108,7 @@ class Bitcoin_Wallet_Service implements LoggerAwareInterface {
 	 * @see API_Interface::generate_new_addresses()
 	 * @used-by CLI::generate_new_addresses()
 	 * @used-by Background_Jobs_Actions_Handler::generate_new_addresses()
-	 * @throws BH_WP_Bitcoin_Gateway_Exception
+	 * @throws BH_WP_Bitcoin_Gateway_Exception When address derivation fails or addresses cannot be saved to the database.
 	 */
 	public function generate_new_addresses(): array {
 
@@ -242,34 +244,6 @@ class Bitcoin_Wallet_Service implements LoggerAwareInterface {
 			address: $address,
 			status: $status,
 		);
-	}
-
-	/**
-	 * Get the WordPress post IDs for all transactions associated with an address.
-	 *
-	 * @param Bitcoin_Address $address The Bitcoin address to get transaction IDs for.
-	 *
-	 * @return int[]|null Array of post IDs or null.
-	 * @throws JsonException
-	 */
-	public function get_transactions_wp_post_ids_for_address(
-		Bitcoin_Address $address,
-	): ?array {
-		$saved_post_meta = get_post_meta( $address->get_post_id(), Bitcoin_Address_WP_Post_Interface::TRANSACTIONS_META_KEY, true );
-
-		if ( empty( $saved_post_meta ) ) {
-			return null;
-		}
-
-		if ( ! is_string( $saved_post_meta ) ) {
-			// TODO: throw an exception – data corrupt.
-			return null;
-		}
-
-		/** @var array<int, string> $saved_meta_array <post_id : transaction id>. */
-		$saved_meta_array = json_decode( json: $saved_post_meta, associative: true, flags: JSON_THROW_ON_ERROR );
-
-		return array_keys( $saved_meta_array );
 	}
 
 	/**

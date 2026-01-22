@@ -126,7 +126,7 @@ class Addresses_List_Table extends \WP_Posts_List_Table {
 	 *
 	 * @param WP_Post $post The post this row is being rendered for.
 	 *
-	 * @return void Echos HTML.
+	 * @return string The return of this gets `echo`d by {@see WP_Posts_List_Table::_column_title()}.
 	 */
 	public function column_title( $post ) {
 		ob_start();
@@ -135,13 +135,16 @@ class Addresses_List_Table extends \WP_Posts_List_Table {
 
 		$bitcoin_address = $this->get_bitcoin_address_object( $post );
 
-		$link = esc_url( "https://www.blockchain.com/btc/address/{$bitcoin_address->get_raw_address()}" );
+		$link = sprintf(
+			'https://www.blockchain.com/btc/address/%s',
+			$bitcoin_address->get_raw_address()
+		);
 
 		$render = (string) preg_replace( '/(.*<a.*)(href=")([^"]*)(".*>)/', '$1$2' . $link . '$4', $render, 1 );
 
 		$render = (string) preg_replace( '/<a\s/', '<a target="_blank" ', $render, 1 );
 
-		echo $render;
+		return wp_kses_post( $render );
 	}
 
 	/**
@@ -233,7 +236,7 @@ class Addresses_List_Table extends \WP_Posts_List_Table {
 			// TODO: echo/log error.
 			return;
 		}
-		$wallet_address = $wallet_post->post_excerpt;
+		$wallet_address = $wallet_post->post_title;
 		$abbreviated    = substr( $wallet_address, 0, 7 ) . '...' . substr( $wallet_address, -3 );
 
 		// Is this wallet being used by a gateway?

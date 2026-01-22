@@ -273,7 +273,7 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 			foreach ( $wallets as $wallet ) {
 				if ( count( $actual_unused_addresses_by_wallet[ $wallet->get_post_id() ] ) < $required_count ) {
 					$address_generation_result = $this->generate_new_addresses_for_wallet( $wallet, 1 );
-					$new_address               = array_first( $address_generation_result->new_addresses );
+					$new_address               = $address_generation_result->new_addresses[ array_key_first( $address_generation_result->new_addresses ) ];
 
 					$address_transactions_result = $this->payment_service->update_address_transactions( $new_address );
 					$this->wallet_service->update_address_transactions_posts( $new_address, $address_transactions_result->all_transactions );
@@ -523,17 +523,17 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 	 * Get saved transactions for a Bitcoin address (`null` if never checked).
 	 *
 	 * @param Bitcoin_Address $bitcoin_address The Bitcoin address to get transactions for.
-	 * @return ?array<Bitcoin_Transaction|Transaction_Interface>
+	 * @return ?array<int,Bitcoin_Transaction> WP post_id: transaction object.
 	 * @throws BH_WP_Bitcoin_Gateway_Exception If one of the post IDs does not match the transaction post type.
 	 */
 	public function get_saved_transactions( Bitcoin_Address $bitcoin_address ): ?array {
 
-		$transaction_post_ids = $this->wallet_service->get_transactions_wp_post_ids_for_address( $bitcoin_address );
+		$transaction_post_ids = $bitcoin_address->get_tx_ids();
 
 		if ( is_null( $transaction_post_ids ) ) {
 			return null;
 		}
 
-		return $this->payment_service->get_saved_transactions( $transaction_post_ids );
+		return $this->payment_service->get_saved_transactions( array_keys( $transaction_post_ids ) );
 	}
 }

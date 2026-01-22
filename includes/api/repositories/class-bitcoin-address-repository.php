@@ -14,11 +14,15 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address_Status;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address_WP_Post_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Queries\WP_Posts_Query_Order;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use WP_Post;
+use wpdb;
 
 /**
  * Interface for creating/getting Bitcoin_Address objects stored in wp_posts table.
+ *
+ * @see Bitcoin_Address_WP_Post_Interface
  *
  * @phpstan-type WpUpdatePostArray array{ID?: int, post_author?: int, post_date?: string, post_date_gmt?: string, post_content?: string, post_content_filtered?: string, post_title?: string, post_excerpt?: string}
  */
@@ -51,38 +55,26 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 			return intval( $cached );
 		}
 
+		/** @var wpdb $wpdb */
 		global $wpdb;
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
 		// @phpstan-ignore-next-line
-		$post_id = $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE post_name=%s", sanitize_title( $address ) ) );
+		$post_id = $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT ID FROM %i WHERE post_name=%s AND post_type=%s',
+				$wpdb->posts,
+				sanitize_title( $address ),
+				Bitcoin_Address_WP_Post_Interface::POST_TYPE
+			)
+		);
 
 		if ( is_numeric( $post_id ) ) {
 			$post_id = intval( $post_id );
-			wp_cache_add( $address, $post_id, Bitcoin_Address_WP_Post_Interface::POST_TYPE );
+			wp_cache_set( $address, $post_id, Bitcoin_Address_WP_Post_Interface::POST_TYPE );
 			return $post_id;
 		}
 
 		return null;
-
-		// TODO: why does this not work?!
-
-		$posts = get_posts(
-			array(
-				'post_type'   => Bitcoin_Address_WP_Post_Interface::POST_TYPE,
-				'post_status' => 'any',
-				'post_title'  => $address, // post_name is slug which is indexed.
-			)
-		);
-
-		if ( empty( $posts ) ) {
-			return null;
-		}
-
-		if ( count( $posts ) > 1 ) {
-			throw new BH_WP_Bitcoin_Gateway_Exception( 'more than one wp_post found for bitcoin address ' . $address );
-		}
-
-		return $posts[0]->ID;
 	}
 
 	/**
@@ -116,7 +108,9 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 		return $this->get_addresses_query(
 			new Bitcoin_Address_Query(
 				status: Bitcoin_Address_Status::ASSIGNED,
-				numberposts: 200,
+			),
+			new WP_Posts_Query_Order(
+				count: 200,
 			)
 		);
 	}
@@ -134,8 +128,10 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 			new Bitcoin_Address_Query(
 				wallet_wp_post_parent_id: $wallet?->get_post_id(),
 				status: Bitcoin_Address_Status::UNUSED,
-				numberposts: 200,
-				orderby: 'post_modified',
+			),
+			new WP_Posts_Query_Order(
+				count: 200,
+				order_by: 'post_modified',
 				order_direction: 'ASC',
 			)
 		);
@@ -151,7 +147,9 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 			$this->get_addresses_query(
 				new Bitcoin_Address_Query(
 					status: Bitcoin_Address_Status::ASSIGNED,
-					numberposts: 1,
+				),
+				new WP_Posts_Query_Order(
+					count: 1,
 				)
 			)
 		);
@@ -189,7 +187,7 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 		return $this->get_addresses_query(
 			new Bitcoin_Address_Query(
 				wallet_wp_post_parent_id: $wallet?->get_post_id(),
-				status: $status, // TODO: Should this null-coalesce to 'all'?
+				status: $status ?? Bitcoin_Address_Status::ALL,
 			)
 		);
 	}
@@ -197,12 +195,16 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 	/**
 	 * Get addresses matching a query.
 	 *
-	 * @param Bitcoin_Address_Query $filter The query filter to apply.
+	 * @param Bitcoin_Address_Query $query The query filter to apply.
+	 * @param ?WP_Posts_Query_Order $order Common WP_Posts number/order by/direction.
 	 * @return Bitcoin_Address[]
 	 */
-	protected function get_addresses_query( Bitcoin_Address_Query $filter ): array {
+	protected function get_addresses_query(
+		Bitcoin_Address_Query $query,
+		?WP_Posts_Query_Order $order = null,
+	): array {
 		/** @var WP_Post[] $posts */
-		$posts = get_posts( $filter->to_query_array() );
+		$posts = get_posts( $query->to_query_array() + ( $order?->to_query_array() ?? array() ) );
 
 		return array_map(
 			fn( WP_Post $wp_post ) => $this->bitcoin_address_factory->get_by_wp_post( $wp_post ),
@@ -211,7 +213,7 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 	}
 
 	/**
-	 * Wrapper on wp_insert_post(), sets the address as the post_title, post_excerpt and post_name.
+	 * Wrapper on wp_insert_post(), sets the address as the post_title and post_name.
 	 *
 	 * @param Bitcoin_Wallet $wallet The wallet this address belongs to.
 	 * @param int            $derivation_path_sequence_index The derivation path index for this address.
@@ -333,7 +335,7 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 		$this->update(
 			model: $address,
 			query: new Bitcoin_Address_Query(
-				updated_transactions_post_ids: $updated_transactions_post_ids,
+				transactions_post_ids: $updated_transactions_post_ids,
 			)
 		);
 	}

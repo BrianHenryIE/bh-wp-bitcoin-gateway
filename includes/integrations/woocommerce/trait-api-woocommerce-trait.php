@@ -178,7 +178,7 @@ trait API_WooCommerce_Trait {
 
 		$unused_addresses = $result->get_unused_addresses();
 
-		return array_first( $unused_addresses );
+		return $unused_addresses[ array_key_first( $unused_addresses ) ];
 	}
 
 	/**

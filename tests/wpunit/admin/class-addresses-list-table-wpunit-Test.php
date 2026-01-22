@@ -100,9 +100,7 @@ class Addresses_List_Table_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTe
 
 		$sut = new Addresses_List_Table( $this->args );
 
-		ob_start();
-		$sut->column_title( $this->post );
-		$result = ob_get_clean();
+		$result = $sut->column_title( $this->post );
 
 		$this->assertStringContainsString( '"https://www.blockchain.com/btc/address/bc1qnlz39q0r40xnv200s9wjutj0fdxex6x8abcdef"', $result );
 		$this->assertStringContainsString( 'target="_blank"', $result );

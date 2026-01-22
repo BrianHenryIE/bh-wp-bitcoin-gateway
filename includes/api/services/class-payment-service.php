@@ -219,7 +219,7 @@ class Payment_Service implements LoggerAwareInterface {
 	 *
 	 * @param string                $to_address The Bitcoin address to calculate value for.
 	 * @param Transaction_Interface $transaction The transaction to calculate value from.
-	 * @throws UnknownCurrencyException
+	 * @throws UnknownCurrencyException 0% likely, this exception would be happening somewhere else first.
 	 */
 	protected function get_value_for_transaction( string $to_address, Transaction_Interface $transaction ): Money {
 

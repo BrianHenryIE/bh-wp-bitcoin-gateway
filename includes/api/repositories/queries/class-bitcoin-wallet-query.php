@@ -40,9 +40,6 @@ readonly class Bitcoin_Wallet_Query extends WP_Post_Query_Abstract {
 			$wp_post_fields['post_status'] = $this->status;
 		}
 		if ( $this->master_public_key ) {
-			$wp_post_fields['post_excerpt'] = $this->master_public_key;
-		}
-		if ( $this->master_public_key ) {
 			$wp_post_fields['post_name'] = sanitize_title( $this->master_public_key );
 		}
 

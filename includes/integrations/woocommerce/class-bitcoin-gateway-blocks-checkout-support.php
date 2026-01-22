@@ -109,7 +109,7 @@ class Bitcoin_Gateway_Blocks_Checkout_Support extends AbstractPaymentMethodType 
 	 * @see \WC_Payment_Gateway::supports()
 	 *
 	 * @return array{title:string, description:string, supports:array<string>}
-	 * @throws UnknownCurrencyException
+	 * @throws UnknownCurrencyException It'll almost definitely never happen.
 	 */
 	public function get_payment_method_data(): array {
 		/** @var string $title */
@@ -118,6 +118,11 @@ class Bitcoin_Gateway_Blocks_Checkout_Support extends AbstractPaymentMethodType 
 		$description = $this->get_setting( 'description' );
 		/** @var array<int|string, string> $supports */
 		$supports = $this->gateway->supports;
+
+		$currency = Currency::of(
+			get_woocommerce_currency()
+		);
+
 		return array(
 			'title'                     => $title,
 			'description'               => $description,
@@ -129,9 +134,7 @@ class Bitcoin_Gateway_Blocks_Checkout_Support extends AbstractPaymentMethodType 
 					wp_strip_all_tags(
 						wc_price(
 							$this->api->get_exchange_rate(
-								Currency::of(
-									get_woocommerce_currency()
-								)
+								$currency
 							)?->getAmount()->toFloat() ?? 0.0 // TODO: add an immediately invoked function that alerts admins of a problem but doesn't break ux.
 						)
 					)

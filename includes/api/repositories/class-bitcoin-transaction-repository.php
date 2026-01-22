@@ -19,7 +19,6 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_E
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Queries\Bitcoin_Transaction_Query;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Post_BH_Bitcoin_Transaction;
-use JsonException;
 use RuntimeException;
 use WP_Post;
 
@@ -76,7 +75,7 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 		}
 
 		if ( count( $wp_posts ) === 1 ) {
-			return array_first( $wp_posts );
+			return $wp_posts[0];
 		}
 
 		throw new RuntimeException( 'Unexpectedly found more than one post for txid: ' . $tx_id );
@@ -126,7 +125,7 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 	}
 
 	/**
-	 * Wrapper on wp_insert_post(), sets the address as the post_title, post_excerpt and post_name.
+	 * Wrapper on wp_insert_post(), sets the address as the post_title and post_name.
 	 *
 	 * @param Transaction     $transaction A transaction from the blockchain API to save as a WordPress post.
 	 * @param Bitcoin_Address $address The Bitcoin address that received funds in this transaction, used to create bidirectional links in post meta.

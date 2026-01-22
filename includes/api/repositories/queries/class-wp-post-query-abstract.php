@@ -17,7 +17,7 @@ use BackedEnum;
 use InvalidArgumentException;
 
 /**
- * @phpstan-type WpUpdatePostArray array{ID?: int, post_type?:string, post_status?:string, post_author?: int, post_date?: string, post_date_gmt?: string, post_content?: string, post_content_filtered?: string, post_title?: string, post_excerpt?: string}
+ * @phpstan-type WpUpdatePostArray array{ID?: int, post_type?:string, post_status?:string, post_author?: int, post_date?: string, post_date_gmt?: string, post_content?: string, post_content_filtered?: string, post_title?: string, post_excerpt?: string, meta_input?:array<string,mixed>}
  */
 abstract readonly class WP_Post_Query_Abstract {
 
@@ -106,13 +106,12 @@ abstract readonly class WP_Post_Query_Abstract {
 			if ( $value instanceof \BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money ) {
 				return $value->jsonSerialize();
 			}
-				return $value;
+			if ( is_array( $value ) ) {
+				return wp_json_encode( $value );
+			}
+			// TODO: if DateTimeInterface serialize as something legible, if we're using it.
+			return $value;
 		};
-
-		$wp_post_fields['meta_input'] = array_map(
-			$mapper,
-			$this->get_meta_input()
-		);
 
 		/** @var WpUpdatePostArray $wp_post_fields */
 		$wp_post_fields = array_map(
@@ -121,7 +120,14 @@ abstract readonly class WP_Post_Query_Abstract {
 			array_filter( $wp_post_fields )
 		);
 
-		// TODO: if DateTimeInterface serialize as something legible.
+		$wp_post_fields['meta_input'] = array_map(
+			$mapper,
+			array_filter( $this->get_meta_input() )
+		);
+
+		if ( empty( $wp_post_fields['meta_input'] ) ) {
+			unset( $wp_post_fields['meta_input'] );
+		}
 
 		return $wp_post_fields;
 	}
