@@ -21,7 +21,7 @@ jobs:
           MYSQL_ROOT_PASSWORD: password
           MYSQL_DATABASE: bh_wp_bitcoin_gateway_integration
         ports:
-          - 3306
+          - 33061
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
 
     permissions:
@@ -60,24 +60,16 @@ jobs:
           php-version: ${{ matrix.php }}
           coverage: ${{ matrix.php == env.COVERAGE_PHP_VERSION && 'xdebug' || 'none' }}
 
-      - name: Test MySQL connection1
-        run: |
-          lsof -i -n -P | grep mysql
-
-      - name: Test MySQL connection2
-        run: |
-          mysql -u root -ppassword -e "SHOW variables LIKE 'port';"
-
       - name: Test MySQL connection3
         run: |
-          mysql -h 127.0.0.1 -port ${{ job.services.mysql.ports['3306'] }} -u root -ppassword -e "SELECT 1;"
+          mysql -h 127.0.0.1 -port ${{ job.services.mysql.ports['33061'] }} -u root -ppassword -e "SELECT 1;"
           if [ 0 != $0 ]; then exit 1; fi
 
       - name: Update .env.testing config for GitHub Actions
         env:
           PLUGIN_SLUG: ${{ github.event.repository.name }}
         run: |
-          find . -depth \( -name '.env.testing' \) -exec sed -i "s/TEST_DB_PORT=\"33066\"/TEST_DB_PORT=\"${{ job.services.mysql.ports['3306'] }}\"/g" {} +
+          find . -depth \( -name '.env.testing' \) -exec sed -i "s/TEST_DB_PORT=\"33066\"/TEST_DB_PORT=\"${{ job.services.mysql.ports['33061'] }}\"/g" {} +
 
       #      - name: Read .env.testing
       #        uses: c-py/action-dotenv-to-setenv@v2
