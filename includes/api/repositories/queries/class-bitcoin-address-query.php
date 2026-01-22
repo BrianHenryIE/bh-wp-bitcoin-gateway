@@ -2,6 +2,10 @@
 /**
  * Strongly typed object for querying Bitcoin_Address in wp_posts table.
  *
+ * A mapping of domain terms to WP_Post columns + meta fields.
+ *
+ * TODO: Add a WP CLI output of a post here.
+ *
  * @package brianhenryie/bh-wp-bitcoin-gateway
  */
 
