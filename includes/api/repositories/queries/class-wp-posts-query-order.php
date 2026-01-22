@@ -29,7 +29,7 @@ readonly class WP_Posts_Query_Order {
 	}
 
 	/**
-	 * @return array{order?:string,numberposts?:int,orderby?:string,post_per_page?:int}
+	 * @return array{order?:string,numberposts?:int,orderby?:string,posts_per_page?:int}
 	 */
 	public function to_query_array(): array {
 
@@ -48,7 +48,7 @@ readonly class WP_Posts_Query_Order {
 			}
 		}
 
-		/** @var array{order?:string,numberposts?:int,orderby?:string,post_per_page?:int} $as_array */
-		return $as_array;
+		/** @var array{order?:string,numberposts?:int,orderby?:string,posts_per_page?:int} $as_array */
+		return array_filter($as_array);
 	}
 }
