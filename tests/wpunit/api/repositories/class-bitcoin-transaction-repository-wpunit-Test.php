@@ -8,13 +8,15 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories\Bitcoin_Wallet_Fa
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_VIn;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_VOut;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Exchange_Rate_Service;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use DateTimeImmutable;
+use lucatume\WPBrowser\TestCase\WPTestCase;
 
 /**
  * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Transaction_Repository
  */
-class Bitcoin_Transaction_Repository_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
+class Bitcoin_Transaction_Repository_WPUnit_Test extends WPTestCase {
 
 	/**
 	 * Save a transaction to the wp_post table, then try to load it again!
@@ -54,7 +56,7 @@ class Bitcoin_Transaction_Repository_WPUnit_Test extends \lucatume\WPBrowser\Tes
 			),
 			v_out: array(
 				new Transaction_VOut(
-					value: Money::of( 2, 'BTC' )->dividedBy( 100_000_000 ),
+					value: Money::of( 2, 'BTC' )->dividedBy( Exchange_Rate_Service::SATOSHI_RATE ),
 					scriptpubkey_address: 'addr',
 				),
 			),

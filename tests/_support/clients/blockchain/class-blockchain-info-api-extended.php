@@ -9,6 +9,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Blockchain;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Blockchain_API_Extended_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Exchange_Rate_Service;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 
 class Blockchain_Info_Api_Extended extends Blockchain_Info_Api implements Blockchain_API_Extended_Interface {
@@ -34,7 +35,7 @@ class Blockchain_Info_Api_Extended extends Blockchain_Info_Api implements Blockc
 		}
 
 		return Money::of(
-			amount: $request_response['body'] / 100_000_000,
+			amount: $request_response['body'] / Exchange_Rate_Service::SATOSHI_RATE,
 			currency: 'BTC',
 		);
 	}

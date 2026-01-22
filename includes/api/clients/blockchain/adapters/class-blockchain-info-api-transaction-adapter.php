@@ -11,6 +11,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_VIn;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_VOut;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Exchange_Rate_Service;
 use BrianHenryIE\WP_Bitcoin_Gateway\BlockchainInfo\Model\Transaction as BlockchainInfo_Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\BlockchainInfo\Model\TransactionInput;
 use BrianHenryIE\WP_Bitcoin_Gateway\BlockchainInfo\Model\TransactionOut;
@@ -52,7 +53,7 @@ class Blockchain_Info_Api_Transaction_Adapter {
 			scriptsig: $transaction_input->getScript(),
 			address: $transaction_input->getPrevOut()->getAddr(),
 			prevout_scriptpubkey: $transaction_input->getPrevOut()->getScript(),
-			value: Money::of( $transaction_input->getPrevOut()->getValue() / 100000000, 'BTC' ),
+			value: Money::of( $transaction_input->getPrevOut()->getValue() / Exchange_Rate_Service::SATOSHI_RATE, 'BTC' ),
 			prev_out_n: $transaction_input->getPrevOut()->getN(),
 		);
 	}
@@ -65,7 +66,7 @@ class Blockchain_Info_Api_Transaction_Adapter {
 	 */
 	protected function map_v_out( TransactionOut $out ): Transaction_VOut {
 		return new Transaction_VOut(
-			value: Money::of( $out->getValue(), 'BTC' )->dividedBy( 100_000_000 ),
+			value: Money::of( $out->getValue(), 'BTC' )->dividedBy( Exchange_Rate_Service::SATOSHI_RATE ),
 			scriptpubkey_address: $out->getAddr(),
 		);
 	}
