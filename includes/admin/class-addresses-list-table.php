@@ -135,7 +135,10 @@ class Addresses_List_Table extends \WP_Posts_List_Table {
 
 		$bitcoin_address = $this->get_bitcoin_address_object( $post );
 
-		$link = esc_url( "https://www.blockchain.com/btc/address/{$bitcoin_address->get_raw_address()}" );
+		$link = sprintf(
+			'https://www.blockchain.com/btc/address/%s',
+			$bitcoin_address->get_raw_address()
+		);
 
 		$render = (string) preg_replace( '/(.*<a.*)(href=")([^"]*)(".*>)/', '$1$2' . $link . '$4', $render, 1 );
 
