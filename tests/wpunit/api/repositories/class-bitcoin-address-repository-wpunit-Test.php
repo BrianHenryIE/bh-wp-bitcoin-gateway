@@ -376,14 +376,16 @@ class Bitcoin_Address_Repository_WPUnit_Test extends WPTestCase {
 		$wallet1 = $this->wallet_repository->save_new( 'xpub_test_filter_wallet1' );
 		$wallet2 = $this->wallet_repository->save_new( 'xpub_test_filter_wallet2' );
 
-		$address_w1 = $this->sut->save_new( $wallet1, 0, 'bc1qfilter_w1_addr' );
-		$address_w2 = $this->sut->save_new( $wallet2, 0, 'bc1qfilter_w2_addr' );
+		$this->sut->save_new( $wallet1, 0, 'bc1qfilter_w1_addr' );
+		$this->sut->save_new( $wallet2, 0, 'bc1qfilter_w2_addr' );
+
+		$result = $this->sut->get_addresses( wallet: $wallet1 );
+
+		$this->assertCount( 1, $result );
 
 		// Verify addresses were created and belong to correct wallets.
-		$address_w1_retrieved = $this->sut->get_by_post_id( $address_w1->get_post_id() );
-		$address_w2_retrieved = $this->sut->get_by_post_id( $address_w2->get_post_id() );
+		$address_w1_retrieved = $result[0];
 		$this->assertEquals( $wallet1->get_post_id(), $address_w1_retrieved->get_wallet_parent_post_id() );
-		$this->assertEquals( $wallet2->get_post_id(), $address_w2_retrieved->get_wallet_parent_post_id() );
 	}
 
 	/**
