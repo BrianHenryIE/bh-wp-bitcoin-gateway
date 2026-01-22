@@ -28,7 +28,7 @@ class Bitcoin_Wallet_Factory {
 	 * @param int $post_id The WordPress post id this wallet is stored under.
 	 *
 	 * @throws InvalidArgumentException When the supplied post_id is not a post of this type.
-	 * @throws UnknownCurrencyException
+	 * @throws UnknownCurrencyException If BTC is not correctly added to brick/money.
 	 */
 	public function get_by_wp_post_id( int $post_id ): Bitcoin_Wallet {
 		$post = get_post( $post_id );
@@ -44,7 +44,7 @@ class Bitcoin_Wallet_Factory {
 	 *
 	 * @param WP_Post $post The WordPress post representing the wallet.
 	 * @return Bitcoin_Wallet The Bitcoin wallet object.
-	 * @throws UnknownCurrencyException
+	 * @throws UnknownCurrencyException If BTC is not correctly added to brick/money.
 	 */
 	public function get_by_wp_post( WP_Post $post ): Bitcoin_Wallet {
 		return new Bitcoin_Wallet(
@@ -63,7 +63,7 @@ class Bitcoin_Wallet_Factory {
 	 *
 	 * @param WP_Post $post The WordPress post representing the wallet.
 	 * @return Money|null The wallet balance or null if never checked.
-	 * @throws UnknownCurrencyException
+	 * @throws UnknownCurrencyException If BTC is not correctly added to brick/money (or someone edited the db!).
 	 */
 	protected function get_balance( WP_Post $post ): ?Money {
 		$balance = get_post_meta( $post->ID, Bitcoin_Wallet_WP_Post_Interface::BALANCE_META_KEY, true );

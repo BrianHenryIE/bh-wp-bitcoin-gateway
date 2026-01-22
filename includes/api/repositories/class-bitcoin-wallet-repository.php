@@ -13,6 +13,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories\Bitcoin_Wallet_Fa
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Queries\Bitcoin_Wallet_Query;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet_Status;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
+use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\UnknownCurrencyException;
 use InvalidArgumentException;
 use WP_Post;
 use wpdb;
@@ -37,6 +38,7 @@ class Bitcoin_Wallet_Repository extends WP_Post_Repository_Abstract {
 	 *
 	 * @param string $xpub The master public key of the wallet.
 	 * @throws BH_WP_Bitcoin_Gateway_Exception If more than one saved wallet was found for the master public key.
+	 * @throws UnknownCurrencyException If BTC is not correctly added to brick/money.
 	 */
 	public function get_by_xpub( string $xpub ): ?Bitcoin_Wallet {
 
