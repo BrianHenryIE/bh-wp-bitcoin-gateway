@@ -14,6 +14,16 @@ jobs:
   php-tests:
     runs-on: ubuntu-latest
 
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: password
+          MYSQL_DATABASE: bh_wp_bitcoin_gateway_integration
+        ports:
+          - 33066
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
     permissions:
       pull-requests: write # To add coverage comment
       contents: write # To commit coverage badge & report
@@ -65,8 +75,12 @@ jobs:
       - name: Build JS
         run: npm run build
 
-      - name: Start wp-env
-        run: npx wp-env start --debug
+# This takes 10 minutes+ so let's try to use services.mysql instead.
+#      - name: Start wp-env
+#        run: npx wp-env start --debug
+
+      - name: Setup test environment
+        run: cp .env.testing .env
 
       - name: Run tests without coverage
         if: ${{ matrix.php != env.COVERAGE_PHP_VERSION }}
