@@ -107,7 +107,7 @@ abstract readonly class WP_Post_Query_Abstract {
 				return $value->jsonSerialize();
 			}
 			if ( is_array( $value ) ) {
-				return json_encode( $value );
+				return wp_json_encode( $value );
 			}
 			// TODO: if DateTimeInterface serialize as something legible, if we're using it.
 			return $value;
