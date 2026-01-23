@@ -43,6 +43,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\Generate_Address_API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Settings;
 use BrianHenryIE\WP_Bitcoin_Gateway\Art4\Requests\Psr\HttpClient;
 use BrianHenryIE\WP_Bitcoin_Gateway\BlockchainInfo\BlockchainInfoApi;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\Woo_Cancel_Abandoned_Order\Woo_Cancel_Abandoned_Order_Integration;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\WooCommerce_Integration;
 use BrianHenryIE\WP_Bitcoin_Gateway\lucatume\DI52\Container;
 use BrianHenryIE\WP_Bitcoin_Gateway\WC_Logger\WC_Logger_Settings_Interface;
@@ -131,12 +132,6 @@ $container->bind( Blockchain_API_Interface::class, Blockstream_Info_API::class )
 $container->bind( Generate_Address_API_Interface::class, Nimq_API::class );
 $container->bind( Exchange_Rate_API_Interface::class, Bitfinex_API::class );
 
-// TODO: remove when Woo_Cancel_Abandoned_Order integration is modularised.
-$container->bind(
-	\BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface::class,
-	\BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce::class
-);
-
 /** @var BH_WP_Bitcoin_Gateway $app */
 $app = $container->get( BH_WP_Bitcoin_Gateway::class );
 $app->register_hooks();
@@ -152,6 +147,7 @@ $init_integrations = function () use ( $container ): void {
 		'bh_wp_bitcoin_gateway_integrations',
 		array(
 			WooCommerce_Integration::class,
+			Woo_Cancel_Abandoned_Order_Integration::class,
 		)
 	);
 

@@ -56,8 +56,6 @@ class BH_WP_Bitcoin_Gateway {
 		$this->define_wp_list_page_ui_hooks();
 
 		$this->define_cli_commands();
-
-		$this->define_integration_woo_cancel_abandoned_order_hooks();
 	}
 
 	/**
@@ -169,19 +167,5 @@ class BH_WP_Bitcoin_Gateway {
 			$logger = $this->container->get( LoggerInterface::class );
 			$logger->error( 'Failed to register WP CLI commands: ' . $e->getMessage(), array( 'exception' => $e ) );
 		}
-	}
-
-	/**
-	 * Add filters to enable support for WooCommerce Cancel Abandoned Order plugin.
-	 *
-	 * @see https://wordpress.org/plugins/woo-cancel-abandoned-order/
-	 */
-	protected function define_integration_woo_cancel_abandoned_order_hooks(): void {
-
-		/** @var Woo_Cancel_Abandoned_Order $woo_cancel_abandoned_order */
-		$woo_cancel_abandoned_order = $this->container->get( Woo_Cancel_Abandoned_Order::class );
-
-		add_filter( 'woo_cao_gateways', array( $woo_cancel_abandoned_order, 'enable_cao_for_bitcoin' ) );
-		add_filter( 'woo_cao_before_cancel_order', array( $woo_cancel_abandoned_order, 'abort_canceling_partially_paid_order' ), 10, 3 );
 	}
 }

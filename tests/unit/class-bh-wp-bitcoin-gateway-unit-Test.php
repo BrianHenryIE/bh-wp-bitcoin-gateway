@@ -208,25 +208,4 @@ class BH_WP_Bitcoin_Gateway_Unit_Test extends \Codeception\Test\Unit {
 		$app = new BH_WP_Bitcoin_Gateway( $this->get_container() );
 		$app->register_hooks();
 	}
-
-	/**
-	 * @covers ::define_integration_woo_cancel_abandoned_order_hooks
-	 */
-	public function test_define_integration_woo_cancel_abandoned_order_hooks(): void {
-
-		\WP_Mock::expectFilterAdded(
-			'woo_cao_gateways',
-			array( new AnyInstance( Woo_Cancel_Abandoned_Order::class ), 'enable_cao_for_bitcoin' )
-		);
-
-		\WP_Mock::expectFilterAdded(
-			'woo_cao_before_cancel_order',
-			array( new AnyInstance( Woo_Cancel_Abandoned_Order::class ), 'abort_canceling_partially_paid_order' ),
-			10,
-			3
-		);
-
-		$app = new BH_WP_Bitcoin_Gateway( $this->get_container() );
-		$app->register_hooks();
-	}
 }
