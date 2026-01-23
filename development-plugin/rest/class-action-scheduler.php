@@ -10,6 +10,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\Development_Plugin\Rest;
 use ActionScheduler;
 use ActionScheduler_Abstract_RecurringSchedule;
 use ActionScheduler_Action;
+use ActionScheduler_NullAction;
 use Exception;
 use WP_Error;
 use WP_REST_Request;
@@ -157,9 +158,10 @@ class Action_Scheduler {
 
 		$claim_id = $store->get_claim_id( $id );
 
+		/** @var ActionScheduler_Action|ActionScheduler_NullAction $as */
 		$as = $store->fetch_action( $id );
 
-		if ( ! ( $as instanceof ActionScheduler_Action ) ) {
+		if ( $as instanceof ActionScheduler_NullAction ) {
 			return new WP_Error( 'rest_invalid_param', 'Invalid id: ' . $id, array( 'status' => 400 ) );
 		}
 

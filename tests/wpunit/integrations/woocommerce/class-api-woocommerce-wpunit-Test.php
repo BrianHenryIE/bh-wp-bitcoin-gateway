@@ -496,6 +496,6 @@ class API_WooCommerce_WPUnit_Test extends WPTestCase {
 		$this->assertEquals( Money::of( '0.00123', 'BTC' ), $result->get_btc_total_price() );
 		$this->assertEquals( Money::of( '90000', 'USD' ), $result->get_btc_exchange_rate() );
 		$this->assertSame( $address, $result->get_address() );
-		$this->assertEquals( '2024-01-15 14:30:00', $result->get_last_checked_time()->format( 'Y-m-d H:i:s' ) );
+		$this->assertEquals( '2024-01-15 14:30:00', $result->get_last_checked_time()?->format( 'Y-m-d H:i:s' ) );
 	}
 }

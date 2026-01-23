@@ -33,10 +33,10 @@ class WooCommerce_Integration {
 	 * Constructor
 	 *
 	 * @param ContainerInterface&DI52_Container $container PSR container.
-	 * @throws ContainerException
+	 * @throws ContainerException E.g. if the bound class cannot be instantiated.
 	 */
 	public function __construct(
-		protected ContainerInterface $container,
+		protected ContainerInterface&DI52_Container $container,
 	) {
 		$this->container->bind( API_WooCommerce_Interface::class, API_WooCommerce::class );
 	}
@@ -48,9 +48,9 @@ class WooCommerce_Integration {
 	 * Load the dependencies, define the locale, and set the hooks for the admin area and
 	 * the frontend-facing side of the site.
 	 *
-	 * @throws ContainerException
-	 * @throws NotFoundExceptionInterface
-	 * @throws ContainerExceptionInterface
+	 * @throws NotFoundExceptionInterface If the class cannot be resolved (often when an interface does not have a bound class).
+	 * @throws ContainerException Other problems when instantiating the requested class.
+	 * @throws ContainerExceptionInterface PSR interface for all container exceptions.
 	 */
 	public function register_hooks(): void {
 

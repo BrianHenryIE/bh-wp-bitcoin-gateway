@@ -25,8 +25,8 @@ class Payment_Gateways {
 	/**
 	 * Constructor
 	 *
-	 * @param API_Interface             $api
-	 * @param API_WooCommerce_Interface $api To get the list of Bitcoin gateways to register with WooCommerce Blocks checkout.
+	 * @param API_Interface             $api The main plugin API, to be used by the gateway.
+	 * @param API_WooCommerce_Interface $api_woocommerce To get the list of Bitcoin gateways to register with WooCommerce Blocks checkout.
 	 * @param Settings_Interface        $settings Passed to {@see Bitcoin_Gateway_Blocks_Checkout_Support}.
 	 * @param LoggerInterface           $logger A PSR logger.
 	 */
@@ -44,9 +44,9 @@ class Payment_Gateways {
 	 *
 	 * @hooked woocommerce_payment_gateways
 	 *
-	 * @param string[] $gateways The payment gateways registered with WooCommerce.
+	 * @param array<class-string|WC_Payment_Gateway> $gateways The payment gateways registered with WooCommerce.
 	 *
-	 * @return string[]
+	 * @return array<class-string|WC_Payment_Gateway>
 	 * @see WC_Payment_Gateways::init()
 	 */
 	public function add_to_woocommerce( array $gateways ): array {
@@ -73,7 +73,11 @@ class Payment_Gateways {
 
 		foreach ( $this->api_woocommerce->get_bitcoin_gateways() as $gateway ) {
 
-			$support = new Bitcoin_Gateway_Blocks_Checkout_Support( $gateway, $this->api, $this->api_woocommerce, $this->settings );
+			$support = new Bitcoin_Gateway_Blocks_Checkout_Support(
+				$gateway,
+				$this->api,
+				$this->settings
+			);
 			$payment_method_registry->register( $support );
 		}
 	}

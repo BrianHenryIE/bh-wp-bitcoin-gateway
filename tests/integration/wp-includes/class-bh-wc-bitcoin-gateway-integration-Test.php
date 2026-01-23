@@ -18,7 +18,7 @@ use lucatume\WPBrowser\TestCase\WPTestCase;
 class BH_WP_Bitcoin_Gateway_Integration_Test extends WPTestCase {
 
 	/**
-	 * @return array{string, string, string}
+	 * @return array{0:string, 1:class-string, 2:string}
 	 */
 	public function hooks(): array {
 		$hooks = array(

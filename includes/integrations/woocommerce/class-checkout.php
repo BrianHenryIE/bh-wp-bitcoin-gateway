@@ -16,7 +16,7 @@ use Psr\Log\LoggerInterface;
 
 /**
  * When the purchase button is clicked, make one or more query-transaction requests to find an unused address.
- * Normally, there will be one address lined up ready to check, and in the unlilkey case that that address is now
+ * Normally, there will be one address lined up ready to check, and in the unlikely case that that address is now
  * used, the next one will almost definitely be unused.
  */
 class Checkout implements LoggerAwareInterface {
@@ -25,8 +25,8 @@ class Checkout implements LoggerAwareInterface {
 	/**
 	 * Constructor.
 	 *
-	 * @param API_Interface             $api
-	 * @param API_WooCommerce_Interface $api_woocommerce API functions for WooCommerce integration.
+	 * @param API_Interface             $api The main plugin functions (to get/create the wallet).
+	 * @param API_WooCommerce_Interface $api_woocommerce WooCommerce specific functions (to get the gateways).
 	 * @param LoggerInterface           $logger PSR logger instance.
 	 */
 	public function __construct(

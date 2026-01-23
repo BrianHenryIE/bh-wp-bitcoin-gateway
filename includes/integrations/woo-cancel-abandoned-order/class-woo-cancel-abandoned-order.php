@@ -30,7 +30,7 @@ class Woo_Cancel_Abandoned_Order {
 	 * Constructor.
 	 *
 	 * @param API_Interface             $api The main plugin functions.
-	 * @param API_WooCommerce_Interface $api The WooCommerce related functions.
+	 * @param API_WooCommerce_Interface $api_woocommerce The WooCommerce related functions.
 	 */
 	public function __construct(
 		protected API_Interface $api,

@@ -6,20 +6,18 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduler_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Ensure_Unused_Addresses_Result;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Wallet_Generation_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Bitcoin_Wallet_Service;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Payment_Service;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Currency;
+use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\MoneyMismatchException;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order_Interface;
 use DateInterval;
+use DateMalformedStringException;
 use DateTimeImmutable;
 use DateTimeZone;
 use Psr\Log\LoggerAwareInterface;
@@ -38,8 +36,11 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 	/**
 	 * Constructor
 	 *
-	 * @param API_Interface   $api Main plugin API.
-	 * @param LoggerInterface $logger PSR logger.
+	 * @param API_Interface                       $api Main plugin API.
+	 * @param Bitcoin_Wallet_Service              $wallet_service For creating/fetching wallets and addresses.
+	 * @param Payment_Service                     $payment_service For getting transaction data/checking for payments.
+	 * @param Background_Jobs_Scheduler_Interface $background_jobs_scheduler When an order is placed, schedule a payment check.
+	 * @param LoggerInterface                     $logger PSR logger.
 	 */
 	public function __construct(
 		protected API_Interface $api,
@@ -285,6 +286,8 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 	 * @param WC_Bitcoin_Order_Interface $bitcoin_order The WC_Order order to refresh.
 	 *
 	 * @throws BH_WP_Bitcoin_Gateway_Exception When blockchain API queries fail or transaction data cannot be updated.
+	 * @throws MoneyMismatchException If somehow we attempt to perform calculations between two different currencies.
+	 * @throws DateMalformedStringException If the saved transaction data has been modified in the db and cannot be deserialized.
 	 */
 	protected function refresh_order( WC_Bitcoin_Order_Interface $bitcoin_order ): WC_Bitcoin_Order_Interface {
 

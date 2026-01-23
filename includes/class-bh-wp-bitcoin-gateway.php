@@ -1,12 +1,6 @@
 <?php
 /**
- * The file that defines the core plugin class
- *
- * A class definition that includes attributes and functions used across both the
- * frontend-facing side of the site and the admin area.
- *
- * @link       http://example.com
- * @since      1.0.0
+ * The file that registers the hooks for the plugin.
  *
  * @package    brianhenryie/bh-wp-bitcoin-gateway
  */
@@ -32,9 +26,6 @@ use WP_CLI;
  *
  * This is used to define internationalization, admin-specific hooks, and
  * frontend-facing site hooks.
- *
- * Also maintains the unique identifier of this plugin as well as the current
- * version of the plugin.
  */
 class BH_WP_Bitcoin_Gateway {
 

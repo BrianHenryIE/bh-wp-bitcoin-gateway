@@ -19,7 +19,6 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
-use Psr\Log\NullLogger;
 use WC_Order;
 use WC_Payment_Gateway;
 use WC_Product;
@@ -51,10 +50,10 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 	 *
 	 * Used to generate new wallets when the xpub is entered, and to fetch addresses when orders are placed.
 	 *
-	 * @param ?API_Interface             $api The main plugin functions.
-	 * @param ?API_WooCommerce_Interface $api_woocommerce The WooCommerce specific functions.
-	 * @param Settings_Interface         $plugin_settings Used to read the gateway settings from wp_options before they are initialized in this class.
-	 * @param LoggerInterface            $logger
+	 * @param API_Interface             $api The main plugin functions.
+	 * @param API_WooCommerce_Interface $api_woocommerce The WooCommerce specific functions.
+	 * @param Settings_Interface        $plugin_settings Used to read the gateway settings from wp_options before they are initialized in this class.
+	 * @param LoggerInterface           $logger PSR logger.
 	 */
 	public function __construct(
 		protected API_Interface $api,
@@ -131,7 +130,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 		} catch ( UnknownCurrencyException $e ) {
 			$currency = Currency::of( 'USD' );
 		}
-		$exchange_rate = $this->api?->get_exchange_rate( $currency );
+		$exchange_rate = $this->api->get_exchange_rate( $currency );
 		if ( is_null( $exchange_rate ) ) {
 			// TODO: Also display an admin notice with instruction to configure / retry.
 			return 'Error fetching exchange rate. Gateway will be unavailable to customers until an exchange rate is available.';
@@ -190,7 +189,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 		$xpub_after = $this->get_xpub();
 
 		if ( ! is_null( $xpub_after ) ) {
-			$this->api?->get_wallet_for_master_public_key( $xpub_after, $this->id );
+			$this->api->get_wallet_for_master_public_key( $xpub_after, $this->id );
 		}
 
 		// If nothing changed, we can return early.
@@ -351,11 +350,6 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 	public function is_available() {
 
 		// TODO: review `$this->is_available_cache` and when we should avoid db calls and http calls.
-
-		if ( is_null( $this->api ) ) {
-			$this->is_available_cache = false;
-			return false;
-		}
 
 		if ( ! $this->api_woocommerce->is_fresh_address_available_for_gateway( $this ) ) {
 			$this->is_available_cache = false;
