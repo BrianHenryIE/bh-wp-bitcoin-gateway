@@ -1,11 +1,7 @@
 <?php
 /**
- * This Bitcoin gateway relies on the BitWasp bitwasp/bitcoin-php PHP library for the maths/heavy lifting.
+ * Bitcoin payment gateway for WordPress – WooCommerce.
  *
- * @see https://github.com/Bit-Wasp/bitcoin-php
- *
- * @link              http://example.com
- * @since             1.0.0
  * @package           brianhenryie/bh-wp-bitcoin-gateway
  *
  * @wordpress-plugin
@@ -16,7 +12,7 @@
  * Requires at least:      5.9
  * Requires PHP:           8.4
  * Author:                 Nullcorps, BrianHenryIE
- * Author URI:             https://github.com/Nullcorps/
+ * Author URI:             https://bhwp.ie
  * License:                GNU General Public License v3.0
  * License URI:            http://www.gnu.org/licenses/gpl-3.0.html
  * Text Domain:            bh-wp-bitcoin-gateway
