@@ -15,7 +15,6 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories\Bitcoin_Address_F
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address_WP_Post_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Bitcoin_Gateway;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Post_BH_Bitcoin_Address;
 use Exception;
@@ -56,7 +55,7 @@ class Addresses_List_Table extends \WP_Posts_List_Table {
 		 * @see Post_BH_Bitcoin_Address::$plugin_objects
 		 * @see Post_BH_Bitcoin_Address::register_address_post_type()
 		 *
-		 * @var WP_Post_Type&object{plugin_objects:array<string,API_Interface&API_WooCommerce_Interface>} $post_type_object
+		 * @var WP_Post_Type&object{plugin_objects:array<string,API_Interface>} $post_type_object
 		 */
 		$post_type_object = get_post_type_object( $post_type_name );
 		$this->api        = $post_type_object->plugin_objects['api'];
