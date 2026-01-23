@@ -1,15 +1,12 @@
 <?php
 
-namespace BrianHenryIE\WP_Bitcoin_Gateway\Frontend;
+namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\API;
-use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
 use Exception;
 
 /**
- * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\Frontend\AJAX
+ * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\AJAX
  */
 class AJAX_Unit_Test extends \Codeception\Test\Unit {
 

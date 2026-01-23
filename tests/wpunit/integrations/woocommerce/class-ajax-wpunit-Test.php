@@ -1,18 +1,18 @@
 <?php
 
-namespace BrianHenryIE\WP_Bitcoin_Gateway\Frontend;
+namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
-use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\Frontend\Frontend_Assets;
 use Codeception\Stub\Expected;
 use Exception;
+use lucatume\WPBrowser\TestCase\WPTestCase;
 use WC_Order;
 
 /**
- * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\Frontend\AJAX
+ * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\AJAX
  */
-class AJAX_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
+class AJAX_WPUnit_Test extends WPTestCase {
 
 	/**
 	 * @covers ::get_order_details
