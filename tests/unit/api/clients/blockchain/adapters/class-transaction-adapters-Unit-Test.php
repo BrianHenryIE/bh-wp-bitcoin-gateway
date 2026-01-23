@@ -58,7 +58,7 @@ class Transaction_Adapters_Unit_Test extends Unit {
 
 		if ( 'array' === $transaction_class ) {
 			$transaction = json_decode( $json, true );
-		} elseif(class_exists( $transaction_class ) ) {
+		} elseif ( class_exists( $transaction_class ) ) {
 			$factory_registry = new FactoryRegistry();
 			$mapper           = JsonMapperBuilder::new()->withPropertyMapper( new PropertyMapper( $factory_registry ) )->withAttributesMiddleware()->withDocBlockAnnotationsMiddleware()->withTypedPropertiesMiddleware()->withNamespaceResolverMiddleware()->withObjectConstructorMiddleware( $factory_registry )->build();
 			$mapper->push( new CaseConversion( TextNotation::UNDERSCORE(), TextNotation::CAMEL_CASE() ) );
