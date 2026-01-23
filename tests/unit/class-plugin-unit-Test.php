@@ -50,6 +50,7 @@ class Plugin_Unit_Test extends \Codeception\Test\Unit {
 			function () {}
 		);
 
+		/** @var string $plugin_root_dir */
 		global $plugin_root_dir;
 
 		\WP_Mock::userFunction(
