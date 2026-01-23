@@ -35,7 +35,7 @@ class Addresses_List_Table extends \WP_Posts_List_Table {
 	 *
 	 * @uses API_Interface::get_bitcoin_gateways()
 	 */
-	protected API_Interface&API_WooCommerce_Interface $api;
+	protected API_Interface $api;
 
 	/**
 	 * Constructor
@@ -239,23 +239,24 @@ class Addresses_List_Table extends \WP_Posts_List_Table {
 		$wallet_address = $wallet_post->post_title;
 		$abbreviated    = substr( $wallet_address, 0, 7 ) . '...' . substr( $wallet_address, -3 );
 
-		// Is this wallet being used by a gateway?
-		if ( ! isset( $this->wallet_id_to_gateways_map[ $wallet_post_id ] ) ) {
-			$this->wallet_id_to_gateways_map[ $wallet_post_id ] = array_filter(
-				$this->api->get_bitcoin_gateways(),
-				function ( Bitcoin_Gateway $gateway ) use ( $wallet_address ): bool {
-					return $gateway->get_xpub() === $wallet_address;
-				}
-			);
-		}
-		$gateways = $this->wallet_id_to_gateways_map[ $wallet_post_id ];
-
 		$href_html = '';
-		if ( 1 === count( $gateways ) ) {
-			/** @var Bitcoin_Gateway $gateway */
-			$gateway   = array_pop( $gateways );
-			$href_html = '<a href="' . esc_url( admin_url( "admin.php?page=wc-settings&tab=checkout&section={$gateway->id}" ) ) . '">';
-		}
+
+		// TODO: reimplement using filters.
+		// Is this wallet being used by a gateway?
+		// if ( ! isset( $this->wallet_id_to_gateways_map[ $wallet_post_id ] ) ) {
+		// $this->wallet_id_to_gateways_map[ $wallet_post_id ] = array_filter(
+		// $this->api->get_bitcoin_gateways(),
+		// function ( Bitcoin_Gateway $gateway ) use ( $wallet_address ): bool {
+		// return $gateway->get_xpub() === $wallet_address;
+		// }
+		// );
+		// }
+		// $gateways = $this->wallet_id_to_gateways_map[ $wallet_post_id ];
+		// if ( 1 === count( $gateways ) ) {
+		// ** @var Bitcoin_Gateway $gateway */
+		// $gateway   = array_pop( $gateways );
+		// $href_html = '<a href="' . esc_url( admin_url( "admin.php?page=wc-settings&tab=checkout&section={$gateway->id}" ) ) . '">';
+		// }
 
 		echo '<span title="' . esc_attr( $wallet_address ) . '">';
 		echo wp_kses_post( $href_html );

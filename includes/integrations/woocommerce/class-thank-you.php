@@ -40,7 +40,7 @@ class Thank_You {
 	 * When the thank you page loads, if the order loading is a Bitcoin order, print the payment instructions (via
 	 * the template).
 	 *
-	 * @uses API_Interface::is_order_has_bitcoin_gateway() to check is the gateway relevant for this thank you page load.
+	 * @uses API_WooCommerce_Interface::is_order_has_bitcoin_gateway() to check is the gateway relevant for this thank you page load.
 	 *
 	 * @hooked woocommerce_thankyou
 	 *

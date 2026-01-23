@@ -31,31 +31,21 @@ class CLI extends WP_CLI_Command {
 	use LoggerAwareTrait;
 
 	/**
-	 * Not used.
-	 *
-	 * @var Settings_Interface
-	 */
-	protected Settings_Interface $settings;
-
-	/**
-	 * All CLI functions call into an instance of the API_Interface.
-	 *
-	 * @var API_Interface&API_WooCommerce_Interface $api The main plugin API definition.
-	 */
-	protected API_Interface&API_WooCommerce_Interface $api;
-
-	/**
 	 * Constructor.
 	 *
-	 * @param API_Interface&API_WooCommerce_Interface $api The main plugin functions.
-	 * @param Settings_Interface                      $settings The plugin's settings.
-	 * @param LoggerInterface                         $logger A PSR logger.
+	 * @param API_Interface             $api The main plugin functions.
+	 * @param API_WooCommerce_Interface $woocommerce_api The main plugin functions.
+	 * @param Settings_Interface        $settings The plugin's settings.
+	 * @param LoggerInterface           $logger A PSR logger.
 	 */
-	public function __construct( API_Interface&API_WooCommerce_Interface $api, Settings_Interface $settings, LoggerInterface $logger ) {
+	public function __construct(
+		protected API_Interface $api,
+		protected API_WooCommerce_Interface $woocommerce_api,
+		protected Settings_Interface $settings,
+		LoggerInterface $logger
+	) {
 		parent::__construct();
 		$this->setLogger( $logger );
-		$this->settings = $settings;
-		$this->api      = $api;
 	}
 
 	/**
@@ -155,7 +145,7 @@ class CLI extends WP_CLI_Command {
 					 * @var WC_Order $order
 					 */
 					$order = wc_get_order( $order_id );
-					if ( ! $this->api->is_order_has_bitcoin_gateway( $order_id ) ) {
+					if ( ! $this->woocommerce_api->is_order_has_bitcoin_gateway( $order_id ) ) {
 						$this->logger->error( '`shop_order:{order_id}` is not a Bitcoin order', array( 'order_id' => $order_id ) );
 						return;
 					}

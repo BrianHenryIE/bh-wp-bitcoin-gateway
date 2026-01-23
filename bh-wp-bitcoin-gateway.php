@@ -43,7 +43,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\Generate_Address_API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Settings;
 use BrianHenryIE\WP_Bitcoin_Gateway\Art4\Requests\Psr\HttpClient;
 use BrianHenryIE\WP_Bitcoin_Gateway\BlockchainInfo\BlockchainInfoApi;
-use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\WooCommerce_Integration;
 use BrianHenryIE\WP_Bitcoin_Gateway\lucatume\DI52\Container;
 use BrianHenryIE\WP_Bitcoin_Gateway\WC_Logger\WC_Logger_Settings_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\WC_Logger\WC_PSR_Logger;
@@ -51,7 +51,6 @@ use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Activator;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Deactivator;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Logger\Logger;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Logger\Logger_Settings_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\WP_Logger\Logger_Settings_Trait;
 use Exception;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
@@ -95,8 +94,6 @@ $container->bind( Background_Jobs_Scheduler_Interface::class, Background_Jobs_Sc
 $container->bind( Background_Jobs_Actions_Interface::class, Background_Jobs_Actions_Handler::class );
 
 $container->bind( API_Background_Jobs_Interface::class, API::class );
-$container->bind( API_WooCommerce_Interface::class, API::class );
-$container->bind( API_Interface::class . '&' . API_WooCommerce_Interface::class, API::class );
 $container->bind( API_Interface::class, API::class );
 
 $container->bind( Settings_Interface::class, Settings::class );
@@ -134,8 +131,36 @@ $container->bind( Blockchain_API_Interface::class, Blockstream_Info_API::class )
 $container->bind( Generate_Address_API_Interface::class, Nimq_API::class );
 $container->bind( Exchange_Rate_API_Interface::class, Bitfinex_API::class );
 
+// TODO: remove when Woo_Cancel_Abandoned_Order integration is modularised.
+$container->bind(
+	\BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface::class,
+	\BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce::class
+);
+
 /** @var BH_WP_Bitcoin_Gateway $app */
 $app = $container->get( BH_WP_Bitcoin_Gateway::class );
 $app->register_hooks();
 
 $GLOBALS['bh_wp_bitcoin_gateway'] = $container->get( API_Interface::class );
+
+/**
+ * @hooked plugins_loaded
+ */
+$init_integrations = function () use ( $container ): void {
+	/** @var class-string[] $integrations */
+	$integrations = apply_filters(
+		'bh_wp_bitcoin_gateway_integrations',
+		array(
+			WooCommerce_Integration::class,
+		)
+	);
+
+	foreach ( $integrations as $integration ) {
+		/** @var object $instance */
+		$instance = $container->get( $integration );
+		if ( method_exists( $instance, 'register_hooks' ) ) {
+			$instance->register_hooks();
+		}
+	}
+};
+add_action( 'plugins_loaded', $init_integrations, 0 );

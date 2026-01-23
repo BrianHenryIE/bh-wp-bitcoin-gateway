@@ -28,16 +28,6 @@ use WC_Payment_Gateway;
 class Bitcoin_Gateway_Blocks_Checkout_Support extends AbstractPaymentMethodType {
 
 	/**
-	 * Used to get exchange rate.
-	 */
-	protected API_Interface $api;
-
-	/**
-	 * Used to get the plugin URL.
-	 */
-	protected Settings_Interface $plugin_settings;
-
-	/**
 	 * The gateway instance.
 	 *
 	 * @var WC_Payment_Gateway&Bitcoin_Gateway
@@ -47,19 +37,19 @@ class Bitcoin_Gateway_Blocks_Checkout_Support extends AbstractPaymentMethodType 
 	/**
 	 * Constructor
 	 *
-	 * @param Bitcoin_Gateway    $gateway The gateway instance.
-	 * @param API_Interface      $api      The API instance.
-	 * @param Settings_Interface $plugin_settings The plugin settings.
+	 * @param Bitcoin_Gateway           $gateway The gateway instance.
+	 * @param API_Interface             $api      The API instance. Used to get exchange rate.
+	 * @param API_WooCommerce_Interface $api_woocommerce
+	 * @param Settings_Interface        $plugin_settings The plugin settings. Used to get the plugin URL.
 	 */
 	public function __construct(
 		Bitcoin_Gateway $gateway,
-		API_Interface $api,
-		Settings_Interface $plugin_settings
+		protected API_Interface $api,
+		protected API_WooCommerce_Interface $api_woocommerce,
+		protected Settings_Interface $plugin_settings
 	) {
-		$this->api             = $api;
-		$this->plugin_settings = $plugin_settings;
-		$this->gateway         = $gateway;
-		$this->name            = $gateway->id;
+		$this->gateway = $gateway;
+		$this->name    = $gateway->id;
 	}
 
 	/**

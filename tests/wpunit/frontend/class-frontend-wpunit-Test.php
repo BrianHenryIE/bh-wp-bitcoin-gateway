@@ -3,17 +3,16 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Frontend;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\API;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
 use Codeception\Stub\Expected;
-use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
 use lucatume\WPBrowser\TestCase\WPTestCase;
 
 /**
  * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\Frontend\Frontend_Assets
  */
-class Frontend_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
+class Frontend_WPUnit_Test extends WPTestCase {
 
 	/**
 	 * @covers ::enqueue_scripts
@@ -75,7 +74,7 @@ class Frontend_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 			)
 		);
 		$api      = $this->make(
-			API::class,
+			API_WooCommerce::class,
 			array( 'is_order_has_bitcoin_gateway' => Expected::never() )
 		);
 

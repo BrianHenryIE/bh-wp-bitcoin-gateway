@@ -99,7 +99,7 @@ class Frontend_Unit_Test extends \Codeception\Test\Unit {
 	public function test_enqueue_styles_not_on_other_pages(): void {
 
 		$logger   = new ColorLogger();
-		$api      = $this->make( API::class );
+		$api      = $this->makeEmpty( API_WooCommerce_Interface::class );
 		$settings = $this->makeEmpty(
 			Settings_Interface::class,
 			array(

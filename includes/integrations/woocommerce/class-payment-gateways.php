@@ -25,12 +25,14 @@ class Payment_Gateways {
 	/**
 	 * Constructor
 	 *
+	 * @param API_Interface             $api
 	 * @param API_WooCommerce_Interface $api To get the list of Bitcoin gateways to register with WooCommerce Blocks checkout.
 	 * @param Settings_Interface        $settings Passed to {@see Bitcoin_Gateway_Blocks_Checkout_Support}.
 	 * @param LoggerInterface           $logger A PSR logger.
 	 */
 	public function __construct(
-		protected API_WooCommerce_Interface $api,
+		protected API_Interface $api,
+		protected API_WooCommerce_Interface $api_woocommerce,
 		protected Settings_Interface $settings,
 		LoggerInterface $logger
 	) {
@@ -48,7 +50,12 @@ class Payment_Gateways {
 	 * @see WC_Payment_Gateways::init()
 	 */
 	public function add_to_woocommerce( array $gateways ): array {
-		$gateways[] = Bitcoin_Gateway::class;
+		$gateways[] = new Bitcoin_Gateway(
+			$this->api,
+			$this->api_woocommerce,
+			$this->settings,
+			$this->logger
+		);
 
 		return $gateways;
 	}
@@ -64,30 +71,10 @@ class Payment_Gateways {
 	 */
 	public function register_woocommerce_block_checkout_support( PaymentMethodRegistry $payment_method_registry ): void {
 
-		foreach ( $this->api->get_bitcoin_gateways() as $gateway ) {
+		foreach ( $this->api_woocommerce->get_bitcoin_gateways() as $gateway ) {
 
-			$support = new Bitcoin_Gateway_Blocks_Checkout_Support( $gateway, $this->api, $this->settings );
+			$support = new Bitcoin_Gateway_Blocks_Checkout_Support( $gateway, $this->api, $this->api_woocommerce, $this->settings );
 			$payment_method_registry->register( $support );
 		}
-	}
-
-	/**
-	 * Set the PSR logger on each gateway instance.
-	 *
-	 * @hooked woocommerce_available_payment_gateways
-	 *
-	 * @param WC_Payment_Gateway[] $available_gateways The gateways to be displayed on the checkout.
-	 *
-	 * @return WC_Payment_Gateway[]
-	 */
-	public function add_logger_to_gateways( array $available_gateways ): array {
-
-		foreach ( $available_gateways as $gateway ) {
-			if ( $gateway instanceof Bitcoin_Gateway ) {
-				$gateway->setLogger( $this->logger );
-			}
-		}
-
-		return $available_gateways;
 	}
 }

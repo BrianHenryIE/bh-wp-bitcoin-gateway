@@ -3,16 +3,18 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\Woo_Cancel_Abandoned_Order;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
+use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
 use Codeception\Stub\Expected;
+use lucatume\WPBrowser\TestCase\WPTestCase;
 use stdClass;
 use WC_Order;
 
 /**
  * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\Integrations\Woo_Cancel_Abandoned_Order\Woo_Cancel_Abandoned_Order
  */
-class Woo_Cancel_Abandoned_Order_Unit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
+class Woo_Cancel_Abandoned_Order_Unit_Test extends WPTestCase {
 
 	/**
 	 * @covers ::enable_cao_for_bitcoin
@@ -26,13 +28,17 @@ class Woo_Cancel_Abandoned_Order_Unit_Test extends \lucatume\WPBrowser\TestCase\
 		$bitcoin_gateways[]  = $bitcoin_gateway;
 
 		$api = $this->makeEmpty(
+			API_Interface::class,
+		);
+
+		$api_woocommerce = $this->makeEmpty(
 			API_WooCommerce_Interface::class,
 			array(
 				'get_bitcoin_gateways' => Expected::once( $bitcoin_gateways ),
 			)
 		);
 
-		$sut = new Woo_Cancel_Abandoned_Order( $api );
+		$sut = new Woo_Cancel_Abandoned_Order( $api, $api_woocommerce );
 
 		$gateway_ids = array();
 
@@ -60,20 +66,25 @@ class Woo_Cancel_Abandoned_Order_Unit_Test extends \lucatume\WPBrowser\TestCase\
 			)
 		);
 
-		$api = $this->makeEmpty(
-			API_WooCommerce_Interface::class,
+		$api             = $this->makeEmpty(
+			API_Interface::class,
 			array(
-				'is_order_has_bitcoin_gateway' => Expected::once( true ),
-				'get_order_details'            => Expected::once( $bitcoin_order_mock ),
-				'get_saved_transactions'       => Expected::once(
+				'get_saved_transactions' => Expected::once(
 					function () {
 						return array( 'not', 'empty' );
 					}
 				),
 			)
 		);
+		$api_woocommerce = $this->makeEmpty(
+			API_WooCommerce_Interface::class,
+			array(
+				'is_order_has_bitcoin_gateway' => Expected::once( true ),
+				'get_order_details'            => Expected::once( $bitcoin_order_mock ),
+			)
+		);
 
-		$sut = new Woo_Cancel_Abandoned_Order( $api );
+		$sut = new Woo_Cancel_Abandoned_Order( $api, $api_woocommerce );
 
 		$should_cancel = true;
 
@@ -95,7 +106,14 @@ class Woo_Cancel_Abandoned_Order_Unit_Test extends \lucatume\WPBrowser\TestCase\
 			'transactions' => array( 'tx1', 'tx2' ),
 		);
 
-		$api = $this->makeEmpty(
+		$api             = $this->makeEmpty(
+			API_Interface::class,
+			array(
+				'is_order_has_bitcoin_gateway' => Expected::once( false ),
+				'get_order_details'            => Expected::never(),
+			)
+		);
+		$api_woocommerce = $this->makeEmpty(
 			API_WooCommerce_Interface::class,
 			array(
 				'is_order_has_bitcoin_gateway' => Expected::once( false ),
@@ -103,7 +121,7 @@ class Woo_Cancel_Abandoned_Order_Unit_Test extends \lucatume\WPBrowser\TestCase\
 			)
 		);
 
-		$sut = new Woo_Cancel_Abandoned_Order( $api );
+		$sut = new Woo_Cancel_Abandoned_Order( $api, $api_woocommerce );
 
 		$should_cancel = true;
 
@@ -134,7 +152,11 @@ class Woo_Cancel_Abandoned_Order_Unit_Test extends \lucatume\WPBrowser\TestCase\
 			)
 		);
 
-		$api = $this->makeEmpty(
+		$api             = $this->makeEmpty(
+			API_Interface::class,
+			array()
+		);
+		$api_woocommerce = $this->makeEmpty(
 			API_WooCommerce_Interface::class,
 			array(
 				'is_order_has_bitcoin_gateway' => Expected::once( true ),
@@ -142,7 +164,7 @@ class Woo_Cancel_Abandoned_Order_Unit_Test extends \lucatume\WPBrowser\TestCase\
 			)
 		);
 
-		$sut = new Woo_Cancel_Abandoned_Order( $api );
+		$sut = new Woo_Cancel_Abandoned_Order( $api, $api_woocommerce );
 
 		$should_cancel = true;
 
