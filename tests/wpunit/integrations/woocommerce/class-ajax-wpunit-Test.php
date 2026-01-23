@@ -3,7 +3,6 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
-use BrianHenryIE\WP_Bitcoin_Gateway\Frontend\Frontend_Assets;
 use Codeception\Stub\Expected;
 use Exception;
 use lucatume\WPBrowser\TestCase\WPTestCase;

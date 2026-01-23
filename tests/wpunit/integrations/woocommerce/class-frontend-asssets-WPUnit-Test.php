@@ -1,6 +1,6 @@
 <?php
 
-namespace BrianHenryIE\WP_Bitcoin_Gateway\Frontend;
+namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce;
@@ -10,9 +10,9 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
 use lucatume\WPBrowser\TestCase\WPTestCase;
 
 /**
- * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\Frontend\Frontend_Assets
+ * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Frontend_Assets
  */
-class Frontend_WPUnit_Test extends WPTestCase {
+class Frontend_Asssets_WPUnit_Test extends WPTestCase {
 
 	/**
 	 * @covers ::enqueue_scripts

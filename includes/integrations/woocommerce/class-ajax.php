@@ -11,7 +11,6 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
-use BrianHenryIE\WP_Bitcoin_Gateway\Frontend\Frontend_Assets;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 
