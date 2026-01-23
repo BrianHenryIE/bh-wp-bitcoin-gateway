@@ -7,6 +7,7 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Blockchain\Adapters;
 
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Blockchain\Blockstream_Info_API;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\BlockchainInfo\Model\Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
@@ -20,6 +21,9 @@ use Codeception\Test\Unit;
 use DateTimeImmutable;
 use WP_Mock;
 
+/**
+ * @phpstan-import-type BlockStreamApiTransactionArray from Blockstream_Info_API
+ */
 class Transaction_Adapters_Unit_Test extends Unit {
 
 	/**
@@ -57,6 +61,7 @@ class Transaction_Adapters_Unit_Test extends Unit {
 		}
 
 		if ( 'array' === $transaction_class ) {
+			/** @var BlockStreamApiTransactionArray $transaction */
 			$transaction = json_decode( $json, true );
 		} elseif ( class_exists( $transaction_class ) ) {
 			$factory_registry = new FactoryRegistry();

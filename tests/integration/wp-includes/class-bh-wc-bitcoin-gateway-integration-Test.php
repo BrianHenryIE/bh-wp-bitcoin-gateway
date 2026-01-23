@@ -18,7 +18,7 @@ use lucatume\WPBrowser\TestCase\WPTestCase;
 class BH_WP_Bitcoin_Gateway_Integration_Test extends WPTestCase {
 
 	/**
-	 * @return array{0:string, 1:class-string, 2:string}
+	 * @return array<array{0:string, 1:class-string, 2:string}>
 	 */
 	public function hooks(): array {
 		$hooks = array(
@@ -39,6 +39,7 @@ class BH_WP_Bitcoin_Gateway_Integration_Test extends WPTestCase {
 	 */
 	public function test_is_function_hooked_on_action( string $action_name, string $class_type, string $method_name, int $expected_priority = 10 ): void {
 
+		/** @var array<string,array<int,array<array{function:array{0:object,1:string}|callable|string}>>> $wp_filter */
 		global $wp_filter;
 
 		$this->assertArrayHasKey( $action_name, $wp_filter, "$method_name definitely not hooked to $action_name" );

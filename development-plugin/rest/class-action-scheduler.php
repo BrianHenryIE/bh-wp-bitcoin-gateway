@@ -11,6 +11,9 @@ use ActionScheduler;
 use ActionScheduler_Abstract_RecurringSchedule;
 use ActionScheduler_Action;
 use ActionScheduler_NullAction;
+use ActionScheduler_Schedule;
+use ActionScheduler_Store;
+use DateTime;
 use Exception;
 use WP_Error;
 use WP_REST_Request;
@@ -72,8 +75,10 @@ class Action_Scheduler {
 		$search['per_page'] = $search['per_page'] ?? 200;
 		$search['orderby']  = $search['orderby'] ?? 'date';
 		$search['order']    = $search['order'] ?? 'ASC';
-		$results            = as_get_scheduled_actions( $search );
+		/** @var array<ActionScheduler_Action> $scheduled_actions */
+		$scheduled_actions = as_get_scheduled_actions( $search );
 
+		/** @var ActionScheduler_Store $store */
 		$store = ActionScheduler::store();
 
 		/**
@@ -88,7 +93,7 @@ class Action_Scheduler {
 			return array(
 				'id'             => $index,
 				'hook'           => $action->get_hook(),
-				'status'         => $store->get_status( $index ),
+				'status'         => $store->get_status( (string) $index ),
 				'args'           => $action->get_args(),
 				'group'          => $action->get_group(),
 				/**
@@ -102,7 +107,10 @@ class Action_Scheduler {
 			);
 		};
 
-		foreach ( $results as $index => $result ) {
+		/** @var array<array<string,int|ActionScheduler_Schedule|DateTime|string|array<string, mixed>>> $results */
+		$results = array();
+
+		foreach ( $scheduled_actions as $index => $result ) {
 			$results[ $index ] = $action_scheduler_action_to_array( $result, $index );
 		}
 
