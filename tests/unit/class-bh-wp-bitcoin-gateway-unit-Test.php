@@ -19,6 +19,9 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\Woo_Cancel_Abandoned_Order\Woo_
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\lucatume\DI52\Container;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\I18n;
+use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Post_BH_Bitcoin_Address;
+use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Post_BH_Bitcoin_Transaction;
+use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Post_BH_Bitcoin_Wallet;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use WP_Mock\Matcher\AnyInstance;
@@ -197,6 +200,35 @@ class BH_WP_Bitcoin_Gateway_Unit_Test extends \Codeception\Test\Unit {
 			array( new AnyInstance( Register_List_Tables::class ), 'register_bitcoin_wallet_table' ),
 			10,
 			2
+		);
+
+		$app = new BH_WP_Bitcoin_Gateway( $this->get_container() );
+		$app->register_hooks();
+	}
+
+	/**
+	 * @covers ::define_custom_post_type_hooks
+	 */
+	public function test_define_custom_post_type_hooks(): void {
+
+		\WP_Mock::expectActionAdded(
+			'init',
+			array( new AnyInstance( Post_BH_Bitcoin_Wallet::class ), 'register_wallet_post_type' )
+		);
+
+		\WP_Mock::expectActionAdded(
+			'init',
+			array( new AnyInstance( Post_BH_Bitcoin_Address::class ), 'register_address_post_type' )
+		);
+
+		\WP_Mock::expectActionAdded(
+			'parse_query',
+			array( new AnyInstance( Post_BH_Bitcoin_Address::class ), 'add_post_statuses' )
+		);
+
+		\WP_Mock::expectActionAdded(
+			'init',
+			array( new AnyInstance( Post_BH_Bitcoin_Transaction::class ), 'register_transaction_post_type' )
 		);
 
 		$app = new BH_WP_Bitcoin_Gateway( $this->get_container() );
