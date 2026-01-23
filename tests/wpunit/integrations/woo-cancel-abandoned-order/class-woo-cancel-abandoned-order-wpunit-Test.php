@@ -1,6 +1,8 @@
 <?php
 /**
  * Requires `WC_Order` objects.
+ *
+ * @package brianhenryie/bh-wp-bitcoin-gateway
  */
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\Woo_Cancel_Abandoned_Order;
