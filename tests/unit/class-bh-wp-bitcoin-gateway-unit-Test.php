@@ -99,19 +99,13 @@ class BH_WP_Bitcoin_Gateway_Unit_Test extends \Codeception\Test\Unit {
 		$app->register_hooks();
 	}
 
-	public function test_admin_hooks(): void {
-		$this->markTestSkipped( 'Not using Admin class right now' );
+	/**
+	 * @covers ::__construct
+	 * @covers ::register_hooks
+	 */
+	public function test_register_hooks(): void {
 
-		\WP_Mock::expectActionAdded(
-			'admin_enqueue_scripts',
-			array( new AnyInstance( Admin::class ), 'enqueue_styles' )
-		);
-
-		\WP_Mock::expectActionAdded(
-			'admin_enqueue_scripts',
-			array( new AnyInstance( Admin::class ), 'enqueue_scripts' )
-		);
-
+		// Just make sure it doesn't crash.
 		$app = new BH_WP_Bitcoin_Gateway( $this->get_container() );
 		$app->register_hooks();
 	}
