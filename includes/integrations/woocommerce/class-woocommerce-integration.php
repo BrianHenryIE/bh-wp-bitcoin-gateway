@@ -207,6 +207,8 @@ class WooCommerce_Integration {
 
 	/**
 	 * Declare compatibility with WooCommerce High Performance Order Storage.
+	 *
+	 * @see wp-admin/plugins.php?plugin_status=incompatible_with_feature
 	 */
 	protected function define_woocommerce_features_hooks(): void {
 
