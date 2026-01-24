@@ -1,10 +1,10 @@
 version: 2
 updates:
 
-  # Maintain dependencies for GitHub Actions
+  # maintain dependencies for GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
-    target-branch: "main"
+    target-branch: "master"
     allow:
       - dependency-type: direct
     schedule:
@@ -16,10 +16,10 @@ updates:
       - "dependencies"
       - "workflows"
 
-  # Maintain dependencies for npm
+  # maintain dependencies for npm
   - package-ecosystem: "npm"
     directory: "/"
-    target-branch: "main"
+    target-branch: "master"
     allow:
       - dependency-type: direct
     schedule:
@@ -33,10 +33,10 @@ updates:
       - "dependencies"
       - "javascript"
 
-  # Maintain dependencies for Composer
+  # maintain dependencies for Composer
   - package-ecosystem: "composer"
     directory: "/"
-    target-branch: "main"
+    target-branch: "master"
     allow:
       - dependency-type: direct
     schedule:
