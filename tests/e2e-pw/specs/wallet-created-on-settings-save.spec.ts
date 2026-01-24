@@ -46,7 +46,7 @@ test.describe( 'Wallet creation on settings save', () => {
 		// await listBitcoinWallets();
 
 		await page.goto(
-			'/wp-admin/admin.php?page=wc-settings&tab=checkout&section=bitcoin_gateway'
+			'/wp-admin/admin.php?page=wc-settings&tab=checkout&section=bh_bitcoin'
 		);
 
 		const xpub =

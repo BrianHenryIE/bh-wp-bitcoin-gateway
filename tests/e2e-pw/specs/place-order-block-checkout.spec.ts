@@ -50,14 +50,14 @@ test.describe( 'Place orders on block checkout', () => {
 		// await page.click('.wc-block-components-payment-method-label:has-text("Bitcoin")');
 		await page
 			.locator(
-				'#radio-control-wc-payment-method-options-bitcoin_gateway__label'
+				'#radio-control-wc-payment-method-options-bh_bitcoin__label'
 			)
 			.click();
 
 		// Verify Bitcoin payment option is selected
 		await expect(
 			page.locator(
-				'#radio-control-wc-payment-method-options-bitcoin_gateway__label'
+				'#radio-control-wc-payment-method-options-bh_bitcoin__label'
 			)
 		).toBeVisible();
 		// await expect(page.locator('.wc-block-components-payment-method-label:has-text("Bitcoin")')).toBeVisible();

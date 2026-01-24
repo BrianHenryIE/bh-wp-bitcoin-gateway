@@ -14,7 +14,7 @@ export async function configureBitcoinXpub( page: Page ) {
 
 	// Navigate to Bitcoin gateway settings
 	await page.goto(
-		'/wp-admin/admin.php?page=wc-settings&tab=checkout&section=bitcoin_gateway'
+		'/wp-admin/admin.php?page=wc-settings&tab=checkout&section=bh_bitcoin'
 	);
 
 	// This is the empty "wp_plugin_wallet" wallet

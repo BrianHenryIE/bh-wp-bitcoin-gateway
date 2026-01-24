@@ -150,12 +150,12 @@ export async function selectPaymentGateway(
 ): Promise< void > {
 	const checkoutType = await detectCheckoutType();
 	if ( checkoutType === 'blocks' ) {
-		// await page.click('#radio-control-wc-payment-method-options-bitcoin_gateway');
+		// await page.click('#radio-control-wc-payment-method-options-bh_bitcoin');
 		await page.click(
 			'#radio-control-wc-payment-method-options-' + gatewayId + '__label'
 		);
 	} else {
 		await page.click( 'label[for="payment_method_' + gatewayId + '"]' );
 	}
-	// await page.waitForSelector('.payment_method_bitcoin_gateway', { state: 'visible' });
+	// await page.waitForSelector('.payment_method_bh_bitcoin', { state: 'visible' });
 }
