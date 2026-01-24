@@ -20,28 +20,45 @@ class WooCommerce_Order {
 	}
 
 	/**
+	 * Determine is the page the admin order view, then get the order id from the URL.
+	 *
+	 * wp-admin/admin.php?page=wc-orders&action=edit&id=71
+	 */
+	protected function get_woocommerce_admin_order_page_order_id(): ?int {
+
+		/** @var string $pagenow */
+		global $pagenow;
+
+		if ( 'post.php' === $pagenow && isset( $_GET['post'] ) && is_string( $_GET['post'] ) ) {
+			$post_id   = absint( $_GET['post'] );
+			$post_type = get_post_type( $post_id );
+			if ( 'shop_order' === $post_type ) {
+				return $post_id;
+			}
+		}
+		if ( 'admin.php' === $pagenow && isset( $_GET['id'] ) && is_string( $_GET['id'] )
+			&& isset( $_GET['page'] ) && 'wc-orders' === $_GET['page'] ) {
+			$post_id = absint( $_GET['id'] );
+			return $post_id;
+		}
+
+		return null;
+	}
+
+	/**
 	 * Add a "Customer Order Link" to the order admin page.
 	 *
 	 * @hooked admin_footer
 	 */
 	public function order_link(): void {
-		global $pagenow;
-		if ( 'post.php' !== $pagenow ) {
-			return;
-		}
-		if ( ! isset( $_GET['post'] ) ) {
-			return;
-		}
-		$post_id = absint( $_GET['post'] );
 
-		$post_type = get_post_type( $post_id );
-
-		if ( 'shop_order' !== $post_type ) {
+		$order_id = $this->get_woocommerce_admin_order_page_order_id();
+		if ( ! $order_id ) {
 			return;
 		}
 
 		/** @var \WC_Order $wc_order */
-		$wc_order = wc_get_order( absint( $_GET['post'] ) );
+		$wc_order = wc_get_order( $order_id );
 		$link     = $wc_order->get_checkout_order_received_url();
 
 		$script = <<<EOT
