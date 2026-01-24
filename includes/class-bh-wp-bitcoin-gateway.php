@@ -9,6 +9,8 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Admin\Register_List_Tables;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Post_BH_Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Post_BH_Bitcoin_Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Post_BH_Bitcoin_Wallet;
@@ -154,6 +156,9 @@ class BH_WP_Bitcoin_Gateway {
 		if ( ! class_exists( WP_CLI::class ) ) {
 			return;
 		}
+
+		// TODO: figure out how to
+		$this->container->bind( API_WooCommerce_Interface::class, API_WooCommerce::class );
 
 		/** @var CLI $cli */
 		$cli = $this->container->get( CLI::class );
