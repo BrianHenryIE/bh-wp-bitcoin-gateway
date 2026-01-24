@@ -23,7 +23,7 @@ export async function configureBitcoinXpub( page: Page ) {
 
 	// Check if it already filled in to save time
 	const existingXpub = await page
-		.locator( '#woocommerce_bitcoin_gateway_xpub' )
+		.locator( '#woocommerce_bh_bitcoin_xpub' )
 		.inputValue();
 
 	if ( existingXpub !== xpub ) {

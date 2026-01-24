@@ -310,7 +310,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 			$checkout_url                                   = add_query_arg(
 				array(
 					'add-to-cart'     => $a_product->get_id(),
-					'payment_gateway' => 'bh_bitcoin',
+					'payment_gateway' => $this->id,
 				),
 				wc_get_checkout_url()
 			);

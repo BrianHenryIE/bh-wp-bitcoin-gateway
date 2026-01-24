@@ -31,7 +31,7 @@ interface BitcoinGatewaySettings {
 }
 
 const bhSettings: BitcoinGatewaySettings = getSetting(
-	'bitcoin_gateway_data',
+	'bh_bitcoin_data', // `{gateway_id}_data`.
 	{}
 );
 
@@ -81,7 +81,7 @@ const BHLabel: React.FC< PaymentMethodProps > = (
  * Payment method config object.
  */
 const BitcoinGateway: PaymentMethodConfig = {
-	name: 'bh_bitcoin',
+	name: 'bh_bitcoin', // Must match `WC_Payment_Gateway::$id`.
 	label: <BHLabel />,
 	content: <BHContent />,
 	edit: <BHContent />,
