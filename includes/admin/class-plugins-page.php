@@ -49,7 +49,7 @@ class Plugins_Page {
 		 *
 		 * @see Bitcoin_Gateway::$id
 		 */
-		$gateway_id = 'bitcoin_gateway';
+		$gateway_id = 'bh_bitcoin';
 
 		$setting_link   = admin_url( "admin.php?page=wc-settings&tab=checkout&section={$gateway_id}" );
 		$plugin_links   = array();
@@ -81,7 +81,7 @@ class Plugins_Page {
 
 			$params = array(
 				'post_type'                  => 'shop_order',
-				'_shop_order_payment_method' => 'bitcoin_gateway',
+				'_shop_order_payment_method' => 'bh_bitcoin',
 			);
 
 			$orders_link    = add_query_arg( $params, admin_url( 'edit.php' ) );

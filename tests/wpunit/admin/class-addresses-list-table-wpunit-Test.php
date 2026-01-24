@@ -60,7 +60,7 @@ class Addresses_List_Table_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTe
 		);
 		$bitcoin_gateway->settings['xpub'] = 'xpub1a2s3d4f5gabcdef';
 
-		\WC_Payment_Gateways::instance()->payment_gateways['bitcoin_gateway'] = $bitcoin_gateway;
+		\WC_Payment_Gateways::instance()->payment_gateways['bh_bitcoin'] = $bitcoin_gateway;
 
 		// Hopefully this is reset between tests?
 		$plugin_post_address_type = new Post_BH_Bitcoin_Address( $api );
@@ -98,7 +98,7 @@ class Addresses_List_Table_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTe
 	public function tearDown(): void {
 		parent::tearDown();
 
-		unset( \WC_Payment_Gateways::instance()->payment_gateways['bitcoin_gateway'] );
+		unset( \WC_Payment_Gateways::instance()->payment_gateways['bh_bitcoin'] );
 	}
 
 	/**

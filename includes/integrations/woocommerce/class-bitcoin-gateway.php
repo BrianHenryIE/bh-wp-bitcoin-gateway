@@ -38,7 +38,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 	 *
 	 * @var string
 	 */
-	public $id = 'bitcoin_gateway';
+	public $id = 'bh_bitcoin';
 
 	/**
 	 * A cache so {@see Bitcoin_Gateway::is_available()} only runs once.
@@ -310,7 +310,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 			$checkout_url                                   = add_query_arg(
 				array(
 					'add-to-cart'     => $a_product->get_id(),
-					'payment_gateway' => 'bitcoin_gateway',
+					'payment_gateway' => 'bh_bitcoin',
 				),
 				wc_get_checkout_url()
 			);

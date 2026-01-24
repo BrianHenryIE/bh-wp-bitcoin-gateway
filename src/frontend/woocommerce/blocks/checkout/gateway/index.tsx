@@ -81,7 +81,7 @@ const BHLabel: React.FC< PaymentMethodProps > = (
  * Payment method config object.
  */
 const BitcoinGateway: PaymentMethodConfig = {
-	name: 'bitcoin_gateway',
+	name: 'bh_bitcoin',
 	label: <BHLabel />,
 	content: <BHContent />,
 	edit: <BHContent />,

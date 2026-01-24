@@ -4,7 +4,7 @@
 import config from '../../../../playwright.config';
 
 export async function removeMasterPublicKeyFromWooCommerceBitcoinPaymentGateway(): Promise<void> {
-    const gatewayId = 'bitcoin_gateway';
+    const gatewayId = 'bh_bitcoin';
     const baseURL: string = config.use.baseURL!;
     const url = `${ baseURL }/wp-json/wc/v3/payment_gateways/${ gatewayId }`;
 
