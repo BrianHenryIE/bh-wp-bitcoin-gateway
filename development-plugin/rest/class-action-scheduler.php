@@ -65,10 +65,6 @@ class Action_Scheduler {
 
 		$search = $request->get_params();
 
-		// if ( ! $search ) {
-		// return new WP_Error( 'rest_missing_param', 'Missing "s" search parameter.', array( 'status' => 400 ) );
-		// }
-
 		/**
 		 * @see ActionScheduler_DBStore::get_query_actions_sql()
 		 */
@@ -161,7 +157,7 @@ class Action_Scheduler {
 			return new WP_Error( 'rest_missing_param', 'Missing id parameter.', array( 'status' => 400 ) );
 		}
 
-		/** @var \ActionScheduler_Store $store */
+		/** @var ActionScheduler_Store $store */
 		$store = ActionScheduler::store();
 
 		$claim_id = $store->get_claim_id( $id );
