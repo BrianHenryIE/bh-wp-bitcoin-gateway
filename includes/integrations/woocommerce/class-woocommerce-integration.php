@@ -34,7 +34,7 @@ class WooCommerce_Integration {
 	 * @throws ContainerException E.g. if the bound class cannot be instantiated.
 	 */
 	public function __construct(
-		protected ContainerInterface&DI52_Container $container,
+		protected DI52_Container $container,
 	) {
 		$this->container->bind( API_WooCommerce_Interface::class, API_WooCommerce::class );
 	}
