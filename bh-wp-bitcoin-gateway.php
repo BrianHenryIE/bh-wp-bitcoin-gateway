@@ -137,7 +137,10 @@ $GLOBALS['bh_wp_bitcoin_gateway'] = $container->get( API_Interface::class );
 /**
  * @hooked plugins_loaded
  */
-$init_integrations = function () use ( $container ): void {
+$boot_integrations = function () use ( $container ): void {
+	/** @var LoggerInterface $logger */
+	$logger = $container->get( LoggerInterface::class );
+
 	/** @var class-string[] $integrations */
 	$integrations = apply_filters(
 		'bh_wp_bitcoin_gateway_integrations',
@@ -148,11 +151,22 @@ $init_integrations = function () use ( $container ): void {
 	);
 
 	foreach ( $integrations as $integration ) {
-		/** @var object $instance */
-		$instance = $container->get( $integration );
-		if ( method_exists( $instance, 'register_hooks' ) ) {
-			$instance->register_hooks();
+		try {
+			/** @var object $instance */
+			$instance = $container->get( $integration );
+			if ( method_exists( $instance, 'register_hooks' ) ) {
+				$instance->register_hooks();
+			}
+		} catch ( Exception $e ) {
+			$logger->warning(
+				'Error booting {integration} – {error_message}.',
+				array(
+					'integration'   => $integration,
+					'error_message' => $e->getMessage(),
+					'exception'     => $e,
+				)
+			);
 		}
 	}
 };
-add_action( 'plugins_loaded', $init_integrations, 0 );
+add_action( 'plugins_loaded', $boot_integrations, 0 );
