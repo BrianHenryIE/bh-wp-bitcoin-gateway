@@ -1,9 +1,17 @@
 <?php
+/**
+ * Given a Transaction, return strings to print in HTML.
+ *
+ * @package brianhenryie/bh-wp-bitcoin-gateway
+ */
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_Interface;
 
+/**
+ * Just a utility class, maybe the functions here should be static.
+ */
 class Transaction_Formatter {
 
 	/**
