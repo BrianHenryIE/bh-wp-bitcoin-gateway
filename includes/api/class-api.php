@@ -146,12 +146,12 @@ class API implements API_Interface, API_Background_Jobs_Interface {
 	/**
 	 * Get or create a Wallet for the given master public key. Optionally, set the gateway id if the wallet is new.
 	 *
-	 * @param string      $xpub Bitcoin master public key.
-	 * @param string|null $gateway_id Gateway id.
+	 * @param string                                              $xpub Bitcoin master public key.
+	 * @param ?array{integration:class-string, gateway_id:string} $gateway_details Gateway id.
 	 * @throws BH_WP_Bitcoin_Gateway_Exception If two wallets for the xpub exist, or if saving fails.
 	 */
-	public function get_wallet_for_master_public_key( string $xpub, ?string $gateway_id = null ): Wallet_Generation_Result {
-		$result = $this->wallet_service->get_wallet_for_xpub( $xpub, $gateway_id );
+	public function get_wallet_for_master_public_key( string $xpub, ?array $gateway_details = null ): Wallet_Generation_Result {
+		$result = $this->wallet_service->get_or_save_wallet_for_xpub( $xpub, $gateway_details );
 
 		if ( $result->is_new ) {
 			$this->background_jobs_scheduler->schedule_single_ensure_unused_addresses( $result->wallet );

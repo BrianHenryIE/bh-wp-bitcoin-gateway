@@ -23,5 +23,5 @@ interface Bitcoin_Wallet_WP_Post_Interface {
 	 *
 	 * TODO: would this be better done as a taxonomy?
 	 */
-	const string GATEWAY_IDS_META_KEY = 'payment_gateway_ids';
+	const string GATEWAYS_DETAILS_META_KEY = 'associated_payment_gateways';
 }

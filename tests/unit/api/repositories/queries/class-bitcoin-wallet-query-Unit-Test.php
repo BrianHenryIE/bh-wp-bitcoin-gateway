@@ -111,8 +111,8 @@ class Bitcoin_Wallet_Query_Unit_Test extends \Codeception\Test\Unit {
 		$query_array = $sut->to_query_array();
 
 		$this->assertArrayHasKey( 'meta_input', $query_array );
-		$this->assertArrayHasKey( Bitcoin_Wallet_WP_Post_Interface::GATEWAY_IDS_META_KEY, $query_array['meta_input'] );
-		$this->assertEquals( json_encode( $gateway_refs ), $query_array['meta_input'][ Bitcoin_Wallet_WP_Post_Interface::GATEWAY_IDS_META_KEY ] );
+		$this->assertArrayHasKey( Bitcoin_Wallet_WP_Post_Interface::GATEWAYS_DETAILS_META_KEY, $query_array['meta_input'] );
+		$this->assertEquals( json_encode( $gateway_refs ), $query_array['meta_input'][ Bitcoin_Wallet_WP_Post_Interface::GATEWAYS_DETAILS_META_KEY ] );
 		$this->assertArrayNotHasKey( 'gateway_refs', $query_array );
 	}
 
@@ -178,9 +178,9 @@ class Bitcoin_Wallet_Query_Unit_Test extends \Codeception\Test\Unit {
 
 		// Check meta_input.
 		$this->assertArrayHasKey( 'meta_input', $query_array );
-		$this->assertArrayHasKey( Bitcoin_Wallet_WP_Post_Interface::GATEWAY_IDS_META_KEY, $query_array['meta_input'] );
+		$this->assertArrayHasKey( Bitcoin_Wallet_WP_Post_Interface::GATEWAYS_DETAILS_META_KEY, $query_array['meta_input'] );
 		$this->assertArrayHasKey( Bitcoin_Wallet_WP_Post_Interface::LAST_DERIVED_ADDRESS_INDEX_META_KEY, $query_array['meta_input'] );
-		$this->assertEquals( json_encode( $gateway_refs ), $query_array['meta_input'][ Bitcoin_Wallet_WP_Post_Interface::GATEWAY_IDS_META_KEY ] );
+		$this->assertEquals( json_encode( $gateway_refs ), $query_array['meta_input'][ Bitcoin_Wallet_WP_Post_Interface::GATEWAYS_DETAILS_META_KEY ] );
 		$this->assertEquals( $index, $query_array['meta_input'][ Bitcoin_Wallet_WP_Post_Interface::LAST_DERIVED_ADDRESS_INDEX_META_KEY ] );
 
 		// Ensure original property names are not in the query array.
@@ -325,8 +325,8 @@ class Bitcoin_Wallet_Query_Unit_Test extends \Codeception\Test\Unit {
 		$query_array  = $sut->to_query_array();
 
 		$this->assertArrayHasKey( 'meta_input', $query_array );
-		$this->assertArrayHasKey( Bitcoin_Wallet_WP_Post_Interface::GATEWAY_IDS_META_KEY, $query_array['meta_input'] );
-		$this->assertEquals( json_encode( $gateway_refs ), $query_array['meta_input'][ Bitcoin_Wallet_WP_Post_Interface::GATEWAY_IDS_META_KEY ] );
+		$this->assertArrayHasKey( Bitcoin_Wallet_WP_Post_Interface::GATEWAYS_DETAILS_META_KEY, $query_array['meta_input'] );
+		$this->assertEquals( json_encode( $gateway_refs ), $query_array['meta_input'][ Bitcoin_Wallet_WP_Post_Interface::GATEWAYS_DETAILS_META_KEY ] );
 	}
 
 	/**
@@ -341,8 +341,8 @@ class Bitcoin_Wallet_Query_Unit_Test extends \Codeception\Test\Unit {
 		$query_array  = $sut->to_query_array();
 
 		$this->assertArrayHasKey( 'meta_input', $query_array );
-		$this->assertArrayHasKey( Bitcoin_Wallet_WP_Post_Interface::GATEWAY_IDS_META_KEY, $query_array['meta_input'] );
-		$this->assertEquals( json_encode( $gateway_refs ), $query_array['meta_input'][ Bitcoin_Wallet_WP_Post_Interface::GATEWAY_IDS_META_KEY ] );
+		$this->assertArrayHasKey( Bitcoin_Wallet_WP_Post_Interface::GATEWAYS_DETAILS_META_KEY, $query_array['meta_input'] );
+		$this->assertEquals( json_encode( $gateway_refs ), $query_array['meta_input'][ Bitcoin_Wallet_WP_Post_Interface::GATEWAYS_DETAILS_META_KEY ] );
 	}
 
 	/**

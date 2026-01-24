@@ -52,7 +52,7 @@ readonly class Bitcoin_Wallet_Query extends WP_Post_Query_Abstract {
 	protected function get_meta_input(): array {
 		return array_filter(
 			array(
-				Bitcoin_Wallet_WP_Post_Interface::GATEWAY_IDS_META_KEY => $this->gateway_refs,
+				Bitcoin_Wallet_WP_Post_Interface::GATEWAYS_DETAILS_META_KEY => $this->gateway_refs,
 				Bitcoin_Wallet_WP_Post_Interface::LAST_DERIVED_ADDRESS_INDEX_META_KEY => $this->last_derived_address_index,
 			)
 		);
@@ -61,10 +61,10 @@ readonly class Bitcoin_Wallet_Query extends WP_Post_Query_Abstract {
 	/**
 	 * Constructor.
 	 *
-	 * @param ?string                $master_public_key The Wallet's master public key.
-	 * @param ?Bitcoin_Wallet_Status $status Current status, e.g. new.
-	 * @param ?array<int|string>     $gateway_refs List of gateways the Bitcoin_Wallet is being used by.
-	 * @param ?int                   $last_derived_address_index The highest address index that has been derived from this wallet's master public key.
+	 * @param ?string                                                    $master_public_key The Wallet's master public key.
+	 * @param ?Bitcoin_Wallet_Status                                     $status Current status, e.g. new.
+	 * @param ?array<array{integration:class-string, gateway_id:string}> $gateway_refs List of gateways the Bitcoin_Wallet is being used by.
+	 * @param ?int                                                       $last_derived_address_index The highest address index that has been derived from this wallet's master public key.
 	 */
 	public function __construct(
 		public ?string $master_public_key = null,

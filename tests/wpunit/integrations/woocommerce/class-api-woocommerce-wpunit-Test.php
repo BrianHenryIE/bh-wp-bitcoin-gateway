@@ -280,9 +280,14 @@ class API_WooCommerce_WPUnit_Test extends WPTestCase {
 			)
 		);
 
+		$gateway = array(
+			'integration' => WooCommerce_Integration::class,
+			'gateway_id'  => 'gateway_id',
+		);
+
 		$get_wallet_for_xpub_service_result = new Get_Wallet_For_Xpub_Service_Result(
 			xpub: 'xpub12345',
-			gateway_id: 'bitcoin',
+			gateway_details: $gateway,
 			wallet: $wallet,
 			is_new: false,
 		);
@@ -296,7 +301,7 @@ class API_WooCommerce_WPUnit_Test extends WPTestCase {
 		$bitcoin_wallet_service = $this->makeEmpty(
 			Bitcoin_Wallet_Service::class,
 			array(
-				'get_wallet_for_xpub'               => Expected::once( $get_wallet_for_xpub_service_result ),
+				'get_or_save_wallet_for_xpub'       => Expected::once( $get_wallet_for_xpub_service_result ),
 				'get_unused_bitcoin_addresses'      => Expected::once( fn() => array() ),
 				'generate_new_addresses_for_wallet' => Expected::once( $address_generation_result ),
 				'save_new'                          => Expected::once( $address ),

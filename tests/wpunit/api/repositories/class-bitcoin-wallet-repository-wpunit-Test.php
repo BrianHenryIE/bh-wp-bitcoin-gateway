@@ -6,6 +6,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_E
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet_Status;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet_WP_Post_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories\Bitcoin_Wallet_Factory;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\WooCommerce_Integration;
 use InvalidArgumentException;
 use lucatume\WPBrowser\TestCase\WPTestCase;
 use wpdb;
@@ -58,7 +59,12 @@ class Bitcoin_Wallet_Repository_WPUnit_Test extends WPTestCase {
 		$xpub       = 'xpub6BosfCnifzxcFwrSzQiqu2DBVTshkCXacvNsWGYJVVhhawA7d4R5WSWGFNbi8Aw6ZRc1brxMyWMzG3DSSSSoekkudhUd9yLb6qx39T9nMdj';
 		$gateway_id = 'bh_bitcoin_gateway';
 
-		$saved_wallet = $this->sut->save_new( $xpub, $gateway_id );
+		$gateway = array(
+			'integration' => WooCommerce_Integration::class,
+			'gateway_id'  => $gateway_id,
+		);
+
+		$saved_wallet = $this->sut->save_new( $xpub, $gateway );
 
 		$this->assertEquals( Bitcoin_Wallet_Status::ACTIVE, $saved_wallet->get_status() );
 	}
@@ -184,9 +190,15 @@ class Bitcoin_Wallet_Repository_WPUnit_Test extends WPTestCase {
 	 * @covers ::get_all
 	 */
 	public function test_get_all_active_wallets(): void {
+
+		$gateway = array(
+			'integration' => WooCommerce_Integration::class,
+			'gateway_id'  => 'gateway_id',
+		);
+
 		// Create active wallet.
 		$active_xpub = 'xpub6H1LXWLaKsWFhvm6RVpEL9P4KfRZSW7abD2ttkWP3SSQvnyA8FSVqNTEcYFgJS2UaFcxupHiYkro49S8yGasTvXEYBVPamhGW6cFJodrTHy';
-		$this->sut->save_new( $active_xpub, 'gateway_id' );
+		$this->sut->save_new( $active_xpub, $gateway );
 
 		// Create inactive wallet.
 		$inactive_xpub = 'xpub6FnCn6nSzZAw5Tw7cgR9bi15UV96gLZhjDstkXXxvCLsUXBGXPdSnLFbdpq8p9HmGsApME5hQTZ3emM2rnY5agb9rXpVGyy3bdW6EEgAtqt';

@@ -49,17 +49,35 @@ class Bitcoin_Wallet_Service implements LoggerAwareInterface {
 	/**
 	 * Get or create a Bitcoin_Wallet from a master public key. Optionally associate a gateway id with it.
 	 *
-	 * @param string  $xpub The master public key – xpub/ypub/zpub.
-	 * @param ?string $gateway_id Optional gateway id to associate the wallet with.
+	 * @param string                                              $xpub The master public key – xpub/ypub/zpub.
+	 * @param ?array{integration:class-string, gateway_id:string} $gateway_details Optional gateway id to associate the wallet with.
 	 * @throws BH_WP_Bitcoin_Gateway_Exception If a previous bug has saved two wp_posts for the same xpub.
 	 */
-	public function get_wallet_for_xpub( string $xpub, ?string $gateway_id = null ): Get_Wallet_For_Xpub_Service_Result {
+	public function get_or_save_wallet_for_xpub( string $xpub, ?array $gateway_details = null ): Get_Wallet_For_Xpub_Service_Result {
 		$existing_wallet = $this->bitcoin_wallet_repository->get_by_xpub( $xpub );
 
 		if ( $existing_wallet ) {
+
+			$has_gateway_recorded = function ( Bitcoin_Wallet $wallet, array $gateway_details ): bool {
+				foreach ( $wallet->get_associated_gateways_details() as $saved_gateway_detail ) {
+					if (
+						$saved_gateway_detail['integration'] === $gateway_details['integration']
+					&&
+						$saved_gateway_detail['gateway_id'] === $gateway_details['gateway_id']
+					) {
+						return true;
+					}
+				}
+				return false;
+			};
+
+			if ( $gateway_details && ! $has_gateway_recorded( $existing_wallet, $gateway_details ) ) {
+				$this->bitcoin_wallet_repository->append_gateway_details( $existing_wallet, $gateway_details );
+			}
+
 			return new Get_Wallet_For_Xpub_Service_Result(
 				xpub: $xpub,
-				gateway_id: $gateway_id,
+				gateway_details: $gateway_details,
 				wallet: $existing_wallet,
 				is_new: false,
 			);
@@ -67,11 +85,11 @@ class Bitcoin_Wallet_Service implements LoggerAwareInterface {
 
 		// TODO: Validate xpub, throw exception.
 
-		$new_wallet = $this->bitcoin_wallet_repository->save_new( $xpub, $gateway_id );
+		$new_wallet = $this->bitcoin_wallet_repository->save_new( $xpub, $gateway_details );
 
 		return new Get_Wallet_For_Xpub_Service_Result(
 			xpub: $xpub,
-			gateway_id: $gateway_id,
+			gateway_details: $gateway_details,
 			wallet: $new_wallet,
 			is_new: true,
 		);

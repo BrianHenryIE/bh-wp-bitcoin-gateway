@@ -189,7 +189,13 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 		$xpub_after = $this->get_xpub();
 
 		if ( ! is_null( $xpub_after ) ) {
-			$this->api->get_wallet_for_master_public_key( $xpub_after, $this->id );
+			$this->api->get_wallet_for_master_public_key(
+				$xpub_after,
+				array(
+					'integration' => WooCommerce_Integration::class,
+					'gateway_id'  => $this->id,
+				)
+			);
 		}
 
 		// If nothing changed, we can return early.
@@ -209,12 +215,11 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 			return $options_updated;
 		}
 
-		$gateway_name = $this->get_method_title() === $this->get_method_description() ? $this->get_method_title() : $this->get_method_title() . ' (' . $this->get_method_description() . ')';
 		$this->logger->info(
-			"New xpub key set for gateway $gateway_name: $xpub_after",
+			'New xpub key set for gateway {gateway_name}: {xpub_after}',
 			array(
 				'gateway_id'   => $this->id,
-				'gateway_name' => $gateway_name,
+				'gateway_name' => $this->get_method_title(),
 				'xpub_before'  => $xpub_before,
 				'xpub_after'   => $xpub_after,
 			)

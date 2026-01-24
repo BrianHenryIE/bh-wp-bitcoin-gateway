@@ -58,10 +58,13 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 	 *
 	 * @used-by Thank_You::print_instructions()
 	 *
-	 * @param string $gateway_id The id of the gateway to check.
+	 * @param string|non-empty-string $gateway_id The id of the gateway to check.
 	 */
 	public function is_bitcoin_gateway( string $gateway_id ): bool {
 		if ( ! is_plugin_active( 'woocommerce/woocommerce.php' ) || ! class_exists( WC_Payment_Gateway::class ) ) {
+			return false;
+		}
+		if ( empty( $gateway_id ) ) {
 			return false;
 		}
 
@@ -201,7 +204,7 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 			return null;
 		}
 
-		$wallet_result = $this->wallet_service->get_wallet_for_xpub( $gateway->get_xpub() );
+		$wallet_result = $this->wallet_service->get_or_save_wallet_for_xpub( $gateway->get_xpub() );
 
 		$result = $this->api->ensure_unused_addresses_for_wallet( $wallet_result->wallet, 1 );
 
@@ -226,7 +229,7 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 			return false;
 		}
 
-		$result           = $this->wallet_service->get_wallet_for_xpub( $gateway->get_xpub() );
+		$result           = $this->wallet_service->get_or_save_wallet_for_xpub( $gateway->get_xpub() );
 		$unused_addresses = $this->wallet_service->get_unused_bitcoin_addresses( $result->wallet );
 
 		// TODO: maybe schedule a job to find an unused address.

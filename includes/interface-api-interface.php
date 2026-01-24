@@ -52,10 +52,10 @@ interface API_Interface {
 	 *
 	 * @used-by Bitcoin_Gateway::process_admin_options()
 	 *
-	 * @param string  $xpub The wallet address to save as a wallet object cpt.
-	 * @param ?string $gateway_id The Bitcoin gateway (it is presumably linked to one).
+	 * @param string                                              $xpub The wallet address to save as a wallet object cpt.
+	 * @param ?array{integration:class-string, gateway_id:string} $gateway_details The Bitcoin gateway (it is presumably linked to one).
 	 */
-	public function get_wallet_for_master_public_key( string $xpub, ?string $gateway_id = null ): Wallet_Generation_Result;
+	public function get_wallet_for_master_public_key( string $xpub, ?array $gateway_details = null ): Wallet_Generation_Result;
 
 	/**
 	 * For each Bitcoin gateway, calls `generate_new_addresses_for_wallet()`.

@@ -11,15 +11,22 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Admin;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories\Bitcoin_Address_Factory;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address_WP_Post_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories\Bitcoin_Wallet_Factory;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\UnknownCurrencyException;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Bitcoin_Gateway;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\WooCommerce_Integration;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Post_BH_Bitcoin_Address;
 use Exception;
+use WC_Payment_Gateway;
+use WC_Payment_Gateways;
 use WP_Post;
 use WP_Post_Type;
+use WP_Posts_List_Table;
 
 /**
  * Hooks into standard WP_List_Table actions and filters.
@@ -27,7 +34,7 @@ use WP_Post_Type;
  * @see wp-admin/edit.php?post_type=bh-bitcoin-address
  * @see WP_Posts_List_Table
  */
-class Addresses_List_Table extends \WP_Posts_List_Table {
+class Addresses_List_Table extends WP_Posts_List_Table {
 
 	/**
 	 *
@@ -97,8 +104,9 @@ class Addresses_List_Table extends \WP_Posts_List_Table {
 				$new_columns['order_id']             = 'Order'; // TODO: Change to ~"assigned to".
 				$new_columns['transactions_count']   = 'Transactions';
 				$new_columns['received']             = 'Received';
-				$new_columns['wallet']               = 'Wallet';
+				$new_columns['wallet']               = 'Wallet'; // TODO: hide when there is only one.
 				$new_columns['derive_path_sequence'] = 'Path';
+				$new_columns['gateways']             = 'Gateways'; // TODO: hide when there is only one.
 			}
 			// The date column will be added last.
 		}
@@ -120,8 +128,23 @@ class Addresses_List_Table extends \WP_Posts_List_Table {
 	}
 
 	/**
+	 * Get the Wallet object so we can link to the gateways it's used for.
+	 *
+	 * @used-by self::column_gateways()
+	 *
+	 * @param int $post_id The post id for the saved wallet.
+	 * @throws UnknownCurrencyException TODO: we should catch this and return null, it's not important enough to crash.
+	 */
+	protected function get_bitcoin_wallet_object( int $post_id ): Bitcoin_Wallet {
+		$bitcoin_wallet_factory = new Bitcoin_Wallet_Factory();
+		return $bitcoin_wallet_factory->get_by_wp_post_id( $post_id );
+	}
+
+	/**
 	 * For now, let's link to an external site when the address is clicked.
 	 * That way we can skip working on a single post view, and also provide an authoritative view of the address information.
+	 *
+	 * TODO: Replace this external link with a view that shows the transactions.
 	 *
 	 * @param WP_Post $post The post this row is being rendered for.
 	 *
@@ -235,34 +258,112 @@ class Addresses_List_Table extends \WP_Posts_List_Table {
 			// TODO: echo/log error.
 			return;
 		}
-		$wallet_address = $wallet_post->post_title;
-		$abbreviated    = substr( $wallet_address, 0, 7 ) . '...' . substr( $wallet_address, -3 );
 
-		$href_html = '';
+		$wallet_address   = $wallet_post->post_title;
+		$wallet_admin_url = admin_url(
+			sprintf(
+				'post.php?post=%d&action=edit',
+				$bitcoin_address->get_wallet_parent_post_id()
+			)
+		);
+		$abbreviated      = substr( $wallet_address, 0, 7 ) . '...' . substr( $wallet_address, -3 );
 
-		// TODO: reimplement using filters.
-		// Is this wallet being used by a gateway?
-		// if ( ! isset( $this->wallet_id_to_gateways_map[ $wallet_post_id ] ) ) {
-		// $this->wallet_id_to_gateways_map[ $wallet_post_id ] = array_filter(
-		// $this->api->get_bitcoin_gateways(),
-		// function ( Bitcoin_Gateway $gateway ) use ( $wallet_address ): bool {
-		// return $gateway->get_xpub() === $wallet_address;
-		// }
-		// );
-		// }
-		// $gateways = $this->wallet_id_to_gateways_map[ $wallet_post_id ];
-		// if ( 1 === count( $gateways ) ) {
-		// ** @var Bitcoin_Gateway $gateway */
-		// $gateway   = array_pop( $gateways );
-		// $href_html = '<a href="' . esc_url( admin_url( "admin.php?page=wc-settings&tab=checkout&section={$gateway->id}" ) ) . '">';
-		// }
+		printf(
+			'<span title="%s"><a href="%s">%s</a></span>',
+			esc_attr( $wallet_address ),
+			esc_url( $wallet_admin_url ),
+			esc_html( $abbreviated ),
+		);
+	}
 
-		echo '<span title="' . esc_attr( $wallet_address ) . '">';
-		echo wp_kses_post( $href_html );
-		echo esc_html( $abbreviated );
-		if ( ! empty( $href_html ) ) {
-			echo '</a>'; }
-		echo '</span>';
+	/**
+	 * Print the HTML for the "gateways" column.
+	 *
+	 * This will be ~"WooCommerce: bitcoin" and link to the gateway settings page.
+	 *
+	 * Most sites will probably only ever use one gateway.
+	 *
+	 * @see API_Interface::get_wallet_for_master_public_key()
+	 *
+	 * @param WP_Post $item The post this row is being rendered for.
+	 *
+	 * @return void Echos HTML.
+	 */
+	public function column_gateways( WP_Post $item ): void {
+
+		try {
+			$bitcoin_address = $this->get_bitcoin_address_object( $item );
+		} catch ( Exception $exception ) {
+			return;
+		}
+
+		try {
+			$bitcoin_wallet = $this->get_bitcoin_wallet_object( $bitcoin_address->get_wallet_parent_post_id() );
+		} catch ( Exception $exception ) {
+			return;
+		}
+
+		/**
+		 * @param array{href:string,text:string} $filtered_result
+		 * @param array{integration:class-string, gateway_id:string} $gateway_details
+		 * @param Bitcoin_Wallet $wallet
+		 * @return array{href:string,text:string}
+		 */
+		$woocommerce_gateway_link = function ( array $filtered_result, string $integration, string $gateway_id, Bitcoin_Wallet $bitcoin_wallet, ?Bitcoin_Address $address ): array {
+			if ( WooCommerce_Integration::class !== $integration ) {
+				return $filtered_result;
+			}
+			if ( ! isset( WC_Payment_Gateways::instance()->get_available_payment_gateways()[ $gateway_id ] ) ) {
+				return array(
+					'text' => sprintf( 'Unavailable WooCommerce: %s', $gateway_id ),
+				);
+			}
+			/** @var WC_Payment_Gateway $gateway_instance */
+			$gateway_instance = WC_Payment_Gateways::instance()->get_available_payment_gateways()[ $gateway_id ];
+			return array(
+				'href' => admin_url( sprintf( 'admin.php?page=wc-settings&tab=checkout&section=%s', $gateway_instance->title ) ),
+				'text' => sprintf( 'WooCommerce: %s', $gateway_instance->title ),
+			);
+		};
+		add_filter( 'bh_wp_bitcoin_gateway_gateway_link', $woocommerce_gateway_link, 10, 5 );
+
+		foreach ( $bitcoin_wallet->get_associated_gateways_details() as $gateways_list_item ) {
+
+			if ( empty( $gateways_list_item['integration'] ) || empty( $gateways_list_item['gateway_id'] ) ) {
+				// TODO: log.
+				continue;
+			}
+
+			$integration = $gateways_list_item['integration'];
+			$gateway_id  = $gateways_list_item['gateway_id'];
+
+			$gateway_href_and_text = array(
+				'href' => '',
+				'text' => '',
+			);
+
+			/**
+			 * @param array{href:string,text:string} $filtered_result
+			 * @param non-empty-string $integration
+			 * @param non-empty-string $gateway_id
+			 * @param Bitcoin_Wallet $bitcoin_wallet
+			 * @param ?Bitcoin_Address $bitcoin_address The address the current table row is displaying (when in appropriate context).
+			 */
+			$gateway_href_and_text = apply_filters( 'bh_wp_bitcoin_gateway_gateway_link', $gateway_href_and_text, $integration, $gateway_id, $bitcoin_wallet, $bitcoin_address );
+
+			$gateway_href = $gateway_href_and_text['href'] ?: null;
+			$gateway_text = $gateway_href_and_text['text'] ?: $gateway_id;
+
+			$link = ! empty( $gateway_href )
+				? sprintf( '<a href="%s">%s</a>', $gateway_href, $gateway_text )
+				: $gateway_text;
+
+			printf(
+				'<span class="%s">%s</span>',
+				esc_attr( sprintf( '%s::%s', $integration, $gateway_id ) ),
+				wp_kses_post( $link )
+			);
+		}
 	}
 
 	/**
