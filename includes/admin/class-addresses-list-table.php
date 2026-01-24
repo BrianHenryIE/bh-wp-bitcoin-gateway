@@ -303,30 +303,6 @@ class Addresses_List_Table extends WP_Posts_List_Table {
 			return;
 		}
 
-		/**
-		 * @param array{href:string,text:string} $filtered_result
-		 * @param array{integration:class-string, gateway_id:string} $gateway_details
-		 * @param Bitcoin_Wallet $wallet
-		 * @return array{href:string,text:string}
-		 */
-		$woocommerce_gateway_link = function ( array $filtered_result, string $integration, string $gateway_id, Bitcoin_Wallet $bitcoin_wallet, ?Bitcoin_Address $address ): array {
-			if ( WooCommerce_Integration::class !== $integration ) {
-				return $filtered_result;
-			}
-			if ( ! isset( WC_Payment_Gateways::instance()->get_available_payment_gateways()[ $gateway_id ] ) ) {
-				return array(
-					'text' => sprintf( 'Unavailable WooCommerce: %s', $gateway_id ),
-				);
-			}
-			/** @var WC_Payment_Gateway $gateway_instance */
-			$gateway_instance = WC_Payment_Gateways::instance()->get_available_payment_gateways()[ $gateway_id ];
-			return array(
-				'href' => admin_url( sprintf( 'admin.php?page=wc-settings&tab=checkout&section=%s', $gateway_instance->title ) ),
-				'text' => sprintf( 'WooCommerce: %s', $gateway_instance->title ),
-			);
-		};
-		add_filter( 'bh_wp_bitcoin_gateway_gateway_link', $woocommerce_gateway_link, 10, 5 );
-
 		foreach ( $bitcoin_wallet->get_associated_gateways_details() as $gateways_list_item ) {
 
 			if ( empty( $gateways_list_item['integration'] ) || empty( $gateways_list_item['gateway_id'] ) ) {
@@ -337,23 +313,31 @@ class Addresses_List_Table extends WP_Posts_List_Table {
 			$integration = $gateways_list_item['integration'];
 			$gateway_id  = $gateways_list_item['gateway_id'];
 
+			/** @var array{href?:string,text:string} $gateway_href_and_text */
 			$gateway_href_and_text = array(
 				'href' => '',
 				'text' => '',
 			);
 
 			/**
-			 * @param array{href:string,text:string} $filtered_result
+			 * @param array{href?:string,text:string} $filtered_result
 			 * @param non-empty-string $integration
 			 * @param non-empty-string $gateway_id
 			 * @param Bitcoin_Wallet $bitcoin_wallet
 			 * @param ?Bitcoin_Address $bitcoin_address The address the current table row is displaying (when in appropriate context).
+			 * @var array{href?:string|mixed,text?:string|mixed} $gateway_href_and_text
 			 */
 			$gateway_href_and_text = apply_filters( 'bh_wp_bitcoin_gateway_gateway_link', $gateway_href_and_text, $integration, $gateway_id, $bitcoin_wallet, $bitcoin_address );
 
-			$gateway_href = $gateway_href_and_text['href'] ?: null;
-			$gateway_text = $gateway_href_and_text['text'] ?: $gateway_id;
+			if ( ! empty( $gateway_href_and_text['href'] ) && is_string( $gateway_href_and_text['href'] ) ) {
+				$gateway_href = $gateway_href_and_text['href'];
+			} else {
+				$gateway_href = null;
+			}
+			/** @var string $gateway_text */
+			$gateway_text = ! empty( $gateway_href_and_text['text'] ) ? $gateway_href_and_text['text'] : $gateway_id;
 
+			/** @var string $link */
 			$link = ! empty( $gateway_href )
 				? sprintf( '<a href="%s">%s</a>', $gateway_href, $gateway_text )
 				: $gateway_text;

@@ -65,6 +65,8 @@ class WooCommerce_Integration {
 		$this->define_admin_order_ui_hooks();
 
 		$this->define_woocommerce_features_hooks();
+
+		$this->define_address_list_table_hooks();
 	}
 
 	/**
@@ -216,5 +218,24 @@ class WooCommerce_Integration {
 		$hpos = $this->container->get( HPOS::class );
 
 		add_action( 'before_woocommerce_init', array( $hpos, 'declare_compatibility' ) );
+	}
+
+	/**
+	 * Filter the output of `wp-admin/edit.php?post_type=bh-bitcoin-address` to include links to WooCommerce gateways.
+	 */
+	protected function define_address_list_table_hooks(): void {
+
+		/** @var Addresses_List_Table $address_list_table */
+		$address_list_table = $this->container->get( Addresses_List_Table::class );
+
+		add_filter(
+			'bh_wp_bitcoin_gateway_gateway_link',
+			array(
+				$address_list_table,
+				'woocommerce_gateway_link',
+			),
+			10,
+			5
+		);
 	}
 }
