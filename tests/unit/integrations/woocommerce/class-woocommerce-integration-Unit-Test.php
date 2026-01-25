@@ -146,21 +146,6 @@ class WooCommerce_Integration_Unit_Test extends Unit {
 		$app->register_hooks();
 	}
 
-	public function test_define_order_hooks(): void {
-
-		$this->markTestSkipped( 'addresses should be checked, rather than orders' );
-
-		\WP_Mock::expectActionAdded(
-			'woocommerce_order_status_changed',
-			array( new AnyInstance( Order::class ), 'schedule_check_for_transactions' ),
-			10,
-			3
-		);
-
-		$app = new WooCommerce_Integration( $this->get_container() );
-		$app->register_hooks();
-	}
-
 	/**
 	 * @covers ::define_admin_order_ui_hooks
 	 */
