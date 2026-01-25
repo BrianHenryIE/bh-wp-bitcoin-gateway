@@ -157,7 +157,7 @@ class BH_WP_Bitcoin_Gateway {
 			return;
 		}
 
-		// TODO: figure out how to
+		// TODO: isolate integrations' code from core.
 		$this->container->bind( API_WooCommerce_Interface::class, API_WooCommerce::class );
 
 		/** @var CLI $cli */

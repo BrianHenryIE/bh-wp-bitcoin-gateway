@@ -143,9 +143,12 @@ $boot_integrations = function () use ( $container ): void {
 
 	/** @var class-string[] $integrations */
 	$integrations = apply_filters(
+		// TODO: How to annotate this to generate documentation?
 		'bh_wp_bitcoin_gateway_integrations',
 		array(
 			WooCommerce_Integration::class,
+			// This relies on the container bindings from the WooCommerce_Integration so is ordered after it, if it
+			// were to fail when being instantiated below, it would fail with a logged warning.
 			Woo_Cancel_Abandoned_Order_Integration::class,
 		)
 	);

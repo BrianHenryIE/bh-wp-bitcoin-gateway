@@ -237,9 +237,6 @@ class Addresses_List_Table extends WP_Posts_List_Table {
 	 * Most sites will probably only ever use one wallet. Others might change wallet once or twice. Some will have
 	 * multiple instances of the gateway running at the same time.
 	 *
-	 * TODO: Currently, this links to the WC_Payment_Gateway page. Maybe it should link externally like the
-	 * title column?
-	 *
 	 * @param WP_Post $item The post this row is being rendered for.
 	 *
 	 * @return void Echos HTML.
