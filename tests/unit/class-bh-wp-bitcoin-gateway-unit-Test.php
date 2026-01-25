@@ -14,6 +14,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduler;
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduler_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Admin\Plugins_Page;
 use BrianHenryIE\WP_Bitcoin_Gateway\Admin\Register_List_Tables;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Blockchain_API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\Generate_Address_API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\lucatume\DI52\Container;
@@ -41,6 +42,7 @@ class BH_WP_Bitcoin_Gateway_Unit_Test extends \Codeception\Test\Unit {
 		parent::tearDown();
 		\WP_Mock::tearDown();
 	}
+
 	protected function get_container(): ContainerInterface {
 
 		$container = new Container();
@@ -81,6 +83,12 @@ class BH_WP_Bitcoin_Gateway_Unit_Test extends \Codeception\Test\Unit {
 			API_WooCommerce_Interface::class,
 			function () {
 				return $this->makeEmpty( API_WooCommerce_Interface::class );
+			}
+		);
+		$container->bind(
+			Blockchain_API_Interface::class,
+			function () {
+				return $this->makeEmpty( Blockchain_API_Interface::class );
 			}
 		);
 
