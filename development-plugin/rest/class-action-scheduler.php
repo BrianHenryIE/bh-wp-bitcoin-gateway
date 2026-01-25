@@ -56,6 +56,7 @@ class Action_Scheduler {
 	 * Search for Action Scheduler schedule events.
 	 *
 	 * @param WP_REST_Request $request The REST request object.
+	 * @phpstan-param WP_REST_Request<array{per_page?:int,orderby?:string,order?:string}> $request -- phpcs:ignore Squiz.Commenting.FunctionComment.IncorrectTypeHint
 	 */
 	public function action_scheduler_search( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 
@@ -143,6 +144,7 @@ class Action_Scheduler {
 	 * Delete an Action Scheduler scheduled task by id (int).
 	 *
 	 * @param WP_REST_Request $request The REST request object.
+	 * @phpstan-param WP_REST_Request<array{id?:string}> $request -- phpcs:ignore Squiz.Commenting.FunctionComment.IncorrectTypeHint
 	 */
 	public function action_scheduler_delete( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 
