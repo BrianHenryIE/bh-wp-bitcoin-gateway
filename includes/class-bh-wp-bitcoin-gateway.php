@@ -11,6 +11,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Int
 use BrianHenryIE\WP_Bitcoin_Gateway\Admin\Register_List_Tables;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\lucatume\DI52\Container;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Post_BH_Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Post_BH_Bitcoin_Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Post_BH_Bitcoin_Wallet;
@@ -157,7 +158,12 @@ class BH_WP_Bitcoin_Gateway {
 			return;
 		}
 
-		// TODO: isolate integrations' code from core.
+		/**
+		 * TODO: isolate integrations' code from core.
+		 * We know that this is a {@see Container}.
+		 *
+		 * @phpstan-ignore method.notFound
+		 */
 		$this->container->bind( API_WooCommerce_Interface::class, API_WooCommerce::class );
 
 		/** @var CLI $cli */
