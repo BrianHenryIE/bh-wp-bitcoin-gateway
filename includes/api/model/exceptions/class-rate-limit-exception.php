@@ -6,6 +6,9 @@
  * 'X-RateLimit-Limit'
  * 'X-RateLimit-Remaining'
  *
+ * TODO: not this exactly, but when an API that has been used for a while starts to fail (this happened with SoChain
+ * removing their unauthenticated free tier), we need to rate limit outgoing requests to it.
+ *
  * @package brianhenryie/bh-wp-bitcoin-gateway
  */
 

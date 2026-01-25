@@ -48,6 +48,9 @@
     <rule ref="Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed">
         <exclude-pattern>*</exclude-pattern>
     </rule>
+    <rule ref="Generic.CodeAnalysis.UnusedFunctionParameter.Found">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
 
     <!-- I'm not really sure how this is a security problem. -->
     <rule ref="WordPress.Security.EscapeOutput.ExceptionNotEscaped">

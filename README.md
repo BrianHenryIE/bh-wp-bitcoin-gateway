@@ -123,33 +123,37 @@ Pre-select Bitcoin at checkout when sending emails to customers.
 
 ### <= v2.0
 
-* ~~Fix hard-coded log level (respect settings)~~
-* ~~WooCommerce Blocks checkout~~
-* ~~Verify instructions are added to emails~~
-* 100% WPCS and PhpStan. JS + CSS linting.
-* Update screenshots + use mobile view for customer screenshots
-* ~~Webpack build in GitHub Actions~~
-* Rewrite all skipped tests (~30)
+* [x] ~~Fix hard-coded log level (respect settings)~~
+* [x] ~~WooCommerce Blocks checkout~~
+* [x] ~~Verify instructions are added to emails~~
+* [ ] 100% WPCS
+* [ ] 100% PHPStan
+* [ ] JS linting
+* [ ] CSS linting
+* [ ] more linting
+* [ ] Update screenshots + use mobile view for customer screenshots
+* [x] ~~Webpack build in GitHub Actions~~
+* [ ] Rewrite all skipped tests (~30)
 
 ### v2.0+
 
-* ~~Show transactions in meta box on order page~~
-* Zero-conf payments for virtual products (mempool). To avoid the threat of fraud where the fee is low-balled, only accept zero-conf transactions whose fees are above recent expected range
-* GitHub Actions for E2E tests
-* Run contract tests to find what currencies are supported by the Exchange_Rate APIs
-* Remove 'required' setting on checkout billing fields
-* API round-robin and failover
-* CLI commands
-* Template for paid orders
-* Partial payment email
-* Delay order-received/on-hold email for an hour; check for payment in mempool
-* Tor
-* Units: Add mbtc as well as sats etc. (to match default Electrum display settings)
-* Add: change payment method button below payment details, if a customer accidentally chooses/changes their mind
-* Read the issues and requests of other Bitcoin gateways
-* Show current exchange rate on settings page
-* Lightning network
-* ~~Remove GMP requirement~~
+* [x] ~~Show transactions in meta box on order page~~
+* [ ] Zero-conf payments for virtual products (mempool). To avoid the threat of fraud where the fee is low-balled, only accept zero-conf transactions whose fees are above recent expected range
+* [ ] GitHub Actions for E2E tests
+* [ ] Run contract tests to find what currencies are supported by the Exchange_Rate APIs
+* [ ] Remove 'required' setting on checkout billing fields
+* [ ] API round-robin and failover
+* [ ] CLI commands
+* [ ] Template for paid orders
+* [ ] Partial payment email
+* [ ] Delay order-received/on-hold email for an hour; check for payment in mempool
+* [ ] Tor
+* [ ] Units: Add mbtc as well as sats etc. (to match default Electrum display settings)
+* [ ] Add: change payment method button below payment details, if a customer accidentally chooses/changes their mind
+* [ ] Read the issues and requests of other Bitcoin gateways
+* [ ] Show current exchange rate on settings page
+* [ ] Lightning network
+* [x] ~~Remove GMP requirement~~
 
 ## How You Can Help
 
