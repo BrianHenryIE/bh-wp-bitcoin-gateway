@@ -62,18 +62,18 @@ class WooCommerce_Integration_Unit_Test extends Unit {
 				return $this->makeEmpty( Generate_Address_API_Interface::class );
 			}
 		);
-				$container->bind(
-					Blockchain_API_Interface::class,
-					function () {
-						return $this->makeEmpty( Blockchain_API_Interface::class );
-					}
-				);
-				$container->bind(
-					Background_Jobs_Scheduler_Interface::class,
-					function () {
-						return $this->makeEmpty( Background_Jobs_Scheduler_Interface::class );
-					}
-				);
+		$container->bind(
+			Blockchain_API_Interface::class,
+			function () {
+				return $this->makeEmpty( Blockchain_API_Interface::class );
+			}
+		);
+		$container->bind(
+			Background_Jobs_Scheduler_Interface::class,
+			function () {
+				return $this->makeEmpty( Background_Jobs_Scheduler_Interface::class );
+			}
+		);
 
 		return $container;
 	}
