@@ -7,6 +7,8 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Development_Plugin\Admin;
 
+use WC_Order;
+
 /**
  * Add JS/CSS on the edit shop_order page.
  */
@@ -22,7 +24,7 @@ class WooCommerce_Order {
 	/**
 	 * Determine is the page the admin order view, then get the order id from the URL.
 	 *
-	 * wp-admin/admin.php?page=wc-orders&action=edit&id=71
+	 * @see wp-admin/admin.php?page=wc-orders&action=edit&id=71
 	 */
 	protected function get_woocommerce_admin_order_page_order_id(): ?int {
 
@@ -57,14 +59,19 @@ class WooCommerce_Order {
 			return;
 		}
 
-		/** @var \WC_Order $wc_order */
+		/** @var WC_Order $wc_order */
 		$wc_order = wc_get_order( $order_id );
 		$link     = $wc_order->get_checkout_order_received_url();
 
-		$script = <<<EOT
-			jQuery('.woocommerce-order-data__heading').append('<span style="display: inline-block;"><a class="customer_order_link" title="Customer order link" target="_blank" href="$link">Customer Order Link</a></span>');
-			EOT;
-		$style  = <<<EOT
+		echo '<script>';
+		printf(
+			"jQuery('.woocommerce-order-data__heading').append('<span style=\"display: inline-block;\"><a class=\"customer_order_link\" title=\"Customer order link\" target=\"_blank\" href=\"%s\">Customer Order Link</a></span>')",
+			esc_url( $link )
+		);
+		echo '</script>';
+
+		echo '<style>';
+		echo <<<EOT
 			.customer_order_link {
 			  color: #333; margin: 1.33em 0 0;
 			  width: 14px;
@@ -90,8 +97,6 @@ class WooCommerce_Order {
 			  font-weight: 400;
 			}
 			EOT;
-
-		echo '<script>' . $script . '</script>';
-		echo '<style>' . $style . '</style>';
+		echo '</style>';
 	}
 }
