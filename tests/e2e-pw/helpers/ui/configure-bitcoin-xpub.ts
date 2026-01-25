@@ -14,7 +14,7 @@ export async function configureBitcoinXpub( page: Page ) {
 
 	// Navigate to Bitcoin gateway settings
 	await page.goto(
-		'/wp-admin/admin.php?page=wc-settings&tab=checkout&section=bitcoin_gateway'
+		'/wp-admin/admin.php?page=wc-settings&tab=checkout&section=bh_bitcoin'
 	);
 
 	// This is the empty "wp_plugin_wallet" wallet
@@ -23,11 +23,11 @@ export async function configureBitcoinXpub( page: Page ) {
 
 	// Check if it already filled in to save time
 	const existingXpub = await page
-		.locator( '#woocommerce_bitcoin_gateway_xpub' )
+		.locator( '#woocommerce_bh_bitcoin_xpub' )
 		.inputValue();
 
 	if ( existingXpub !== xpub ) {
-		await page.fill( '#woocommerce_bitcoin_gateway_xpub', xpub );
+		await page.fill( '#woocommerce_bh_bitcoin_xpub', xpub );
 		await page.click( '.woocommerce-save-button' );
 
 		// I think the save-button won't be active when `existingXpub === xpub` but I'm not sure exactly why this flow isn't working.

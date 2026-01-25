@@ -25,11 +25,12 @@ class Bitcoin_Wallet implements Bitcoin_Wallet_Interface {
 	/**
 	 * Constructor
 	 *
-	 * @param int                   $post_id The WordPress post ID where this wallet is stored in the database.
-	 * @param string                $xpub The extended public key (xpub/ypub/zpub) used to derive child addresses for this wallet.
-	 * @param Bitcoin_Wallet_Status $status The current operational status of the wallet (e.g. active, inactive).
-	 * @param ?int                  $address_index The highest derivation path index used for generating addresses, or null before any addresses have been generated.
-	 * @param ?string               $balance The cached total balance received across all addresses derived from this wallet, or null if never calculated.
+	 * @param int                                                       $post_id The WordPress post ID where this wallet is stored in the database.
+	 * @param string                                                    $xpub The extended public key (xpub/ypub/zpub) used to derive child addresses for this wallet.
+	 * @param Bitcoin_Wallet_Status                                     $status The current operational status of the wallet (e.g. active, inactive).
+	 * @param ?int                                                      $address_index The highest derivation path index used for generating addresses, or null before any addresses have been generated.
+	 * @param ?string                                                   $balance The cached total balance received across all addresses derived from this wallet, or null if never calculated.
+	 * @param array<array{integration:class-string, gateway_id:string}> $gateways The list of integration,gateway_id that are using this wallet.
 	 */
 	public function __construct(
 		protected int $post_id,
@@ -37,6 +38,7 @@ class Bitcoin_Wallet implements Bitcoin_Wallet_Interface {
 		protected Bitcoin_Wallet_Status $status,
 		protected ?int $address_index, // null before any addresses have been generated.
 		protected ?string $balance, // TODO: just use "received", "balance" requires monitoring all used addresses.
+		protected array $gateways,
 	) {
 	}
 
@@ -80,5 +82,12 @@ class Bitcoin_Wallet implements Bitcoin_Wallet_Interface {
 	 */
 	public function get_address_index(): ?int {
 		return $this->address_index;
+	}
+
+	/**
+	 * @return array<array{integration:class-string, gateway_id:string}>
+	 */
+	public function get_associated_gateways_details(): array {
+		return $this->gateways;
 	}
 }

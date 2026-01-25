@@ -1,11 +1,7 @@
 <?php
 /**
- * This Bitcoin gateway relies on the BitWasp bitwasp/bitcoin-php PHP library for the maths/heavy lifting.
+ * Bitcoin payment gateway for WordPress – WooCommerce.
  *
- * @see https://github.com/Bit-Wasp/bitcoin-php
- *
- * @link              http://example.com
- * @since             1.0.0
  * @package           brianhenryie/bh-wp-bitcoin-gateway
  *
  * @wordpress-plugin
@@ -16,7 +12,7 @@
  * Requires at least:      5.9
  * Requires PHP:           8.4
  * Author:                 Nullcorps, BrianHenryIE
- * Author URI:             https://github.com/Nullcorps/
+ * Author URI:             https://bhwp.ie
  * License:                GNU General Public License v3.0
  * License URI:            http://www.gnu.org/licenses/gpl-3.0.html
  * Text Domain:            bh-wp-bitcoin-gateway
@@ -43,7 +39,8 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\Generate_Address_API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Settings;
 use BrianHenryIE\WP_Bitcoin_Gateway\Art4\Requests\Psr\HttpClient;
 use BrianHenryIE\WP_Bitcoin_Gateway\BlockchainInfo\BlockchainInfoApi;
-use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\Woo_Cancel_Abandoned_Order\Woo_Cancel_Abandoned_Order_Integration;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\WooCommerce_Integration;
 use BrianHenryIE\WP_Bitcoin_Gateway\lucatume\DI52\Container;
 use BrianHenryIE\WP_Bitcoin_Gateway\WC_Logger\WC_Logger_Settings_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\WC_Logger\WC_PSR_Logger;
@@ -51,7 +48,6 @@ use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Activator;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Deactivator;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Logger\Logger;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Logger\Logger_Settings_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\WP_Logger\Logger_Settings_Trait;
 use Exception;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
@@ -95,8 +91,6 @@ $container->bind( Background_Jobs_Scheduler_Interface::class, Background_Jobs_Sc
 $container->bind( Background_Jobs_Actions_Interface::class, Background_Jobs_Actions_Handler::class );
 
 $container->bind( API_Background_Jobs_Interface::class, API::class );
-$container->bind( API_WooCommerce_Interface::class, API::class );
-$container->bind( API_Interface::class . '&' . API_WooCommerce_Interface::class, API::class );
 $container->bind( API_Interface::class, API::class );
 
 $container->bind( Settings_Interface::class, Settings::class );
@@ -139,3 +133,43 @@ $app = $container->get( BH_WP_Bitcoin_Gateway::class );
 $app->register_hooks();
 
 $GLOBALS['bh_wp_bitcoin_gateway'] = $container->get( API_Interface::class );
+
+/**
+ * @hooked plugins_loaded
+ */
+$boot_integrations = function () use ( $container ): void {
+	/** @var LoggerInterface $logger */
+	$logger = $container->get( LoggerInterface::class );
+
+	/** @var class-string[] $integrations */
+	$integrations = apply_filters(
+		// TODO: How to annotate this to generate documentation?
+		'bh_wp_bitcoin_gateway_integrations',
+		array(
+			WooCommerce_Integration::class,
+			// This relies on the container bindings from the WooCommerce_Integration so is ordered after it, if it
+			// were to fail when being instantiated below, it would fail with a logged warning.
+			Woo_Cancel_Abandoned_Order_Integration::class,
+		)
+	);
+
+	foreach ( $integrations as $integration ) {
+		try {
+			/** @var object $instance */
+			$instance = $container->get( $integration );
+			if ( method_exists( $instance, 'register_hooks' ) ) {
+				$instance->register_hooks();
+			}
+		} catch ( Exception $e ) {
+			$logger->warning(
+				'Error booting {integration} – {error_message}.',
+				array(
+					'integration'   => $integration,
+					'error_message' => $e->getMessage(),
+					'exception'     => $e,
+				)
+			);
+		}
+	}
+};
+add_action( 'plugins_loaded', $boot_integrations, 0 );

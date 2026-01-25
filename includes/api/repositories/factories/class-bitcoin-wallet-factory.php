@@ -53,6 +53,7 @@ class Bitcoin_Wallet_Factory {
 			status: Bitcoin_Wallet_Status::from( $post->post_status ),
 			address_index: $this->get_address_index( $post ),
 			balance: $this->get_balance( $post ),
+			gateways: $this->get_gateways_from_meta( $post ),
 		);
 	}
 
@@ -83,5 +84,26 @@ class Bitcoin_Wallet_Factory {
 	protected function get_address_index( WP_Post $post ): ?int {
 		$index = get_post_meta( $post->ID, Bitcoin_Wallet_WP_Post_Interface::LAST_DERIVED_ADDRESS_INDEX_META_KEY, true );
 		return is_numeric( $index ) ? intval( $index ) : null; // Empty string '' will parse to 0.
+	}
+
+	/**
+	 * Get the array of integrations/gateway_ids that are using this wallet.
+	 *
+	 * @param WP_Post $post The WordPress post representing the wallet.
+	 * @return array<array{integration:class-string, gateway_id:string}>
+	 */
+	protected function get_gateways_from_meta( WP_Post $post ): array {
+		$meta_string = get_post_meta( $post->ID, Bitcoin_Wallet_WP_Post_Interface::GATEWAYS_DETAILS_META_KEY, true );
+		if ( empty( $meta_string ) || ! is_string( $meta_string ) ) {
+			// TODO: log.
+			return array();
+		}
+		/** @var null|array<array{integration:class-string, gateway_id:string}> $result */
+		$result = json_decode( $meta_string, true );
+		if ( ! is_array( $result ) ) {
+			// TODO: log.
+			return array();
+		}
+		return $result;
 	}
 }

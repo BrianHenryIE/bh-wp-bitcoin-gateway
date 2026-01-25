@@ -7,6 +7,7 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Blockchain\Adapters;
 
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Blockchain\Blockstream_Info_API;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\BlockchainInfo\Model\Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
@@ -16,10 +17,14 @@ use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\Handler\FactoryRegistry;
 use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\Handler\PropertyMapper;
 use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\JsonMapperBuilder;
 use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\Middleware\CaseConversion;
+use Codeception\Test\Unit;
 use DateTimeImmutable;
 use WP_Mock;
 
-class Transaction_Adapters_Unit_Test extends \Codeception\Test\Unit {
+/**
+ * @phpstan-import-type BlockStreamApiTransactionArray from Blockstream_Info_API
+ */
+class Transaction_Adapters_Unit_Test extends Unit {
 
 	/**
 	 * @return array<array{0:class-string, 1:string, 2:string}>
@@ -56,13 +61,16 @@ class Transaction_Adapters_Unit_Test extends \Codeception\Test\Unit {
 		}
 
 		if ( 'array' === $transaction_class ) {
+			/** @var BlockStreamApiTransactionArray $transaction */
 			$transaction = json_decode( $json, true );
-		} else {
+		} elseif ( class_exists( $transaction_class ) ) {
 			$factory_registry = new FactoryRegistry();
 			$mapper           = JsonMapperBuilder::new()->withPropertyMapper( new PropertyMapper( $factory_registry ) )->withAttributesMiddleware()->withDocBlockAnnotationsMiddleware()->withTypedPropertiesMiddleware()->withNamespaceResolverMiddleware()->withObjectConstructorMiddleware( $factory_registry )->build();
 			$mapper->push( new CaseConversion( TextNotation::UNDERSCORE(), TextNotation::CAMEL_CASE() ) );
 			$mapper->push( new AssociativeArrayMiddleware() );
 			$transaction = $mapper->mapToClassFromString( $json, $transaction_class );
+		} else {
+			$this->fail();
 		}
 
 		/** @var Blockchain_Info_Api_Transaction_Adapter|BlockStream_Info_API_Transaction_Adapter $sut */

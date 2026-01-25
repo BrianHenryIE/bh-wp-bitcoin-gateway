@@ -5,15 +5,24 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
+use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduler_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Bitcoin_Wallet_Service;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Payment_Service;
+use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\MoneyMismatchException;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order_Interface;
 use DateInterval;
+use DateMalformedStringException;
 use DateTimeImmutable;
 use DateTimeZone;
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerAwareTrait;
+use Psr\Log\LoggerInterface;
 use WC_Order;
 use WC_Payment_Gateway;
 use WC_Payment_Gateways;
@@ -21,7 +30,27 @@ use WC_Payment_Gateways;
 /**
  * Implements API_WooCommerce_Interface
  */
-trait API_WooCommerce_Trait {
+class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface {
+	use LoggerAwareTrait;
+
+	/**
+	 * Constructor
+	 *
+	 * @param API_Interface                       $api Main plugin API.
+	 * @param Bitcoin_Wallet_Service              $wallet_service For creating/fetching wallets and addresses.
+	 * @param Payment_Service                     $payment_service For getting transaction data/checking for payments.
+	 * @param Background_Jobs_Scheduler_Interface $background_jobs_scheduler When an order is placed, schedule a payment check.
+	 * @param LoggerInterface                     $logger PSR logger.
+	 */
+	public function __construct(
+		protected API_Interface $api,
+		protected Bitcoin_Wallet_Service $wallet_service,
+		protected Payment_Service $payment_service,
+		protected Background_Jobs_Scheduler_Interface $background_jobs_scheduler,
+		LoggerInterface $logger,
+	) {
+		$this->setLogger( $logger );
+	}
 
 	/**
 	 * Check a gateway id and determine is it an instance of this gateway type.
@@ -29,10 +58,13 @@ trait API_WooCommerce_Trait {
 	 *
 	 * @used-by Thank_You::print_instructions()
 	 *
-	 * @param string $gateway_id The id of the gateway to check.
+	 * @param string|non-empty-string $gateway_id The id of the gateway to check.
 	 */
 	public function is_bitcoin_gateway( string $gateway_id ): bool {
 		if ( ! is_plugin_active( 'woocommerce/woocommerce.php' ) || ! class_exists( WC_Payment_Gateway::class ) ) {
+			return false;
+		}
+		if ( empty( $gateway_id ) ) {
 			return false;
 		}
 
@@ -172,13 +204,13 @@ trait API_WooCommerce_Trait {
 			return null;
 		}
 
-		$wallet_result = $this->wallet_service->get_wallet_for_xpub( $gateway->get_xpub() );
+		$wallet_result = $this->wallet_service->get_or_save_wallet_for_xpub( $gateway->get_xpub() );
 
-		$result = $this->ensure_unused_addresses_for_wallet( $wallet_result->wallet, 1 );
+		$result = $this->api->ensure_unused_addresses_for_wallet( $wallet_result->wallet, 1 );
 
 		$unused_addresses = $result->get_unused_addresses();
 
-		return $unused_addresses[ array_key_first( $unused_addresses ) ];
+		return empty( $unused_addresses ) ? null : $unused_addresses[ array_key_first( $unused_addresses ) ];
 	}
 
 	/**
@@ -197,7 +229,7 @@ trait API_WooCommerce_Trait {
 			return false;
 		}
 
-		$result           = $this->wallet_service->get_wallet_for_xpub( $gateway->get_xpub() );
+		$result           = $this->wallet_service->get_or_save_wallet_for_xpub( $gateway->get_xpub() );
 		$unused_addresses = $this->wallet_service->get_unused_bitcoin_addresses( $result->wallet );
 
 		// TODO: maybe schedule a job to find an unused address.
@@ -257,6 +289,8 @@ trait API_WooCommerce_Trait {
 	 * @param WC_Bitcoin_Order_Interface $bitcoin_order The WC_Order order to refresh.
 	 *
 	 * @throws BH_WP_Bitcoin_Gateway_Exception When blockchain API queries fail or transaction data cannot be updated.
+	 * @throws MoneyMismatchException If somehow we attempt to perform calculations between two different currencies.
+	 * @throws DateMalformedStringException If the saved transaction data has been modified in the db and cannot be deserialized.
 	 */
 	protected function refresh_order( WC_Bitcoin_Order_Interface $bitcoin_order ): WC_Bitcoin_Order_Interface {
 
@@ -267,7 +301,7 @@ trait API_WooCommerce_Trait {
 		$bitcoin_address         = $bitcoin_order->get_address();
 		$confirmed_value_current = $bitcoin_address->get_amount_received();
 
-		$check_address_for_payment_result = $this->check_address_for_payment( $bitcoin_address );
+		$check_address_for_payment_result = $this->api->check_address_for_payment( $bitcoin_address );
 
 		// Filter to transactions that have just been seen, so we can record them in notes.
 		$new_order_transactions = $check_address_for_payment_result->get_new_transactions();
@@ -369,7 +403,7 @@ trait API_WooCommerce_Trait {
 		$result['btc_total']           = $order_details->get_btc_total_price();
 		$result['btc_exchange_rate']   = $order_details->get_btc_exchange_rate();
 		$result['btc_address']         = $order_details->get_address()->get_raw_address();
-		$result['transactions']        = $this->get_saved_transactions( $order_details->get_address() );
+		$result['transactions']        = $this->api->get_saved_transactions( $order_details->get_address() );
 		$result['btc_amount_received'] = $order_details->get_address()->get_amount_received() ?? 'unknown';
 
 		// Objects.

@@ -10,6 +10,10 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\Development_Plugin\Rest;
 use ActionScheduler;
 use ActionScheduler_Abstract_RecurringSchedule;
 use ActionScheduler_Action;
+use ActionScheduler_NullAction;
+use ActionScheduler_Schedule;
+use ActionScheduler_Store;
+use DateTime;
 use Exception;
 use WP_Error;
 use WP_REST_Request;
@@ -52,6 +56,7 @@ class Action_Scheduler {
 	 * Search for Action Scheduler schedule events.
 	 *
 	 * @param WP_REST_Request $request The REST request object.
+	 * @phpstan-param WP_REST_Request<array{per_page?:int,orderby?:string,order?:string}> $request -- phpcs:ignore Squiz.Commenting.FunctionComment.IncorrectTypeHint
 	 */
 	public function action_scheduler_search( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 
@@ -61,18 +66,16 @@ class Action_Scheduler {
 
 		$search = $request->get_params();
 
-		// if ( ! $search ) {
-		// return new WP_Error( 'rest_missing_param', 'Missing "s" search parameter.', array( 'status' => 400 ) );
-		// }
-
 		/**
 		 * @see ActionScheduler_DBStore::get_query_actions_sql()
 		 */
 		$search['per_page'] = $search['per_page'] ?? 200;
 		$search['orderby']  = $search['orderby'] ?? 'date';
 		$search['order']    = $search['order'] ?? 'ASC';
-		$results            = as_get_scheduled_actions( $search );
+		/** @var array<ActionScheduler_Action> $scheduled_actions */
+		$scheduled_actions = as_get_scheduled_actions( $search );
 
+		/** @var ActionScheduler_Store $store */
 		$store = ActionScheduler::store();
 
 		/**
@@ -87,7 +90,7 @@ class Action_Scheduler {
 			return array(
 				'id'             => $index,
 				'hook'           => $action->get_hook(),
-				'status'         => $store->get_status( $index ),
+				'status'         => $store->get_status( (string) $index ),
 				'args'           => $action->get_args(),
 				'group'          => $action->get_group(),
 				/**
@@ -101,7 +104,10 @@ class Action_Scheduler {
 			);
 		};
 
-		foreach ( $results as $index => $result ) {
+		/** @var array<array<string,int|ActionScheduler_Schedule|DateTime|string|array<string, mixed>>> $results */
+		$results = array();
+
+		foreach ( $scheduled_actions as $index => $result ) {
 			$results[ $index ] = $action_scheduler_action_to_array( $result, $index );
 		}
 
@@ -138,6 +144,7 @@ class Action_Scheduler {
 	 * Delete an Action Scheduler scheduled task by id (int).
 	 *
 	 * @param WP_REST_Request $request The REST request object.
+	 * @phpstan-param WP_REST_Request<array{id?:string}> $request -- phpcs:ignore Squiz.Commenting.FunctionComment.IncorrectTypeHint
 	 */
 	public function action_scheduler_delete( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 
@@ -152,14 +159,15 @@ class Action_Scheduler {
 			return new WP_Error( 'rest_missing_param', 'Missing id parameter.', array( 'status' => 400 ) );
 		}
 
-		/** @var \ActionScheduler_Store $store */
+		/** @var ActionScheduler_Store $store */
 		$store = ActionScheduler::store();
 
 		$claim_id = $store->get_claim_id( $id );
 
+		/** @var ActionScheduler_Action|ActionScheduler_NullAction $as */
 		$as = $store->fetch_action( $id );
 
-		if ( ! ( $as instanceof ActionScheduler_Action ) ) {
+		if ( $as instanceof ActionScheduler_NullAction ) {
 			return new WP_Error( 'rest_invalid_param', 'Invalid id: ' . $id, array( 'status' => 400 ) );
 		}
 

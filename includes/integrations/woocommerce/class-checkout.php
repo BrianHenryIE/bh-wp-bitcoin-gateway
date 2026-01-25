@@ -9,13 +9,14 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
+use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 
 /**
  * When the purchase button is clicked, make one or more query-transaction requests to find an unused address.
- * Normally, there will be one address lined up ready to check, and in the unlilkey case that that address is now
+ * Normally, there will be one address lined up ready to check, and in the unlikely case that that address is now
  * used, the next one will almost definitely be unused.
  */
 class Checkout implements LoggerAwareInterface {
@@ -24,11 +25,13 @@ class Checkout implements LoggerAwareInterface {
 	/**
 	 * Constructor.
 	 *
-	 * @param API_WooCommerce_Interface $api API functions for WooCommerce integration.
+	 * @param API_Interface             $api The main plugin functions (to get/create the wallet).
+	 * @param API_WooCommerce_Interface $api_woocommerce WooCommerce specific functions (to get the gateways).
 	 * @param LoggerInterface           $logger PSR logger instance.
 	 */
 	public function __construct(
-		protected API_WooCommerce_Interface $api,
+		protected API_Interface $api,
+		protected API_WooCommerce_Interface $api_woocommerce,
 		LoggerInterface $logger,
 	) {
 		$this->setLogger( $logger );
@@ -46,7 +49,7 @@ class Checkout implements LoggerAwareInterface {
 	 */
 	public function ensure_one_address_for_payment(): void {
 
-		$bitcoin_gateways = $this->api->get_bitcoin_gateways();
+		$bitcoin_gateways = $this->api_woocommerce->get_bitcoin_gateways();
 
 		foreach ( $bitcoin_gateways as $bitcoin_gateway ) {
 			/**

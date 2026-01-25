@@ -20,7 +20,7 @@ class Order_Integration_Test extends WPTestCase {
 		$this->markTestSkipped( 'We no longer check orders\' payments directly.' );
 
 		$order = new \WC_Order();
-		$order->set_payment_method( 'bitcoin_gateway' );
+		$order->set_payment_method( 'bh_bitcoin' );
 		$order_id = $order->save();
 
 		$order->set_status( 'on-hold' );

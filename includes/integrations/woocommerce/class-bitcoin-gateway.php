@@ -7,13 +7,9 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
-use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduler;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories\Bitcoin_Address_Factory;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Address_Repository;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories\Bitcoin_Wallet_Factory;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Wallet_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\API;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
+use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Currency;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\UnknownCurrencyException;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
@@ -21,10 +17,11 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
 use Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
 use Psr\Log\LoggerAwareTrait;
+use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
-use Psr\Log\NullLogger;
 use WC_Order;
 use WC_Payment_Gateway;
+use WC_Product;
 
 /**
  * Simple instance of WC_Payment Gateway. Defines the admin settings and processes the payment.
@@ -41,23 +38,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 	 *
 	 * @var string
 	 */
-	public $id = 'bitcoin_gateway';
-
-	/**
-	 * Used to generate new wallets when the xpub is entered, and to fetch addresses when orders are placed.
-	 *
-	 * @var ?API_WooCommerce_Interface
-	 */
-	protected ?API_WooCommerce_Interface $api = null;
-
-	/**
-	 * The plugin settings.
-	 *
-	 * Used to read the gateway settings from wp_options before they are initialized in this class.
-	 *
-	 * @var Settings_Interface
-	 */
-	protected Settings_Interface $plugin_settings;
+	public $id = 'bh_bitcoin';
 
 	/**
 	 * A cache so {@see Bitcoin_Gateway::is_available()} only runs once.
@@ -67,23 +48,26 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 	/**
 	 * Constructor for the gateway.
 	 *
-	 * @param ?API_WooCommerce_Interface $api The main plugin functions.
+	 * Used to generate new wallets when the xpub is entered, and to fetch addresses when orders are placed.
+	 *
+	 * @param API_Interface             $api The main plugin functions.
+	 * @param API_WooCommerce_Interface $api_woocommerce The WooCommerce specific functions.
+	 * @param Settings_Interface        $plugin_settings Used to read the gateway settings from wp_options before they are initialized in this class.
+	 * @param LoggerInterface           $logger PSR logger.
 	 */
-	public function __construct( ?API_WooCommerce_Interface $api = null ) {
-
+	public function __construct(
+		protected API_Interface $api,
+		protected API_WooCommerce_Interface $api_woocommerce,
+		protected Settings_Interface $plugin_settings,
+		LoggerInterface $logger,
+	) {
 		/**
 		 * Set a null logger to prevent null pointer exceptions. Later this will be correctly set
 		 * with the plugin's real logger.
 		 *
 		 * @see Payment_Gateways::add_logger_to_gateways()
 		 */
-		$this->setLogger( new NullLogger() );
-
-		/** @var ?API $api */
-		$api       = $api ?? $GLOBALS['bh_wp_bitcoin_gateway'];
-		$this->api = $api;
-
-		$this->plugin_settings = new \BrianHenryIE\WP_Bitcoin_Gateway\API\Settings();
+		$this->setLogger( $logger );
 
 		$this->icon               = plugins_url( 'assets/bitcoin.png', 'bh-wp-bitcoin-gateway/bh-wp-bitcoin-gateway.php' );
 		$this->has_fields         = false;
@@ -146,7 +130,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 		} catch ( UnknownCurrencyException $e ) {
 			$currency = Currency::of( 'USD' );
 		}
-		$exchange_rate = $this->api?->get_exchange_rate( $currency );
+		$exchange_rate = $this->api->get_exchange_rate( $currency );
 		if ( is_null( $exchange_rate ) ) {
 			// TODO: Also display an admin notice with instruction to configure / retry.
 			return 'Error fetching exchange rate. Gateway will be unavailable to customers until an exchange rate is available.';
@@ -205,7 +189,13 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 		$xpub_after = $this->get_xpub();
 
 		if ( ! is_null( $xpub_after ) ) {
-			$this->api?->get_wallet_for_master_public_key( $xpub_after, $this->id );
+			$this->api->get_wallet_for_master_public_key(
+				$xpub_after,
+				array(
+					'integration' => WooCommerce_Integration::class,
+					'gateway_id'  => $this->id,
+				)
+			);
 		}
 
 		// If nothing changed, we can return early.
@@ -225,12 +215,11 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 			return $options_updated;
 		}
 
-		$gateway_name = $this->get_method_title() === $this->get_method_description() ? $this->get_method_title() : $this->get_method_title() . ' (' . $this->get_method_description() . ')';
 		$this->logger->info(
-			"New xpub key set for gateway $gateway_name: $xpub_after",
+			'New xpub key set for gateway {gateway_name}: {xpub_after}',
 			array(
 				'gateway_id'   => $this->id,
-				'gateway_name' => $gateway_name,
+				'gateway_name' => $this->get_method_title(),
 				'xpub_before'  => $xpub_before,
 				'xpub_after'   => $xpub_after,
 			)
@@ -301,7 +290,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 		 * Let's get some products, filter to one that can be purchased, then use it to link to the checkout so
 		 * the admin can see what it will all look like.
 		 *
-		 * @var \WC_Product[] $products
+		 * @var WC_Product[] $products
 		 */
 		$products = wc_get_products(
 			array(
@@ -311,7 +300,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 		);
 		$products = array_filter(
 			$products,
-			function ( \WC_Product $product ): bool {
+			function ( WC_Product $product ): bool {
 				return $product->is_purchasable();
 			}
 		);
@@ -321,7 +310,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 			$checkout_url                                   = add_query_arg(
 				array(
 					'add-to-cart'     => $a_product->get_id(),
-					'payment_gateway' => 'bitcoin_gateway',
+					'payment_gateway' => $this->id,
 				),
 				wc_get_checkout_url()
 			);
@@ -367,12 +356,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 
 		// TODO: review `$this->is_available_cache` and when we should avoid db calls and http calls.
 
-		if ( is_null( $this->api ) ) {
-			$this->is_available_cache = false;
-			return false;
-		}
-
-		if ( ! $this->api->is_fresh_address_available_for_gateway( $this ) ) {
+		if ( ! $this->api_woocommerce->is_fresh_address_available_for_gateway( $this ) ) {
 			$this->is_available_cache = false;
 			return false;
 		}
@@ -391,6 +375,8 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 	 *
 	 * @param int $order_id The id of the order being paid.
 	 *
+	 * @see WC_Payment_Gateway::process_payment()
+	 *
 	 * @return array{result:string, redirect:string}
 	 * @throws BH_WP_Bitcoin_Gateway_Exception Throws an exception when no address is available (which is caught by WooCommerce and displayed at checkout).
 	 */
@@ -403,15 +389,9 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 			throw new BH_WP_Bitcoin_Gateway_Exception( __( 'Error creating order.', 'bh-wp-bitcoin-gateway' ) );
 		}
 
-		if ( is_null( $this->api ) ) {
-			throw new BH_WP_Bitcoin_Gateway_Exception( __( 'API unavailable for new Bitcoin gateway order.', 'bh-wp-bitcoin-gateway' ) );
-		}
-
-		$api = $this->api;
-
 		$fiat_total = Money::of( $order->get_total(), $order->get_currency() );
 
-		$btc_total = $api->convert_fiat_to_btc( $fiat_total );
+		$btc_total = $this->api->convert_fiat_to_btc( $fiat_total );
 
 		/**
 		 * There should never really be an exception here, since the availability of a fresh address was checked before
@@ -425,7 +405,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 			 * @see Order::BITCOIN_ADDRESS_META_KEY
 			 * @see Bitcoin_Address::get_raw_address()
 			 */
-			$btc_address = $api->get_fresh_address_for_order( $order, $btc_total );
+			$btc_address = $this->api_woocommerce->get_fresh_address_for_order( $order, $btc_total );
 		} catch ( Exception $e ) {
 			$this->logger->error( $e->getMessage(), array( 'exception' => $e ) );
 			throw new BH_WP_Bitcoin_Gateway_Exception( 'Unable to find Bitcoin address to send to. Please choose another payment method.' );
@@ -439,7 +419,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 		 */
 		$order->add_meta_data(
 			Order::EXCHANGE_RATE_AT_TIME_OF_PURCHASE_META_KEY,
-			$api->get_exchange_rate( Currency::of( $order->get_currency() ) )?->jsonSerialize()
+			$this->api->get_exchange_rate( Currency::of( $order->get_currency() ) )?->jsonSerialize()
 		);
 
 		// Record the amount the customer has been asked to pay in BTC.
@@ -475,8 +455,6 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 	 * TODO: rename to get_master_public_key() ?
 	 *
 	 * @used-by API::generate_new_addresses_for_wallet()
-	 *
-	 * @return string
 	 */
 	public function get_xpub(): ?string {
 		// TODO: validate xpub format when setting.

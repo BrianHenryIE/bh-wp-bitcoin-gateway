@@ -9,12 +9,11 @@
  * @package    brianhenryie/bh-wp-bitcoin-gateway
  */
 
-namespace BrianHenryIE\WP_Bitcoin_Gateway\Frontend;
+namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
-use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
+use WC_Order;
 
 /**
  * Action `bh_wp_bitcoin_gateway_refresh_order_details` hooked to `wp_ajax` and `wp_ajax_nopriv`.
@@ -41,10 +40,9 @@ class AJAX {
 	 * does more need to be sent
 	 *
 	 * @hooked wp_ajax_bh_wp_bitcoin_gateway_refresh_order_details
-	 *
-	 * @return void
+	 * @hooked wp_ajax_nopriv_bh_wp_bitcoin_gateway_refresh_order_details
 	 */
-	public function get_order_details() {
+	public function get_order_details(): void {
 
 		if ( ! check_ajax_referer( Frontend_Assets::class, false, false ) ) {
 			wp_send_json_error( array( 'message' => 'Bad/no nonce.' ), 400 );
@@ -58,12 +56,11 @@ class AJAX {
 
 		$order = wc_get_order( $order_id );
 
-		if ( ! ( $order instanceof \WC_Order ) ) {
+		if ( ! ( $order instanceof WC_Order ) ) {
 			wp_send_json_error( array( 'message' => 'Invalid order id: ' . $order_id ), 400 );
 		}
 
-		// TODO: Include the order key in the AJAX request.
-		// Check `$order->get_customer_id() !== get_current_user_id()` and `$order->key_is_valid( $key )`.
+		$this->is_user_authorized( $order );
 
 		$result = $this->api->get_formatted_order_details( $order, true );
 
@@ -86,5 +83,37 @@ class AJAX {
 		}
 
 		wp_send_json_success( $result );
+	}
+
+	/**
+	 * Check permission to view the order.
+	 *
+	 * @see \WC_Shortcode_Checkout::guest_should_verify_email()
+	 * @see woocommerce/templates/checkout/form-verify-email.php
+	 * @see OrderAuthorizationTrait
+	 * @see \WC_Shortcode_Checkout::order_received()
+	 *
+	 * @param WC_Order $order To find is there a user id set on the order.
+	 */
+	protected function is_user_authorized( WC_Order $order ): void {
+
+		// If the order has no user/customer id, we assume that WooCommerce verified them before displaying the page.
+		if ( empty( $order->get_customer_id() ) ) {
+			return;
+		}
+
+		// Shop admin?
+		if ( current_user_can( 'read_private_shop_orders' ) ) {
+			return;
+		}
+
+		$wp_user = wp_get_current_user();
+
+		// Logged in and owns the order.
+		if ( $order->get_customer_id() === $wp_user->ID ) {
+			return;
+		}
+
+		wp_send_json_error( array( 'message' => 'Logged in user does not own this order.' ), 403 );
 	}
 }

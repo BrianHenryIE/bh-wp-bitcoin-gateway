@@ -5,62 +5,55 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 use BrianHenryIE\ColorLogger\ColorLogger;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\API;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\BH_WP_Bitcoin_Gateway;
 use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
 use Codeception\Stub\Expected;
+use Codeception\Test\Unit;
 use WC_Payment_Gateway;
 
 /**
  * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Payment_Gateways
  */
-class Payment_Gateways_Unit_Test extends \Codeception\Test\Unit {
+class Payment_Gateways_Unit_Test extends Unit {
+
+	protected function setUp(): void {
+		parent::setUp();
+		\WP_Mock::setUp();
+	}
+
+	public function tearDown(): void {
+		\WP_Mock::tearDown();
+		parent::tearDown();
+	}
 
 	/**
 	 * @covers ::add_to_woocommerce
 	 */
 	public function test_add_to_woocommerce(): void {
 
-		$logger   = new ColorLogger();
-		$settings = $this->makeEmpty( Settings_Interface::class );
-		$api      = $this->make( API::class );
+		if ( ! function_exists( '\Patchwork\redefine' ) ) {
+			$this->markTestSkipped( 'Patchwork not loaded' );
+		}
 
-		$sut = new Payment_Gateways( $api, $settings, $logger );
+		\Patchwork\redefine(
+			array( Bitcoin_Gateway::class, 'init_form_fields' ),
+			function () {}
+		);
+		\WP_Mock::passthruFunction( 'plugins_url' );
+		\Patchwork\redefine(
+			array( Bitcoin_Gateway::class, 'init_settings' ),
+			function () {}
+		);
+
+		$logger          = new ColorLogger();
+		$settings        = $this->makeEmpty( Settings_Interface::class );
+		$api             = $this->makeEmpty( API_Interface::class );
+		$api_woocommerce = $this->makeEmpty( API_WooCommerce_Interface::class );
+
+		$sut = new Payment_Gateways( $api, $api_woocommerce, $settings, $logger );
 
 		$result = $sut->add_to_woocommerce( array() );
 
-		$this->assertContains( Bitcoin_Gateway::class, $result );
-	}
-
-	/**
-	 * @covers ::add_logger_to_gateways
-	 * @covers ::__construct
-	 */
-	public function test_add_logger_to_gateways(): void {
-
-		$logger   = new ColorLogger();
-		$settings = $this->makeEmpty( Settings_Interface::class );
-		$api      = $this->make( API::class );
-
-		$sut = new Payment_Gateways( $api, $settings, $logger );
-
-		$gateways = array(
-			$this->makeEmpty(
-				Bitcoin_Gateway::class,
-				array(
-					'set_logger' => Expected::once(
-						function ( $the_logger ) use ( $logger ) {
-							assert( $the_logger === $logger );
-						}
-					),
-				)
-			),
-			$this->makeEmpty(
-				WC_Payment_Gateway::class,
-				array(
-					'set_logger' => Expected::never(),
-				)
-			),
-		);
-
-		$sut->add_logger_to_gateways( $gateways );
+		$this->assertInstanceOf( Bitcoin_Gateway::class, $result[0] );
 	}
 }

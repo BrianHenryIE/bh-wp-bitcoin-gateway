@@ -89,4 +89,4 @@ parameters:
           path: tests/unit
         - # Primary output of WP_Posts_Query_Order is an array whose elements are all optional. Let the test fail hard.
           identifier: offsetAccess.notFound
-          path: tests/unit/api/repositories/queries/class-wp-posts-query-order-Unit-Test.php
+          path: tests/unit/api/repositories/queries/

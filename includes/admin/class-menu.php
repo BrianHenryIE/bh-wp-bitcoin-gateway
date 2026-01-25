@@ -19,7 +19,7 @@ class Menu {
 	 */
 	public function add_woocommerce_payments_submenu(): void {
 
-		// TODO: check current page is not `admin.php?page=wc-settings&tab=checkout&section=bitcoin_gateway`.
+		// TODO: check current page is not `admin.php?page=wc-settings&tab=checkout&section=bh_bitcoin`.
 
 		add_submenu_page(
 			'admin.php?page=wc-settings&tab=checkout&from=PAYMENTS_MENU_ITEM',

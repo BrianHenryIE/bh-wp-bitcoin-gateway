@@ -13,7 +13,7 @@ import { logout } from './login';
 import { setDefaultCustomerAddresses } from "../rest/wc-cart";
 
 async function selectBitcoinPaymentMethod( page: Page ) {
-	await selectPaymentGateway( page, 'bitcoin_gateway' );
+	await selectPaymentGateway( page, 'bh_bitcoin' );
 
 	// Verify Bitcoin payment method description appears
 	await expect(

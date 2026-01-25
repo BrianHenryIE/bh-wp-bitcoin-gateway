@@ -14,7 +14,7 @@ class Wallet_Generation_Result_Unit_Test extends \Codeception\Test\Unit {
 
 		$get_wallet_for_xpub_service_result = new Get_Wallet_For_Xpub_Service_Result(
 			xpub: 'xpub1234',
-			gateway_id:null,
+			gateway_details:null,
 			wallet: $this->make( Bitcoin_Wallet::class ),
 			is_new: false
 		);

@@ -1,14 +1,12 @@
 <?php
 
-namespace BrianHenryIE\WP_Bitcoin_Gateway\Frontend;
+namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\API;
-use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use Exception;
 
 /**
- * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\Frontend\AJAX
+ * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\AJAX
  */
 class AJAX_Unit_Test extends \Codeception\Test\Unit {
 
@@ -29,7 +27,7 @@ class AJAX_Unit_Test extends \Codeception\Test\Unit {
 	public function test_bad_nonce(): void {
 
 		$logger = new ColorLogger();
-		$api    = $this->make( API::class );
+		$api    = $this->makeEmpty( API_WooCommerce_Interface::class );
 
 		$sut = new AJAX( $api, $logger );
 
@@ -63,7 +61,7 @@ class AJAX_Unit_Test extends \Codeception\Test\Unit {
 	public function test_get_order_details_no_order_id(): void {
 
 		$logger = new ColorLogger();
-		$api    = $this->make( API::class );
+		$api    = $this->makeEmpty( API_WooCommerce_Interface::class );
 
 		unset( $_POST['order_id'] );
 
@@ -99,7 +97,7 @@ class AJAX_Unit_Test extends \Codeception\Test\Unit {
 	public function test_get_order_details_no_order_object(): void {
 
 		$logger = new ColorLogger();
-		$api    = $this->make( API::class );
+		$api    = $this->makeEmpty( API_WooCommerce_Interface::class );
 
 		$_POST['order_id'] = 123;
 

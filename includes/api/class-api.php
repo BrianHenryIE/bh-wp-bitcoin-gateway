@@ -30,7 +30,6 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_E
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Check_Assigned_Addresses_For_Transactions_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Ensure_Unused_Addresses_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Mark_Address_As_Paid_Result;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Wallet_Generation_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Bitcoin_Wallet_Service;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Exchange_Rate_Service;
@@ -39,8 +38,6 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Currency;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\MoneyMismatchException;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\UnknownCurrencyException;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
-use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Trait;
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Handler;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet;
@@ -63,9 +60,8 @@ use Psr\Log\LoggerInterface;
  * Bitcoin addresses for incoming transactions via blockchain APIs, and managing payment
  * confirmation workflows for assigned addresses.
  */
-class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommerce_Interface {
+class API implements API_Interface, API_Background_Jobs_Interface {
 	use LoggerAwareTrait;
-	use API_WooCommerce_Trait;
 
 	/**
 	 * Constructor
@@ -150,12 +146,12 @@ class API implements API_Interface, API_Background_Jobs_Interface, API_WooCommer
 	/**
 	 * Get or create a Wallet for the given master public key. Optionally, set the gateway id if the wallet is new.
 	 *
-	 * @param string      $xpub Bitcoin master public key.
-	 * @param string|null $gateway_id Gateway id.
+	 * @param string                                              $xpub Bitcoin master public key.
+	 * @param ?array{integration:class-string, gateway_id:string} $gateway_details Gateway id.
 	 * @throws BH_WP_Bitcoin_Gateway_Exception If two wallets for the xpub exist, or if saving fails.
 	 */
-	public function get_wallet_for_master_public_key( string $xpub, ?string $gateway_id = null ): Wallet_Generation_Result {
-		$result = $this->wallet_service->get_wallet_for_xpub( $xpub, $gateway_id );
+	public function get_wallet_for_master_public_key( string $xpub, ?array $gateway_details = null ): Wallet_Generation_Result {
+		$result = $this->wallet_service->get_or_save_wallet_for_xpub( $xpub, $gateway_details );
 
 		if ( $result->is_new ) {
 			$this->background_jobs_scheduler->schedule_single_ensure_unused_addresses( $result->wallet );

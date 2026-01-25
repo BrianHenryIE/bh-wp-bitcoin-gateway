@@ -13,6 +13,7 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\Woo_Cancel_Abandoned_Order;
 
+use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order_Interface;
 use Exception;
@@ -28,10 +29,12 @@ class Woo_Cancel_Abandoned_Order {
 	/**
 	 * Constructor.
 	 *
-	 * @param API_WooCommerce_Interface $api The main plugin functions.
+	 * @param API_Interface             $api The main plugin functions.
+	 * @param API_WooCommerce_Interface $api_woocommerce The WooCommerce related functions.
 	 */
 	public function __construct(
-		protected API_WooCommerce_Interface $api
+		protected API_Interface $api,
+		protected API_WooCommerce_Interface $api_woocommerce,
 	) {
 	}
 
@@ -49,7 +52,7 @@ class Woo_Cancel_Abandoned_Order {
 	 */
 	public function enable_cao_for_bitcoin( array $gateway_ids ): array {
 
-		foreach ( $this->api->get_bitcoin_gateways() as $bitcoin_gateway ) {
+		foreach ( $this->api_woocommerce->get_bitcoin_gateways() as $bitcoin_gateway ) {
 			$gateway_ids[] = $bitcoin_gateway->id;
 		}
 
@@ -72,13 +75,13 @@ class Woo_Cancel_Abandoned_Order {
 	 */
 	public function abort_canceling_partially_paid_order( bool $should_cancel, int $order_id, WC_Order $order ): bool {
 
-		if ( ! $this->api->is_order_has_bitcoin_gateway( $order_id ) ) {
+		if ( ! $this->api_woocommerce->is_order_has_bitcoin_gateway( $order_id ) ) {
 			return $should_cancel;
 		}
 
 		try {
 			/** @var WC_Bitcoin_Order_Interface $bitcoin_order */
-			$bitcoin_order = $this->api->get_order_details( $order );
+			$bitcoin_order = $this->api_woocommerce->get_order_details( $order );
 		} catch ( Exception $exception ) {
 			// If something is going wrong, do not automatically cancel the order.
 			return false;

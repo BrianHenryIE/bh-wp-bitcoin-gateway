@@ -14,6 +14,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Queries\Bitcoin_Wallet_Quer
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet_Status;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\UnknownCurrencyException;
+use DateTimeImmutable;
 use InvalidArgumentException;
 use WP_Post;
 use wpdb;
@@ -138,13 +139,13 @@ class Bitcoin_Wallet_Repository extends WP_Post_Repository_Abstract {
 	/**
 	 * Create a new Bitcoin_Wallet WordPress post for the provided address and optionally specify the associated gateway.
 	 *
-	 * @param string  $master_public_key The xpub/ypub/zpub of the wallet.
-	 * @param ?string $gateway_id The WC_Payment_Gateway the wallet is being used with.
+	 * @param string                                              $master_public_key The xpub/ypub/zpub of the wallet.
+	 * @param ?array{integration:class-string, gateway_id:string} $gateway The WC_Payment_Gateway the wallet is being used with.
 	 *
 	 * @return Bitcoin_Wallet The wp_posts saved wallet.
 	 * @throws BH_WP_Bitcoin_Gateway_Exception When `wp_insert_post()` fails.
 	 */
-	public function save_new( string $master_public_key, ?string $gateway_id = null ): Bitcoin_Wallet {
+	public function save_new( string $master_public_key, ?array $gateway = null ): Bitcoin_Wallet {
 
 		$existing = $this->get_by_xpub( $master_public_key );
 		if ( $existing ) {
@@ -153,8 +154,8 @@ class Bitcoin_Wallet_Repository extends WP_Post_Repository_Abstract {
 
 		$args = new Bitcoin_Wallet_Query(
 			master_public_key: $master_public_key,
-			status: ! is_null( $gateway_id ) ? Bitcoin_Wallet_Status::ACTIVE : Bitcoin_Wallet_Status::INACTIVE,
-			gateway_refs: $gateway_id ? array( $gateway_id ) : null,
+			status: ! is_null( $gateway ) ? Bitcoin_Wallet_Status::ACTIVE : Bitcoin_Wallet_Status::INACTIVE,
+			gateway_refs: $gateway ? array( $gateway ) : null,
 		);
 
 		$query_args_array = $args->to_query_array();
@@ -190,5 +191,30 @@ class Bitcoin_Wallet_Repository extends WP_Post_Repository_Abstract {
 	 */
 	public function refresh( Bitcoin_Wallet $wallet ): Bitcoin_Wallet {
 		return $this->bitcoin_wallet_factory->get_by_wp_post_id( $wallet->get_post_id() );
+	}
+
+	/**
+	 * Add meta to the wallet to record where it is being used.
+	 *
+	 * @param Bitcoin_Wallet                                     $wallet The wallet to update.
+	 * @param array{integration:class-string, gateway_id:string} $new_gateway_details The integration,gateway_id to associate with the wallet.
+	 * @return void
+	 * @see Bitcoin_Wallet_WP_Post_Interface::GATEWAYS_DETAILS_META_KEY
+	 */
+	public function append_gateway_details( Bitcoin_Wallet $wallet, array $new_gateway_details ): void {
+		$new_gateway_details['date_added'] = new DateTimeImmutable();
+
+		// TODO: does this need to be done for every one every time?
+		$new_gateway_details['integration'] = wp_slash( $new_gateway_details['integration'] );
+
+		$associated_gateway_details   = $wallet->get_associated_gateways_details();
+		$associated_gateway_details[] = $new_gateway_details;
+
+		$this->update(
+			$wallet,
+			new Bitcoin_Wallet_Query(
+				gateway_refs: $associated_gateway_details,
+			)
+		);
 	}
 }
