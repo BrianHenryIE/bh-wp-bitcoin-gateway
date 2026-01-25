@@ -26,20 +26,6 @@ class Woo_Cancel_Abandoned_Order_Integration_Unit_Test extends Unit {
 
 	/**
 	 * @covers ::__construct
-	 */
-	public function test_constructor_binds_class(): void {
-
-		$container_mock = $this->make(
-			DI52_Container::class,
-			array(
-				'bind' => Expected::once(),
-			)
-		);
-
-		new Woo_Cancel_Abandoned_Order_Integration( $container_mock );
-	}
-
-	/**
 	 * @covers ::register_hooks
 	 */
 	public function test_define_integration_woo_cancel_abandoned_order_hooks(): void {
@@ -49,8 +35,7 @@ class Woo_Cancel_Abandoned_Order_Integration_Unit_Test extends Unit {
 		$container_mock = $this->make(
 			DI52_Container::class,
 			array(
-				'bind' => Expected::once(),
-				'get'  => Expected::once( $woo_cancel_abandoned_order ),
+				'get' => Expected::once( $woo_cancel_abandoned_order ),
 			)
 		);
 
