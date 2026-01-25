@@ -36,7 +36,6 @@ class Woo_Cancel_Abandoned_Order_Integration {
 	public function __construct(
 		protected DI52_Container $container,
 	) {
-		$this->container->bind( API_WooCommerce_Interface::class, API_WooCommerce::class );
 	}
 
 	/**
