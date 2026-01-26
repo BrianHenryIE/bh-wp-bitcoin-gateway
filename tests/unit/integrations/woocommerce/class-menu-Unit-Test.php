@@ -42,13 +42,13 @@ class Menu_Unit_Test extends \Codeception\Test\Unit {
 			'add_submenu_page',
 			array(
 				'times' => 1,
-				'args' => array(
+				'args'  => array(
 					'admin.php?page=wc-settings&tab=checkout&from=PAYMENTS_MENU_ITEM',
 					'Bitcoin Gateway',
 					'Bitcoin',
 					'manage_woocommerce',
-					'admin.php?page=wc-settings&tab=checkout&section=bh_bitcoin'
-				)
+					'admin.php?page=wc-settings&tab=checkout&section=bh_bitcoin',
+				),
 			),
 		);
 
@@ -80,13 +80,13 @@ class Menu_Unit_Test extends \Codeception\Test\Unit {
 			'add_submenu_page',
 			array(
 				'times' => 3,
-				'args' => array(
+				'args'  => array(
 					'admin.php?page=wc-settings&tab=checkout&from=PAYMENTS_MENU_ITEM',
 					'Bitcoin Gateway',
 					'Bitcoin (bh_bitcoin)',
 					'manage_woocommerce',
-					'admin.php?page=wc-settings&tab=checkout&section=bh_bitcoin'
-				)
+					'admin.php?page=wc-settings&tab=checkout&section=bh_bitcoin',
+				),
 			)
 		);
 
