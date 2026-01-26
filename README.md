@@ -135,6 +135,7 @@ Pre-select Bitcoin at checkout when sending emails to customers.
 * [x] ~~Webpack build in GitHub Actions~~
 * [ ] Rewrite all skipped tests (~30)
 * [ ] `API` test coverage > 50% (currently ~16%)
+* [ ] Get number of `TODO:`s < 100 (currently 187, `grep -rnwi includes -e "TODO" | wc -l`)
 
 ### v2.0+
 
