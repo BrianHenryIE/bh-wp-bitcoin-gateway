@@ -194,6 +194,8 @@ class API implements API_Interface, API_Background_Jobs_Interface {
 	/**
 	 * Check that there are two addresses generated and unused for every wallet (or specific wallet/number).
 	 *
+	 * TODO: This should be checking the address's last modified time and not making remote API calls if it was recently checked.
+	 *
 	 * TODO: If a store has 100 orders/minute, this should still only check each address once every ten minutes, since
 	 * until a new block is mined, the result won't change. TODO: mempool?
 	 *
