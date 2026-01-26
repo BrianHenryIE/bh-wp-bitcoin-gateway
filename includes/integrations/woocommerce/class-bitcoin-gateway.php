@@ -405,7 +405,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 			 * @see Order::BITCOIN_ADDRESS_META_KEY
 			 * @see Bitcoin_Address::get_raw_address()
 			 */
-			$btc_address = $this->api_woocommerce->get_fresh_address_for_order( $order, $btc_total );
+			$btc_address = $this->api_woocommerce->assign_unused_address_to_order( $order, $btc_total );
 		} catch ( Exception $e ) {
 			$this->logger->error( $e->getMessage(), array( 'exception' => $e ) );
 			throw new BH_WP_Bitcoin_Gateway_Exception( 'Unable to find Bitcoin address to send to. Please choose another payment method.' );

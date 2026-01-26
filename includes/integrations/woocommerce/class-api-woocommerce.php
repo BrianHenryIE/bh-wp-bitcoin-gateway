@@ -154,7 +154,7 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 	 * @return Bitcoin_Address
 	 * @throws BH_WP_Bitcoin_Gateway_Exception When no Bitcoin addresses are available or the address cannot be assigned to the order.
 	 */
-	public function get_fresh_address_for_order( WC_Order $order, Money $btc_total ): Bitcoin_Address {
+	public function assign_unused_address_to_order(WC_Order $order, Money $btc_total ): Bitcoin_Address {
 		$this->logger->debug( 'Get fresh address for `shop_order:{order_id}`', array( 'order_id' => $order->get_id() ) );
 
 		$btc_address = $this->get_fresh_address_for_gateway( $this->get_bitcoin_gateways()[ $order->get_payment_method() ] );

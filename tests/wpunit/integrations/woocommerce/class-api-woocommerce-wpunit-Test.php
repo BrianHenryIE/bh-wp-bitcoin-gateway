@@ -258,7 +258,7 @@ class API_WooCommerce_WPUnit_Test extends WPTestCase {
 	}
 
 	/**
-	 * @see API_WooCommerce::get_fresh_address_for_order
+	 * @see API_WooCommerce::assign_unused_address_to_order
 	 * @see API_WooCommerce::get_fresh_address_for_gateway
 	 */
 	public function test_get_fresh_address_for_order(): void {
@@ -362,7 +362,7 @@ class API_WooCommerce_WPUnit_Test extends WPTestCase {
 
 		$btc_amount = Money::of( '0.00123', 'BTC' );
 
-		$result = $sut->get_fresh_address_for_order( $order, $btc_amount );
+		$result = $sut->assign_unused_address_to_order( $order, $btc_amount );
 
 		$this->assertEquals( 'success', $result->get_raw_address() );
 

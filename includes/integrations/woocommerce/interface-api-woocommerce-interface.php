@@ -53,7 +53,7 @@ interface API_WooCommerce_Interface {
 	 * @return Bitcoin_Address
 	 * @throws BH_WP_Bitcoin_Gateway_Exception When no address is available.
 	 */
-	public function get_fresh_address_for_order( WC_Order $order, Money $btc_total ): Bitcoin_Address;
+	public function assign_unused_address_to_order(WC_Order $order, Money $btc_total ): Bitcoin_Address;
 
 	/**
 	 * Return the current Bitcoin details for an order, optionally refresh.
