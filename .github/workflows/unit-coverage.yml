@@ -152,7 +152,7 @@ jobs:
 
       - name: Commit HTML code coverage + badge to gh-pages
         if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }}
-        uses: stefanzweifel/git-auto-commit-action@v4
+        uses: stefanzweifel/git-auto-commit-action@v7
         with:
           repository: gh-pages
           branch: gh-pages
@@ -160,7 +160,7 @@ jobs:
 
       - name: Commit code coverage badge to master/main
         if: ${{ matrix.php == env.COVERAGE_PHP_VERSION && github.ref == 'refs/heads/master' }}
-        uses: stefanzweifel/git-auto-commit-action@v4
+        uses: stefanzweifel/git-auto-commit-action@v7
         with:
           file_pattern: .github/coverage.svg
           commit_message: "🤖 Commit code coverage badge"
