@@ -143,6 +143,7 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 				'post_type'   => 'bh-bitcoin-address',
 				'post_status' => 'used',
 				'meta_input'  => array(
+					Bitcoin_Address_WP_Post_Interface::DERIVATION_PATH_SEQUENCE_NUMBER_META_KEY => 123,
 					Bitcoin_Address_WP_Post_Interface::RECEIVED_META_KEY => array( '1.23456789', 'BTC' ),
 				),
 			)
@@ -169,6 +170,9 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 			array(
 				'post_type'   => 'bh-bitcoin-address',
 				'post_status' => 'used',
+				'meta_input'  => array(
+					Bitcoin_Address_WP_Post_Interface::DERIVATION_PATH_SEQUENCE_NUMBER_META_KEY => 123,
+				),
 			)
 		);
 
@@ -193,6 +197,9 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 			array(
 				'post_type'   => 'bh-bitcoin-address',
 				'post_status' => 'unused',
+				'meta_input'  => array(
+					Bitcoin_Address_WP_Post_Interface::DERIVATION_PATH_SEQUENCE_NUMBER_META_KEY => 123,
+				),
 			)
 		);
 
@@ -214,6 +221,9 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 			array(
 				'post_type'   => 'bh-bitcoin-address',
 				'post_status' => 'unknown',
+				'meta_input'  => array(
+					Bitcoin_Address_WP_Post_Interface::DERIVATION_PATH_SEQUENCE_NUMBER_META_KEY => 123,
+				),
 			)
 		);
 

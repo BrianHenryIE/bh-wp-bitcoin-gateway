@@ -42,9 +42,28 @@ abstract class WP_Post_Repository_Abstract {
 		Bitcoin_Wallet|Bitcoin_Address|Bitcoin_Transaction $model,
 		WP_Post_Query_Abstract $query
 	): void {
+
+		/** @var array<int|string,mixed> $existing_meta */
+		$existing_meta = get_post_meta( $model->get_post_id() );
+
 		/** @var WpUpdatePostArray $args */
 		$args       = $query->to_query_array();
 		$args['ID'] = $model->get_post_id();
+
+		$new_meta = isset( $args['meta_input'] ) ? $args['meta_input'] : array();
+
+		$args['meta_input'] = array();
+		foreach ( $existing_meta as $key => $value ) {
+			if ( is_array( $value ) && count( $value ) === 1 && array_key_first( $value ) === 0 ) {
+				$args['meta_input'][ $key ] = $value[0];
+			} else {
+				$args['meta_input'][ $key ] = $value;
+			}
+		}
+		$args['meta_input'] = $args['meta_input'] + $new_meta;
+		if ( empty( $args['meta_input'] ) ) {
+			unset( $args['meta_input'] );
+		}
 
 		/** @var int|WP_Error $result */
 		$result = wp_update_post(
