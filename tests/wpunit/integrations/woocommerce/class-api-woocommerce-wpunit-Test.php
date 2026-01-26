@@ -136,6 +136,22 @@ class API_WooCommerce_WPUnit_Test extends WPTestCase {
 	}
 
 	/**
+	 * @covers ::get_fresh_address_for_gateway
+	 */
+	public function test_get_fresh_addresses_for_gateway_no_master_public_key(): void
+	{
+		$gateway = $this->make(Bitcoin_Gateway::class );
+
+		assert(empty($gateway->get_xpub()));
+
+		$sut = $this->get_sut();
+
+		$result = $sut->get_fresh_address_for_gateway( $gateway );
+
+		$this->assertNull( $result );
+	}
+
+	/**
 	 * @see API_WooCommerce_Interface::get_fresh_address_for_gateway
 	 * @see API_WooCommerce::get_fresh_address_for_gateway
 	 */
