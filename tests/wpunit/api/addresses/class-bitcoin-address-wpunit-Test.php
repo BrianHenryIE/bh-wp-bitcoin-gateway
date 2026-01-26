@@ -107,33 +107,6 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 		$this->assertEquals( 123, $result );
 	}
 
-	public function test_set_status(): void {
-		$this->markTestIncomplete( 'should a Bitcoin_Address object have setters?' );
-
-		$bitcoin_address_factory    = new Bitcoin_Address_Factory();
-		$bitcoin_address_repository = new Bitcoin_Address_Repository( $bitcoin_address_factory );
-
-		$wallet = $this->makeEmpty( Bitcoin_Wallet::class );
-
-		$bitcoin_address_post_id = $bitcoin_address_repository->save_new_address(
-			new Bitcoin_Address_Query(
-				wallet_wp_post_parent_id: $wallet->get_post_id(),
-				xpub: 'address',
-				derivation_path_sequence_index: 2
-			)
-		);
-
-		$sut = $bitcoin_address_repository->get_by_post_id( $bitcoin_address_post_id );
-
-		$sut->set_status( Bitcoin_Address_Status::ASSIGNED );
-
-		$sut = $bitcoin_address_repository->get_by_post_id( $bitcoin_address_post_id );
-
-		$result = $sut->get_status();
-
-		$this->assertEquals( 'assigned', $result->value );
-	}
-
 	/**
 	 * @covers ::get_amount_received
 	 */
