@@ -469,7 +469,7 @@ class Bitcoin_Wallet_Service_Unit_Test extends \Codeception\Test\Unit {
 			Bitcoin_Address_Repository::class,
 			array(
 				'get_post_id_for_address' => Expected::once( null ),
-				'save_new'                => Expected::once( $bitcoin_address ),
+				'save_new_address'        => Expected::once( $bitcoin_address ),
 			)
 		);
 
