@@ -134,6 +134,7 @@ Pre-select Bitcoin at checkout when sending emails to customers.
 * [ ] Update screenshots + use mobile view for customer screenshots
 * [x] ~~Webpack build in GitHub Actions~~
 * [ ] Rewrite all skipped tests (~30)
+* [ ] `API` test coverage > 50% (currently ~16%)
 
 ### v2.0+
 
