@@ -122,7 +122,7 @@ jobs:
 
       - name: Generate the badge SVG image
         if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }}
-        uses: emibcn/badge-action@v1
+        uses: emibcn/badge-action@v2
         id: badge
         with:
           label: 'PHPUnit'
