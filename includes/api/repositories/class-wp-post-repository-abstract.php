@@ -24,7 +24,7 @@ use WP_Error;
  * @method get_by_wp_post_id( int $post_id )
  * @method get_all( $status ): array
  *
- * @phpstan-type WpUpdatePostArray array{ID?: int, post_author?: int, post_date?: string, post_date_gmt?: string, post_content?: string, post_content_filtered?: string, post_title?: string, post_excerpt?: string}
+ * @phpstan-type WpUpdatePostArray array{ID?: int, post_author?: int, post_date?: string, post_date_gmt?: string, post_content?: string, post_content_filtered?: string, post_title?: string, post_excerpt?: string, meta_input?:array<string,mixed>}
  */
 abstract class WP_Post_Repository_Abstract {
 
@@ -60,7 +60,8 @@ abstract class WP_Post_Repository_Abstract {
 				$args['meta_input'][ $key ] = $value;
 			}
 		}
-		$args['meta_input'] = $args['meta_input'] + $new_meta;
+		// Meta keys are string values; `array_merge()` re-indexes integer keys but that should be irrelevant here.
+		$args['meta_input'] = array_merge( $args['meta_input'], $new_meta );
 		if ( empty( $args['meta_input'] ) ) {
 			unset( $args['meta_input'] );
 		}
