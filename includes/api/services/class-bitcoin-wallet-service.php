@@ -19,8 +19,11 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Addresses_Generation_Resul
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Address_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Wallet_Repository;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Queries\WP_Posts_Query_Order;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Results\Get_Wallet_For_Xpub_Service_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
+use DateInterval;
+use DateTimeImmutable;
 use InvalidArgumentException;
 use JsonException;
 use Psr\Log\LoggerAwareInterface;
@@ -237,6 +240,34 @@ class Bitcoin_Wallet_Service implements LoggerAwareInterface {
 	public function get_unused_bitcoin_addresses( ?Bitcoin_Wallet $wallet = null ): array {
 
 		return $this->bitcoin_address_repository->get_unused_bitcoin_addresses( $wallet );
+	}
+
+	/**
+	 * Local db query to check is there an unused address that has recently been verified as unused.
+	 *
+	 * We should be making remote calls to verify an address is unused regularly, both on cron and on customer activity,
+	 * so this should generally return true, but can be used to schedule a background check.
+	 *
+	 * @param Bitcoin_Wallet $wallet The wallet we need a payment address for.
+	 */
+	public function has_unused_bitcoin_address( Bitcoin_Wallet $wallet ): bool {
+
+		$unused_addresses = $this->bitcoin_address_repository->get_unused_bitcoin_addresses(
+			wallet: $wallet,
+			query_order: new WP_Posts_Query_Order(
+				count: 1,
+				order_by: 'post_modified',
+				order_direction: 'DESC',
+			)
+		);
+
+		if ( empty( $unused_addresses ) ) {
+			return false;
+		}
+
+		$address = $unused_addresses[ array_key_first( $unused_addresses ) ];
+
+		return new DateTimeImmutable()->sub( new DateInterval( 'PT10M' ) ) < $address->get_modified_time();
 	}
 
 	/**

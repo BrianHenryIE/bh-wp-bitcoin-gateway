@@ -11,6 +11,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_E
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Bitcoin_Wallet_Service;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Payment_Service;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Results\Get_Wallet_For_Xpub_Service_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\MoneyMismatchException;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
@@ -223,18 +224,16 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 	 * @return bool
 	 * @throws BH_WP_Bitcoin_Gateway_Exception When the wallet lookup fails or the address repository cannot be queried.
 	 */
-	public function is_unused_address_available_for_gateway(Bitcoin_Gateway $gateway ): bool {
+	public function is_unused_address_available_for_gateway( Bitcoin_Gateway $gateway ): bool {
 
 		if ( is_null( $gateway->get_xpub() ) ) {
 			return false;
 		}
 
-		$result           = $this->wallet_service->get_or_save_wallet_for_xpub( $gateway->get_xpub() );
-		$unused_addresses = $this->wallet_service->get_unused_bitcoin_addresses( $result->wallet );
+		$get_wallet_for_xpub_service_result = $this->wallet_service->get_or_save_wallet_for_xpub( $gateway->get_xpub() );
 
-		// TODO: maybe schedule a job to find an unused address.
-
-		return count( $unused_addresses ) > 0;
+		// This will schedule a job if there are none.
+		return $this->api->is_unused_address_available_for_wallet( $get_wallet_for_xpub_service_result->wallet );
 	}
 
 	/**

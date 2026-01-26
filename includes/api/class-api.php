@@ -150,7 +150,7 @@ class API implements API_Interface, API_Background_Jobs_Interface {
 	 * @param ?array{integration:class-string, gateway_id:string} $gateway_details Gateway id.
 	 * @throws BH_WP_Bitcoin_Gateway_Exception If two wallets for the xpub exist, or if saving fails.
 	 */
-	public function get_or_save_wallet_for_master_public_key(string $xpub, ?array $gateway_details = null ): Wallet_Generation_Result {
+	public function get_or_save_wallet_for_master_public_key( string $xpub, ?array $gateway_details = null ): Wallet_Generation_Result {
 		$result = $this->wallet_service->get_or_save_wallet_for_xpub( $xpub, $gateway_details );
 
 		if ( $result->is_new ) {
@@ -161,6 +161,22 @@ class API implements API_Interface, API_Background_Jobs_Interface {
 			get_wallet_for_xpub_service_result: $result,
 			did_schedule_ensure_addresses: $result->is_new,
 		);
+	}
+
+	/**
+	 * A local-only check to see if the wallet has any payment addresses whose status has been checked in the last ten
+	 * minutes.
+	 *
+	 * @param Bitcoin_Wallet $wallet The wallet object we need an address to give to a customer.
+	 */
+	public function is_unused_address_available_for_wallet( Bitcoin_Wallet $wallet ): bool {
+		$success = $this->wallet_service->has_unused_bitcoin_address( $wallet );
+
+		if ( ! $success ) {
+			$this->background_jobs_scheduler->schedule_single_ensure_unused_addresses( $wallet );
+		}
+
+		return $success;
 	}
 
 	/**

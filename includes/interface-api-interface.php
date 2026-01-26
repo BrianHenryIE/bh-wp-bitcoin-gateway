@@ -55,7 +55,7 @@ interface API_Interface {
 	 * @param string                                              $xpub The wallet address to save as a wallet object cpt.
 	 * @param ?array{integration:class-string, gateway_id:string} $gateway_details The Bitcoin gateway (it is presumably linked to one).
 	 */
-	public function get_or_save_wallet_for_master_public_key(string $xpub, ?array $gateway_details = null ): Wallet_Generation_Result;
+	public function get_or_save_wallet_for_master_public_key( string $xpub, ?array $gateway_details = null ): Wallet_Generation_Result;
 
 	/**
 	 * For each Bitcoin gateway, calls `generate_new_addresses_for_wallet()`.
@@ -63,6 +63,14 @@ interface API_Interface {
 	 * @return Addresses_Generation_Result[]
 	 */
 	public function generate_new_addresses(): array;
+
+	/**
+	 * Local-db-only check to see is there an unused address that has been recently checked to ensure it is available.
+	 * Schedules an immediate background job if none are available.
+	 *
+	 * @param Bitcoin_Wallet $wallet The wallet we want a payment address for.
+	 */
+	public function is_unused_address_available_for_wallet( Bitcoin_Wallet $wallet ): bool;
 
 	/**
 	 * Generate fresh addresses for a wallet.

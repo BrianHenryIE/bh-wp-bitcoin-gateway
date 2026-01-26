@@ -81,7 +81,8 @@ class Bitcoin_Gateway_WPUnit_Test extends WPTestCase {
 
 	/**
 	 * @covers ::is_available
-	 * @see API_Interface::is_fresh_address_available_for_gateway()
+	 * @see API_WooCommerce_Interface::is_unused_address_available_for_gateway()
+	 * @see API_Interface::is_unused_address_available_for_wallet()
 	 */
 	public function test_checks_for_available_address_for_availability_true(): void {
 
@@ -98,7 +99,7 @@ class Bitcoin_Gateway_WPUnit_Test extends WPTestCase {
 		$api_woocommerce = $this->makeEmpty(
 			API_WooCommerce_Interface::class,
 			array(
-				'is_fresh_address_available_for_gateway' => Expected::once(
+				'is_unused_address_available_for_gateway' => Expected::once(
 					function ( Bitcoin_Gateway $gateway ) {
 						return true;
 					}
