@@ -169,7 +169,7 @@
     "impress-org/give-next-gen": "^0.2",
     "impress-org/givewp-example-gateway": "dev-master",
     "johnpbloch/wordpress": "*",
-    "lucatume/wp-browser": "^4.5.10",
+    "lucatume/wp-browser": "^4.5.11",
     "php-stubs/woocommerce-stubs": "*",
     "phpcompatibility/phpcompatibility-wp": "^2|^3",
     "phpstan/extension-installer": "^1.4.3",
