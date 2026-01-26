@@ -189,7 +189,7 @@ class Bitcoin_Wallet_Service implements LoggerAwareInterface {
 				continue;
 			}
 
-			$bitcoin_address = $this->bitcoin_address_repository->save_new(
+			$bitcoin_address = $this->bitcoin_address_repository->save_new_address(
 				wallet: $wallet,
 				derivation_path_sequence_index: $address_index,
 				address: $new_address_string,

@@ -33,7 +33,7 @@ class CLI_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 		$factory = new Bitcoin_Address_Repository();
 		$wallet  = $this->makeEmpty( Bitcoin_Wallet::class );
 
-		$post_id = (string) $factory->save_new(
+		$post_id = (string) $factory->save_new_address(
 			new Bitcoin_Address_Query(
 				wallet_wp_post_parent_id: $wallet->get_post_id(),
 				xpub: 'mockaddress',

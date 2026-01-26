@@ -225,7 +225,7 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 	 * @return Bitcoin_Address The saved Bitcoin address.
 	 * @throws BH_WP_Bitcoin_Gateway_Exception When WordPress fails to create the wp_post.
 	 */
-	public function save_new(
+	public function save_new_address(
 		Bitcoin_Wallet $wallet,
 		int $derivation_path_sequence_index,
 		string $address,

@@ -33,7 +33,7 @@ class Bitcoin_Transaction_Repository_WPUnit_Test extends WPTestCase {
 		$bitcoin_address_factory    = new Bitcoin_Address_Factory();
 		$bitcoin_address_repository = new Bitcoin_Address_Repository( $bitcoin_address_factory );
 
-		$bitcoin_address = $bitcoin_address_repository->save_new( $wallet, 1, 'payment_address_345' );
+		$bitcoin_address = $bitcoin_address_repository->save_new_address( $wallet, 1, 'payment_address_345' );
 
 		$bitcoin_transaction_factory = new Bitcoin_Transaction_Factory();
 		$sut                         = new Bitcoin_Transaction_Repository( $bitcoin_transaction_factory );

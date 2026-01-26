@@ -26,7 +26,7 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 
 		$wallet = $this->makeEmpty( Bitcoin_Wallet::class );
 
-		$bitcoin_address = $bitcoin_address_repository->save_new(
+		$bitcoin_address = $bitcoin_address_repository->save_new_address(
 			wallet:             $wallet,
 			derivation_path_sequence_index: 2,
 			address: 'address',
@@ -63,7 +63,7 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 
 		$wallet = $this->makeEmpty( Bitcoin_Wallet::class );
 
-		$bitcoin_address = $bitcoin_address_repository->save_new(
+		$bitcoin_address = $bitcoin_address_repository->save_new_address(
 			wallet:             $wallet,
 			derivation_path_sequence_index: 2,
 			address: 'address',
@@ -88,7 +88,7 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 
 		$wallet = $this->makeEmpty( Bitcoin_Wallet::class );
 
-		$bitcoin_address_post_id = $bitcoin_address_repository->save_new(
+		$bitcoin_address_post_id = $bitcoin_address_repository->save_new_address(
 			new Bitcoin_Address_Query(
 				wallet_wp_post_parent_id: $wallet->get_post_id(),
 				xpub: 'address',
@@ -115,7 +115,7 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 
 		$wallet = $this->makeEmpty( Bitcoin_Wallet::class );
 
-		$bitcoin_address_post_id = $bitcoin_address_repository->save_new(
+		$bitcoin_address_post_id = $bitcoin_address_repository->save_new_address(
 			new Bitcoin_Address_Query(
 				wallet_wp_post_parent_id: $wallet->get_post_id(),
 				xpub: 'address',
@@ -242,7 +242,7 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 
 		$wallet = $this->makeEmpty( Bitcoin_Wallet::class );
 
-		$bitcoin_address_post_id = $bitcoin_address_repository->save_new(
+		$bitcoin_address_post_id = $bitcoin_address_repository->save_new_address(
 			new Bitcoin_Address_Query(
 				wallet_wp_post_parent_id: $wallet->get_post_id(),
 				xpub: 'address',
