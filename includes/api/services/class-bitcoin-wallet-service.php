@@ -265,7 +265,11 @@ class Bitcoin_Wallet_Service implements LoggerAwareInterface {
 
 		$address = $unused_addresses[ array_key_first( $unused_addresses ) ];
 
-		return new DateTimeImmutable()->sub( new DateInterval( 'PT10M' ) ) < $address->get_modified_time();
+		$now                    = new DateTimeImmutable();
+		$ten_minutes_in_seconds = ( 10 * constant( 'MINUTE_IN_SECONDS' ) );
+		$seconds_difference     = $now->getTimestamp() - $address->get_modified_time()->getTimestamp();
+
+		return $seconds_difference < $ten_minutes_in_seconds;
 	}
 
 	/**
@@ -373,11 +377,7 @@ class Bitcoin_Wallet_Service implements LoggerAwareInterface {
 
 		$updated_transactions_post_ids = $existing_meta_transactions_post_ids + $new_transactions_post_ids;
 
-		// We do want to set an empty array once to indicate we have checked the address for transactions, but if there are still none, skip the save operation.
-		if ( ! is_null( $address->get_tx_ids() ) && empty( $new_transactions_post_ids ) ) {
-			return;
-		}
-
+		// Even if we have no changes, we want to update the object's modified timestamp.
 		$this->bitcoin_address_repository->set_transactions_post_ids_to_address( $address, $updated_transactions_post_ids );
 	}
 }
