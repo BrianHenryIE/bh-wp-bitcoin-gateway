@@ -121,16 +121,16 @@ class Addresses_List_Table_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTe
 	 */
 	public function test_column_wallet(): void {
 
-		$this->markTestSkipped( 'TODO: reimplement using filters' );
-
 		$sut = new Addresses_List_Table( $this->args );
 
 		ob_start();
 		$sut->column_wallet( $this->post );
 		$result = ob_get_clean();
 
+		$wallet_post_id = $this->post->post_parent;
+
 		$this->assertStringContainsString( 'xpub1a2...def', $result );
-		$this->assertStringContainsString( 'admin.php?page=wc-settings&#038;tab=checkout&#038;section=bitcoin_gateway', $result );
+		$this->assertStringContainsString( "wp-admin/post.php?post={$wallet_post_id}&#038;action=edit", $result );
 	}
 
 	/**
