@@ -223,7 +223,7 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 	 * @return bool
 	 * @throws BH_WP_Bitcoin_Gateway_Exception When the wallet lookup fails or the address repository cannot be queried.
 	 */
-	public function is_fresh_address_available_for_gateway( Bitcoin_Gateway $gateway ): bool {
+	public function is_unused_address_available_for_gateway(Bitcoin_Gateway $gateway ): bool {
 
 		if ( is_null( $gateway->get_xpub() ) ) {
 			return false;

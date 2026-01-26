@@ -356,7 +356,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 
 		// TODO: review `$this->is_available_cache` and when we should avoid db calls and http calls.
 
-		if ( ! $this->api_woocommerce->is_fresh_address_available_for_gateway( $this ) ) {
+		if ( ! $this->api_woocommerce->is_unused_address_available_for_gateway( $this ) ) {
 			$this->is_available_cache = false;
 			return false;
 		}

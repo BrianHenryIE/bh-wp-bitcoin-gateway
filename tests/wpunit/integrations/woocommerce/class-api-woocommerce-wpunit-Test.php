@@ -251,7 +251,7 @@ class API_WooCommerce_WPUnit_Test extends WPTestCase {
 		$bitcoin_gateway                   = $this->get_bitcoin_gateway( api_woocommerce: $sut );
 		$bitcoin_gateway->settings['xpub'] = 'xpub';
 
-		$result = $sut->is_fresh_address_available_for_gateway( $bitcoin_gateway );
+		$result = $sut->is_unused_address_available_for_gateway( $bitcoin_gateway );
 
 		self::assertTrue( $result );
 	}

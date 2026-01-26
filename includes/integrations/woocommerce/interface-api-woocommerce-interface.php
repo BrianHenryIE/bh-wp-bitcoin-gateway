@@ -73,7 +73,7 @@ interface API_WooCommerce_Interface {
 	 *
 	 * @param Bitcoin_Gateway $gateway The WooCommerce payment gateway which should have addresses generated.
 	 */
-	public function is_fresh_address_available_for_gateway( Bitcoin_Gateway $gateway ): bool;
+	public function is_unused_address_available_for_gateway(Bitcoin_Gateway $gateway ): bool;
 
 	/**
 	 * Get a single unused Bitcoin address for a given payment gateway's wallet.
