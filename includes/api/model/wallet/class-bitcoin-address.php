@@ -12,6 +12,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\Admin\Addresses_List_Table;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Bitcoin_Gateway;
+use DateTimeInterface;
 use InvalidArgumentException;
 
 /**
@@ -27,6 +28,8 @@ class Bitcoin_Address implements Bitcoin_Address_Interface {
 	 * @param int                    $post_id The WordPress post ID for this address.
 	 * @param int                    $wallet_parent_post_id The post ID of the parent wallet.
 	 * @param string                 $raw_address The Bitcoin address string.
+	 * @param DateTimeInterface      $created_time When the WP Post was created.
+	 * @param DateTimeInterface      $modified_time When the WP Post was last modified, presumably to check when the address was last checked.
 	 * @param ?int                   $derivation_path_sequence_number The derivation path sequence number.
 	 * @param Bitcoin_Address_Status $status The current status of the address.
 	 * @param ?Money                 $target_amount The target amount for payment.
@@ -40,7 +43,9 @@ class Bitcoin_Address implements Bitcoin_Address_Interface {
 		protected int $post_id,
 		protected int $wallet_parent_post_id,
 		protected string $raw_address,
-		protected ?int $derivation_path_sequence_number = null,
+		protected DateTimeInterface $created_time,
+		protected DateTimeInterface $modified_time,
+		protected ?int $derivation_path_sequence_number = null, // TODO: Why is this nullable?
 		protected Bitcoin_Address_Status $status = Bitcoin_Address_Status::UNKNOWN,
 		protected ?Money $target_amount = null,
 		protected ?int $order_id = null,
@@ -135,5 +140,12 @@ class Bitcoin_Address implements Bitcoin_Address_Interface {
 	 */
 	public function get_tx_ids(): ?array {
 		return $this->tx_ids;
+	}
+
+	/**
+	 * When was the WP_Post last modified.
+	 */
+	public function get_modified_time(): DateTimeInterface {
+		return $this->modified_time;
 	}
 }

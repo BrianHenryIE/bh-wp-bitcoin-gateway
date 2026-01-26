@@ -9,6 +9,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Address_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Wallet_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_Interface;
 use Codeception\Stub\Expected;
+use DateTimeImmutable;
 use WP_Mock;
 
 /**
@@ -373,6 +374,8 @@ class Bitcoin_Wallet_Service_Unit_Test extends \Codeception\Test\Unit {
 							post_id: 123,
 							wallet_parent_post_id: 4,
 							raw_address: 'bc1qaddress0',
+							created_time: new DateTimeImmutable(),
+							modified_time: new DateTimeImmutable(),
 						);
 					}
 				),

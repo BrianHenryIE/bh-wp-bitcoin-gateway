@@ -11,6 +11,8 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address_Status;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address_WP_Post_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
+use DateMalformedStringException;
+use DateTimeImmutable;
 use InvalidArgumentException;
 use WP_Post;
 
@@ -39,13 +41,16 @@ class Bitcoin_Address_Factory {
 	 * The first call to {@see get_post_meta()} caches all meta for the object, {@see get_metadata_raw()}.
 	 *
 	 * @param WP_Post $post The backing WP_Post for this Bitcoin_Address.
+	 * @throws DateMalformedStringException If somehow {@see WP_Post::$post_modified_gmt} is not in the expected format.
 	 */
 	public function get_by_wp_post( WP_Post $post ): Bitcoin_Address {
 
-		$bitcoin_address = new Bitcoin_Address(
+		return new Bitcoin_Address(
 			post_id: $post->ID,
 			wallet_parent_post_id: $post->post_parent,
 			raw_address: $post->post_title,
+			created_time: new DateTimeImmutable( $post->post_date_gmt ),
+			modified_time: new DateTimeImmutable( $post->post_modified_gmt ),
 			derivation_path_sequence_number: $this->get_derivation_path_sequence_number_from_post( $post ),
 			status: Bitcoin_Address_Status::from( $post->post_status ),
 			target_amount: $this->get_target_amount_from_post( $post ),
@@ -54,8 +59,6 @@ class Bitcoin_Address_Factory {
 			// TODO: Use "received", not balance.
 			balance: $this->get_balance_from_post( $post ),
 		);
-
-		return $bitcoin_address;
 	}
 
 	/**
