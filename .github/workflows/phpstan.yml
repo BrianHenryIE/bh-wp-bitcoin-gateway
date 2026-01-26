@@ -45,7 +45,7 @@ jobs:
           find . -depth \( -name 'dump.sql' \) -exec sed -i "s/localhost:8080\/${{ env.PLUGIN_SLUG }}/localhost:8080/g" {} +
 
       - name: Read .env.testing
-        uses: c-py/action-dotenv-to-setenv@v2
+        uses: c-py/action-dotenv-to-setenv@v5
         with:
           env-file: .env.testing
 
