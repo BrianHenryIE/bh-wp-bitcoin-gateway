@@ -45,13 +45,11 @@ readonly class Bitcoin_Address_Query extends WP_Post_Query_Abstract {
 	 * @return array<string,mixed>
 	 */
 	protected function get_meta_input(): array {
-		return array_filter(
-			array(
-				Bitcoin_Address_WP_Post_Interface::DERIVATION_PATH_SEQUENCE_NUMBER_META_KEY => $this->derivation_path_sequence_index,
-				Bitcoin_Address_WP_Post_Interface::TRANSACTIONS_META_KEY => $this->transactions_post_ids,
-				Bitcoin_Address_WP_Post_Interface::ORDER_ID_META_KEY => $this->associated_order_id,
-				Bitcoin_Address_WP_Post_Interface::TARGET_AMOUNT_META_KEY => $this->target_amount,
-			)
+		return array(
+			Bitcoin_Address_WP_Post_Interface::DERIVATION_PATH_SEQUENCE_NUMBER_META_KEY => $this->derivation_path_sequence_index,
+			Bitcoin_Address_WP_Post_Interface::TRANSACTIONS_META_KEY => $this->transactions_post_ids,
+			Bitcoin_Address_WP_Post_Interface::ORDER_ID_META_KEY => $this->associated_order_id,
+			Bitcoin_Address_WP_Post_Interface::TARGET_AMOUNT_META_KEY => $this->target_amount,
 		);
 	}
 
