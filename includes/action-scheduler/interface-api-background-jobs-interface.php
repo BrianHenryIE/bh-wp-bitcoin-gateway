@@ -65,7 +65,7 @@ interface API_Background_Jobs_Interface {
 	 * @param Bitcoin_Wallet $wallet  The wallet to check / find unused addresses for.
 	 * @param int            $required_count The number of available addresses we should have.
 	 */
-	public function ensure_unused_addresses_for_wallet( Bitcoin_Wallet $wallet, int $required_count = 2 ): Ensure_Unused_Addresses_Result;
+	public function ensure_unused_addresses_for_wallet_synchronously( Bitcoin_Wallet $wallet, int $required_count = 2 ): Ensure_Unused_Addresses_Result;
 
 	/**
 	 * Update the exchange rate for the WooCommerce store currency.

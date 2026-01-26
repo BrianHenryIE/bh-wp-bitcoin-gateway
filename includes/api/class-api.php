@@ -332,7 +332,7 @@ class API implements API_Interface, API_Background_Jobs_Interface {
 	 * @param Bitcoin_Wallet $wallet The wallet to generate unused addresses for by querying the blockchain to verify generated addresses have no transaction history.
 	 * @param int            $required_count The minimum number of unused addresses that must be available for this wallet before returning.
 	 */
-	public function ensure_unused_addresses_for_wallet_synchronously(Bitcoin_Wallet $wallet, int $required_count = 2 ): Ensure_Unused_Addresses_Result {
+	public function ensure_unused_addresses_for_wallet_synchronously( Bitcoin_Wallet $wallet, int $required_count = 2 ): Ensure_Unused_Addresses_Result {
 		return $this->ensure_unused_addresses( $required_count, array( $wallet ) )[ $wallet->get_xpub() ];
 	}
 
