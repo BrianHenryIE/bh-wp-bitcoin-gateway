@@ -365,14 +365,13 @@ class API_WooCommerce_WPUnit_Test extends WPTestCase {
 	/**
 	 * @see API_WooCommerce::get_order_details
 	 * @see API_WooCommerce::refresh_order
-	 * @see API_WooCommerce::update_address_transactions
 	 */
 	public function test_get_order_details_no_transactions(): void {
 
 		$address = $this->make(
 			Bitcoin_Address::class,
 			array(
-				'get_tx_ids'          => Expected::exactly( 1, array() ),
+				'get_tx_ids'          => Expected::atLeastOnce( 1, array() ),
 				'get_amount_received' => Expected::exactly( 1, Money::of( 0.01, 'BTC' ) ),
 				'get_target_amount'   => Expected::exactly( 1, Money::of( 0.1, 'BTC' ) ),
 			)
@@ -432,7 +431,7 @@ class API_WooCommerce_WPUnit_Test extends WPTestCase {
 
 		$result = $sut->get_order_details( $order, true );
 
-		$this->markTestIncomplete();
+		$this->assertEmpty( $result->get_address()->get_tx_ids() );
 	}
 
 	/**
