@@ -452,12 +452,13 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 	/**
 	 * Returns the configured xpub for the gateway, so new addresses can be generated.
 	 *
+	 * TODO: This should be ~`{master_public_key:string, wp_post_id?:int}`.
 	 * TODO: rename to get_master_public_key() ?
 	 *
 	 * @used-by API::generate_new_addresses_for_wallet()
 	 */
 	public function get_xpub(): ?string {
-		// TODO: validate xpub format when setting.
+		// TODO: validate xpub format when setting (in JS).
 		return isset( $this->settings['xpub'] ) && is_string( $this->settings['xpub'] ) && ! empty( $this->settings['xpub'] )
 			? $this->settings['xpub']
 			: null;
