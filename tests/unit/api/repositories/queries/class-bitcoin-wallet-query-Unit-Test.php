@@ -394,7 +394,7 @@ class Bitcoin_Wallet_Query_Unit_Test extends Unit {
 	 * @covers ::get_meta_input
 	 */
 	public function test_last_derived_address_index_zero(): void {
-		$sut         = new Bitcoin_Wallet_Query( last_derived_address_index: 0 );
+		$sut         = new Bitcoin_Wallet_Query( master_public_key: 'abc123' );
 		$query_array = $sut->to_query_array();
 
 		// Zero is a falsy value and gets filtered out by array_filter.
