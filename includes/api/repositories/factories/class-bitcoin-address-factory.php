@@ -56,8 +56,7 @@ class Bitcoin_Address_Factory {
 			target_amount: $this->get_target_amount_from_post( $post ),
 			order_id: $this->get_order_id_from_post( $post ),
 			tx_ids: $this->get_tx_ids_from_post( $post ),
-			// TODO: Use "received", not balance.
-			balance: $this->get_balance_from_post( $post ),
+			received: $this->get_received_from_post( $post ),
 		);
 	}
 
@@ -116,9 +115,9 @@ class Bitcoin_Address_Factory {
 	/**
 	 * @param WP_Post $post The backing WP_Post for this Bitcoin_Address.
 	 */
-	protected function get_balance_from_post( WP_Post $post ): ?Money {
-		/** @var MoneySerializedArray|array{} $balance_meta */
-		$balance_meta = array_filter( (array) get_post_meta( $post->ID, Bitcoin_Address_WP_Post_Interface::BALANCE_META_KEY, true ) );
-		return empty( $balance_meta ) ? null : Money::of( ...$balance_meta );
+	protected function get_received_from_post( WP_Post $post ): ?Money {
+		/** @var MoneySerializedArray|array{} $received_meta */
+		$received_meta = array_filter( (array) get_post_meta( $post->ID, Bitcoin_Address_WP_Post_Interface::RECEIVED_META_KEY, true ) );
+		return empty( $received_meta ) ? null : Money::of( ...$received_meta );
 	}
 }

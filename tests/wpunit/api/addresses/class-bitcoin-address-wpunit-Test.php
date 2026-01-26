@@ -135,15 +135,15 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 	}
 
 	/**
-	 * @covers ::get_balance
+	 * @covers ::get_amount_received
 	 */
-	public function test_get_balance_used(): void {
+	public function test_get_received_used(): void {
 		$post_id = wp_insert_post(
 			array(
 				'post_type'   => 'bh-bitcoin-address',
 				'post_status' => 'used',
 				'meta_input'  => array(
-					Bitcoin_Address_WP_Post_Interface::BALANCE_META_KEY => array( '1.23456789', 'BTC' ),
+					Bitcoin_Address_WP_Post_Interface::RECEIVED_META_KEY => array( '1.23456789', 'BTC' ),
 				),
 			)
 		);
@@ -153,13 +153,13 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 
 		$sut = $bitcoin_address_repository->get_by_post_id( $post_id );
 
-		$result = $sut->get_balance();
+		$result = $sut->get_amount_received();
 
 		$this->assertEquals( '1.23456789', $result?->getAmount() );
 	}
 
 	/**
-	 * @covers ::get_balance
+	 * @covers ::get_amount_received
 	 */
 	public function test_get_target_amount(): void {
 
@@ -186,9 +186,9 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 	}
 
 	/**
-	 * @covers ::get_balance
+	 * @covers ::get_amount_received
 	 */
-	public function test_get_balance_unused(): void {
+	public function test_get_received_unused(): void {
 		$post_id = wp_insert_post(
 			array(
 				'post_type'   => 'bh-bitcoin-address',
@@ -201,13 +201,13 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 
 		$sut = $bitcoin_address_repository->get_by_post_id( $post_id );
 
-		$result = $sut->get_balance();
+		$result = $sut->get_amount_received();
 
 		$this->assertNull( $result );
 	}
 
 	/**
-	 * @covers ::get_balance
+	 * @covers ::get_amount_received
 	 */
 	public function test_get_balance_unknown(): void {
 		$post_id = wp_insert_post(
@@ -222,7 +222,7 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 
 		$sut = $bitcoin_address_repository->get_by_post_id( $post_id );
 
-		$result = $sut->get_balance();
+		$result = $sut->get_amount_received();
 
 		$this->assertNull( $result );
 	}

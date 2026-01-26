@@ -6,10 +6,10 @@
  * * its derive path
  * * which order it is for
  * * its transactions
- * * its balance
+ * * its total received amount
  * Its parent will be its xpub.
  *
- * WP_List_Table can show all addresses and their orders and balances and last activity date.
+ * WP_List_Table can show all addresses and their orders and amount received and last activity date.
  *
  * @see \BrianHenryIE\WP_Bitcoin_Gateway\Admin\Addresses_List_Table
  *

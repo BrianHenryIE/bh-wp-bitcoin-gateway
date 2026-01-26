@@ -1,6 +1,6 @@
 <?php
 /**
- * Display wallets in use/formerly in use, their status, balance
+ * Display wallets in use/formerly in use, their status.
  *
  * @package    brianhenryie/bh-wp-bitcoin-gateway
  */
@@ -9,7 +9,6 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\Admin;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories\Bitcoin_Wallet_Factory;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet_WP_Post_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\API;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet;
 use InvalidArgumentException;
@@ -62,7 +61,6 @@ class Wallets_List_Table extends WP_Posts_List_Table {
 
 	/**
 	 * Define the custom columns for the post type.
-	 * Status|Balance.
 	 *
 	 * TODO: Only show the wallet column if there is more than one wallet.
 	 *
@@ -85,8 +83,7 @@ class Wallets_List_Table extends WP_Posts_List_Table {
 			$new_columns[ $key ] = $column;
 			if ( 'title' === $key ) {
 
-				$new_columns['status']  = 'Status';
-				$new_columns['balance'] = 'Balance';
+				$new_columns['status'] = 'Status';
 			}
 			// The date column will be added last.
 		}
@@ -118,21 +115,6 @@ class Wallets_List_Table extends WP_Posts_List_Table {
 		$bitcoin_wallet = $this->get_bitcoin_wallet_object( $post );
 
 		echo esc_html( $bitcoin_wallet->get_status()->value );
-	}
-
-	/**
-	 * Print the total Bitcoin received by this wallet.
-	 *
-	 * TODO: Not yet implemented.
-	 *
-	 * @used-by WP_List_Table::single_row_columns()
-	 *
-	 * @param WP_Post $post The post this row is being rendered for.
-	 */
-	public function column_balance( WP_Post $post ): void {
-		$bitcoin_wallet = $this->get_bitcoin_wallet_object( $post );
-
-		echo esc_html( $bitcoin_wallet->get_balance() ?? 'unknown' );
 	}
 
 	/**

@@ -69,7 +69,7 @@ class Blockchain_Info_Api_Extended extends Blockchain_Info_Api implements Blockc
 		$this->assertEquals( '104.32394445', (string) $result->getAmount() );
 	}
 
-	public function test_get_address_balance(): void {
+	public function test_get_address_received(): void {
 
 		// Old test – new we only fetch transactions and calculate the amount received based on the desired number of confirmations.
 

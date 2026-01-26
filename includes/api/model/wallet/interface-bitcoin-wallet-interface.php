@@ -27,13 +27,6 @@ interface Bitcoin_Wallet_Interface {
 	public function get_xpub(): string;
 
 	/**
-	 * Get the current balance of this wallet, or null if it has never been checked.
-	 *
-	 * Must iterate across all addresses and sum them.
-	 */
-	public function get_balance(): ?string;
-
-	/**
 	 * Get the index of the last generated address, so generating new addresses can start higher.
 	 */
 	public function get_address_index(): ?int;

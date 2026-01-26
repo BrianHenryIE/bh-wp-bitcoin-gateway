@@ -445,10 +445,10 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 
 		$transactions = array( $transaction1 );
 
-		$balance = $sut->get_address_confirmed_balance( $raw_address, $blockchain_height, $required_confirmations, $transactions );
+		$received = $sut->get_address_confirmed_balance( $raw_address, $blockchain_height, $required_confirmations, $transactions );
 
-		$this->assertEquals( '1.00000000', $balance->getAmount()->__toString() );
-		$this->assertEquals( 'BTC', $balance->getCurrency()->getCurrencyCode() );
+		$this->assertEquals( '1.00000000', $received->getAmount()->__toString() );
+		$this->assertEquals( 'BTC', $received->getCurrency()->getCurrencyCode() );
 	}
 
 	/**
@@ -482,10 +482,10 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 
 		$transactions = array( $transaction );
 
-		$balance = $sut->get_address_confirmed_balance( $raw_address, $blockchain_height, $required_confirmations, $transactions );
+		$received = $sut->get_address_confirmed_balance( $raw_address, $blockchain_height, $required_confirmations, $transactions );
 
-		$this->assertEquals( '0.50000000', $balance->getAmount()->__toString() );
-		$this->assertEquals( 'BTC', $balance->getCurrency()->getCurrencyCode() );
+		$this->assertEquals( '0.50000000', $received->getAmount()->__toString() );
+		$this->assertEquals( 'BTC', $received->getCurrency()->getCurrencyCode() );
 	}
 
 	/**
@@ -517,10 +517,10 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 
 		$transactions = array( $transaction );
 
-		$balance = $sut->get_address_confirmed_balance( $raw_address, $blockchain_height, $required_confirmations, $transactions );
+		$received = $sut->get_address_confirmed_balance( $raw_address, $blockchain_height, $required_confirmations, $transactions );
 
-		$this->assertEquals( '0.00000000', $balance->getAmount()->__toString() );
-		$this->assertEquals( 'BTC', $balance->getCurrency()->getCurrencyCode() );
+		$this->assertEquals( '0.00000000', $received->getAmount()->__toString() );
+		$this->assertEquals( 'BTC', $received->getCurrency()->getCurrencyCode() );
 	}
 
 	/**
@@ -536,10 +536,10 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 		$required_confirmations = 3;
 		$transactions           = array();
 
-		$balance = $sut->get_address_confirmed_balance( $raw_address, $blockchain_height, $required_confirmations, $transactions );
+		$received = $sut->get_address_confirmed_balance( $raw_address, $blockchain_height, $required_confirmations, $transactions );
 
-		$this->assertEquals( '0.00000000', $balance->getAmount()->__toString() );
-		$this->assertEquals( 'BTC', $balance->getCurrency()->getCurrencyCode() );
+		$this->assertEquals( '0.00000000', $received->getAmount()->__toString() );
+		$this->assertEquals( 'BTC', $received->getCurrency()->getCurrencyCode() );
 	}
 
 	/**
@@ -601,11 +601,11 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 
 		$transactions = array( $transaction1, $transaction2, $transaction3 );
 
-		$balance = $sut->get_address_confirmed_balance( $raw_address, $blockchain_height, $required_confirmations, $transactions );
+		$received = $sut->get_address_confirmed_balance( $raw_address, $blockchain_height, $required_confirmations, $transactions );
 
 		// Should be 1 + 0.5 = 1.5 BTC (transaction3 excluded due to insufficient confirmations).
-		$this->assertEquals( '1.50000000', $balance->getAmount()->__toString() );
-		$this->assertEquals( 'BTC', $balance->getCurrency()->getCurrencyCode() );
+		$this->assertEquals( '1.50000000', $received->getAmount()->__toString() );
+		$this->assertEquals( 'BTC', $received->getCurrency()->getCurrencyCode() );
 	}
 
 	/**
@@ -653,10 +653,10 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 
 		$transactions = array( $transaction1, $transaction2 );
 
-		$balance = $sut->get_address_confirmed_balance( $raw_address, $blockchain_height, $required_confirmations, $transactions );
+		$received = $sut->get_address_confirmed_balance( $raw_address, $blockchain_height, $required_confirmations, $transactions );
 
 		// Should only count transaction1.
-		$this->assertEquals( '10.00000000', $balance->getAmount()->__toString() );
-		$this->assertEquals( 'BTC', $balance->getCurrency()->getCurrencyCode() );
+		$this->assertEquals( '10.00000000', $received->getAmount()->__toString() );
+		$this->assertEquals( 'BTC', $received->getCurrency()->getCurrencyCode() );
 	}
 }

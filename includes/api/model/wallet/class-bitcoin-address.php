@@ -35,7 +35,7 @@ class Bitcoin_Address implements Bitcoin_Address_Interface {
 	 * @param ?Money                 $target_amount The target amount for payment.
 	 * @param ?int                   $order_id The WooCommerce order ID associated with this address.
 	 * @param array<int,string>|null $tx_ids Transaction IDs as post_id:tx_id.
-	 * @param ?Money                 $balance The current balance of the address.
+	 * @param ?Money                 $received The sum of incoming transactions for the address.
 	 *
 	 * @throws InvalidArgumentException When the supplied post_id is not a post of this type.
 	 */
@@ -50,7 +50,7 @@ class Bitcoin_Address implements Bitcoin_Address_Interface {
 		protected ?Money $target_amount = null,
 		protected ?int $order_id = null,
 		protected ?array $tx_ids = null,
-		protected ?Money $balance = null,
+		protected ?Money $received = null,
 	) {
 	}
 
@@ -95,23 +95,16 @@ class Bitcoin_Address implements Bitcoin_Address_Interface {
 	// TODO: `get_mempool_transactions()`.
 
 	/**
-	 * Return the balance saved in the post meta, or null if the address status is unknown.
+	 * Return the amount received that is saved in the post meta, or null if the address status is unknown.
 	 *
-	 * TODO: Might need a $confirmations parameter and calculate the balance from the transactions.
+	 * TODO: Might need a $confirmations parameter and calculate the total received from the transactions.
 	 *
 	 * @used-by Addresses_List_Table::print_columns()
 	 *
 	 * @return ?Money Null if unknown.
 	 */
-	public function get_balance(): ?Money {
-		return Bitcoin_Address_Status::UNKNOWN === $this->get_status() ? null : $this->balance;
-	}
-
-	/**
-	 * TODO: "balance" is not an accurate term for what we need.
-	 */
 	public function get_amount_received(): ?Money {
-		return $this->get_balance();
+		return Bitcoin_Address_Status::UNKNOWN === $this->get_status() ? null : $this->received;
 	}
 
 	/**

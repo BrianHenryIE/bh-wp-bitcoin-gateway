@@ -25,7 +25,7 @@ interface Bitcoin_Address_WP_Post_Interface {
 	 * @see Payment_Service::update_address_transactions()
 	 */
 	const string TRANSACTIONS_META_KEY  = 'address_transactions';
-	const string BALANCE_META_KEY       = 'balance';
+	const string RECEIVED_META_KEY      = 'cumulative_received';
 	const string ORDER_ID_META_KEY      = 'order_id';
 	const string TARGET_AMOUNT_META_KEY = 'target_amount';
 }

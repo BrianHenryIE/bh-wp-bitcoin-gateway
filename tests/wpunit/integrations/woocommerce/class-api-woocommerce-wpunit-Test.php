@@ -371,9 +371,8 @@ class API_WooCommerce_WPUnit_Test extends WPTestCase {
 		$address = $this->make(
 			Bitcoin_Address::class,
 			array(
-				'get_tx_ids'          => Expected::atLeastOnce( 1, array() ),
+				'get_tx_ids'          => Expected::atLeastOnce( array() ),
 				'get_amount_received' => Expected::exactly( 1, Money::of( 0.01, 'BTC' ) ),
-				'get_target_amount'   => Expected::exactly( 1, Money::of( 0.1, 'BTC' ) ),
 			)
 		);
 
@@ -398,8 +397,7 @@ class API_WooCommerce_WPUnit_Test extends WPTestCase {
 		$payment_service_mock = $this->make(
 			Payment_Service::class,
 			array(
-				'get_saved_transactions'    => Expected::once( array() ),
-				'check_address_for_payment' => Expected::once( $check_address_for_payment_service_result ),
+				'get_saved_transactions' => Expected::once( array() ),
 			)
 		);
 
