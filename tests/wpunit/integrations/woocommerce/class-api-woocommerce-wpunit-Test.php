@@ -5,8 +5,6 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 use BrianHenryIE\ColorLogger\ColorLogger;
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduler_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Ensure_Unused_Addresses_Result;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address_Status;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Addresses_Generation_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Update_Address_Transactions_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Bitcoin_Wallet_Service;
@@ -237,55 +235,36 @@ class API_WooCommerce_WPUnit_Test extends WPTestCase {
 	 * @covers ::is_unused_address_available_for_gateway()
 	 */
 	public function test_is_unused_address_available_for_gateway_true(): void {
-		$this->markTestSkipped( 'is_fresh_address_available_for_gateway no does not make API calls' );
-
-		$address = $this->make(
-			Bitcoin_Address::class,
-			array(
-				'get_post_id'     => 123,
-				'get_raw_address' => 'success',
-				'get_status'      => Expected::once( fn() => Bitcoin_Address_Status::ASSIGNED ),
-				'get_tx_ids'      => array(),
-			)
-		);
-
-		$addresses_result = array(
-			$address,
-			$this->make(
-				Bitcoin_Address::class,
-				array(
-					'get_post_id'     => 123,
-					'get_raw_address' => 'success',
-					'get_status'      => Bitcoin_Address_Status::ASSIGNED,
-				)
-			),
-		);
 
 		$wallet = $this->make(
 			Bitcoin_Wallet::class,
+			array()
+		);
+
+		$get_wallet_for_xpub_service_result = new Get_Wallet_For_Xpub_Service_Result(
+			xpub: 'xpub12345',
+			gateway_details: null,
+			wallet: $wallet,
+			is_new: false,
+		);
+
+		$wallet_service_mock = $this->makeEmpty(
+			Bitcoin_Wallet_Service::class,
 			array(
-				'get_post_id'       => 321,
-				'get_address_index' => 111,
-				'get_xpub'          => 'xpub12345',
+				'get_or_save_wallet_for_xpub' => Expected::once( $get_wallet_for_xpub_service_result ),
 			)
 		);
 
-		$bitcoin_wallet_service = $this->makeEmpty(
-			Bitcoin_Wallet_Service::class,
+		$api_mock = $this->makeEmpty(
+			API_Interface::class,
 			array(
-				'get_by_xpub'   => Expected::once( $wallet ),
-				'get_addresses' => Expected::once(
-					function ( ?Bitcoin_Wallet $wallet = null, ?Bitcoin_Address_Status $status = null ) use ( $addresses_result ): array {
-						/** @return Bitcoin_Address[] */
-						return $addresses_result;
-					}
-				),
-				'save_new'      => Expected::once( $address ),
+				'is_unused_address_available_for_wallet' => Expected::once( true ),
 			)
 		);
 
 		$sut = $this->get_sut(
-			wallet_service: $bitcoin_wallet_service,
+			api: $api_mock,
+			wallet_service: $wallet_service_mock,
 		);
 
 		$bitcoin_gateway                   = $this->get_bitcoin_gateway( api_woocommerce: $sut );
@@ -293,7 +272,7 @@ class API_WooCommerce_WPUnit_Test extends WPTestCase {
 
 		$result = $sut->is_unused_address_available_for_gateway( $bitcoin_gateway );
 
-		self::assertTrue( $result );
+		$this->assertTrue( $result );
 	}
 
 	/**
