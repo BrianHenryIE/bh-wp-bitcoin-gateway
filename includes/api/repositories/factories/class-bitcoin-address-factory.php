@@ -7,7 +7,6 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories;
 
-use _PHPStan_5adafcbb8\Nette\Neon\Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address_Status;
@@ -70,8 +69,8 @@ class Bitcoin_Address_Factory {
 		$meta_value = get_post_meta( $post->ID, Bitcoin_Address_WP_Post_Interface::DERIVATION_PATH_SEQUENCE_NUMBER_META_KEY, true );
 		return is_numeric( $meta_value )
 			? intval( $meta_value )
-			: ( function () {
-				throw new BH_WP_Bitcoin_Gateway_Exception();
+			: ( function () use ( $meta_value ) {
+				throw new BH_WP_Bitcoin_Gateway_Exception( 'get_derivation_path_sequence_number_from_post failed for ' . wp_json_encode( $meta_value ) );
 			} )();
 	}
 
