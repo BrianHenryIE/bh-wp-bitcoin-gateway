@@ -458,6 +458,9 @@ class API implements API_Interface, API_Background_Jobs_Interface {
 	public function check_address_for_payment( Bitcoin_Address $payment_address ): Check_Address_For_Payment_Result {
 
 		// TODO: Maybe throw if the address has not been assigned.
+		// TODO: Check _when_ the address was assigned and discard any transactions before that time. This should
+		// never actually happen due to other checks that are present, but it's a simple and logical check to not
+		// count payments received before the order was placed.
 
 		$target_amount = $payment_address->get_target_amount();
 		if ( ! $target_amount ) {

@@ -136,7 +136,8 @@ class API_WooCommerce_WPUnit_Test extends WPTestCase {
 	}
 
 	/**
-	 * @see API_WooCommerce_Trait::get_fresh_address_for_gateway
+	 * @see API_WooCommerce_Interface::get_fresh_address_for_gateway
+	 * @see API_WooCommerce::get_fresh_address_for_gateway
 	 */
 	public function test_get_fresh_addresses_for_gateway(): void {
 
