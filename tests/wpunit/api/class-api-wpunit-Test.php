@@ -40,41 +40,6 @@ class API_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	}
 
 	/**
-	 * @covers ::generate_new_addresses_for_wallet
-	 */
-	public function test_generate_addresses_for_gateway(): void {
-
-		$this->markTestIncomplete();
-
-		$test_xpub = 'zpub6n37hVDJHFyDG1hBERbMBVjEd6ws6zVhg9bMs5STo21i9DgDE9Z9KTedtGxikpbkaucTzpj79n6Xg8Zwb9kY8bd9GyPh9WVRkM55uK7w97K';
-
-		$wallet                    = $this->makeEmpty( Bitcoin_Wallet::class );
-		$bitcoin_wallet_repository = $this->makeEmpty(
-			Bitcoin_Wallet_Repository::class,
-			array(
-				'get_post_id_for_wallet' => Expected::once( 123 ),
-				'get_by_post_id'         => Expected::once( $wallet ),
-			)
-		);
-
-		$address                    = $this->makeEmpty( Bitcoin_Address::class );
-		$bitcoin_address_repository = $this->makeEmpty(
-			Bitcoin_Address_Repository::class,
-			array(
-				'save_new'       => Expected::exactly( 5, 123 ),
-				'get_by_post_id' => Expected::exactly( 5, $address ),
-			)
-		);
-
-		$sut = $this->get_sut(
-			bitcoin_wallet_repository: $bitcoin_wallet_repository,
-			bitcoin_address_repository: $bitcoin_address_repository,
-		);
-
-		$result = $sut->generate_new_addresses_for_wallet( $test_xpub, 5 );
-	}
-
-	/**
 	 * This is a very dumb function.
 	 *
 	 * @covers ::convert_fiat_to_btc
