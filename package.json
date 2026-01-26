@@ -74,7 +74,7 @@
 		"typescript": "^5.3"
 	},
 	"dependencies": {
-		"@wordpress/components": "^30.3.0",
+		"@wordpress/components": "^32.0.0",
 		"config": "^4.1.0",
 		"react": "^18.0",
 		"react-dom": "^18.0"
