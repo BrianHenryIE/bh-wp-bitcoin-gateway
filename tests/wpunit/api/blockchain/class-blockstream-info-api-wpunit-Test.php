@@ -3,17 +3,18 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Blockchain;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
+use lucatume\WPBrowser\TestCase\WPTestCase;
 
 /**
  * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Blockchain\Blockstream_Info_API
  */
-class Blockstream_Info_API_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
+class Blockstream_Info_API_WPUnit_Test extends WPTestCase {
 
 	/**
 	 * @covers ::__construct
 	 */
 	public function test_get_balance(): void {
-		$this->markTestSkipped( 'old test – new we only fetch transactions and elsewhere calculate the amount received based on the desired number of confirmations' );
+		$this->markTestSkipped( 'old test – preserving this test so it can be used when the API is extracted to its own package.' );
 
 		$logger = new ColorLogger();
 
@@ -65,7 +66,7 @@ class Blockstream_Info_API_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTe
 	 * TODO: Run a contract test to check our transaction calculations match direct API calls.
 	 */
 	public function test_get_received_by_address(): void {
-		$this->markTestSkipped( 'old test – new we only fetch transactions and elsewhere calculate the amount received based on the desired number of confirmations' );
+		$this->markTestSkipped( 'old test – preserving this test so it can be used when the API is extracted to its own package.' );
 
 		$logger = new ColorLogger();
 
