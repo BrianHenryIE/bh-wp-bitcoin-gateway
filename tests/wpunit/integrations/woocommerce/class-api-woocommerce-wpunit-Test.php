@@ -59,7 +59,7 @@ class API_WooCommerce_WPUnit_Test extends WPTestCase {
 	}
 
 	/**
-	 * @see API_WooCommerce_Trait::get_bitcoin_gateways
+	 * @see API_WooCommerce::get_bitcoin_gateways
 	 */
 	public function test_get_bitcoin_gateways(): void {
 
@@ -96,7 +96,7 @@ class API_WooCommerce_WPUnit_Test extends WPTestCase {
 	}
 
 	/**
-	 * @see API_WooCommerce_Trait::is_bitcoin_gateway
+	 * @see API_WooCommerce::is_bitcoin_gateway
 	 */
 	public function test_is_bitcoin_gateway(): void {
 
@@ -113,7 +113,7 @@ class API_WooCommerce_WPUnit_Test extends WPTestCase {
 	}
 
 	/**
-	 * @see API_WooCommerce_Trait::is_order_has_bitcoin_gateway
+	 * @see API_WooCommerce::is_order_has_bitcoin_gateway
 	 */
 	public function test_is_order_has_bitcoin_gateway(): void {
 
@@ -363,9 +363,9 @@ class API_WooCommerce_WPUnit_Test extends WPTestCase {
 	}
 
 	/**
-	 * @see API_WooCommerce_Trait::get_order_details
-	 * @see API_WooCommerce_Trait::refresh_order
-	 * @see API_WooCommerce_Trait::update_address_transactions
+	 * @see API_WooCommerce::get_order_details
+	 * @see API_WooCommerce::refresh_order
+	 * @see API_WooCommerce::update_address_transactions
 	 */
 	public function test_get_order_details_no_transactions(): void {
 
@@ -436,9 +436,9 @@ class API_WooCommerce_WPUnit_Test extends WPTestCase {
 	}
 
 	/**
-	 * @see API_WooCommerce_Trait::get_order_details
-	 * @see API_WooCommerce_Trait::refresh_order
-	 * @see API_WooCommerce_Trait::update_address_transactions
+	 * @see API_WooCommerce::get_order_details
+	 * @see API_WooCommerce::refresh_order
+	 * @see API_WooCommerce::update_address_transactions
 	 */
 	public function test_get_order_details_no_refresh(): void {
 
