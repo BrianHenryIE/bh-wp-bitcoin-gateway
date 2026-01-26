@@ -120,16 +120,20 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 	 *
 	 * It may be the case that they have been used in the meantime.
 	 *
-	 * @param ?Bitcoin_Wallet $wallet Optional wallet to filter addresses by.
+	 * @param ?Bitcoin_Wallet       $wallet Optional wallet to filter addresses by.
+	 * @param ?WP_Posts_Query_Order $query_order Object to sort and filter the results.
 	 * @return Bitcoin_Address[]
 	 */
-	public function get_unused_bitcoin_addresses( ?Bitcoin_Wallet $wallet = null ): array {
+	public function get_unused_bitcoin_addresses(
+		?Bitcoin_Wallet $wallet = null,
+		?WP_Posts_Query_Order $query_order = null
+	): array {
 		return $this->get_addresses_query(
 			new Bitcoin_Address_Query(
 				wallet_wp_post_parent_id: $wallet?->get_post_id(),
 				status: Bitcoin_Address_Status::UNUSED,
 			),
-			new WP_Posts_Query_Order(
+			$query_order ?? new WP_Posts_Query_Order(
 				count: 200,
 				order_by: 'post_modified',
 				order_direction: 'ASC',
