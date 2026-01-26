@@ -100,7 +100,7 @@ interface API_Interface {
 	 * @param Bitcoin_Wallet $wallet The wallet to ensure there are unused addresses for.
 	 * @param int            $required_count Number of unused addresses required.
 	 */
-	public function ensure_unused_addresses_for_wallet( Bitcoin_Wallet $wallet, int $required_count = 2 ): Ensure_Unused_Addresses_Result;
+	public function ensure_unused_addresses_for_wallet_synchronously(Bitcoin_Wallet $wallet, int $required_count = 2 ): Ensure_Unused_Addresses_Result;
 
 	/**
 	 * Validate addresses have not been used before by checking for transactions.

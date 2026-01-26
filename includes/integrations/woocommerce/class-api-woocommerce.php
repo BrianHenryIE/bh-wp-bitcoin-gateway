@@ -207,7 +207,7 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 
 		$wallet_result = $this->wallet_service->get_or_save_wallet_for_xpub( $gateway->get_xpub() );
 
-		$result = $this->api->ensure_unused_addresses_for_wallet( $wallet_result->wallet, 1 );
+		$result = $this->api->ensure_unused_addresses_for_wallet_synchronously( $wallet_result->wallet, 1 );
 
 		$unused_addresses = $result->get_unused_addresses();
 

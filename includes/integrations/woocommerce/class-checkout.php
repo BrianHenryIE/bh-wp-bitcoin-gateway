@@ -72,7 +72,7 @@ class Checkout implements LoggerAwareInterface {
 			$wallet_result = $this->api->get_or_save_wallet_for_master_public_key( $master_public_key );
 
 			if ( ! $wallet_result->did_schedule_ensure_addresses ) {
-				$this->api->ensure_unused_addresses_for_wallet( $wallet_result->wallet, 1 );
+				$this->api->ensure_unused_addresses_for_wallet_synchronously( $wallet_result->wallet, 1 );
 			}
 		}
 	}
