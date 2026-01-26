@@ -374,6 +374,7 @@ class Bitcoin_Wallet_Service_Unit_Test extends \Codeception\Test\Unit {
 							post_id: 123,
 							wallet_parent_post_id: 4,
 							raw_address: 'bc1qaddress0',
+							derivation_path_sequence_number: 123,
 							created_time: new DateTimeImmutable(),
 							modified_time: new DateTimeImmutable(),
 						);
