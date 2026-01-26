@@ -149,7 +149,7 @@
     "brianhenryie/bh-php-blockchain-info": "dev-main",
     "brianhenryie/bh-php-btc-rpc-explorer-api-client": "dev-main",
     "brianhenryie/bh-wp-logger": "*",
-    "brick/money": "^0.10.3",
+    "brick/money": "^0.11.0",
     "chillerlan/php-qrcode": "^5.0.3",
     "json-mapper/json-mapper": "^2.18",
     "lucatume/di52": "^4.0.1",
