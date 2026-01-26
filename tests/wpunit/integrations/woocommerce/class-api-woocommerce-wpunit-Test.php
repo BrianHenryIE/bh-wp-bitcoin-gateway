@@ -138,11 +138,10 @@ class API_WooCommerce_WPUnit_Test extends WPTestCase {
 	/**
 	 * @covers ::get_fresh_address_for_gateway
 	 */
-	public function test_get_fresh_addresses_for_gateway_no_master_public_key(): void
-	{
-		$gateway = $this->make(Bitcoin_Gateway::class );
+	public function test_get_fresh_addresses_for_gateway_no_master_public_key(): void {
+		$gateway = $this->make( Bitcoin_Gateway::class );
 
-		assert(empty($gateway->get_xpub()));
+		assert( empty( $gateway->get_xpub() ) );
 
 		$sut = $this->get_sut();
 
@@ -156,8 +155,6 @@ class API_WooCommerce_WPUnit_Test extends WPTestCase {
 	 * @see API_WooCommerce::get_fresh_address_for_gateway
 	 */
 	public function test_get_fresh_addresses_for_gateway(): void {
-
-		$this->markTestSkipped();
 
 		$address = $this->make(
 			Bitcoin_Address::class,
@@ -191,9 +188,9 @@ class API_WooCommerce_WPUnit_Test extends WPTestCase {
 		$bitcoin_wallet_service = $this->makeEmpty(
 			Bitcoin_Wallet_Service::class,
 			array(
-				'get_by_xpub' => Expected::once( $wallet ),
-				'save_new'    => Expected::once( $address ),
-				'refresh'     => $address,
+				'get_or_save_wallet_for_xpub' => Expected::once( $wallet ),
+				'save_new'                    => Expected::once( $address ),
+				'refresh'                     => $address,
 			)
 		);
 
@@ -206,7 +203,7 @@ class API_WooCommerce_WPUnit_Test extends WPTestCase {
 
 		$address = $sut->get_fresh_address_for_gateway( $bitcoin_gateway );
 
-		self::assertEquals( 'success', $address->get_raw_address() );
+		self::assertEquals( 'success', $address?->get_raw_address() );
 	}
 
 	/**
