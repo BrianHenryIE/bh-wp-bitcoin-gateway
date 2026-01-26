@@ -309,12 +309,13 @@ class Bitcoin_Wallet_Service implements LoggerAwareInterface {
 		Bitcoin_Address $address,
 		int $order_id,
 		Money $btc_total
-	): void {
+	): Bitcoin_Address {
 		$this->bitcoin_address_repository->assign_to_order(
 			address: $address,
 			order_id: $order_id,
 			btc_total: $btc_total,
 		);
+		return $this->refresh_address( $address );
 	}
 
 	/**

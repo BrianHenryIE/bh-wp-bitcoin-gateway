@@ -216,7 +216,7 @@ class Bitcoin_Gateway_WPUnit_Test extends WPTestCase {
 		$api_woocommerce = $this->makeEmpty(
 			API_WooCommerce_Interface::class,
 			array(
-				'get_fresh_address_for_order' => Expected::once(
+				'assign_unused_address_to_order' => Expected::once(
 					function ( WC_Order $order ) {
 						throw new Exception( 'This message will not be shown!' );
 					}

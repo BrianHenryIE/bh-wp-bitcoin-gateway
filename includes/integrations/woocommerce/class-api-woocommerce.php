@@ -162,7 +162,7 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 			throw new BH_WP_Bitcoin_Gateway_Exception( 'No Bitcoin addresses available.' );
 		}
 
-		$this->wallet_service->assign_order_to_bitcoin_payment_address(
+		$refreshed_address = $this->wallet_service->assign_order_to_bitcoin_payment_address(
 			address: $btc_address,
 			order_id: $order->get_id(),
 			btc_total: $btc_total
@@ -185,7 +185,7 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 			date_time: new DateTimeImmutable( 'now' )->add( new DateInterval( 'PT15M' ) )
 		);
 
-		return $btc_address;
+		return $refreshed_address;
 	}
 
 	/**
