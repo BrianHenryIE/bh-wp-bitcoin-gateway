@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "565d710eb9a93a508052bb103f9fcf34",
+    "content-hash": "e06f92085c94b850e8ad51a256ed3429",
     "packages": [
         {
             "name": "alleyinteractive/wordpress-autoloader",
@@ -721,29 +721,30 @@
         },
         {
             "name": "brick/money",
-            "version": "0.10.3",
+            "version": "0.11.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/brick/money.git",
-                "reference": "b1b0bb6035d26a58f29b1c06b1265c01a0b5c9c3"
+                "reference": "56ffc5f08d0697a929c93e27bb672aa5eb6660fb"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/brick/money/zipball/b1b0bb6035d26a58f29b1c06b1265c01a0b5c9c3",
-                "reference": "b1b0bb6035d26a58f29b1c06b1265c01a0b5c9c3",
+                "url": "https://api.github.com/repos/brick/money/zipball/56ffc5f08d0697a929c93e27bb672aa5eb6660fb",
+                "reference": "56ffc5f08d0697a929c93e27bb672aa5eb6660fb",
                 "shasum": ""
             },
             "require": {
                 "brick/math": "~0.12.0|~0.13.0|~0.14.0",
-                "php": "^8.1"
+                "php": "^8.2",
+                "symfony/deprecation-contracts": "^2.2|^3.0"
             },
             "require-dev": {
-                "brick/varexporter": "~0.5.0",
+                "brick/varexporter": "0.7.0",
                 "ext-dom": "*",
                 "ext-pdo": "*",
                 "php-coveralls/php-coveralls": "^2.2",
-                "phpunit/phpunit": "^10.1",
-                "vimeo/psalm": "6.3.0"
+                "phpunit/phpunit": "^11.0",
+                "vimeo/psalm": "6.14.3"
             },
             "suggest": {
                 "ext-intl": "Required to format Money objects"
@@ -766,7 +767,7 @@
             ],
             "support": {
                 "issues": "https://github.com/brick/money/issues",
-                "source": "https://github.com/brick/money/tree/0.10.3"
+                "source": "https://github.com/brick/money/tree/0.11.0"
             },
             "funding": [
                 {
@@ -774,7 +775,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2025-09-03T09:55:48+00:00"
+            "time": "2026-01-22T14:33:29+00:00"
         },
         {
             "name": "chillerlan/php-qrcode",
