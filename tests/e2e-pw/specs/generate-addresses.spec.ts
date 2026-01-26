@@ -51,6 +51,7 @@ test.describe( 'Generate new addresses', () => {
 
 	} );
 
+	// TODO: update to account for "trash"ed posts.
 	test( 'should correctly report the all addresses count', async ( {
 		page,
 	} ) => {

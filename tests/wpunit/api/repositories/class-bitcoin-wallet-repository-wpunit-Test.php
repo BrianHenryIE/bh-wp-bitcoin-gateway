@@ -40,7 +40,6 @@ class Bitcoin_Wallet_Repository_WPUnit_Test extends WPTestCase {
 		$this->assertEquals( $xpub, $saved_wallet->get_xpub() );
 		$this->assertEquals( Bitcoin_Wallet_Status::INACTIVE, $saved_wallet->get_status() );
 		$this->assertNull( $saved_wallet->get_address_index() );
-		$this->assertNull( $saved_wallet->get_balance() );
 
 		// Test get_by_xpub.
 		$retrieved_wallet = $this->sut->get_by_xpub( $xpub );

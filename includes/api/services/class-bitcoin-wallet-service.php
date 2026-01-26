@@ -11,7 +11,6 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Han
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address_Status;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address_WP_Post_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet_Status;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\Generate_Address_API_Interface;
@@ -19,10 +18,12 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Addresses_Generation_Resul
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Address_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Wallet_Repository;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Queries\WP_Posts_Query_Order;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Results\Get_Wallet_For_Xpub_Service_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
+use DateInterval;
+use DateTimeImmutable;
 use InvalidArgumentException;
-use JsonException;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 
@@ -188,7 +189,7 @@ class Bitcoin_Wallet_Service implements LoggerAwareInterface {
 				continue;
 			}
 
-			$bitcoin_address = $this->bitcoin_address_repository->save_new(
+			$bitcoin_address = $this->bitcoin_address_repository->save_new_address(
 				wallet: $wallet,
 				derivation_path_sequence_index: $address_index,
 				address: $new_address_string,
@@ -240,6 +241,34 @@ class Bitcoin_Wallet_Service implements LoggerAwareInterface {
 	}
 
 	/**
+	 * Local db query to check is there an unused address that has recently been verified as unused.
+	 *
+	 * We should be making remote calls to verify an address is unused regularly, both on cron and on customer activity,
+	 * so this should generally return true, but can be used to schedule a background check.
+	 *
+	 * @param Bitcoin_Wallet $wallet The wallet we need a payment address for.
+	 */
+	public function has_unused_bitcoin_address( Bitcoin_Wallet $wallet ): bool {
+
+		$unused_addresses = $this->bitcoin_address_repository->get_unused_bitcoin_addresses(
+			wallet: $wallet,
+			query_order: new WP_Posts_Query_Order(
+				count: 1,
+				order_by: 'post_modified',
+				order_direction: 'DESC',
+			)
+		);
+
+		if ( empty( $unused_addresses ) ) {
+			return false;
+		}
+
+		$address = $unused_addresses[ array_key_first( $unused_addresses ) ];
+
+		return new DateTimeImmutable()->sub( new DateInterval( 'PT10M' ) ) < $address->get_modified_time();
+	}
+
+	/**
 	 * Find all generated addresses that have never been checked for transactions.
 	 *
 	 * @return Bitcoin_Address[]
@@ -270,20 +299,24 @@ class Bitcoin_Wallet_Service implements LoggerAwareInterface {
 	 *
 	 * @see Bitcoin_Address_Status::ASSIGNED
 	 *
-	 * @param Bitcoin_Address $address The Bitcoin payment address to link.
-	 * @param int             $order_id The post_id (e.g. WooCommerce order id) that transactions to this address represent payment for.
-	 * @param Money           $btc_total The target amount to be paid, after which the order should be updated.
+	 * @param Bitcoin_Address     $address The Bitcoin payment address to link.
+	 * @param string|class-string $integration The plugin that is using this address.
+	 * @param int                 $order_id The post_id (e.g. WooCommerce order id) that transactions to this address represent payment for.
+	 * @param Money               $btc_total The target amount to be paid, after which the order should be updated.
 	 */
 	public function assign_order_to_bitcoin_payment_address(
 		Bitcoin_Address $address,
+		string $integration,
 		int $order_id,
 		Money $btc_total
-	): void {
+	): Bitcoin_Address {
 		$this->bitcoin_address_repository->assign_to_order(
 			address: $address,
+			integration: $integration,
 			order_id: $order_id,
 			btc_total: $btc_total,
 		);
+		return $this->refresh_address( $address );
 	}
 
 	/**

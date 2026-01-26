@@ -45,18 +45,13 @@ interface Bitcoin_Address_Interface {
 	public function get_raw_address(): string;
 
 	/**
-	 * Return the balance saved in the post meta, or null if the address status is unknown.
+	 * Return the summed amount received that is saved in the post meta, or null if the address status is unknown.
 	 *
-	 * TODO: Might need a $confirmations parameter and calculate the balance from the transactions.
+	 * TODO: Might need a $confirmations parameter and calculate the total received from the transactions.
 	 *
 	 * @used-by Addresses_List_Table::print_columns()
 	 *
 	 * @return ?Money Null if unknown.
-	 */
-	public function get_balance(): ?Money;
-
-	/**
-	 * TODO: "balance" is not an accurate term for what we need.
 	 */
 	public function get_amount_received(): ?Money;
 

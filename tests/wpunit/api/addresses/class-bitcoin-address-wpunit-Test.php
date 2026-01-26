@@ -26,7 +26,7 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 
 		$wallet = $this->makeEmpty( Bitcoin_Wallet::class );
 
-		$bitcoin_address = $bitcoin_address_repository->save_new(
+		$bitcoin_address = $bitcoin_address_repository->save_new_address(
 			wallet:             $wallet,
 			derivation_path_sequence_index: 2,
 			address: 'address',
@@ -63,7 +63,7 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 
 		$wallet = $this->makeEmpty( Bitcoin_Wallet::class );
 
-		$bitcoin_address = $bitcoin_address_repository->save_new(
+		$bitcoin_address = $bitcoin_address_repository->save_new_address(
 			wallet:             $wallet,
 			derivation_path_sequence_index: 2,
 			address: 'address',
@@ -88,7 +88,7 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 
 		$wallet = $this->makeEmpty( Bitcoin_Wallet::class );
 
-		$bitcoin_address_post_id = $bitcoin_address_repository->save_new(
+		$bitcoin_address_post_id = $bitcoin_address_repository->save_new_address(
 			new Bitcoin_Address_Query(
 				wallet_wp_post_parent_id: $wallet->get_post_id(),
 				xpub: 'address',
@@ -107,43 +107,17 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 		$this->assertEquals( 123, $result );
 	}
 
-	public function test_set_status(): void {
-		$this->markTestIncomplete( 'should a Bitcoin_Address object have setters?' );
-
-		$bitcoin_address_factory    = new Bitcoin_Address_Factory();
-		$bitcoin_address_repository = new Bitcoin_Address_Repository( $bitcoin_address_factory );
-
-		$wallet = $this->makeEmpty( Bitcoin_Wallet::class );
-
-		$bitcoin_address_post_id = $bitcoin_address_repository->save_new(
-			new Bitcoin_Address_Query(
-				wallet_wp_post_parent_id: $wallet->get_post_id(),
-				xpub: 'address',
-				derivation_path_sequence_index: 2
-			)
-		);
-
-		$sut = $bitcoin_address_repository->get_by_post_id( $bitcoin_address_post_id );
-
-		$sut->set_status( Bitcoin_Address_Status::ASSIGNED );
-
-		$sut = $bitcoin_address_repository->get_by_post_id( $bitcoin_address_post_id );
-
-		$result = $sut->get_status();
-
-		$this->assertEquals( 'assigned', $result->value );
-	}
-
 	/**
-	 * @covers ::get_balance
+	 * @covers ::get_amount_received
 	 */
-	public function test_get_balance_used(): void {
+	public function test_get_received_used(): void {
 		$post_id = wp_insert_post(
 			array(
 				'post_type'   => 'bh-bitcoin-address',
 				'post_status' => 'used',
 				'meta_input'  => array(
-					Bitcoin_Address_WP_Post_Interface::BALANCE_META_KEY => array( '1.23456789', 'BTC' ),
+					Bitcoin_Address_WP_Post_Interface::DERIVATION_PATH_SEQUENCE_NUMBER_META_KEY => 123,
+					Bitcoin_Address_WP_Post_Interface::RECEIVED_META_KEY => array( '1.23456789', 'BTC' ),
 				),
 			)
 		);
@@ -153,13 +127,13 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 
 		$sut = $bitcoin_address_repository->get_by_post_id( $post_id );
 
-		$result = $sut->get_balance();
+		$result = $sut->get_amount_received();
 
 		$this->assertEquals( '1.23456789', $result?->getAmount() );
 	}
 
 	/**
-	 * @covers ::get_balance
+	 * @covers ::get_amount_received
 	 */
 	public function test_get_target_amount(): void {
 
@@ -169,6 +143,9 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 			array(
 				'post_type'   => 'bh-bitcoin-address',
 				'post_status' => 'used',
+				'meta_input'  => array(
+					Bitcoin_Address_WP_Post_Interface::DERIVATION_PATH_SEQUENCE_NUMBER_META_KEY => 123,
+				),
 			)
 		);
 
@@ -186,13 +163,16 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 	}
 
 	/**
-	 * @covers ::get_balance
+	 * @covers ::get_amount_received
 	 */
-	public function test_get_balance_unused(): void {
+	public function test_get_received_unused(): void {
 		$post_id = wp_insert_post(
 			array(
 				'post_type'   => 'bh-bitcoin-address',
 				'post_status' => 'unused',
+				'meta_input'  => array(
+					Bitcoin_Address_WP_Post_Interface::DERIVATION_PATH_SEQUENCE_NUMBER_META_KEY => 123,
+				),
 			)
 		);
 
@@ -201,19 +181,22 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 
 		$sut = $bitcoin_address_repository->get_by_post_id( $post_id );
 
-		$result = $sut->get_balance();
+		$result = $sut->get_amount_received();
 
 		$this->assertNull( $result );
 	}
 
 	/**
-	 * @covers ::get_balance
+	 * @covers ::get_amount_received
 	 */
-	public function test_get_balance_unknown(): void {
+	public function test_get_received_unknown(): void {
 		$post_id = wp_insert_post(
 			array(
 				'post_type'   => 'bh-bitcoin-address',
 				'post_status' => 'unknown',
+				'meta_input'  => array(
+					Bitcoin_Address_WP_Post_Interface::DERIVATION_PATH_SEQUENCE_NUMBER_META_KEY => 123,
+				),
 			)
 		);
 
@@ -222,7 +205,7 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 
 		$sut = $bitcoin_address_repository->get_by_post_id( $post_id );
 
-		$result = $sut->get_balance();
+		$result = $sut->get_amount_received();
 
 		$this->assertNull( $result );
 	}
@@ -242,7 +225,7 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 
 		$wallet = $this->makeEmpty( Bitcoin_Wallet::class );
 
-		$bitcoin_address_post_id = $bitcoin_address_repository->save_new(
+		$bitcoin_address_post_id = $bitcoin_address_repository->save_new_address(
 			new Bitcoin_Address_Query(
 				wallet_wp_post_parent_id: $wallet->get_post_id(),
 				xpub: 'address',

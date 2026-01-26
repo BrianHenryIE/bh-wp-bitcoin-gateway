@@ -120,16 +120,20 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 	 *
 	 * It may be the case that they have been used in the meantime.
 	 *
-	 * @param ?Bitcoin_Wallet $wallet Optional wallet to filter addresses by.
+	 * @param ?Bitcoin_Wallet       $wallet Optional wallet to filter addresses by.
+	 * @param ?WP_Posts_Query_Order $query_order Object to sort and filter the results.
 	 * @return Bitcoin_Address[]
 	 */
-	public function get_unused_bitcoin_addresses( ?Bitcoin_Wallet $wallet = null ): array {
+	public function get_unused_bitcoin_addresses(
+		?Bitcoin_Wallet $wallet = null,
+		?WP_Posts_Query_Order $query_order = null
+	): array {
 		return $this->get_addresses_query(
 			new Bitcoin_Address_Query(
 				wallet_wp_post_parent_id: $wallet?->get_post_id(),
 				status: Bitcoin_Address_Status::UNUSED,
 			),
-			new WP_Posts_Query_Order(
+			$query_order ?? new WP_Posts_Query_Order(
 				count: 200,
 				order_by: 'post_modified',
 				order_direction: 'ASC',
@@ -221,7 +225,7 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 	 * @return Bitcoin_Address The saved Bitcoin address.
 	 * @throws BH_WP_Bitcoin_Gateway_Exception When WordPress fails to create the wp_post.
 	 */
-	public function save_new(
+	public function save_new_address(
 		Bitcoin_Wallet $wallet,
 		int $derivation_path_sequence_index,
 		string $address,
@@ -284,12 +288,14 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 	 *
 	 * @see Bitcoin_Address_Status::ASSIGNED
 	 *
-	 * @param Bitcoin_Address $address The Bitcoin payment address to link.
-	 * @param int             $order_id The post_id (e.g. WooCommerce order id) that transactions to this address represent payment for.
-	 * @param Money           $btc_total The target amount to be paid, after which the order should be updated.
+	 * @param Bitcoin_Address     $address The Bitcoin payment address to link.
+	 * @param string|class-string $integration The plugin that is using this address.
+	 * @param int                 $order_id The post_id (e.g. WooCommerce order id) that transactions to this address represent payment for.
+	 * @param Money               $btc_total The target amount to be paid, after which the order should be updated.
 	 */
 	public function assign_to_order(
 		Bitcoin_Address $address,
+		string $integration,
 		int $order_id,
 		Money $btc_total,
 	): void {
@@ -297,6 +303,7 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 			model: $address,
 			query: new Bitcoin_Address_Query(
 				status: Bitcoin_Address_Status::ASSIGNED,
+				integration: wp_slash( $integration ),
 				associated_order_id: $order_id,
 				target_amount: $btc_total,
 			)

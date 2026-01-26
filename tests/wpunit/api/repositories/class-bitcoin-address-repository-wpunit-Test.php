@@ -32,7 +32,7 @@ class Bitcoin_Address_Repository_WPUnit_Test extends WPTestCase {
 	/**
 	 * Test saving a new Bitcoin address and retrieving it by post_id.
 	 *
-	 * @covers ::save_new
+	 * @covers ::save_new_address
 	 * @covers ::get_by_post_id
 	 */
 	public function test_save_new_and_get_by_post_id(): void {
@@ -41,7 +41,7 @@ class Bitcoin_Address_Repository_WPUnit_Test extends WPTestCase {
 		$address_string   = 'bc1qtest123456';
 		$derivation_index = 5;
 
-		$saved_address = $this->sut->save_new( $wallet, $derivation_index, $address_string );
+		$saved_address = $this->sut->save_new_address( $wallet, $derivation_index, $address_string );
 
 		$this->assertEquals( $address_string, $saved_address->get_raw_address() );
 		$this->assertEquals( $derivation_index, $saved_address->get_derivation_path_sequence_number() );
@@ -64,7 +64,7 @@ class Bitcoin_Address_Repository_WPUnit_Test extends WPTestCase {
 		$wallet = $this->wallet_repository->save_new( 'xpub_test_456' );
 
 		$address_string = 'bc1qtest789012';
-		$saved_address  = $this->sut->save_new( $wallet, 0, $address_string );
+		$saved_address  = $this->sut->save_new_address( $wallet, 0, $address_string );
 
 		$post_id = $this->sut->get_post_id_for_address( $address_string );
 
@@ -85,18 +85,18 @@ class Bitcoin_Address_Repository_WPUnit_Test extends WPTestCase {
 	/**
 	 * Test save_new throws exception when attempting to save duplicate address.
 	 *
-	 * @covers ::save_new
+	 * @covers ::save_new_address
 	 */
 	public function test_save_new_throws_exception_for_duplicate(): void {
 		$wallet = $this->wallet_repository->save_new( 'xpub_test_duplicate' );
 
 		$address_string = 'bc1qduplicate';
-		$this->sut->save_new( $wallet, 0, $address_string );
+		$this->sut->save_new_address( $wallet, 0, $address_string );
 
 		$this->expectException( BH_WP_Bitcoin_Gateway_Exception::class );
 		$this->expectExceptionMessage( 'Attempted to save a payment address that already exists' );
 
-		$this->sut->save_new( $wallet, 1, $address_string );
+		$this->sut->save_new_address( $wallet, 1, $address_string );
 	}
 
 	/**
@@ -106,7 +106,7 @@ class Bitcoin_Address_Repository_WPUnit_Test extends WPTestCase {
 	 */
 	public function test_refresh(): void {
 		$wallet  = $this->wallet_repository->save_new( 'xpub_test_refresh' );
-		$address = $this->sut->save_new( $wallet, 0, 'bc1qrefresh' );
+		$address = $this->sut->save_new_address( $wallet, 0, 'bc1qrefresh' );
 
 		// Change status directly in database.
 		wp_update_post(
@@ -131,7 +131,7 @@ class Bitcoin_Address_Repository_WPUnit_Test extends WPTestCase {
 	 */
 	public function test_set_status(): void {
 		$wallet  = $this->wallet_repository->save_new( 'xpub_test_status' );
-		$address = $this->sut->save_new( $wallet, 0, 'bc1qstatus' );
+		$address = $this->sut->save_new_address( $wallet, 0, 'bc1qstatus' );
 
 		$this->assertEquals( Bitcoin_Address_Status::UNKNOWN, $address->get_status() );
 
@@ -148,12 +148,12 @@ class Bitcoin_Address_Repository_WPUnit_Test extends WPTestCase {
 	 */
 	public function test_assign_to_order(): void {
 		$wallet  = $this->wallet_repository->save_new( 'xpub_test_assign' );
-		$address = $this->sut->save_new( $wallet, 0, 'bc1qassign' );
+		$address = $this->sut->save_new_address( $wallet, 0, 'bc1qassign' );
 
 		$order_id  = 123;
 		$btc_total = Money::of( '0.001', 'BTC' );
 
-		$this->sut->assign_to_order( $address, $order_id, $btc_total );
+		$this->sut->assign_to_order( $address, get_class( $this ), $order_id, $btc_total );
 
 		$updated_address = $this->sut->get_by_post_id( $address->get_post_id() );
 
@@ -171,7 +171,7 @@ class Bitcoin_Address_Repository_WPUnit_Test extends WPTestCase {
 		$wallet1 = $this->wallet_repository->save_new( 'xpub_test_wallet1' );
 		$wallet2 = $this->wallet_repository->save_new( 'xpub_test_wallet2' );
 
-		$address = $this->sut->save_new( $wallet1, 0, 'bc1qwalletid' );
+		$address = $this->sut->save_new_address( $wallet1, 0, 'bc1qwalletid' );
 
 		$this->assertEquals( $wallet1->get_post_id(), $address->get_wallet_parent_post_id() );
 
@@ -188,7 +188,7 @@ class Bitcoin_Address_Repository_WPUnit_Test extends WPTestCase {
 	 */
 	public function test_set_transactions_post_ids_to_address(): void {
 		$wallet  = $this->wallet_repository->save_new( 'xpub_test_tx' );
-		$address = $this->sut->save_new( $wallet, 0, 'bc1qtransactions' );
+		$address = $this->sut->save_new_address( $wallet, 0, 'bc1qtransactions' );
 
 		$this->assertNull( $address->get_tx_ids() );
 
@@ -212,16 +212,16 @@ class Bitcoin_Address_Repository_WPUnit_Test extends WPTestCase {
 		$wallet = $this->wallet_repository->save_new( 'xpub_test_unused' );
 
 		// Create addresses with different statuses.
-		$unused_address1 = $this->sut->save_new( $wallet, 0, 'bc1qunused1' );
+		$unused_address1 = $this->sut->save_new_address( $wallet, 0, 'bc1qunused1' );
 		$this->sut->set_status( $unused_address1, Bitcoin_Address_Status::UNUSED );
 
-		$unused_address2 = $this->sut->save_new( $wallet, 1, 'bc1qunused2' );
+		$unused_address2 = $this->sut->save_new_address( $wallet, 1, 'bc1qunused2' );
 		$this->sut->set_status( $unused_address2, Bitcoin_Address_Status::UNUSED );
 
-		$assigned_address = $this->sut->save_new( $wallet, 2, 'bc1qassigned_test' );
+		$assigned_address = $this->sut->save_new_address( $wallet, 2, 'bc1qassigned_test' );
 		$this->sut->set_status( $assigned_address, Bitcoin_Address_Status::ASSIGNED );
 
-		$unknown_address = $this->sut->save_new( $wallet, 3, 'bc1qunknown_test' );
+		$unknown_address = $this->sut->save_new_address( $wallet, 3, 'bc1qunknown_test' );
 
 		$unused_addresses = $this->sut->get_unused_bitcoin_addresses();
 
@@ -245,10 +245,10 @@ class Bitcoin_Address_Repository_WPUnit_Test extends WPTestCase {
 		$wallet1 = $this->wallet_repository->save_new( 'xpub_test_wallet_filter1' );
 		$wallet2 = $this->wallet_repository->save_new( 'xpub_test_wallet_filter2' );
 
-		$unused_wallet1 = $this->sut->save_new( $wallet1, 0, 'bc1qunused_w1' );
+		$unused_wallet1 = $this->sut->save_new_address( $wallet1, 0, 'bc1qunused_w1' );
 		$this->sut->set_status( $unused_wallet1, Bitcoin_Address_Status::UNUSED );
 
-		$unused_wallet2 = $this->sut->save_new( $wallet2, 0, 'bc1qunused_w2' );
+		$unused_wallet2 = $this->sut->save_new_address( $wallet2, 0, 'bc1qunused_w2' );
 		$this->sut->set_status( $unused_wallet2, Bitcoin_Address_Status::UNUSED );
 
 		$unused_addresses_wallet1 = $this->sut->get_unused_bitcoin_addresses( $wallet1 );
@@ -271,13 +271,13 @@ class Bitcoin_Address_Repository_WPUnit_Test extends WPTestCase {
 	public function test_get_assigned_bitcoin_addresses(): void {
 		$wallet = $this->wallet_repository->save_new( 'xpub_test_assigned_list' );
 
-		$assigned1 = $this->sut->save_new( $wallet, 0, 'bc1qassigned1' );
+		$assigned1 = $this->sut->save_new_address( $wallet, 0, 'bc1qassigned1' );
 		$this->sut->set_status( $assigned1, Bitcoin_Address_Status::ASSIGNED );
 
-		$assigned2 = $this->sut->save_new( $wallet, 1, 'bc1qassigned2' );
+		$assigned2 = $this->sut->save_new_address( $wallet, 1, 'bc1qassigned2' );
 		$this->sut->set_status( $assigned2, Bitcoin_Address_Status::ASSIGNED );
 
-		$unused = $this->sut->save_new( $wallet, 2, 'bc1qunused_test' );
+		$unused = $this->sut->save_new_address( $wallet, 2, 'bc1qunused_test' );
 		$this->sut->set_status( $unused, Bitcoin_Address_Status::UNUSED );
 
 		$assigned_addresses = $this->sut->get_assigned_bitcoin_addresses();
@@ -296,7 +296,7 @@ class Bitcoin_Address_Repository_WPUnit_Test extends WPTestCase {
 	public function test_has_assigned_bitcoin_addresses_true(): void {
 		$wallet = $this->wallet_repository->save_new( 'xpub_test_has_assigned' );
 
-		$address = $this->sut->save_new( $wallet, 0, 'bc1qhas_assigned' );
+		$address = $this->sut->save_new_address( $wallet, 0, 'bc1qhas_assigned' );
 		$this->sut->set_status( $address, Bitcoin_Address_Status::ASSIGNED );
 
 		$this->assertTrue( $this->sut->has_assigned_bitcoin_addresses() );
@@ -333,11 +333,13 @@ class Bitcoin_Address_Repository_WPUnit_Test extends WPTestCase {
 	public function test_get_unknown_bitcoin_addresses(): void {
 		$wallet = $this->wallet_repository->save_new( 'xpub_test_unknown_list' );
 
-		$unknown1 = $this->sut->save_new( $wallet, 0, 'bc1qunknown1' );
-		$unknown2 = $this->sut->save_new( $wallet, 1, 'bc1qunknown2' );
+		$unknown1 = $this->sut->save_new_address( $wallet, 0, 'bc1qunknown1' );
+		$unknown2 = $this->sut->save_new_address( $wallet, 1, 'bc1qunknown2' );
 
-		$unused = $this->sut->save_new( $wallet, 2, 'bc1qunused_for_unknown' );
+		$unused = $this->sut->save_new_address( $wallet, 2, 'bc1qunused_for_unknown' );
 		$this->sut->set_status( $unused, Bitcoin_Address_Status::UNUSED );
+
+		$this->wallet_repository->set_highest_address_index( $wallet, 2 );
 
 		$unknown_addresses = $this->sut->get_unknown_bitcoin_addresses();
 
@@ -360,8 +362,8 @@ class Bitcoin_Address_Repository_WPUnit_Test extends WPTestCase {
 	public function test_get_addresses_no_filters(): void {
 		$wallet = $this->wallet_repository->save_new( 'xpub_test_get_all' );
 
-		$address1 = $this->sut->save_new( $wallet, 0, 'bc1qgetall1' );
-		$address2 = $this->sut->save_new( $wallet, 1, 'bc1qgetall2' );
+		$address1 = $this->sut->save_new_address( $wallet, 0, 'bc1qgetall1' );
+		$address2 = $this->sut->save_new_address( $wallet, 1, 'bc1qgetall2' );
 
 		$result = $this->sut->get_addresses();
 
@@ -383,8 +385,8 @@ class Bitcoin_Address_Repository_WPUnit_Test extends WPTestCase {
 		$wallet1 = $this->wallet_repository->save_new( 'xpub_test_filter_wallet1' );
 		$wallet2 = $this->wallet_repository->save_new( 'xpub_test_filter_wallet2' );
 
-		$this->sut->save_new( $wallet1, 0, 'bc1qfilter_w1_addr' );
-		$this->sut->save_new( $wallet2, 0, 'bc1qfilter_w2_addr' );
+		$this->sut->save_new_address( $wallet1, 0, 'bc1qfilter_w1_addr' );
+		$this->sut->save_new_address( $wallet2, 0, 'bc1qfilter_w2_addr' );
 
 		$result = $this->sut->get_addresses( wallet: $wallet1 );
 
@@ -403,10 +405,10 @@ class Bitcoin_Address_Repository_WPUnit_Test extends WPTestCase {
 	public function test_get_addresses_with_status_filter(): void {
 		$wallet = $this->wallet_repository->save_new( 'xpub_test_filter_status' );
 
-		$unused = $this->sut->save_new( $wallet, 0, 'bc1qfilter_unused_addr' );
+		$unused = $this->sut->save_new_address( $wallet, 0, 'bc1qfilter_unused_addr' );
 		$this->sut->set_status( $unused, Bitcoin_Address_Status::UNUSED );
 
-		$unknown = $this->sut->save_new( $wallet, 1, 'bc1qfilter_unknown_addr' );
+		$unknown = $this->sut->save_new_address( $wallet, 1, 'bc1qfilter_unknown_addr' );
 
 		// Filter by wallet and status to avoid pollution.
 		$unused_addresses = $this->sut->get_addresses( $wallet, Bitcoin_Address_Status::UNUSED );
@@ -428,12 +430,12 @@ class Bitcoin_Address_Repository_WPUnit_Test extends WPTestCase {
 		$wallet1 = $this->wallet_repository->save_new( 'xpub_test_both_filters1' );
 		$wallet2 = $this->wallet_repository->save_new( 'xpub_test_both_filters2' );
 
-		$unused_w1 = $this->sut->save_new( $wallet1, 0, 'bc1qboth_unused_w1_addr' );
+		$unused_w1 = $this->sut->save_new_address( $wallet1, 0, 'bc1qboth_unused_w1_addr' );
 		$this->sut->set_status( $unused_w1, Bitcoin_Address_Status::UNUSED );
 
-		$unknown_w1 = $this->sut->save_new( $wallet1, 1, 'bc1qboth_unknown_w1_addr' );
+		$unknown_w1 = $this->sut->save_new_address( $wallet1, 1, 'bc1qboth_unknown_w1_addr' );
 
-		$unused_w2 = $this->sut->save_new( $wallet2, 0, 'bc1qboth_unused_w2_addr' );
+		$unused_w2 = $this->sut->save_new_address( $wallet2, 0, 'bc1qboth_unused_w2_addr' );
 		$this->sut->set_status( $unused_w2, Bitcoin_Address_Status::UNUSED );
 
 		$addresses = $this->sut->get_addresses( $wallet1, Bitcoin_Address_Status::UNUSED );

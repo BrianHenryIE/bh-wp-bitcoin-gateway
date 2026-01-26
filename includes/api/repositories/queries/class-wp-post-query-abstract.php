@@ -99,7 +99,7 @@ abstract readonly class WP_Post_Query_Abstract {
 
 		$wp_post_fields['post_type'] = $this->post_type;
 
-		$mapper = function ( $value ) {
+		$map_types_to_json = function ( $value ) {
 			if ( $value instanceof BackedEnum ) {
 				return $value->value;
 			}
@@ -113,16 +113,28 @@ abstract readonly class WP_Post_Query_Abstract {
 			return $value;
 		};
 
+		$filter_null = fn( $value ) => ! is_null( $value );
+
 		/** @var WpUpdatePostArray $wp_post_fields */
 		$wp_post_fields = array_map(
-			$mapper,
-			// Remove empty values. TODO: should this check `null` and allow empty strings?
-			array_filter( $wp_post_fields )
+			$map_types_to_json,
+			$wp_post_fields,
 		);
 
 		$wp_post_fields['meta_input'] = array_map(
-			$mapper,
-			array_filter( $this->get_meta_input() )
+			$map_types_to_json,
+			(array) $this->get_meta_input()
+		);
+
+		$wp_post_fields['meta_input'] = array_filter(
+			$wp_post_fields['meta_input'],
+			$filter_null
+		);
+
+		/** @var WpUpdatePostArray $wp_post_fields */
+		$wp_post_fields = array_filter(
+			$wp_post_fields,
+			$filter_null
 		);
 
 		if ( empty( $wp_post_fields['meta_input'] ) ) {

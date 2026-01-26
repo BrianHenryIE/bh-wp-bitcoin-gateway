@@ -32,17 +32,13 @@ class I18n_Unit_Test extends \Codeception\Test\Unit {
 	 */
 	public function test_load_plugin_textdomain(): void {
 
-		$this->markTestSkipped( 'Symlinks are messing with the correct value.' );
-
-		global $plugin_root_dir;
-
 		\WP_Mock::userFunction(
 			'plugin_basename',
 			array(
 				'args'   => array(
 					\WP_Mock\Functions::type( 'string' ),
 				),
-				'return' => 'bh-wp-bitcoin-gateway/bh-wp-bitcoin-gateway.php',
+				'return' => 'bh-wp-bitcoin-gateway',
 				'times'  => 1,
 			)
 		);

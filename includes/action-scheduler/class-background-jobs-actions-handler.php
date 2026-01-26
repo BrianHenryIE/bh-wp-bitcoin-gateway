@@ -115,7 +115,7 @@ class Background_Jobs_Actions_Handler implements Background_Jobs_Actions_Interfa
 
 		$wallet = $this->wallet_service->get_wallet_by_wp_post_id( $wallet_post_id );
 
-		$result = $this->api->ensure_unused_addresses_for_wallet( $wallet );
+		$result = $this->api->ensure_unused_addresses_for_wallet_synchronously( $wallet );
 
 		$this->logger->info(
 			'Finished `single_ensure_unused_addresses()` background job for `wallet_post_id:{wallet_post_id}`.',

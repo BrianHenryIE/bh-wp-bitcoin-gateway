@@ -153,7 +153,7 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 	 * @return Bitcoin_Address
 	 * @throws BH_WP_Bitcoin_Gateway_Exception When no Bitcoin addresses are available or the address cannot be assigned to the order.
 	 */
-	public function get_fresh_address_for_order( WC_Order $order, Money $btc_total ): Bitcoin_Address {
+	public function assign_unused_address_to_order( WC_Order $order, Money $btc_total ): Bitcoin_Address {
 		$this->logger->debug( 'Get fresh address for `shop_order:{order_id}`', array( 'order_id' => $order->get_id() ) );
 
 		$btc_address = $this->get_fresh_address_for_gateway( $this->get_bitcoin_gateways()[ $order->get_payment_method() ] );
@@ -162,8 +162,9 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 			throw new BH_WP_Bitcoin_Gateway_Exception( 'No Bitcoin addresses available.' );
 		}
 
-		$this->wallet_service->assign_order_to_bitcoin_payment_address(
+		$refreshed_address = $this->wallet_service->assign_order_to_bitcoin_payment_address(
 			address: $btc_address,
+			integration: WooCommerce_Integration::class,
 			order_id: $order->get_id(),
 			btc_total: $btc_total
 		);
@@ -185,7 +186,7 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 			date_time: new DateTimeImmutable( 'now' )->add( new DateInterval( 'PT15M' ) )
 		);
 
-		return $btc_address;
+		return $refreshed_address;
 	}
 
 	/**
@@ -206,7 +207,7 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 
 		$wallet_result = $this->wallet_service->get_or_save_wallet_for_xpub( $gateway->get_xpub() );
 
-		$result = $this->api->ensure_unused_addresses_for_wallet( $wallet_result->wallet, 1 );
+		$result = $this->api->ensure_unused_addresses_for_wallet_synchronously( $wallet_result->wallet, 1 );
 
 		$unused_addresses = $result->get_unused_addresses();
 
@@ -223,18 +224,16 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 	 * @return bool
 	 * @throws BH_WP_Bitcoin_Gateway_Exception When the wallet lookup fails or the address repository cannot be queried.
 	 */
-	public function is_fresh_address_available_for_gateway( Bitcoin_Gateway $gateway ): bool {
+	public function is_unused_address_available_for_gateway( Bitcoin_Gateway $gateway ): bool {
 
 		if ( is_null( $gateway->get_xpub() ) ) {
 			return false;
 		}
 
-		$result           = $this->wallet_service->get_or_save_wallet_for_xpub( $gateway->get_xpub() );
-		$unused_addresses = $this->wallet_service->get_unused_bitcoin_addresses( $result->wallet );
+		$get_wallet_for_xpub_service_result = $this->wallet_service->get_or_save_wallet_for_xpub( $gateway->get_xpub() );
 
-		// TODO: maybe schedule a job to find an unused address.
-
-		return count( $unused_addresses ) > 0;
+		// This will schedule a job if there are none.
+		return $this->api->is_unused_address_available_for_wallet( $get_wallet_for_xpub_service_result->wallet );
 	}
 
 	/**

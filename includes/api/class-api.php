@@ -150,7 +150,7 @@ class API implements API_Interface, API_Background_Jobs_Interface {
 	 * @param ?array{integration:class-string, gateway_id:string} $gateway_details Gateway id.
 	 * @throws BH_WP_Bitcoin_Gateway_Exception If two wallets for the xpub exist, or if saving fails.
 	 */
-	public function get_wallet_for_master_public_key( string $xpub, ?array $gateway_details = null ): Wallet_Generation_Result {
+	public function get_or_save_wallet_for_master_public_key( string $xpub, ?array $gateway_details = null ): Wallet_Generation_Result {
 		$result = $this->wallet_service->get_or_save_wallet_for_xpub( $xpub, $gateway_details );
 
 		if ( $result->is_new ) {
@@ -161,6 +161,22 @@ class API implements API_Interface, API_Background_Jobs_Interface {
 			get_wallet_for_xpub_service_result: $result,
 			did_schedule_ensure_addresses: $result->is_new,
 		);
+	}
+
+	/**
+	 * A local-only check to see if the wallet has any payment addresses whose status has been checked in the last ten
+	 * minutes.
+	 *
+	 * @param Bitcoin_Wallet $wallet The wallet object we need an address to give to a customer.
+	 */
+	public function is_unused_address_available_for_wallet( Bitcoin_Wallet $wallet ): bool {
+		$success = $this->wallet_service->has_unused_bitcoin_address( $wallet );
+
+		if ( ! $success ) {
+			$this->background_jobs_scheduler->schedule_single_ensure_unused_addresses( $wallet );
+		}
+
+		return $success;
 	}
 
 	/**
@@ -177,6 +193,8 @@ class API implements API_Interface, API_Background_Jobs_Interface {
 
 	/**
 	 * Check that there are two addresses generated and unused for every wallet (or specific wallet/number).
+	 *
+	 * TODO: This should be checking the address's last modified time and not making remote API calls if it was recently checked.
 	 *
 	 * TODO: If a store has 100 orders/minute, this should still only check each address once every ten minutes, since
 	 * until a new block is mined, the result won't change. TODO: mempool?
@@ -314,7 +332,7 @@ class API implements API_Interface, API_Background_Jobs_Interface {
 	 * @param Bitcoin_Wallet $wallet The wallet to generate unused addresses for by querying the blockchain to verify generated addresses have no transaction history.
 	 * @param int            $required_count The minimum number of unused addresses that must be available for this wallet before returning.
 	 */
-	public function ensure_unused_addresses_for_wallet( Bitcoin_Wallet $wallet, int $required_count = 2 ): Ensure_Unused_Addresses_Result {
+	public function ensure_unused_addresses_for_wallet_synchronously( Bitcoin_Wallet $wallet, int $required_count = 2 ): Ensure_Unused_Addresses_Result {
 		return $this->ensure_unused_addresses( $required_count, array( $wallet ) )[ $wallet->get_xpub() ];
 	}
 
@@ -442,6 +460,9 @@ class API implements API_Interface, API_Background_Jobs_Interface {
 	public function check_address_for_payment( Bitcoin_Address $payment_address ): Check_Address_For_Payment_Result {
 
 		// TODO: Maybe throw if the address has not been assigned.
+		// TODO: Check _when_ the address was assigned and discard any transactions before that time. This should
+		// never actually happen due to other checks that are present, but it's a simple and logical check to not
+		// count payments received before the order was placed.
 
 		$target_amount = $payment_address->get_target_amount();
 		if ( ! $target_amount ) {

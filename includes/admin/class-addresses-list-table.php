@@ -19,11 +19,8 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories\Bitcoin_Wallet_Fa
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\UnknownCurrencyException;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Bitcoin_Gateway;
-use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\WooCommerce_Integration;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Post_BH_Bitcoin_Address;
 use Exception;
-use WC_Payment_Gateway;
-use WC_Payment_Gateways;
 use WP_Post;
 use WP_Post_Type;
 use WP_Posts_List_Table;
@@ -228,7 +225,7 @@ class Addresses_List_Table extends WP_Posts_List_Table {
 
 		$bitcoin_address = $this->get_bitcoin_address_object( $item );
 
-		echo esc_html( $bitcoin_address->get_balance() ?? 'unknown' );
+		echo esc_html( $bitcoin_address->get_amount_received() ?? 'unknown' );
 	}
 
 	/**
@@ -280,7 +277,7 @@ class Addresses_List_Table extends WP_Posts_List_Table {
 	 *
 	 * Most sites will probably only ever use one gateway.
 	 *
-	 * @see API_Interface::get_wallet_for_master_public_key()
+	 * @see API_Interface::get_or_save_wallet_for_master_public_key()
 	 *
 	 * @param WP_Post $item The post this row is being rendered for.
 	 *

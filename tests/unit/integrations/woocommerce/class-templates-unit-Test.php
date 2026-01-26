@@ -3,6 +3,7 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
+use Codeception\Stub\Expected;
 
 /**
  * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Templates
@@ -98,9 +99,14 @@ class Templates_Unit_Test extends \Codeception\Test\Unit {
 	 */
 	public function test_return_plugin_default_template(): void {
 
-		$this->markTestSkipped( 'Redefining a constant. Needs to run in own process' );
+		$settings_mock = $this->makeEmpty(
+			Settings_Interface::class,
+			array(
+				'get_plugin_dir' => Expected::once( '/path/to/plugin/' ),
+			)
+		);
 
-		$sut = new Templates();
+		$sut = new Templates( $settings_mock );
 
 		// Use any existing file here for the test.
 		$template      = 'bitcoin-unpaid.php';
@@ -116,10 +122,6 @@ class Templates_Unit_Test extends \Codeception\Test\Unit {
 				'return' => '', // WooCommerce's function returns an empty string, which I guess is falsey.
 			)
 		);
-
-		if ( ! defined( 'BH_WP_BITCOIN_GATEWAY_PATH' ) ) {
-			define( 'BH_WP_BITCOIN_GATEWAY_PATH', '/path/to/plugin' );
-		}
 
 		$result = $sut->load_bitcoin_templates( $template, $template_name, $args, $template_path, $default_path );
 

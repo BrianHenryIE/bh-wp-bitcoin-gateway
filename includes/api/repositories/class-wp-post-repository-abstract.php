@@ -24,7 +24,7 @@ use WP_Error;
  * @method get_by_wp_post_id( int $post_id )
  * @method get_all( $status ): array
  *
- * @phpstan-type WpUpdatePostArray array{ID?: int, post_author?: int, post_date?: string, post_date_gmt?: string, post_content?: string, post_content_filtered?: string, post_title?: string, post_excerpt?: string}
+ * @phpstan-type WpUpdatePostArray array{ID?: int, post_author?: int, post_date?: string, post_date_gmt?: string, post_content?: string, post_content_filtered?: string, post_title?: string, post_excerpt?: string, meta_input?:array<string,mixed>}
  */
 abstract class WP_Post_Repository_Abstract {
 
@@ -42,9 +42,29 @@ abstract class WP_Post_Repository_Abstract {
 		Bitcoin_Wallet|Bitcoin_Address|Bitcoin_Transaction $model,
 		WP_Post_Query_Abstract $query
 	): void {
+
+		/** @var array<int|string,mixed> $existing_meta */
+		$existing_meta = get_post_meta( $model->get_post_id() );
+
 		/** @var WpUpdatePostArray $args */
 		$args       = $query->to_query_array();
 		$args['ID'] = $model->get_post_id();
+
+		$new_meta = isset( $args['meta_input'] ) ? $args['meta_input'] : array();
+
+		$args['meta_input'] = array();
+		foreach ( $existing_meta as $key => $value ) {
+			if ( is_array( $value ) && count( $value ) === 1 && array_key_first( $value ) === 0 ) {
+				$args['meta_input'][ $key ] = $value[0];
+			} else {
+				$args['meta_input'][ $key ] = $value;
+			}
+		}
+		// Meta keys are string values; `array_merge()` re-indexes integer keys but that should be irrelevant here.
+		$args['meta_input'] = array_merge( $args['meta_input'], $new_meta );
+		if ( empty( $args['meta_input'] ) ) {
+			unset( $args['meta_input'] );
+		}
 
 		/** @var int|WP_Error $result */
 		$result = wp_update_post(

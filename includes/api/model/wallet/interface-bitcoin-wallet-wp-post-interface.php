@@ -11,10 +11,6 @@ interface Bitcoin_Wallet_WP_Post_Interface {
 
 	const string POST_TYPE = 'bh-bitcoin-wallet';
 
-	/**
-	 * TODO: We are not yet setting the balance.
-	 */
-	const string BALANCE_META_KEY                    = 'bitcoin_wallet_balance';
 	const string LAST_DERIVED_ADDRESS_INDEX_META_KEY = 'last_derived_address_index';
 
 	/**

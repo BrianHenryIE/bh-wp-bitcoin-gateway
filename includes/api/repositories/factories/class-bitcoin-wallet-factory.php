@@ -52,27 +52,8 @@ class Bitcoin_Wallet_Factory {
 			xpub: $post->post_title,
 			status: Bitcoin_Wallet_Status::from( $post->post_status ),
 			address_index: $this->get_address_index( $post ),
-			balance: $this->get_balance( $post ),
 			gateways: $this->get_gateways_from_meta( $post ),
 		);
-	}
-
-	/**
-	 * Get the current balance of this wallet, or null if it has never been checked.
-	 *
-	 * Must iterate across all addresses and sum them.
-	 *
-	 * @param WP_Post $post The WordPress post representing the wallet.
-	 * @return Money|null The wallet balance or null if never checked.
-	 * @throws UnknownCurrencyException If BTC is not correctly added to brick/money (or someone edited the db!).
-	 */
-	protected function get_balance( WP_Post $post ): ?Money {
-		$balance = get_post_meta( $post->ID, Bitcoin_Wallet_WP_Post_Interface::BALANCE_META_KEY, true );
-		if ( is_array( $balance ) && isset( $balance['amount'], $balance['currency'] ) ) {
-			/** @var array{amount:string, currency:string} $balance  */
-			return Money::of( ...$balance );
-		}
-		return null;
 	}
 
 	/**

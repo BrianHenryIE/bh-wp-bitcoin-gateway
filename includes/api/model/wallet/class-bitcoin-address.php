@@ -12,6 +12,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\Admin\Addresses_List_Table;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Bitcoin_Gateway;
+use DateTimeInterface;
 use InvalidArgumentException;
 
 /**
@@ -27,12 +28,14 @@ class Bitcoin_Address implements Bitcoin_Address_Interface {
 	 * @param int                    $post_id The WordPress post ID for this address.
 	 * @param int                    $wallet_parent_post_id The post ID of the parent wallet.
 	 * @param string                 $raw_address The Bitcoin address string.
-	 * @param ?int                   $derivation_path_sequence_number The derivation path sequence number.
+	 * @param int                    $derivation_path_sequence_number The derivation path sequence number.
+	 * @param DateTimeInterface      $created_time When the WP Post was created.
+	 * @param DateTimeInterface      $modified_time When the WP Post was last modified, presumably to check when the address was last checked.
 	 * @param Bitcoin_Address_Status $status The current status of the address.
 	 * @param ?Money                 $target_amount The target amount for payment.
 	 * @param ?int                   $order_id The WooCommerce order ID associated with this address.
 	 * @param array<int,string>|null $tx_ids Transaction IDs as post_id:tx_id.
-	 * @param ?Money                 $balance The current balance of the address.
+	 * @param ?Money                 $received The sum of incoming transactions for the address.
 	 *
 	 * @throws InvalidArgumentException When the supplied post_id is not a post of this type.
 	 */
@@ -40,12 +43,14 @@ class Bitcoin_Address implements Bitcoin_Address_Interface {
 		protected int $post_id,
 		protected int $wallet_parent_post_id,
 		protected string $raw_address,
-		protected ?int $derivation_path_sequence_number = null,
+		protected int $derivation_path_sequence_number,
+		protected DateTimeInterface $created_time,
+		protected DateTimeInterface $modified_time,
 		protected Bitcoin_Address_Status $status = Bitcoin_Address_Status::UNKNOWN,
 		protected ?Money $target_amount = null,
 		protected ?int $order_id = null,
 		protected ?array $tx_ids = null,
-		protected ?Money $balance = null,
+		protected ?Money $received = null,
 	) {
 	}
 
@@ -90,23 +95,16 @@ class Bitcoin_Address implements Bitcoin_Address_Interface {
 	// TODO: `get_mempool_transactions()`.
 
 	/**
-	 * Return the balance saved in the post meta, or null if the address status is unknown.
+	 * Return the amount received that is saved in the post meta, or null if the address status is unknown.
 	 *
-	 * TODO: Might need a $confirmations parameter and calculate the balance from the transactions.
+	 * TODO: Might need a $confirmations parameter and calculate the total received from the transactions.
 	 *
 	 * @used-by Addresses_List_Table::print_columns()
 	 *
 	 * @return ?Money Null if unknown.
 	 */
-	public function get_balance(): ?Money {
-		return Bitcoin_Address_Status::UNKNOWN === $this->get_status() ? null : $this->balance;
-	}
-
-	/**
-	 * TODO: "balance" is not an accurate term for what we need.
-	 */
 	public function get_amount_received(): ?Money {
-		return $this->get_balance();
+		return Bitcoin_Address_Status::UNKNOWN === $this->get_status() ? null : $this->received;
 	}
 
 	/**
@@ -135,5 +133,12 @@ class Bitcoin_Address implements Bitcoin_Address_Interface {
 	 */
 	public function get_tx_ids(): ?array {
 		return $this->tx_ids;
+	}
+
+	/**
+	 * When was the WP_Post last modified.
+	 */
+	public function get_modified_time(): DateTimeInterface {
+		return $this->modified_time;
 	}
 }

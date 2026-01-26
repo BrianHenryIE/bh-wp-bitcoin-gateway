@@ -18,55 +18,6 @@ use Codeception\Stub\Expected;
 class Blockchain_Info_API_Unit_Test extends \Codeception\Test\Unit {
 
 	/**
-	 * @covers ::__construct
-	 */
-	public function test_get_received_by_address(): void {
-
-		$this->markTestSkipped( 'old test – new we only fetch transactions and calculate the amount received based on the desired number of confirmations' );
-
-		$logger = new ColorLogger();
-
-		$mock_api = $this->make(
-			BlockchainInfoApi::class,
-			array(
-				'getReceivedByAddress' => Expected::once( '10432394445' ),
-			)
-		);
-
-		$sut = new Blockchain_Info_Api( $logger, $mock_api );
-
-		// Satoshi Nakamoto's address.
-		$address = '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa';
-
-		$result = $sut->get_received_by_address( $address, false );
-
-		$this->assertEquals( '104.32394445', (string) $result->getAmount() );
-	}
-
-	public function test_get_address_balance(): void {
-
-		$this->markTestSkipped( 'old test – new we only fetch transactions and calculate the amount received based on the desired number of confirmations' );
-
-		$logger = new ColorLogger();
-
-		$mock_api = $this->make(
-			BlockchainInfoApi::class,
-			array(
-				'getAddressBalance' => 18142,
-			)
-		);
-
-		$sut = new Blockchain_Info_Api( $logger, $mock_api );
-
-		// The pizza address.
-		$address = '1XPTgDRhN8RFnzniWCddobD9iKZatrvH4';
-
-		$result = $sut->get_address_balance( $address, 1 );
-
-		$this->assertEquals( '0.00018142', (string) $result->get_confirmed_balance()->getAmount() );
-	}
-
-	/**
 	 * @covers ::get_transactions_received
 	 */
 	public function test_get_transactions(): void {

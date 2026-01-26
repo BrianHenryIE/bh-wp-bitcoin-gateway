@@ -189,7 +189,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 		$xpub_after = $this->get_xpub();
 
 		if ( ! is_null( $xpub_after ) ) {
-			$this->api->get_wallet_for_master_public_key(
+			$this->api->get_or_save_wallet_for_master_public_key(
 				$xpub_after,
 				array(
 					'integration' => WooCommerce_Integration::class,
@@ -356,7 +356,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 
 		// TODO: review `$this->is_available_cache` and when we should avoid db calls and http calls.
 
-		if ( ! $this->api_woocommerce->is_fresh_address_available_for_gateway( $this ) ) {
+		if ( ! $this->api_woocommerce->is_unused_address_available_for_gateway( $this ) ) {
 			$this->is_available_cache = false;
 			return false;
 		}
@@ -405,7 +405,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 			 * @see Order::BITCOIN_ADDRESS_META_KEY
 			 * @see Bitcoin_Address::get_raw_address()
 			 */
-			$btc_address = $this->api_woocommerce->get_fresh_address_for_order( $order, $btc_total );
+			$btc_address = $this->api_woocommerce->assign_unused_address_to_order( $order, $btc_total );
 		} catch ( Exception $e ) {
 			$this->logger->error( $e->getMessage(), array( 'exception' => $e ) );
 			throw new BH_WP_Bitcoin_Gateway_Exception( 'Unable to find Bitcoin address to send to. Please choose another payment method.' );
@@ -452,12 +452,13 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 	/**
 	 * Returns the configured xpub for the gateway, so new addresses can be generated.
 	 *
+	 * TODO: This should be ~`{master_public_key:string, wp_post_id?:int}`.
 	 * TODO: rename to get_master_public_key() ?
 	 *
 	 * @used-by API::generate_new_addresses_for_wallet()
 	 */
 	public function get_xpub(): ?string {
-		// TODO: validate xpub format when setting.
+		// TODO: validate xpub format when setting (in JS).
 		return isset( $this->settings['xpub'] ) && is_string( $this->settings['xpub'] ) && ! empty( $this->settings['xpub'] )
 			? $this->settings['xpub']
 			: null;

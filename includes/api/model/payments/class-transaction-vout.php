@@ -21,8 +21,10 @@ readonly class Transaction_VOut {
 	/**
 	 * Constructor.
 	 *
+	 * @see https://learnmeabitcoin.com/technical/transaction/output/scriptpubkey/
+	 *
 	 * @param Money   $value The value of the transaction output.
-	 * @param ?string $scriptpubkey_address
+	 * @param ?string $scriptpubkey_address Locking code.
 	 */
 	public function __construct(
 		public Money $value,

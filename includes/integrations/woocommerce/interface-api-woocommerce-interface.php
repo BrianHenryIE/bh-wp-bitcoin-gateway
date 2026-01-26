@@ -53,7 +53,7 @@ interface API_WooCommerce_Interface {
 	 * @return Bitcoin_Address
 	 * @throws BH_WP_Bitcoin_Gateway_Exception When no address is available.
 	 */
-	public function get_fresh_address_for_order( WC_Order $order, Money $btc_total ): Bitcoin_Address;
+	public function assign_unused_address_to_order( WC_Order $order, Money $btc_total ): Bitcoin_Address;
 
 	/**
 	 * Return the current Bitcoin details for an order, optionally refresh.
@@ -73,7 +73,7 @@ interface API_WooCommerce_Interface {
 	 *
 	 * @param Bitcoin_Gateway $gateway The WooCommerce payment gateway which should have addresses generated.
 	 */
-	public function is_fresh_address_available_for_gateway( Bitcoin_Gateway $gateway ): bool;
+	public function is_unused_address_available_for_gateway( Bitcoin_Gateway $gateway ): bool;
 
 	/**
 	 * Get a single unused Bitcoin address for a given payment gateway's wallet.

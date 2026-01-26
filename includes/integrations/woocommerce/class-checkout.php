@@ -69,10 +69,10 @@ class Checkout implements LoggerAwareInterface {
 
 			// Although it's safe to assume here that there was a Wallet created when the xpub was saved in the UI,
 			// this would create it anyway.
-			$wallet_result = $this->api->get_wallet_for_master_public_key( $master_public_key );
+			$wallet_result = $this->api->get_or_save_wallet_for_master_public_key( $master_public_key );
 
 			if ( ! $wallet_result->did_schedule_ensure_addresses ) {
-				$this->api->ensure_unused_addresses_for_wallet( $wallet_result->wallet, 1 );
+				$this->api->ensure_unused_addresses_for_wallet_synchronously( $wallet_result->wallet, 1 );
 			}
 		}
 	}
