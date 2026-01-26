@@ -164,6 +164,7 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 
 		$refreshed_address = $this->wallet_service->assign_order_to_bitcoin_payment_address(
 			address: $btc_address,
+			integration: WooCommerce_Integration::class,
 			order_id: $order->get_id(),
 			btc_total: $btc_total
 		);

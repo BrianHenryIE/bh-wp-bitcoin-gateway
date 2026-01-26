@@ -299,17 +299,20 @@ class Bitcoin_Wallet_Service implements LoggerAwareInterface {
 	 *
 	 * @see Bitcoin_Address_Status::ASSIGNED
 	 *
-	 * @param Bitcoin_Address $address The Bitcoin payment address to link.
-	 * @param int             $order_id The post_id (e.g. WooCommerce order id) that transactions to this address represent payment for.
-	 * @param Money           $btc_total The target amount to be paid, after which the order should be updated.
+	 * @param Bitcoin_Address     $address The Bitcoin payment address to link.
+	 * @param string|class-string $integration The plugin that is using this address.
+	 * @param int                 $order_id The post_id (e.g. WooCommerce order id) that transactions to this address represent payment for.
+	 * @param Money               $btc_total The target amount to be paid, after which the order should be updated.
 	 */
 	public function assign_order_to_bitcoin_payment_address(
 		Bitcoin_Address $address,
+		string $integration,
 		int $order_id,
 		Money $btc_total
 	): Bitcoin_Address {
 		$this->bitcoin_address_repository->assign_to_order(
 			address: $address,
+			integration: $integration,
 			order_id: $order_id,
 			btc_total: $btc_total,
 		);
