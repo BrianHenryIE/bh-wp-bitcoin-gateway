@@ -36,7 +36,7 @@ class API_WooCommerce_WPUnit_Test extends WPTestCase {
 		?Payment_Service $payment_service = null,
 		?Background_Jobs_Scheduler_Interface $background_jobs_scheduler = null,
 		?LoggerInterface $logger = null,
-	): API_WooCommerce_Interface {
+	): API_WooCommerce {
 		return new API_WooCommerce(
 			api: $api ?? $this->makeEmpty( API_Interface::class ),
 			wallet_service: $wallet_service ?? $this->makeEmpty( Bitcoin_Wallet_Service::class ),
