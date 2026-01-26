@@ -421,7 +421,7 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 	 *
 	 * @covers ::get_address_confirmed_balance
 	 */
-	public function test_get_address_confirmed_balance_with_confirmed_transactions(): void {
+	public function test_get_address_confirmed_received_with_confirmed_transactions(): void {
 		$sut = $this->get_sut();
 
 		$raw_address            = 'bc1qtest123';
@@ -458,7 +458,7 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 	 *
 	 * @covers ::get_address_confirmed_balance
 	 */
-	public function test_get_address_confirmed_balance_with_exactly_required_confirmations(): void {
+	public function test_get_address_confirmed_received_with_exactly_required_confirmations(): void {
 		$sut = $this->get_sut();
 
 		$raw_address            = 'bc1qtest123';
@@ -493,7 +493,7 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 	 *
 	 * @covers ::get_address_confirmed_balance
 	 */
-	public function test_get_address_confirmed_balance_with_insufficient_confirmations(): void {
+	public function test_get_address_confirmed_received_with_insufficient_confirmations(): void {
 		$sut = $this->get_sut();
 
 		$raw_address            = 'bc1qtest123';
@@ -528,7 +528,7 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 	 *
 	 * @covers ::get_address_confirmed_balance
 	 */
-	public function test_get_address_confirmed_balance_with_empty_transactions(): void {
+	public function test_get_address_confirmed_received_with_empty_transactions(): void {
 		$sut = $this->get_sut();
 
 		$raw_address            = 'bc1qtest123';
@@ -547,7 +547,7 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 	 *
 	 * @covers ::get_address_confirmed_balance
 	 */
-	public function test_get_address_confirmed_balance_with_mixed_confirmations(): void {
+	public function test_get_address_confirmed_received_with_mixed_confirmations(): void {
 		$sut = $this->get_sut();
 
 		$raw_address            = 'bc1qtest123';
@@ -613,7 +613,7 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 	 *
 	 * @covers ::get_address_confirmed_balance
 	 */
-	public function test_get_address_confirmed_balance_filters_by_address(): void {
+	public function test_get_address_confirmed_received_filters_by_address(): void {
 		$sut = $this->get_sut();
 
 		$raw_address            = 'bc1qtest123';

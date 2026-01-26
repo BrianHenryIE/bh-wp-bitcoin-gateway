@@ -189,7 +189,7 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 	/**
 	 * @covers ::get_amount_received
 	 */
-	public function test_get_balance_unknown(): void {
+	public function test_get_received_unknown(): void {
 		$post_id = wp_insert_post(
 			array(
 				'post_type'   => 'bh-bitcoin-address',
