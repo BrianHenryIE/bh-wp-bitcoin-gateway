@@ -150,7 +150,7 @@ class API implements API_Interface, API_Background_Jobs_Interface {
 	 * @param ?array{integration:class-string, gateway_id:string} $gateway_details Gateway id.
 	 * @throws BH_WP_Bitcoin_Gateway_Exception If two wallets for the xpub exist, or if saving fails.
 	 */
-	public function get_wallet_for_master_public_key( string $xpub, ?array $gateway_details = null ): Wallet_Generation_Result {
+	public function get_or_save_wallet_for_master_public_key(string $xpub, ?array $gateway_details = null ): Wallet_Generation_Result {
 		$result = $this->wallet_service->get_or_save_wallet_for_xpub( $xpub, $gateway_details );
 
 		if ( $result->is_new ) {

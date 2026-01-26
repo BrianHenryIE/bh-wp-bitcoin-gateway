@@ -189,7 +189,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 		$xpub_after = $this->get_xpub();
 
 		if ( ! is_null( $xpub_after ) ) {
-			$this->api->get_wallet_for_master_public_key(
+			$this->api->get_or_save_wallet_for_master_public_key(
 				$xpub_after,
 				array(
 					'integration' => WooCommerce_Integration::class,

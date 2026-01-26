@@ -280,7 +280,7 @@ class Addresses_List_Table extends WP_Posts_List_Table {
 	 *
 	 * Most sites will probably only ever use one gateway.
 	 *
-	 * @see API_Interface::get_wallet_for_master_public_key()
+	 * @see API_Interface::get_or_save_wallet_for_master_public_key()
 	 *
 	 * @param WP_Post $item The post this row is being rendered for.
 	 *
