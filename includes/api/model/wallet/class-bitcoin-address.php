@@ -33,6 +33,7 @@ class Bitcoin_Address implements Bitcoin_Address_Interface {
 	 * @param DateTimeInterface      $modified_time When the WP Post was last modified, presumably to check when the address was last checked.
 	 * @param Bitcoin_Address_Status $status The current status of the address.
 	 * @param ?Money                 $target_amount The target amount for payment.
+	 * @param ?string                $integration_id The plugin the order was placed with.
 	 * @param ?int                   $order_id The WooCommerce order ID associated with this address.
 	 * @param array<int,string>|null $tx_ids Transaction IDs as post_id:tx_id.
 	 * @param ?Money                 $received The sum of incoming transactions for the address.
@@ -48,6 +49,7 @@ class Bitcoin_Address implements Bitcoin_Address_Interface {
 		protected DateTimeInterface $modified_time,
 		protected Bitcoin_Address_Status $status = Bitcoin_Address_Status::UNKNOWN,
 		protected ?Money $target_amount = null,
+		protected ?string $integration_id = null,
 		protected ?int $order_id = null,
 		protected ?array $tx_ids = null,
 		protected ?Money $received = null,
@@ -140,5 +142,12 @@ class Bitcoin_Address implements Bitcoin_Address_Interface {
 	 */
 	public function get_modified_time(): DateTimeInterface {
 		return $this->modified_time;
+	}
+
+	/**
+	 * The internal name/id of the integration (WooCommerce...) that the address is assigned to.
+	 */
+	public function get_integration_id(): ?string {
+		return $this->integration_id;
 	}
 }

@@ -49,7 +49,7 @@ readonly class Bitcoin_Address_Query extends WP_Post_Query_Abstract {
 			Bitcoin_Address_WP_Post_Interface::DERIVATION_PATH_SEQUENCE_NUMBER_META_KEY => $this->derivation_path_sequence_index,
 			Bitcoin_Address_WP_Post_Interface::TRANSACTIONS_META_KEY => $this->transactions_post_ids,
 			Bitcoin_Address_WP_Post_Interface::ORDER_ID_META_KEY => $this->associated_order_id,
-			Bitcoin_Address_WP_Post_Interface::INTEGRATION_NAME_META_KEY => $this->integration,
+			Bitcoin_Address_WP_Post_Interface::INTEGRATION_ID_META_KEY => $this->integration_id,
 			Bitcoin_Address_WP_Post_Interface::TARGET_AMOUNT_META_KEY => $this->target_amount,
 		);
 	}
@@ -64,7 +64,7 @@ readonly class Bitcoin_Address_Query extends WP_Post_Query_Abstract {
 	 * @param ?string                 $xpub The public key for the address.
 	 * @param ?int                    $derivation_path_sequence_index This Bitcoin Address is the nth one derived from the Bitcoin_Wallet.
 	 * @param array<int, string>|null $transactions_post_ids post_id:tx_id.
-	 * @param string|class-string     $integration The plugin that is using this address.
+	 * @param string|class-string     $integration_id The plugin that is using this address.
 	 * @param ?int                    $associated_order_id The wp_post ID for the order associated with the address.
 	 * @param ?Money                  $target_amount The target amount of bitcoin to receive for the order the address is associated with. Saved in post_meta as `array{amount:string,currency:string}`.
 	 */
@@ -74,7 +74,7 @@ readonly class Bitcoin_Address_Query extends WP_Post_Query_Abstract {
 		public ?string $xpub = null,
 		public ?int $derivation_path_sequence_index = null,
 		public ?array $transactions_post_ids = null,
-		public ?string $integration = null,
+		public ?string $integration_id = null,
 		public ?int $associated_order_id = null,
 		public ?Money $target_amount = null,
 	) {

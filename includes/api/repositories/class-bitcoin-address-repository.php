@@ -289,13 +289,13 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 	 * @see Bitcoin_Address_Status::ASSIGNED
 	 *
 	 * @param Bitcoin_Address     $address The Bitcoin payment address to link.
-	 * @param string|class-string $integration The plugin that is using this address.
+	 * @param string|class-string $integration_id The plugin that is using this address.
 	 * @param int                 $order_id The post_id (e.g. WooCommerce order id) that transactions to this address represent payment for.
 	 * @param Money               $btc_total The target amount to be paid, after which the order should be updated.
 	 */
 	public function assign_to_order(
 		Bitcoin_Address $address,
-		string $integration,
+		string $integration_id,
 		int $order_id,
 		Money $btc_total,
 	): void {
@@ -303,7 +303,7 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 			model: $address,
 			query: new Bitcoin_Address_Query(
 				status: Bitcoin_Address_Status::ASSIGNED,
-				integration: wp_slash( $integration ),
+				integration_id: wp_slash( $integration_id ),
 				associated_order_id: $order_id,
 				target_amount: $btc_total,
 			)
