@@ -305,13 +305,11 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 		// Filter to transactions that have just been seen, so we can record them in notes.
 		$new_order_transactions = $check_address_for_payment_result->get_new_transactions();
 
-		$transaction_formatter = new Transaction_Formatter();
-
 		// Add a note saying "one new transactions seen, unconfirmed total =, confirmed total = ...".
 		$note = '';
 		if ( $check_address_for_payment_result->is_updated() ) {
 			$updated = true;
-			$note   .= $transaction_formatter->get_order_note( $check_address_for_payment_result->get_new_transactions() );
+			$note   .= Transaction_Formatter::get_order_note( $check_address_for_payment_result->get_new_transactions() );
 		}
 
 		if ( ! empty( $note ) ) {
