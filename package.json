@@ -56,7 +56,7 @@
 		"@wordpress/block-editor": "^15.2.0",
 		"@wordpress/e2e-test-utils": "^11.28.0",
 		"@wordpress/e2e-test-utils-playwright": "^1.28.0",
-		"@wordpress/env": "^10.28.0",
+		"@wordpress/env": "^10.38.0",
 		"@wordpress/scripts": "^30.21.0",
 		"@wordpress/stylelint-config": "^23.21.0",
 		"dotenv": "^17.2.1",
