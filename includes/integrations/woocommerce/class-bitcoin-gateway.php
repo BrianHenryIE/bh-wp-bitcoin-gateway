@@ -100,6 +100,8 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 	/**
 	 * Return the description for admin screens.
 	 *
+	 * @see parent::get_method_description()
+	 *
 	 * @return string
 	 */
 	public function get_method_description() {
@@ -108,6 +110,8 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 		$method_description .= PHP_EOL;
 		$method_description .= PHP_EOL;
 		$method_description .= $this->get_formatted_exchange_rate_string();
+		$method_description .= ' • ';
+		$method_description .= $this->get_view_scheduled_actions_link();
 
 		if ( $this->is_site_using_full_site_editing() ) {
 			$method_description .= PHP_EOL;
@@ -116,7 +120,29 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 		}
 
 		$filtered = apply_filters( 'woocommerce_gateway_method_description', $method_description, $this );
+
 		return is_string( $filtered ) ? $filtered : $method_description;
+	}
+
+	/**
+	 * Build a link to Action Scheduler's view, filtered to this plugin's jobs.
+	 */
+	protected function get_view_scheduled_actions_link(): string {
+		return sprintf(
+			'<a href="%s">View Scheduled Actions</a>',
+			add_query_arg(
+				array(
+					'page'    => 'action-scheduler',
+					'status'  => 'pending',
+					'orderby' => 'schedule',
+					'order'   => 'desc',
+					's'       => 'bh_wp_bitcoin_gateway',
+				),
+				admin_url(
+					'tools.php'
+				)
+			)
+		);
 	}
 
 	/**

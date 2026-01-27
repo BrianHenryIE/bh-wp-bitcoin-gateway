@@ -239,4 +239,42 @@ class Bitcoin_Gateway_WPUnit_Test extends WPTestCase {
 		$this->assertNotNull( $exception );
 		$this->assertEquals( 'Unable to find Bitcoin address to send to. Please choose another payment method.', $exception->getMessage() );
 	}
+
+	/**
+	 * Test that the method description includes a link to view scheduled actions.
+	 * The get_view_scheduled_actions_link() method is protected, so we test it indirectly
+	 * through get_method_description() which calls it.
+	 *
+	 * @covers ::get_view_scheduled_actions_link
+	 * @covers ::get_method_description
+	 */
+	public function test_get_view_scheduled_actions_link(): void {
+		$api = $this->makeEmpty(
+			API_Interface::class,
+			array(
+				'get_exchange_rate' => Expected::once(
+					function ( Currency $currency ) {
+						return Money::of( '100000', $currency );
+					}
+				),
+			)
+		);
+
+		$sut    = $this->get_sut( api: $api );
+		$result = $sut->get_method_description();
+
+		// Verify the link to Action Scheduler is present.
+		$this->assertStringContainsString( '<a href=', $result );
+		$this->assertStringContainsString( 'View Scheduled Actions', $result );
+
+		// Verify it links to the tools.php admin page.
+		$this->assertStringContainsString( 'tools.php', $result );
+
+		// Verify the link contains the correct query parameters.
+		$this->assertStringContainsString( 'page=action-scheduler', $result );
+		$this->assertStringContainsString( 'status=pending', $result );
+		$this->assertStringContainsString( 'orderby=schedule', $result );
+		$this->assertStringContainsString( 'order=desc', $result );
+		$this->assertStringContainsString( 's=bh_wp_bitcoin_gateway', $result );
+	}
 }
