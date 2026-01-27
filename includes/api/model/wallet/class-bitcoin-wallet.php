@@ -7,8 +7,6 @@
  *
  * Custom post type in WordPress, keyed with GUID of the wallet.
  *
- * TODO: Update the wp_post last modified time when updating metadata.
- *
  * @package    brianhenryie/bh-wp-bitcoin-gateway
  */
 

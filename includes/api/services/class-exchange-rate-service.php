@@ -233,7 +233,7 @@ class Exchange_Rate_Service implements LoggerAwareInterface {
 			return null;
 		}
 
-		// TODO: after testing, see what -> are unnecessary.
+		// TODO: after testing, see what -> are unnecessary. Inject JSON Mapper to class.
 		$property_mapper = new PropertyMapper( $factory_registry );
 
 		try {

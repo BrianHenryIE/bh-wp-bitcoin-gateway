@@ -4,6 +4,8 @@
  *
  * TODO: Update the wp_post last modified time when updating metadata.
  *
+ * @see wp_update_post()
+ *
  * @package    brianhenryie/bh-wp-bitcoin-gateway
  */
 

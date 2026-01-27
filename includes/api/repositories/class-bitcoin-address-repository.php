@@ -41,9 +41,6 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 	/**
 	 * Given a bitcoin public key, get the WordPress post_id it is saved under.
 	 *
-	 * TODO: If a wallet post is deleted, but its addresses are not, and it is re-saved with
-	 * a new post_id, the orphaned addresses will behave unpredictably.
-	 *
 	 * @param string $address Xpub|ypub|zpub.
 	 *
 	 * @return int|null The post id if it exists, null if it is not found.
@@ -163,11 +160,6 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 	 * @return Bitcoin_Address[]
 	 */
 	public function get_unknown_bitcoin_addresses(): array {
-		// 'orderby'        => 'ID',
-		// 'order'          => 'ASC',
-		// TODO: Should this query use ID.asc as a way to order?
-		// TODO: updated_at is probably correct.
-
 		return $this->get_addresses_query(
 			new Bitcoin_Address_Query(
 				status: Bitcoin_Address_Status::UNKNOWN,
@@ -248,8 +240,6 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 			xpub: $address,
 			derivation_path_sequence_index: $derivation_path_sequence_index,
 		);
-
-		// TODO: Validate address, throw exception.
 
 		/** @var WpUpdatePostArray $args */
 		$args = $query->to_query_array();

@@ -52,7 +52,7 @@ interface API_Background_Jobs_Interface {
 	 *
 	 * TODO: change the return type to an object that communicates did we run into rate limiting or other handled exceptions.
 	 *
-	 * @param int $required_count How many unused addresses to make available. TODO This runs hourly and on checkout load and on place-order, so there should always be addresses available without slowing down customers before placing their order.
+	 * @param int $required_count How many unused addresses to make available.
 	 *
 	 * @return array<string, Ensure_Unused_Addresses_Result> array<wallet_xpub: Ensure_Unused_Addresses_Result>
 	 */

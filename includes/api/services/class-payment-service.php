@@ -131,7 +131,8 @@ class Payment_Service implements LoggerAwareInterface {
 	/**
 	 * Remotely check/fetch the latest data for an address.
 	 *
-	 * TODO: return an object show the initial and final state in a way the changes made can be logged. E.g. was it ever checked before?
+	 * TODO: use post_status to indicate mempool.
+	 * TODO: use payment address wp_comments table to log every time it is checked, which API was used.
 	 *
 	 * @param Bitcoin_Address $address The Bitcoin address to query the blockchain API for, retrieving all transactions where this address received funds.
 	 *
@@ -241,7 +242,7 @@ class Payment_Service implements LoggerAwareInterface {
 	 *
 	 * The Bitcoin_Address's wp_post has a meta key that holds an array of post ids for saved transactions.
 	 *
-	 * TODO: Add Bitcoin_Transaction_Repository::get_by_post_ids() function.
+	 * @see Bitcoin_Transaction_Repository::get_by_wp_post_id()
 	 *
 	 * @see Addresses_List_Table::column_transactions_count() When displaying all addresses.
 	 * @used-by API::get_saved_transactions() When displaying all addresses.
