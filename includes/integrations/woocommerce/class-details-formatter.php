@@ -9,21 +9,21 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\UnknownCurrencyException;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
-use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
 use NumberFormatter;
 
 /**
- * Parse the values of WC_Bitcoin_Order_Interface into HTML and strings for output.
+ * Parse the values of WC_Bitcoin_Order into HTML and strings for output.
  */
 class Details_Formatter {
 
 	/**
 	 * Constructor
 	 *
-	 * @param WC_Bitcoin_Order_Interface $order The order we are about to print.
+	 * @param WC_Bitcoin_Order $bitcoin_order The order we are about to print.
 	 */
 	public function __construct(
-		protected WC_Bitcoin_Order_Interface $order
+		protected WC_Bitcoin_Order $bitcoin_order,
 	) {
 	}
 

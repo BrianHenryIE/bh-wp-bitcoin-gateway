@@ -25,7 +25,7 @@ use WC_Payment_Gateways;
 /**
  * @mixin WC_Order
  */
-class WC_Bitcoin_Order implements WC_Bitcoin_Order_Interface {
+class WC_Bitcoin_Order implements LoggerAwareInterface {
 	use LoggerAwareTrait;
 
 	/**

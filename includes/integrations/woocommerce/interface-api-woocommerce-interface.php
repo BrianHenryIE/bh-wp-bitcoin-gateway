@@ -15,7 +15,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Math\BigNumber;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
-use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
 use WC_Order;
 
 interface API_WooCommerce_Interface {
@@ -61,9 +61,9 @@ interface API_WooCommerce_Interface {
 	 *
 	 * @param WC_Order $wc_order   WooCommerce order object.
 	 *
-	 * @return WC_Bitcoin_Order_Interface
+	 * @return WC_Bitcoin_Order
 	 */
-	public function get_order_details( WC_Order $wc_order ): WC_Bitcoin_Order_Interface;
+	public function get_order_details( WC_Order $wc_order ): WC_Bitcoin_Order;
 
 	/**
 	 * Synchronously remotely query the blockchain for new payments.

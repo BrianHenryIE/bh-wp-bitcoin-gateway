@@ -15,7 +15,6 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\MoneyMismatchException;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
-use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order_Interface;
 use DateInterval;
 use DateMalformedStringException;
 use DateTimeImmutable;
@@ -245,10 +244,10 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 	 *
 	 * @param WC_Order $wc_order The WooCommerce order to check.
 	 *
-	 * @return WC_Bitcoin_Order_Interface
+	 * @return WC_Bitcoin_Order
 	 * @throws BH_WP_Bitcoin_Gateway_Exception When the order has no Bitcoin address or blockchain API queries fail during refresh.
 	 */
-	public function get_order_details( WC_Order $wc_order ): WC_Bitcoin_Order_Interface {
+	public function get_order_details( WC_Order $wc_order ): WC_Bitcoin_Order {
 
 		/** @var ?string $assigned_payment_address */
 		$assigned_payment_address = $wc_order->get_meta( Order::BITCOIN_ADDRESS_META_KEY );
