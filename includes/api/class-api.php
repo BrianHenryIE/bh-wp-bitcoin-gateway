@@ -235,6 +235,26 @@ class API implements API_Interface, API_Background_Jobs_Interface {
 		// TODO: check the modified time and assume any that were checked in the past ten minutes are still valid (since no new block has been completed since).
 		$unused_addresses = $this->wallet_service->get_unused_bitcoin_addresses();
 
+		/**
+		 * @param array<int, array<Bitcoin_Address>> $unused_addresses_by_wallet
+		 * @param int $required_count
+		 */
+		$all_wallets_have_enough_addresses_fn = function ( array $unused_addresses_by_wallet, int $required_count ): bool {
+			return array_reduce(
+				$unused_addresses_by_wallet,
+				/**
+				 * This is definitely safe to ignore.
+				 * "Parameter #2 $callback of function array_reduce expects callable(bool, mixed): bool, Closure(bool, array): bool given".
+				 *
+				 * @phpstan-ignore argument.type
+				 */
+				function ( bool $carry, array $addresses ) use ( $required_count ): bool {
+					return $carry && count( $addresses ) >= $required_count;
+				},
+				true
+			);
+		};
+
 		foreach ( $unused_addresses as $address ) {
 			$address_wallet_id = $address->get_wallet_parent_post_id();
 			if ( count( $actual_unused_addresses_by_wallet[ $address_wallet_id ] ) >= $required_count ) {
@@ -266,26 +286,6 @@ class API implements API_Interface, API_Background_Jobs_Interface {
 				// TODO: log more.
 			}
 		}
-
-		/**
-		 * @param array<int, array<Bitcoin_Address>> $unused_addresses_by_wallet
-		 * @param int $required_count
-		 */
-		$all_wallets_have_enough_addresses_fn = function ( array $unused_addresses_by_wallet, int $required_count ): bool {
-			return array_reduce(
-				$unused_addresses_by_wallet,
-				/**
-				 * This is definitely safe to ignore.
-				 * "Parameter #2 $callback of function array_reduce expects callable(bool, mixed): bool, Closure(bool, array): bool given".
-				 *
-				 * @phpstan-ignore argument.type
-				 */
-				function ( bool $carry, array $addresses ) use ( $required_count ): bool {
-					return $carry && count( $addresses ) >= $required_count;
-				},
-				true
-			);
-		};
 
 		// This could loop hundreds of time, e.g. you add a wallet that has been in use elsewhere and it has
 		// to check each used address until it finds an unused one.
