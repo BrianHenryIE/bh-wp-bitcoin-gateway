@@ -54,13 +54,6 @@ interface WC_Bitcoin_Order_Interface {
 	public function set_amount_received( Money $updated_confirmed_value ): void;
 
 	/**
-	 * Set the timestamp when the address was last checked for payments.
-	 *
-	 * @param DateTimeInterface $last_checked_time The timestamp of last check.
-	 */
-	public function set_last_checked_time( DateTimeInterface $last_checked_time ): void;
-
-	/**
 	 * Get the timestamp when the address was last checked for payments.
 	 *
 	 * @return ?DateTimeInterface The last checked time or null if never checked.

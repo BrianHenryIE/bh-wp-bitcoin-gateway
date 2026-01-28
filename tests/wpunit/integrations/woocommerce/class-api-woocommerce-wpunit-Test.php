@@ -424,7 +424,6 @@ class API_WooCommerce_WPUnit_Test extends WPTestCase {
 			),
 			true
 		);
-		$order->add_meta_data( Order::LAST_CHECKED_META_KEY, new \DateTimeImmutable( '2024-01-15T14:30:00+00:00' ), true );
 		$order->save();
 
 		$result = $sut->get_order_details( $order, true );
@@ -484,7 +483,6 @@ class API_WooCommerce_WPUnit_Test extends WPTestCase {
 			),
 			true
 		);
-		$order->add_meta_data( Order::LAST_CHECKED_META_KEY, new \DateTimeImmutable( '2024-01-15T14:30:00+00:00' ), true );
 		$order->save();
 
 		$result = $sut->get_order_details( $order, false );

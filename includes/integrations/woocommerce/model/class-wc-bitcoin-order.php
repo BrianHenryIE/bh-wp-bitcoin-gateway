@@ -129,21 +129,7 @@ class WC_Bitcoin_Order implements WC_Bitcoin_Order_Interface {
 		if ( is_null( $this->payment_address->get_tx_ids() ) ) {
 			return null;
 		}
-		/** @var DateTimeInterface|mixed $last_checked_time */
-		$last_checked_time = $this->wc_order->get_meta( Order::LAST_CHECKED_META_KEY );
-		return $last_checked_time instanceof DateTimeInterface ? $last_checked_time : null;
-	}
-
-	/**
-	 * Set the timestamp when the Bitcoin address was last checked for payments.
-	 *
-	 * @param DateTimeInterface $last_checked_time The timestamp of the last check.
-	 */
-	public function set_last_checked_time( DateTimeInterface $last_checked_time ): void {
-		// @phpstan-ignore-next-line This works fine.
-		$this->wc_order->add_meta_data( Order::LAST_CHECKED_META_KEY, $last_checked_time, true );
-		// TODO: Save?
-		$this->last_checked_time = $last_checked_time;
+		return $this->payment_address->get_modified_time();
 	}
 
 	/**

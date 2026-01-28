@@ -35,7 +35,6 @@ class Bitcoin_Order_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase 
 		$order->add_meta_data( Order::BITCOIN_ADDRESS_META_KEY, 'xpub-address', true );
 		$order->add_meta_data( Order::EXCHANGE_RATE_AT_TIME_OF_PURCHASE_META_KEY, 1234, true );
 		$order->add_meta_data( Order::ORDER_TOTAL_BITCOIN_AT_TIME_OF_PURCHASE_META_KEY, 0.01, true );
-		$order->add_meta_data( Order::LAST_CHECKED_META_KEY, new \DateTime(), true );
 		$order_id = $order->save();
 
 		$sut = $this->get_sut( $order );
@@ -59,7 +58,6 @@ class Bitcoin_Order_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase 
 		$order->add_meta_data( Order::BITCOIN_ADDRESS_META_KEY, 'xpub-address', true );
 		$order->add_meta_data( Order::EXCHANGE_RATE_AT_TIME_OF_PURCHASE_META_KEY, 1234, true );
 		$order->add_meta_data( Order::ORDER_TOTAL_BITCOIN_AT_TIME_OF_PURCHASE_META_KEY, 0.01, true );
-		$order->add_meta_data( Order::LAST_CHECKED_META_KEY, new \DateTime(), true );
 		$order_id = $order->save();
 
 		$sut = $this->get_sut( $order, $bitcoin_address_mock );
@@ -78,7 +76,6 @@ class Bitcoin_Order_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase 
 		$order->add_meta_data( Order::BITCOIN_ADDRESS_META_KEY, 'xpub-address', true );
 		$order->add_meta_data( Order::EXCHANGE_RATE_AT_TIME_OF_PURCHASE_META_KEY, 1234, true );
 		$order->add_meta_data( Order::ORDER_TOTAL_BITCOIN_AT_TIME_OF_PURCHASE_META_KEY, 0.01, true );
-		$order->add_meta_data( Order::LAST_CHECKED_META_KEY, new \DateTime(), true );
 		$order_id = $order->save();
 
 		add_filter( 'woocommerce_order_is_paid', '__return_true' );
@@ -91,35 +88,6 @@ class Bitcoin_Order_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase 
 	}
 
 	/**
-	 * @covers ::set_last_checked_time
-	 */
-	public function test_set_last_checked_time(): void {
-
-		$order = new WC_Order();
-		$order->set_payment_method( 'bitcoin' );
-		$order->add_meta_data( Order::BITCOIN_ADDRESS_META_KEY, 'xpub-address', true );
-		$order->add_meta_data( Order::EXCHANGE_RATE_AT_TIME_OF_PURCHASE_META_KEY, 1234, true );
-		$order->add_meta_data( Order::ORDER_TOTAL_BITCOIN_AT_TIME_OF_PURCHASE_META_KEY, 0.01, true );
-		$order->add_meta_data( Order::LAST_CHECKED_META_KEY, new DateTimeImmutable(), true );
-		$order_id = $order->save();
-
-		$sut = $this->get_sut( $order );
-
-		// 946684800 is Y2K.
-		$last_checked = DateTimeImmutable::createFromFormat( 'U', '946684800' );
-
-		$sut->set_last_checked_time( $last_checked );
-		$sut->save();
-
-		/** @var WC_Order $order */
-		$order = wc_get_order( $order_id );
-		/** @var \DateTimeInterface $result */
-		$result = $order->get_meta( Order::LAST_CHECKED_META_KEY, true );
-
-		self::assertEquals( 946684800, $result->format( 'U' ) );
-	}
-
-	/**
 	 * No covers because it uses a __call @method.
 	 */
 	public function test_get_status(): void {
@@ -129,7 +97,6 @@ class Bitcoin_Order_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase 
 		$order->add_meta_data( Order::BITCOIN_ADDRESS_META_KEY, 'xpub-address', true );
 		$order->add_meta_data( Order::EXCHANGE_RATE_AT_TIME_OF_PURCHASE_META_KEY, 1234, true );
 		$order->add_meta_data( Order::ORDER_TOTAL_BITCOIN_AT_TIME_OF_PURCHASE_META_KEY, 0.01, true );
-		$order->add_meta_data( Order::LAST_CHECKED_META_KEY, new \DateTime(), true );
 		$order_id = $order->save();
 
 		$sut = $this->get_sut( $order );

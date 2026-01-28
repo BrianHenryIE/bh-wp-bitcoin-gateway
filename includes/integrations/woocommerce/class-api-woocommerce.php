@@ -353,7 +353,6 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 		if ( $updated && ! is_null( $confirmed_value_current ) ) {
 			$bitcoin_order->set_amount_received( $confirmed_value_current );
 		}
-		$bitcoin_order->set_last_checked_time( $time_now );
 
 		$bitcoin_order->save();
 
