@@ -332,7 +332,7 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 			throw new BH_WP_Bitcoin_Gateway_Exception( 'Invalid amount_received: ' . $check_address_for_payment_service_result->confirmed_received->__toString() . ' is negative or zero.' );
 		}
 
-		$this->order_meta_helper->set_amount_received( $wc_order, $check_address_for_payment_service_result->confirmed_received );
+		$this->order_meta_helper->set_confirmed_amount_received( $wc_order, $check_address_for_payment_service_result->confirmed_received );
 
 		/**
 		 * We know there must be at least one transaction if we've summed them to the required amount!

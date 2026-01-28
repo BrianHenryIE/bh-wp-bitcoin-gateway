@@ -150,7 +150,7 @@ class WC_Order_Meta_Helper implements LoggerAwareInterface {
 	 * @param WC_Order $wc_order The order to save the meta on.
 	 * @param Money    $updated_confirmed_value The confirmed amount received in Bitcoin.
 	 */
-	public function set_amount_received( WC_Order $wc_order, Money $updated_confirmed_value ): void {
+	public function set_confirmed_amount_received(WC_Order $wc_order, Money $updated_confirmed_value ): void {
 		$updated_confirmed_value_json_string = wp_json_encode( $updated_confirmed_value->jsonSerialize() );
 		$wc_order->add_meta_data(
 			self::BITCOIN_AMOUNT_CONFIRMED_RECEIVED_META_KEY,
@@ -165,7 +165,7 @@ class WC_Order_Meta_Helper implements LoggerAwareInterface {
 	 *
 	 * @param WC_Order $wc_order The WooCommerce order.
 	 */
-	public function get_amount_received( WC_Order $wc_order ): ?Money {
+	public function get_confirmed_amount_received(WC_Order $wc_order ): ?Money {
 		$confirmed_amount_meta_string = $wc_order->get_meta( self::BITCOIN_AMOUNT_CONFIRMED_RECEIVED_META_KEY );
 		if ( ! is_string( $confirmed_amount_meta_string ) ) {
 			return null;
