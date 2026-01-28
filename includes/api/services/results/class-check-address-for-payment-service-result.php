@@ -44,6 +44,6 @@ class Check_Address_For_Payment_Service_Result extends Update_Address_Transactio
 	 * If the `target_amount` is `null` (addresses that have not been assigned to orders), this will return false.
 	 */
 	public function is_paid(): bool {
-		return $this->queried_address->get_target_amount()->isLessThanOrEqualTo( $this->confirmed_received );
+		return (bool) $this->queried_address->get_target_amount()?->isLessThanOrEqualTo( $this->confirmed_received );
 	}
 }
