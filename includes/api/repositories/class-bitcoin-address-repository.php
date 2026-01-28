@@ -199,12 +199,15 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 		Bitcoin_Address_Query $query,
 		?WP_Posts_Query_Order $order = null,
 	): array {
+
+		$effective_order = $order ?? new WP_Posts_Query_Order(
+			order_by: 'ID',
+			order_direction: 'ASC',
+		);
+
 		/** @var WP_Post[] $posts */
 		$posts = get_posts(
-			$query->to_query_array() + ( $order ?? new WP_Posts_Query_Order(
-				order_by: 'ID',
-				order_direction: 'ASC',
-			) )->to_query_array()
+			$query->to_query_array() + $effective_order->to_query_array()
 		);
 
 		return array_map(
