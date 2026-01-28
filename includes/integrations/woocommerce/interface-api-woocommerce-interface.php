@@ -59,11 +59,21 @@ interface API_WooCommerce_Interface {
 	 * Return the current Bitcoin details for an order, optionally refresh.
 	 *
 	 * @param WC_Order $wc_order   WooCommerce order object.
-	 * @param bool     $refresh Query remote APIs to refresh the details, or just return cached data.
 	 *
 	 * @return WC_Bitcoin_Order_Interface
 	 */
-	public function get_order_details( WC_Order $wc_order, bool $refresh = true ): WC_Bitcoin_Order_Interface;
+	public function get_order_details( WC_Order $wc_order ): WC_Bitcoin_Order_Interface;
+
+	/**
+	 * Synchronously remotely query the blockchain for new payments.
+	 *
+	 * This should only be run on user interaction. There will be a cron job checking it regularly anyway. This is
+	 * almost like a pedestrian crossing button, or an elevator button. It might make a tiny difference but the
+	 * system should already be managing it.
+	 *
+	 * @param WC_Order $order The order, presumably with Bitcoin chosen at checkout, to look for payments for.
+	 */
+	public function check_order_for_payment( WC_Order $order ): void;
 
 	/**
 	 * Determine do we have any fresh address available for this gateway.
@@ -93,5 +103,5 @@ interface API_WooCommerce_Interface {
 	 * @return array<string, string|null|Money|BigNumber|array<Bitcoin_Transaction>>
 	 * @throws BH_WP_Bitcoin_Gateway_Exception When the order has no Bitcoin address.
 	 */
-	public function get_formatted_order_details( WC_Order $order, bool $refresh = true ): array;
+	public function get_formatted_order_details( WC_Order $order ): array;
 }

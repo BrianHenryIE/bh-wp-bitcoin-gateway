@@ -364,15 +364,15 @@ class API_WooCommerce_WPUnit_Test extends WPTestCase {
 
 	/**
 	 * @see API_WooCommerce::get_order_details
-	 * @see API_WooCommerce::refresh_order
+	 * @see API_WooCommerce::check_order_for_payment()
+	 * @see API_WooCommerce_Interface::check_order_for_payment()
 	 */
 	public function test_get_order_details_no_transactions(): void {
 
 		$address = $this->make(
 			Bitcoin_Address::class,
 			array(
-				'get_tx_ids'          => Expected::atLeastOnce( array() ),
-				'get_amount_received' => Expected::exactly( 1, Money::of( 0.01, 'BTC' ) ),
+				'get_tx_ids' => Expected::atLeastOnce( array() ),
 			)
 		);
 
@@ -383,23 +383,7 @@ class API_WooCommerce_WPUnit_Test extends WPTestCase {
 			)
 		);
 
-		$check_address_for_payment_service_result = new Check_Address_For_Payment_Service_Result(
-			update_address_transactions_result: new Update_Address_Transactions_Result(
-				queried_address: $address,
-				known_tx_ids_before: array(),
-				all_transactions: array( $this->makeEmpty( Transaction_Interface::class ) ),
-			),
-			blockchain_height: 12345,
-			required_confirmations: 3,
-			total_received: Money::of( 0.02, 'BTC' ),
-		);
-
-		$payment_service_mock = $this->make(
-			Payment_Service::class,
-			array(
-				'get_saved_transactions' => Expected::once( array() ),
-			)
-		);
+		$payment_service_mock = $this->make( Payment_Service::class );
 
 		$sut = $this->get_sut(
 			wallet_service: $bitcoin_wallet_service,
@@ -426,70 +410,8 @@ class API_WooCommerce_WPUnit_Test extends WPTestCase {
 		);
 		$order->save();
 
-		$result = $sut->get_order_details( $order, true );
+		$result = $sut->get_order_details( $order );
 
 		$this->assertEmpty( $result->get_address()->get_tx_ids() );
-	}
-
-	/**
-	 * @see API_WooCommerce::get_order_details
-	 * @see API_WooCommerce::refresh_order
-	 * @see API_WooCommerce::update_address_transactions
-	 */
-	public function test_get_order_details_no_refresh(): void {
-
-		$address = $this->make(
-			Bitcoin_Address::class,
-			array(
-				'get_tx_ids' => Expected::exactly( 2, array() ),
-			)
-		);
-
-		$bitcoin_wallet_service = $this->makeEmpty(
-			Bitcoin_Wallet_Service::class,
-			array(
-				'get_saved_address_by_bitcoin_payment_address' => Expected::once( $address ), // param: `xpub1234`.
-			)
-		);
-
-		$payment_service_mock = $this->make(
-			Payment_Service::class,
-			array(
-				'get_saved_transactions'    => Expected::once( array() ),
-				'check_address_for_payment' => Expected::never(),
-			)
-		);
-
-		$sut = $this->get_sut(
-			wallet_service: $bitcoin_wallet_service,
-			payment_service: $payment_service_mock
-		);
-
-		$order = new WC_Order();
-		$order->add_meta_data( Order::BITCOIN_ADDRESS_META_KEY, 'xpub1234', true );
-		$order->add_meta_data(
-			Order::ORDER_TOTAL_BITCOIN_AT_TIME_OF_PURCHASE_META_KEY,
-			array(
-				'amount'   => '0.00123',
-				'currency' => 'BTC',
-			),
-			true
-		);
-		$order->add_meta_data(
-			Order::EXCHANGE_RATE_AT_TIME_OF_PURCHASE_META_KEY,
-			array(
-				'amount'   => '90000',
-				'currency' => 'USD',
-			),
-			true
-		);
-		$order->save();
-
-		$result = $sut->get_order_details( $order, false );
-
-		$this->assertEquals( Money::of( '0.00123', 'BTC' ), $result->get_btc_total_price() );
-		$this->assertEquals( Money::of( '90000', 'USD' ), $result->get_btc_exchange_rate() );
-		$this->assertSame( $address, $result->get_address() );
-		$this->assertEquals( '2024-01-15 14:30:00', $result->get_last_checked_time()?->format( 'Y-m-d H:i:s' ) );
 	}
 }

@@ -62,7 +62,8 @@ class AJAX {
 
 		$this->is_user_authorized( $order );
 
-		$result = $this->api->get_formatted_order_details( $order, true );
+		$this->api->check_order_for_payment( $order );
+		$result = $this->api->get_formatted_order_details( $order );
 
 		// These are the only keys used by the JavaScript.
 		$allowed_keys = array(

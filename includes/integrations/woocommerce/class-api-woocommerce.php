@@ -244,12 +244,11 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 	 * `array{btc_address:string, bitcoin_total:Money, btc_price_at_at_order_time:string, transactions:array<string, TransactionArray>, btc_exchange_rate:string, last_checked_time:DateTimeInterface, btc_amount_received:string, order_status_before:string}`
 	 *
 	 * @param WC_Order $wc_order The WooCommerce order to check.
-	 * @param bool     $refresh Should the result be returned from cache or refreshed from remote APIs.
 	 *
 	 * @return WC_Bitcoin_Order_Interface
 	 * @throws BH_WP_Bitcoin_Gateway_Exception When the order has no Bitcoin address or blockchain API queries fail during refresh.
 	 */
-	public function get_order_details( WC_Order $wc_order, bool $refresh = true ): WC_Bitcoin_Order_Interface {
+	public function get_order_details( WC_Order $wc_order ): WC_Bitcoin_Order_Interface {
 
 		/** @var ?string $assigned_payment_address */
 		$assigned_payment_address = $wc_order->get_meta( Order::BITCOIN_ADDRESS_META_KEY );
@@ -275,9 +274,7 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 			logger: $this->logger
 		);
 
-		return $refresh
-			? $this->refresh_order( $bitcoin_order )
-			: $bitcoin_order;
+		return $bitcoin_order;
 	}
 
 	/**
@@ -285,17 +282,19 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 	 *
 	 * TODO: mempool.
 	 *
-	 * @param WC_Bitcoin_Order_Interface $bitcoin_order The WC_Order order to refresh.
+	 * @param WC_Order $order The WC_Order order to refresh.
 	 *
 	 * @throws BH_WP_Bitcoin_Gateway_Exception When blockchain API queries fail or transaction data cannot be updated.
 	 * @throws MoneyMismatchException If somehow we attempt to perform calculations between two different currencies.
 	 * @throws DateMalformedStringException If the saved transaction data has been modified in the db and cannot be deserialized.
 	 */
-	protected function refresh_order( WC_Bitcoin_Order_Interface $bitcoin_order ): WC_Bitcoin_Order_Interface {
+	public function check_order_for_payment( WC_Order $order ): void {
 
 		$updated = false;
 
 		$time_now = new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) );
+
+		$bitcoin_order = $this->get_order_details( $order );
 
 		$bitcoin_address         = $bitcoin_order->get_address();
 		$confirmed_value_current = $bitcoin_address->get_amount_received();
@@ -377,7 +376,6 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 	 * * objects the values are from
 	 *
 	 * @param WC_Order $order The WooCommerce order object to update.
-	 * @param bool     $refresh Should saved order details be returned or remote APIs be queried.
 	 *
 	 * @uses API_WooCommerce_Interface::get_order_details()
 	 * @see  Details_Formatter
@@ -386,9 +384,9 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 	 *
 	 * @throws BH_WP_Bitcoin_Gateway_Exception When order details cannot be retrieved or formatted due to missing address or API failures.
 	 */
-	public function get_formatted_order_details( WC_Order $order, bool $refresh = true ): array {
+	public function get_formatted_order_details( WC_Order $order ): array {
 
-		$order_details = $this->get_order_details( $order, $refresh );
+		$order_details = $this->get_order_details( $order );
 
 		$formatted = new Details_Formatter( $order_details );
 
