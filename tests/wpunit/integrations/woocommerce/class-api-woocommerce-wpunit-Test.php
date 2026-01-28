@@ -33,6 +33,7 @@ class API_WooCommerce_WPUnit_Test extends WPTestCase {
 		?API_Interface $api = null,
 		?Bitcoin_Wallet_Service $wallet_service = null,
 		?Payment_Service $payment_service = null,
+		?WC_Order_Meta_Helper $order_meta_helper = null,
 		?Background_Jobs_Scheduler_Interface $background_jobs_scheduler = null,
 		?LoggerInterface $logger = null,
 	): API_WooCommerce {
@@ -40,6 +41,7 @@ class API_WooCommerce_WPUnit_Test extends WPTestCase {
 			api: $api ?? $this->makeEmpty( API_Interface::class ),
 			wallet_service: $wallet_service ?? $this->makeEmpty( Bitcoin_Wallet_Service::class ),
 			payment_service: $payment_service ?? $this->makeEmpty( Payment_Service::class ),
+			order_meta_helper: $order_meta_helper ?? $this->make( WC_Order_Meta_Helper::class ),
 			background_jobs_scheduler: $background_jobs_scheduler ?? $this->makeEmpty( Background_Jobs_Scheduler_Interface::class ),
 			logger: $logger ?? new ColorLogger(),
 		);
