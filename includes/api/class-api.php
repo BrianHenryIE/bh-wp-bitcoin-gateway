@@ -34,6 +34,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Wallet_Generation_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Bitcoin_Wallet_Service;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Exchange_Rate_Service;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Payment_Service;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Results\Check_Address_For_Payment_Service_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Currency;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\MoneyMismatchException;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\UnknownCurrencyException;
@@ -463,7 +464,6 @@ class API implements API_Interface, API_Background_Jobs_Interface {
 		return new Check_Assigned_Addresses_For_Transactions_Result( count:0 );
 	}
 
-
 	/**
 	 * Check a Bitcoin address for payment and mark as paid if sufficient funds received.
 	 *
@@ -485,6 +485,12 @@ class API implements API_Interface, API_Background_Jobs_Interface {
 
 		$check_address_for_payment_service_result = $this->payment_service->check_address_for_payment( $payment_address );
 
+		// Always "update" transactions here to record the time it was last checked.
+		$this->wallet_service->update_address_transactions_posts( $payment_address, $check_address_for_payment_service_result->all_transactions );
+
+		// If there are new transactions, fire an action to let integrations know.
+		$this->maybe_fire_new_transactions_seen_action( $payment_address, $check_address_for_payment_service_result );
+
 		$total_received = $check_address_for_payment_service_result->total_received;
 
 		$is_paid = $total_received->isGreaterThanOrEqualTo( $target_amount );
@@ -498,6 +504,40 @@ class API implements API_Interface, API_Background_Jobs_Interface {
 			is_paid: $is_paid,
 			refreshed_address: $this->wallet_service->refresh_address( $payment_address ),
 		);
+	}
+
+	/**
+	 * Fire the `bh_wp_bitcoin_gateway_new_transactions_seen` action, whe appropriate.
+	 *
+	 * @param Bitcoin_Address                          $payment_address The address that was checked by cron / checked by user interaction.
+	 * @param Check_Address_For_Payment_Service_Result $check_address_for_payment_service_result The full details of before/after transactions and the confirmed/unconfirmed values based on the address's requirements.
+	 */
+	protected function maybe_fire_new_transactions_seen_action(
+		Bitcoin_Address $payment_address,
+		Check_Address_For_Payment_Service_Result $check_address_for_payment_service_result
+	): void {
+
+		if ( ! $check_address_for_payment_service_result->is_updated() ) {
+			return;
+		}
+
+		$payment_address = $this->wallet_service->refresh_address( $payment_address );
+		$order_post_id   = $payment_address->get_order_id();
+		$integration_id  = $payment_address->get_integration_id();
+
+		/**
+		 * When new transactions have been seen for a payment address, fire an action so integrations can act,
+		 *
+		 * E.g. to log the txid+time+href to blockchain.com/explorer as notes on a WooCommerce order.
+		 *
+		 * @example {@see Order::new_transactions_seen()}
+		 *
+		 * @param string|class-string|null $integration_id The bh-wp-bitcoin-gateway integration that "owns" the payment address.
+		 * @param ?int $order_post_id The post_id that the integration will know how to manage.
+		 * @param Bitcoin_Address $payment_address The payment address that was assigned to that order.
+		 * @param Check_Address_For_Payment_Service_Result $check_address_for_payment_service_result The prior state + new transaction detail.
+		 */
+		do_action( 'bh_wp_bitcoin_gateway_new_transactions_seen', $integration_id, $order_post_id, $payment_address, $check_address_for_payment_service_result );
 	}
 
 	/**
