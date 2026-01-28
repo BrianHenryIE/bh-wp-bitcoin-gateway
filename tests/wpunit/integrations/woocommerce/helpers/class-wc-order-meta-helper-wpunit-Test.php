@@ -2,12 +2,9 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Helpers;
 
-use BrianHenryIE\ColorLogger\ColorLogger;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\JsonMapper\JsonMapper_Helper;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
-use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Order;
-use Codeception\Stub\Expected;
 use DateTimeImmutable;
 use WC_Order;
 
@@ -62,6 +59,7 @@ class WC_Order_Meta_Helper_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTe
 
 		self::assertEquals( 'xpub1', $result );
 	}
+
 	/**
 	 * @covers ::set_btc_total_price
 	 * @covers ::get_btc_total_price
@@ -78,5 +76,41 @@ class WC_Order_Meta_Helper_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTe
 		$result = $sut->get_btc_total_price( $wc_order );
 
 		$this->assertTrue( Money::of( 2, 'BTC' )->isEqualTo( $result ) );
+	}
+
+	/**
+	 * @covers ::set_exchange_rate
+	 * @covers ::get_exchange_rate
+	 */
+	public function test_exchange_rate(): void {
+
+		$wc_order = new WC_Order();
+		$wc_order->save();
+
+		$sut = $this->get_sut();
+
+		$sut->set_exchange_rate( $wc_order, Money::of( 0.0987, 'BTC' ) );
+
+		$result = $sut->get_exchange_rate( $wc_order );
+
+		$this->assertTrue( Money::of( 0.0987, 'BTC' )->isEqualTo( $result ) );
+	}
+
+	/**
+	 * @covers ::set_confirmed_amount_received
+	 * @covers ::get_confirmed_amount_received
+	 */
+	public function test_confirmed_amount_received(): void {
+
+		$wc_order = new WC_Order();
+		$wc_order->save();
+
+		$sut = $this->get_sut();
+
+		$sut->set_confirmed_amount_received( $wc_order, Money::of( 0.0024, 'BTC' ) );
+
+		$result = $sut->get_confirmed_amount_received( $wc_order );
+
+		$this->assertTrue( Money::of( 0.0024, 'BTC' )->isEqualTo( $result ) );
 	}
 }
