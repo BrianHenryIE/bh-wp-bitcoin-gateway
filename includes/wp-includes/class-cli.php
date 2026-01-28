@@ -9,6 +9,7 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes;
 
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\JsonMapper\JsonMapper_Helper;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories\Bitcoin_Address_Factory;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Address_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address_WP_Post_Interface;
@@ -150,7 +151,7 @@ class CLI extends WP_CLI_Command {
 						$this->logger->error( '`shop_order:{order_id}` is not a Bitcoin order', array( 'order_id' => $order_id ) );
 						return;
 					}
-					$order_meta_helper = new WC_Order_Meta_Helper();
+					$order_meta_helper = new WC_Order_Meta_Helper( new JsonMapper_Helper()->build() );
 					$address           = $order_meta_helper->get_raw_payment_address( $order );
 					if ( empty( $address ) ) {
 						throw new InvalidArgumentException( 'Order ' . $order->get_id() . ' has no Bitcoin address' );
