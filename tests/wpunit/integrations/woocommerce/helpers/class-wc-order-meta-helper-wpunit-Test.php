@@ -3,7 +3,9 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Helpers;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\JsonMapper\JsonMapper_Helper;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
+use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Order;
 use Codeception\Stub\Expected;
 use DateTimeImmutable;
@@ -16,6 +18,7 @@ class WC_Order_Meta_Helper_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTe
 
 	protected function get_sut(): WC_Order_Meta_Helper {
 		return new WC_Order_Meta_Helper(
+			new JsonMapper_Helper()->build()
 		);
 	}
 
@@ -58,5 +61,22 @@ class WC_Order_Meta_Helper_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTe
 		$result = $sut->get_raw_payment_address( $order );
 
 		self::assertEquals( 'xpub1', $result );
+	}
+	/**
+	 * @covers ::set_btc_total_price
+	 * @covers ::get_btc_total_price
+	 */
+	public function test_btc_total_price(): void {
+
+		$wc_order = new WC_Order();
+		$wc_order->save();
+
+		$sut = $this->get_sut();
+
+		$sut->set_btc_total_price( $wc_order, Money::of( 2, 'BTC' ) );
+
+		$result = $sut->get_btc_total_price( $wc_order );
+
+		$this->assertTrue( Money::of( 2, 'BTC' )->isEqualTo( $result ) );
 	}
 }

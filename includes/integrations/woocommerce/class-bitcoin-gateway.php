@@ -8,6 +8,7 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\API;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\JsonMapper\JsonMapper_Helper;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Currency;
@@ -438,7 +439,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 			throw new BH_WP_Bitcoin_Gateway_Exception( 'Unable to find Bitcoin address to send to. Please choose another payment method.' );
 		}
 
-		$order_meta_helper = new WC_Order_Meta_Helper();
+		$order_meta_helper = new WC_Order_Meta_Helper( new JsonMapper_Helper()->build() );
 
 		/**
 		 * Record the exchange rate at the time the order was placed.
