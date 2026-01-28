@@ -147,6 +147,29 @@ class WooCommerce_Integration_Unit_Test extends Unit {
 	}
 
 	/**
+	 * @covers ::define_order_hooks
+	 */
+	public function test_define_order_hooks(): void {
+
+		\WP_Mock::expectActionAdded(
+			'bh_wp_bitcoin_gateway_new_transactions_seen',
+			array( new AnyInstance( Order::class ), 'new_transactions_seen' ),
+			10,
+			4
+		);
+
+		\WP_Mock::expectActionAdded(
+			'bh_wp_bitcoin_gateway_payment_received',
+			array( new AnyInstance( Order::class ), 'payment_received' ),
+			10,
+			4
+		);
+
+		$app = new WooCommerce_Integration( $this->get_container() );
+		$app->register_hooks();
+	}
+
+	/**
 	 * @covers ::define_admin_order_ui_hooks
 	 */
 	public function test_define_admin_order_ui_hooks(): void {

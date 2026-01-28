@@ -205,6 +205,7 @@ class WooCommerce_Integration {
 		$order = $this->container->get( Order::class );
 
 		add_action( 'bh_wp_bitcoin_gateway_new_transactions_seen', array( $order, 'new_transactions_seen' ), 10, 4 );
+		add_action( 'bh_wp_bitcoin_gateway_payment_received', array( $order, 'payment_received' ), 10, 4 );
 	}
 
 	/**
