@@ -13,6 +13,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Bitcoin_Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Results\Check_Address_For_Payment_Service_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Math\BigNumber;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
@@ -95,7 +96,6 @@ interface API_WooCommerce_Interface {
 	 */
 	public function get_fresh_address_for_gateway( Bitcoin_Gateway $gateway ): ?Bitcoin_Address;
 
-
 	/**
 	 * Returns the array from `get_order_details()` with additional keys for printing in HTML/email.
 	 *
@@ -115,4 +115,12 @@ interface API_WooCommerce_Interface {
 	 * @param array<Transaction_Interface> $new_transactions List of transactions.
 	 */
 	public function add_order_note_for_transactions( WC_Order $order, array $new_transactions ): void;
+
+	/**
+	 * Set a WooCommerce order paid with the data from the Payment_Service.
+	 *
+	 * @param WC_Order                                 $wc_order The order to mark paid (wc-completed).
+	 * @param Check_Address_For_Payment_Service_Result $check_address_for_payment_service_result The payment details.
+	 */
+	public function mark_order_paid( WC_Order $wc_order, Check_Address_For_Payment_Service_Result $check_address_for_payment_service_result, ): void;
 }

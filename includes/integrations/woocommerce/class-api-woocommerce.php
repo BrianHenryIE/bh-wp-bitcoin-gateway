@@ -11,14 +11,15 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_E
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Bitcoin_Wallet_Service;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Payment_Service;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Results\Check_Address_For_Payment_Service_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\MoneyMismatchException;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Helpers\WC_Order_Meta_Helper;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
 use DateInterval;
 use DateMalformedStringException;
 use DateTimeImmutable;
-use DateTimeZone;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
@@ -38,6 +39,7 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 	 * @param API_Interface                       $api Main plugin API.
 	 * @param Bitcoin_Wallet_Service              $wallet_service For creating/fetching wallets and addresses.
 	 * @param Payment_Service                     $payment_service For getting transaction data/checking for payments.
+	 * @param WC_Order_Meta_Helper                $order_meta_helper Meta helper.
 	 * @param Background_Jobs_Scheduler_Interface $background_jobs_scheduler When an order is placed, schedule a payment check.
 	 * @param LoggerInterface                     $logger PSR logger.
 	 */
@@ -45,6 +47,7 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 		protected API_Interface $api,
 		protected Bitcoin_Wallet_Service $wallet_service,
 		protected Payment_Service $payment_service,
+		protected WC_Order_Meta_Helper $order_meta_helper,
 		protected Background_Jobs_Scheduler_Interface $background_jobs_scheduler,
 		LoggerInterface $logger,
 	) {
@@ -168,8 +171,7 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 			btc_total: $btc_total
 		);
 
-		$order->add_meta_data( Order::BITCOIN_ADDRESS_META_KEY, $btc_address->get_raw_address() );
-		$order->save();
+		$this->order_meta_helper->set_raw_address( $order, $btc_address );
 
 		$this->logger->info(
 			'Assigned `bh-bitcoin-address:{post_id}` {address} to `shop_order:{order_id}`.',
@@ -250,7 +252,8 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 	public function get_order_details( WC_Order $wc_order ): WC_Bitcoin_Order {
 
 		/** @var ?string $assigned_payment_address */
-		$assigned_payment_address = $wc_order->get_meta( Order::BITCOIN_ADDRESS_META_KEY );
+		$assigned_payment_address = $this->order_meta_helper->get_raw_payment_address( $wc_order );
+
 		if ( is_null( $assigned_payment_address ) ) {
 			// If this were to happen, it should be possible to look up which address is associated with this order id.
 			throw new BH_WP_Bitcoin_Gateway_Exception( 'No Bitcoin payment address found for order.' );
@@ -289,60 +292,58 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 	 */
 	public function check_order_for_payment( WC_Order $order ): void {
 
-		$updated = false;
-
-		$time_now = new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) );
-
 		$bitcoin_order = $this->get_order_details( $order );
 
-		$bitcoin_address         = $bitcoin_order->get_address();
-		$confirmed_value_current = $bitcoin_address->get_amount_received();
+		$bitcoin_address        = $bitcoin_order->get_address();
+		$confirmed_value_before = $bitcoin_address->get_amount_received();
 
 		$check_address_for_payment_result = $this->api->check_address_for_payment( $bitcoin_address );
 
-		// Filter to transactions that have just been seen, so we can record them in notes.
-		$new_order_transactions = $check_address_for_payment_result->get_new_transactions();
+		/**
+		 * By this point 0/1/both {@see Order::new_transactions_seen()} or {@see Order::payment_received()} will have
+		 * been called.
+		 *
+		 * @see self::add_order_note_for_transactions()
+		 * @see self::mark_order_paid()
+		 *
+		 * Maybe `remove_action` before the user initiated synchronous call so better data can be returned?
+		 *
+		 * `remove_all_actions('bh_wp_bitcoin_gateway_new_transactions_seen')`.
+		 */
+	}
 
-		if ( $check_address_for_payment_result->is_updated() ) {
-			$this->add_order_note_for_transactions( $order, $check_address_for_payment_result->get_new_transactions() );
-			$updated = true;
+	/**
+	 * Mark the order as paid using the latest transaction's id as the order transaction id. Save the amount
+	 * received to the order meta.
+	 *
+	 * @see WC_Order::payment_complete()
+	 *
+	 * @param WC_Order                                 $wc_order The order in question.
+	 * @param Check_Address_For_Payment_Service_Result $check_address_for_payment_service_result The details of the requirements + transactions.
+	 * @throws BH_WP_Bitcoin_Gateway_Exception If the amount is invalid.
+	 */
+	public function mark_order_paid(
+		WC_Order $wc_order,
+		Check_Address_For_Payment_Service_Result $check_address_for_payment_service_result,
+	): void {
+
+		if ( $check_address_for_payment_service_result->confirmed_received->isNegativeOrZero() ) {
+			// This should never happen.
+			throw new BH_WP_Bitcoin_Gateway_Exception( 'Invalid amount_received: ' . $check_address_for_payment_service_result->confirmed_received->__toString() . ' is negative or zero.' );
 		}
 
-		$gateway = $bitcoin_order->get_gateway();
+		$this->order_meta_helper->set_amount_received( $wc_order, $check_address_for_payment_service_result->confirmed_received );
 
-		// If the ~`WC_Order::$gateway_id` references a gateway that no longer exists.
-		if ( ! $gateway ) {
-			throw new BH_WP_Bitcoin_Gateway_Exception( 'No Bitcoin payment gateway found for order.' );
-		}
+		/**
+		 * We know there must be at least one transaction if we've summed them to the required amount!
+		 *
+		 * @var Transaction_Interface $last_transaction
+		 */
+		$last_transaction = array_last( $check_address_for_payment_service_result->all_transactions );
+		$wc_order->payment_complete( $last_transaction->get_txid() );
+		$wc_order->save();
 
-		if ( ! $bitcoin_order->is_paid() && ! is_null( $confirmed_value_current ) && ! $confirmed_value_current->isZero() ) {
-			$expected        = $bitcoin_order->get_btc_total_price();
-			$price_margin    = $gateway->get_price_margin_percent();
-			$minimum_payment = $expected->multipliedBy( ( 100 - $price_margin ) / 100 );
-
-			if ( $confirmed_value_current->isGreaterThan( $minimum_payment ) ) {
-				/**
-				 * We know there must be at least one transaction if we've summed them to the required amount!
-				 *
-				 * @var Transaction_Interface $last_transaction
-				 */
-				$last_transaction = array_last( $check_address_for_payment_result->all_transactions );
-				$bitcoin_order->payment_complete( $last_transaction->get_txid() );
-				$this->logger->info( '`shop_order:{order_id}` has been marked paid.', array( 'order_id' => $bitcoin_order->get_id() ) );
-
-				$updated = true;
-			}
-		}
-
-		if ( $updated && ! is_null( $confirmed_value_current ) ) {
-			$bitcoin_order->set_amount_received( $confirmed_value_current );
-		}
-
-		$bitcoin_order->save();
-
-		$refreshed_address = $this->wallet_service->refresh_address( $bitcoin_order->get_address() );
-		/** @var WC_Order $refreshed_wc_order */
-		$refreshed_wc_order = wc_get_order( $bitcoin_order->get_id() );
+		$this->logger->info( '`shop_order:{order_id}` has been marked paid.', array( 'order_id' => $wc_order->get_id() ) );
 	}
 
 	/**
@@ -384,14 +385,14 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 
 		$order_details = $this->get_order_details( $order );
 
-		$formatted = new Details_Formatter( $order_details );
+		$formatted = new Details_Formatter( $order_details, $this->order_meta_helper );
 
 		// HTML formatted data.
 		$result = $formatted->to_array();
 
 		// Raw data. TODO: convert `::get_btc_total_price(): Money`, use typed class with all strings.
-		$result['btc_total']           = $order_details->get_btc_total_price();
-		$result['btc_exchange_rate']   = $order_details->get_btc_exchange_rate();
+		$result['btc_total']           = $this->order_meta_helper->get_btc_total_price( $order );
+		$result['btc_exchange_rate']   = $this->order_meta_helper->get_exchange_rate( $order );
 		$result['btc_address']         = $order_details->get_address()->get_raw_address();
 		$result['transactions']        = $this->api->get_saved_transactions( $order_details->get_address() );
 		$result['btc_amount_received'] = $order_details->get_address()->get_amount_received() ?? 'unknown';
