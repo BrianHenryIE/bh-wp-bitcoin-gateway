@@ -478,11 +478,6 @@ class API implements API_Interface, API_Background_Jobs_Interface {
 		// never actually happen due to other checks that are present, but it's a simple and logical check to not
 		// count payments received before the order was placed.
 
-		$target_amount = $payment_address->get_target_amount();
-		if ( ! $target_amount ) {
-			throw new BH_WP_Bitcoin_Gateway_Exception( 'No target payment amount on address "' . $payment_address->get_raw_address() . '"' );
-		}
-
 		$check_address_for_payment_service_result = $this->payment_service->check_address_for_payment( $payment_address );
 
 		// Always "update" transactions here to record the time it was last checked.
@@ -491,17 +486,12 @@ class API implements API_Interface, API_Background_Jobs_Interface {
 		// If there are new transactions, fire an action to let integrations know.
 		$this->maybe_fire_new_transactions_seen_action( $payment_address, $check_address_for_payment_service_result );
 
-		$total_received = $check_address_for_payment_service_result->total_received;
-
-		$is_paid = $total_received->isGreaterThanOrEqualTo( $target_amount );
-
-		if ( $is_paid ) {
-			$this->mark_address_as_paid( $payment_address );
-		}
+		// `$payment_address` should be NOT refreshed at this point, hopefully none of the methods called before this called `::refresh()`.
+		$this->maybe_mark_address_as_paid( $payment_address, $check_address_for_payment_service_result );
 
 		return new Check_Address_For_Payment_Result(
 			check_address_for_payment_service_result: $check_address_for_payment_service_result,
-			is_paid: $is_paid,
+			is_paid: $check_address_for_payment_service_result->is_paid(),
 			refreshed_address: $this->wallet_service->refresh_address( $payment_address ),
 		);
 	}
@@ -547,47 +537,75 @@ class API implements API_Interface, API_Background_Jobs_Interface {
 	 *
 	 * @used-by self::check_address_for_payment()
 	 *
-	 * @param Bitcoin_Address $bitcoin_address The Bitcoin address to mark as paid.
+	 * @param Bitcoin_Address                          $payment_address The Bitcoin address to mark as paid.
+	 * @param Check_Address_For_Payment_Service_Result $check_address_for_payment_service_result The full detail of the before/after transactions for this address.
+	 * @throws BH_WP_Bitcoin_Gateway_Exception If there is no target amount set on the payment address.
 	 */
-	protected function mark_address_as_paid( Bitcoin_Address $bitcoin_address ): Mark_Address_As_Paid_Result {
+	protected function maybe_mark_address_as_paid(
+		Bitcoin_Address $payment_address,
+		Check_Address_For_Payment_Service_Result $check_address_for_payment_service_result
+	): Mark_Address_As_Paid_Result {
 
-		$status_before = $bitcoin_address->get_status();
-
-		$this->wallet_service->set_payment_address_status(
-			address: $bitcoin_address,
-			status: Bitcoin_Address_Status::USED
-		);
-
-		$order_post_id = $bitcoin_address->get_order_id();
-
-		if ( ! $order_post_id ) {
+		if ( ! $check_address_for_payment_service_result->is_paid() ) {
 			return new Mark_Address_As_Paid_Result(
-				$bitcoin_address,
-				$status_before,
+				$payment_address,
+				$payment_address->get_status(),
 			);
 		}
 
-		/** @var class-string $order_post_type */
-		$order_post_type = get_post_type( $order_post_id );
+		$target_amount = $payment_address->get_target_amount();
+		if ( is_null( $target_amount ) ) {
+			throw new BH_WP_Bitcoin_Gateway_Exception( 'No target payment amount on address "' . $payment_address->get_raw_address() . '"' );
+		}
 
-		// TODO: Add `phpstan-type` on the Bitcoin_Address class importable by consumers.
-		$address_array = (array) $bitcoin_address;
+		$status_before = $payment_address->get_status();
 
-		/**
-		 * TODO: Maybe this should be a filter to learn who used the action(filter).
-		 *
-		 * @phpstan-type array{} Bitcoin_Address_Array
-		 *
-		 * @param class-string $order_post_type
-		 * @param int $order_post_id
-		 * @param array{} $address_array
-		 */
-		do_action( 'bh_wp_bitcoin_gateway_payment_received', $order_post_type, $order_post_id, $address_array );
+		$this->wallet_service->set_payment_address_status(
+			address: $payment_address,
+			status: Bitcoin_Address_Status::USED
+		);
+
+		$this->maybe_fire_mark_address_paid_action( $payment_address, $check_address_for_payment_service_result );
 
 		return new Mark_Address_As_Paid_Result(
-			$bitcoin_address,
+			$payment_address,
 			$status_before,
 		);
+	}
+
+	/**
+	 * Fire `bh_wp_bitcoin_gateway_payment_received` action when `$target_amount` is reached.
+	 *
+	 * @param Bitcoin_Address                          $payment_address_before The payment address (we will refresh this).
+	 * @param Check_Address_For_Payment_Service_Result $check_address_for_payment_service_result The details of the new transactions.
+	 */
+	protected function maybe_fire_mark_address_paid_action(
+		Bitcoin_Address $payment_address_before,
+		Check_Address_For_Payment_Service_Result $check_address_for_payment_service_result
+	): void {
+
+		// We've probably already checked this before reaching this point.
+		if ( ! $check_address_for_payment_service_result->is_paid() ) {
+			return;
+		}
+
+		$order_post_id   = $payment_address_before->get_order_id();
+		$integration_id  = $payment_address_before->get_integration_id();
+		$payment_address = $this->wallet_service->refresh_address( $payment_address_before );
+
+		/**
+		 *
+		 *
+		 * `bh_wp_bitcoin_gateway_new_transactions_seen` will _always_ be fired before this.
+		 *
+		 * {@see Check_Address_For_Payment_Service_Result::$queried_address} has the state of the address before.
+		 *
+		 * @param string|class-string|null $integration_id The bh-wp-bitcoin-gateway integration that "owns" the payment address.
+		 * @param ?int $order_post_id The post_id that the integration will know how to manage.
+		 * @param Bitcoin_Address $payment_address The payment address that was assigned to that order.
+		 * @param Check_Address_For_Payment_Service_Result $check_address_for_payment_service_result The prior state + new transaction detail.
+		 */
+		do_action( 'bh_wp_bitcoin_gateway_payment_received', $integration_id, $order_post_id, $payment_address, $check_address_for_payment_service_result );
 	}
 
 	/**
