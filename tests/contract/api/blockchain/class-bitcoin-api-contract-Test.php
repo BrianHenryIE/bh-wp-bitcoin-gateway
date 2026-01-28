@@ -11,6 +11,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Blockchain;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Blockchain_API_Extended_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\JsonMapper\JsonMapper_Helper;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\Rate_Limit_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories\Bitcoin_Transaction_Factory;
@@ -47,7 +48,7 @@ class Bitcoin_API_Contract_Test extends WPTestCase {
 		return new Payment_Service(
 			blockchain_api: $blockchain_api,
 			bitcoin_transaction_repository: $bitcoin_transaction_repository
-				?? ( fn() => new Bitcoin_Transaction_Repository( new Bitcoin_Transaction_Factory() ) )(),
+				?? ( fn() => new Bitcoin_Transaction_Repository( new Bitcoin_Transaction_Factory( new JsonMapper_Helper()->build() ) ) )(),
 			logger: $this->get_logger(),
 		);
 	}

@@ -2,6 +2,7 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories;
 
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\JsonMapper\JsonMapper_Helper;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories\Bitcoin_Address_Factory;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories\Bitcoin_Transaction_Factory;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories\Bitcoin_Wallet_Factory;
@@ -35,7 +36,8 @@ class Bitcoin_Transaction_Repository_WPUnit_Test extends WPTestCase {
 
 		$bitcoin_address = $bitcoin_address_repository->save_new_address( $wallet, 1, 'payment_address_345' );
 
-		$bitcoin_transaction_factory = new Bitcoin_Transaction_Factory();
+		$json_mapper                 = ( new JsonMapper_Helper() )->build();
+		$bitcoin_transaction_factory = new Bitcoin_Transaction_Factory( $json_mapper );
 		$sut                         = new Bitcoin_Transaction_Repository( $bitcoin_transaction_factory );
 
 		$block_time = new DateTimeImmutable()->setDate( 2020, 02, 27 )->setTime( 11, 46, 35 );
