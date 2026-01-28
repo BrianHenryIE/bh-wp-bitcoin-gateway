@@ -14,6 +14,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\Admin\Addresses_List_Table;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Bitcoin_Gateway;
+use DateTimeImmutable;
 use DateTimeInterface;
 use InvalidArgumentException;
 
@@ -26,6 +27,7 @@ class Bitcoin_Address implements Bitcoin_Address_Interface {
 	 * Constructor
 	 *
 	 * TODO: allow setting `required_confirmations`.
+	 * TODO: allow setting `price_margin`.
 	 *
 	 * @param int                    $post_id The WordPress post ID for this address.
 	 * @param int                    $wallet_parent_post_id The post ID of the parent wallet.
@@ -151,5 +153,22 @@ class Bitcoin_Address implements Bitcoin_Address_Interface {
 	 */
 	public function get_integration_id(): ?string {
 		return $this->integration_id;
+	}
+
+
+	/**
+	 * Was this address recently checked for transactions?
+	 *
+	 * There is no need to check more than once every ten minutes because that is the rate of blocks mined.
+	 *
+	 * `$address->get_modified_time() > (new DateTimeImmutable())->sub(new DateInterval('PT10M'))`.
+	 *
+	 * @param int $minutes Number of minutes until it is considered stale.
+	 */
+	public function was_checked_recently( int $minutes = 10 ): bool {
+		$now                = new DateTimeImmutable();
+		$threshold_seconds  = $minutes * constant( 'MINUTE_IN_SECONDS' );
+		$seconds_difference = $now->getTimestamp() - $this->modified_time->getTimestamp();
+		return $seconds_difference < $threshold_seconds;
 	}
 }

@@ -244,16 +244,7 @@ class API implements API_Interface, API_Background_Jobs_Interface {
 			// TODO: Should we index by anything?
 			$assumed_existing_unused_addresses[ $address_wallet_id ][] = $address;
 
-			$was_checked_within_past_ten_minutes = function ( Bitcoin_Address $address ): bool {
-
-				$now                    = new DateTimeImmutable();
-				$ten_minutes_in_seconds = ( 10 * constant( 'MINUTE_IN_SECONDS' ) );
-				$seconds_difference     = $now->getTimestamp() - $address->get_modified_time()->getTimestamp();
-
-				return $seconds_difference < $ten_minutes_in_seconds;
-			};
-
-			if ( $was_checked_within_past_ten_minutes( $address ) ) {
+			if ( $address->was_checked_recently() ) {
 				$actual_unused_addresses_by_wallet[ $address_wallet_id ][] = $address;
 				continue;
 			}

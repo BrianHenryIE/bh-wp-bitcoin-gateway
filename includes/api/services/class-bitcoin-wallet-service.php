@@ -21,7 +21,6 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Wallet_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Queries\WP_Posts_Query_Order;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Results\Get_Wallet_For_Xpub_Service_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
-use DateInterval;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use Psr\Log\LoggerAwareInterface;
@@ -265,11 +264,7 @@ class Bitcoin_Wallet_Service implements LoggerAwareInterface {
 
 		$address = $unused_addresses[ array_key_first( $unused_addresses ) ];
 
-		$now                    = new DateTimeImmutable();
-		$ten_minutes_in_seconds = ( 10 * constant( 'MINUTE_IN_SECONDS' ) );
-		$seconds_difference     = $now->getTimestamp() - $address->get_modified_time()->getTimestamp();
-
-		return $seconds_difference < $ten_minutes_in_seconds;
+		return $address->was_checked_recently();
 	}
 
 	/**
