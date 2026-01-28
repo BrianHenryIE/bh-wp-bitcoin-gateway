@@ -304,30 +304,16 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 		// Filter to transactions that have just been seen, so we can record them in notes.
 		$new_order_transactions = $check_address_for_payment_result->get_new_transactions();
 
-		// Add a note saying "one new transactions seen, unconfirmed total =, confirmed total = ...".
-		$note = '';
 		if ( $check_address_for_payment_result->is_updated() ) {
+			$this->add_order_note_for_transactions( $order, $check_address_for_payment_result->get_new_transactions() );
 			$updated = true;
-			$note   .= Transaction_Formatter::get_order_note( $check_address_for_payment_result->get_new_transactions() );
-		}
-
-		if ( ! empty( $note ) ) {
-			$this->logger->info(
-				$note,
-				array(
-					'order_id' => $bitcoin_order->get_id(),
-					'updates'  => $new_order_transactions,
-				)
-			);
-
-			$bitcoin_order->add_order_note( $note );
 		}
 
 		$gateway = $bitcoin_order->get_gateway();
 
+		// If the ~`WC_Order::$gateway_id` references a gateway that no longer exists.
 		if ( ! $gateway ) {
-			// TODO: log / exception.
-			return $bitcoin_order;
+			throw new BH_WP_Bitcoin_Gateway_Exception( 'No Bitcoin payment gateway found for order.' );
 		}
 
 		if ( ! $bitcoin_order->is_paid() && ! is_null( $confirmed_value_current ) && ! $confirmed_value_current->isZero() ) {
@@ -358,13 +344,24 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 		$refreshed_address = $this->wallet_service->refresh_address( $bitcoin_order->get_address() );
 		/** @var WC_Order $refreshed_wc_order */
 		$refreshed_wc_order = wc_get_order( $bitcoin_order->get_id() );
+	}
 
-		return new WC_Bitcoin_Order(
-			wc_order: $refreshed_wc_order,
-			payment_address: $refreshed_address,
-			transactions: $check_address_for_payment_result->all_transactions,
-			logger: $this->logger
-		);
+	/**
+	 * Add a note saying "New transactions seen", linking to the details.
+	 *
+	 * TODO: show ~"unconfirmed total =..., confirmed total = ...".
+	 *
+	 * @deprecated This function signature is expected to change to pass data for totals. Please don't use it directly.
+	 *
+	 * @used-by Order::new_transactions_seen()
+	 * @used-by self::refresh_order()
+	 *
+	 * @param WC_Order                     $order The WooCommerce order to record the new transactions for.
+	 * @param array<Transaction_Interface> $new_transactions The transactions.
+	 */
+	public function add_order_note_for_transactions( WC_Order $order, array $new_transactions ): void {
+		$note = Transaction_Formatter::get_order_note( $new_transactions );
+		$order->add_order_note( $note );
 	}
 
 	/**

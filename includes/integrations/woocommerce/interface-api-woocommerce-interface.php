@@ -10,6 +10,7 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Bitcoin_Transaction;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Math\BigNumber;
@@ -94,14 +95,24 @@ interface API_WooCommerce_Interface {
 	 */
 	public function get_fresh_address_for_gateway( Bitcoin_Gateway $gateway ): ?Bitcoin_Address;
 
+
 	/**
 	 * Returns the array from `get_order_details()` with additional keys for printing in HTML/email.
 	 *
 	 * @param WC_Order $order The WooCommerce order.
-	 * @param bool     $refresh Should an API request be made to check for new transactions, or just use existing data.
 	 *
 	 * @return array<string, string|null|Money|BigNumber|array<Bitcoin_Transaction>>
 	 * @throws BH_WP_Bitcoin_Gateway_Exception When the order has no Bitcoin address.
 	 */
 	public function get_formatted_order_details( WC_Order $order ): array;
+
+	/**
+	 * Record (log) newly seen transactions as order notes.
+	 *
+	 * The signature on this will probably change so we can pass the confirmed/unconfirmed balance to the printer.
+	 *
+	 * @param WC_Order                     $order The order <- the payment address <- the new transactions.
+	 * @param array<Transaction_Interface> $new_transactions List of transactions.
+	 */
+	public function add_order_note_for_transactions( WC_Order $order, array $new_transactions ): void;
 }
