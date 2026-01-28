@@ -244,7 +244,7 @@ class Order_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 			API_WooCommerce_Interface::class,
 			array(
 				'mark_order_paid' => Expected::once(
-					function ( $wc_order, $result ) use ( $order, $check_address_for_payment_service_result ) {
+					function ( WC_Order $wc_order, Check_Address_For_Payment_Service_Result $result ) use ( $order, $check_address_for_payment_service_result ) {
 						$this->assertEquals( $order->get_id(), $wc_order->get_id() );
 						$this->assertEquals( $check_address_for_payment_service_result->blockchain_height, $result->blockchain_height );
 						$this->assertEquals( $check_address_for_payment_service_result->required_confirmations, $result->required_confirmations );
@@ -277,9 +277,6 @@ class Order_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	protected function invokeMethod( object $object_instance, string $method_name, array $parameters = array() ) {
 		$reflection = new \ReflectionClass( get_class( $object_instance ) );
 		$method     = $reflection->getMethod( $method_name );
-		if ( version_compare( PHP_VERSION, '8.1.0', '<' ) ) {
-			$method->setAccessible( true );
-		}
 
 		return $method->invokeArgs( $object_instance, $parameters );
 	}
