@@ -69,7 +69,7 @@ class Payment_Service implements LoggerAwareInterface {
 
 		$blockchain_height = $this->get_blockchain_height();
 
-		$total_received = $this->get_address_confirmed_balance(
+		$confirmed_amount = $this->get_address_confirmed_received(
 			raw_address: $bitcoin_address->get_raw_address(),
 			blockchain_height: $blockchain_height,
 			required_confirmations: $required_confirmations,
@@ -80,7 +80,7 @@ class Payment_Service implements LoggerAwareInterface {
 			update_address_transactions_result: $update_address_transactions_result,
 			blockchain_height: $blockchain_height,
 			required_confirmations: $required_confirmations,
-			total_received: $total_received,
+			confirmed_received: $confirmed_amount,
 		);
 	}
 
@@ -194,12 +194,12 @@ class Payment_Service implements LoggerAwareInterface {
 	 * @param string                  $raw_address The raw Bitcoin address to calculate balance for.
 	 * @param int                     $blockchain_height The current blockchain height. (TODO: explain why).
 	 * @param int                     $required_confirmations A confirmation is a subsequent block mined after the transaction.
-	 * @param Transaction_Interface[] $transactions Array of transactions to calculate balance from.
+	 * @param Transaction_Interface[] $transactions Array of transactions to inspect for confirmations and relevant amounts received.
 	 *
 	 * @throws MoneyMismatchException If the calculations were somehow using two different currencies.
 	 * @throws UnknownCurrencyException If `BTC` has not correctly been added to Money's currency list.
 	 */
-	public function get_address_confirmed_balance( string $raw_address, int $blockchain_height, int $required_confirmations, array $transactions ): Money {
+	public function get_address_confirmed_received( string $raw_address, int $blockchain_height, int $required_confirmations, array $transactions ): Money {
 		return array_reduce(
 			$transactions,
 			function ( Money $carry, Transaction_Interface $transaction ) use ( $raw_address, $blockchain_height, $required_confirmations ) {

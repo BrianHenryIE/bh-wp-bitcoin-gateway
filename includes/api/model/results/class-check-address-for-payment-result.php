@@ -31,7 +31,7 @@ class Check_Address_For_Payment_Result extends Check_Address_For_Payment_Service
 			update_address_transactions_result: $check_address_for_payment_service_result->update_address_transactions_result,
 			blockchain_height: $check_address_for_payment_service_result->blockchain_height,
 			required_confirmations: $check_address_for_payment_service_result->required_confirmations,
-			total_received: $check_address_for_payment_service_result->total_received,
+			confirmed_received: $check_address_for_payment_service_result->confirmed_received,
 		);
 	}
 }

@@ -117,6 +117,6 @@ class Bitcoin_API_Contract_Test extends WPTestCase {
 
 		$result = $payment_service->check_address_for_payment( $address );
 
-		$this->assertTrue( $result->total_received->isEqualTo( $received ) );
+		$this->assertTrue( $result->confirmed_received->isEqualTo( $received ) );
 	}
 }

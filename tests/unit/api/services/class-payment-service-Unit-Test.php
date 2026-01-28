@@ -417,9 +417,9 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 	}
 
 	/**
-	 * Test get_address_confirmed_balance with transactions that have enough confirmations.
+	 * Test get_address_confirmed_received with transactions that have enough confirmations.
 	 *
-	 * @covers ::get_address_confirmed_balance
+	 * @covers ::get_address_confirmed_received
 	 */
 	public function test_get_address_confirmed_received_with_confirmed_transactions(): void {
 		$sut = $this->get_sut();
@@ -445,18 +445,18 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 
 		$transactions = array( $transaction1 );
 
-		$received = $sut->get_address_confirmed_balance( $raw_address, $blockchain_height, $required_confirmations, $transactions );
+		$received = $sut->get_address_confirmed_received( $raw_address, $blockchain_height, $required_confirmations, $transactions );
 
 		$this->assertEquals( '1.00000000', $received->getAmount()->__toString() );
 		$this->assertEquals( 'BTC', $received->getCurrency()->getCurrencyCode() );
 	}
 
 	/**
-	 * Test get_address_confirmed_balance with transaction that has exactly required confirmations.
+	 * Test get_address_confirmed_received with transaction that has exactly required confirmations.
 	 *
 	 * This tests the boundary condition where confirmations exactly equal the requirement.
 	 *
-	 * @covers ::get_address_confirmed_balance
+	 * @covers ::get_address_confirmed_received
 	 */
 	public function test_get_address_confirmed_received_with_exactly_required_confirmations(): void {
 		$sut = $this->get_sut();
@@ -482,16 +482,16 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 
 		$transactions = array( $transaction );
 
-		$received = $sut->get_address_confirmed_balance( $raw_address, $blockchain_height, $required_confirmations, $transactions );
+		$received = $sut->get_address_confirmed_received( $raw_address, $blockchain_height, $required_confirmations, $transactions );
 
 		$this->assertEquals( '0.50000000', $received->getAmount()->__toString() );
 		$this->assertEquals( 'BTC', $received->getCurrency()->getCurrencyCode() );
 	}
 
 	/**
-	 * Test get_address_confirmed_balance with transaction that has insufficient confirmations.
+	 * Test get_address_confirmed_received with transaction that has insufficient confirmations.
 	 *
-	 * @covers ::get_address_confirmed_balance
+	 * @covers ::get_address_confirmed_received
 	 */
 	public function test_get_address_confirmed_received_with_insufficient_confirmations(): void {
 		$sut = $this->get_sut();
@@ -517,16 +517,16 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 
 		$transactions = array( $transaction );
 
-		$received = $sut->get_address_confirmed_balance( $raw_address, $blockchain_height, $required_confirmations, $transactions );
+		$received = $sut->get_address_confirmed_received( $raw_address, $blockchain_height, $required_confirmations, $transactions );
 
 		$this->assertEquals( '0.00000000', $received->getAmount()->__toString() );
 		$this->assertEquals( 'BTC', $received->getCurrency()->getCurrencyCode() );
 	}
 
 	/**
-	 * Test get_address_confirmed_balance with empty transactions array.
+	 * Test get_address_confirmed_received with empty transactions array.
 	 *
-	 * @covers ::get_address_confirmed_balance
+	 * @covers ::get_address_confirmed_received
 	 */
 	public function test_get_address_confirmed_received_with_empty_transactions(): void {
 		$sut = $this->get_sut();
@@ -536,16 +536,16 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 		$required_confirmations = 3;
 		$transactions           = array();
 
-		$received = $sut->get_address_confirmed_balance( $raw_address, $blockchain_height, $required_confirmations, $transactions );
+		$received = $sut->get_address_confirmed_received( $raw_address, $blockchain_height, $required_confirmations, $transactions );
 
 		$this->assertEquals( '0.00000000', $received->getAmount()->__toString() );
 		$this->assertEquals( 'BTC', $received->getCurrency()->getCurrencyCode() );
 	}
 
 	/**
-	 * Test get_address_confirmed_balance with multiple transactions of varying confirmation levels.
+	 * Test get_address_confirmed_received with multiple transactions of varying confirmation levels.
 	 *
-	 * @covers ::get_address_confirmed_balance
+	 * @covers ::get_address_confirmed_received
 	 */
 	public function test_get_address_confirmed_received_with_mixed_confirmations(): void {
 		$sut = $this->get_sut();
@@ -601,7 +601,7 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 
 		$transactions = array( $transaction1, $transaction2, $transaction3 );
 
-		$received = $sut->get_address_confirmed_balance( $raw_address, $blockchain_height, $required_confirmations, $transactions );
+		$received = $sut->get_address_confirmed_received( $raw_address, $blockchain_height, $required_confirmations, $transactions );
 
 		// Should be 1 + 0.5 = 1.5 BTC (transaction3 excluded due to insufficient confirmations).
 		$this->assertEquals( '1.50000000', $received->getAmount()->__toString() );
@@ -609,9 +609,9 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 	}
 
 	/**
-	 * Test get_address_confirmed_balance filters transactions to correct address.
+	 * Test get_address_confirmed_received filters transactions to correct address.
 	 *
-	 * @covers ::get_address_confirmed_balance
+	 * @covers ::get_address_confirmed_received
 	 */
 	public function test_get_address_confirmed_received_filters_by_address(): void {
 		$sut = $this->get_sut();
@@ -653,7 +653,7 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 
 		$transactions = array( $transaction1, $transaction2 );
 
-		$received = $sut->get_address_confirmed_balance( $raw_address, $blockchain_height, $required_confirmations, $transactions );
+		$received = $sut->get_address_confirmed_received( $raw_address, $blockchain_height, $required_confirmations, $transactions );
 
 		// Should only count transaction1.
 		$this->assertEquals( '10.00000000', $received->getAmount()->__toString() );

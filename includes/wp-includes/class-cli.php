@@ -192,7 +192,7 @@ class CLI extends WP_CLI_Command {
 				$formatted['new_transactions'] = $result->get_new_transactions();
 			}
 
-			$formatted['balance'] = $result->queried_address->get_amount_received();
+			$formatted['confirmed_received'] = $result->queried_address->get_amount_received();
 
 			WP_CLI\Utils\format_items( $format, $formatted, array_keys( $formatted ) );
 

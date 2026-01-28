@@ -109,7 +109,7 @@ interface API_WooCommerce_Interface {
 	/**
 	 * Record (log) newly seen transactions as order notes.
 	 *
-	 * The signature on this will probably change so we can pass the confirmed/unconfirmed balance to the printer.
+	 * The signature on this will probably change so we can pass the confirmed/unconfirmed amounts to the printer.
 	 *
 	 * @param WC_Order                     $order The order <- the payment address <- the new transactions.
 	 * @param array<Transaction_Interface> $new_transactions List of transactions.
