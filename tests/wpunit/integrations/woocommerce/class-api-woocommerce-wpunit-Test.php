@@ -15,6 +15,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Helpers\WC_Order_Meta_Helper;
 use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
 use Codeception\Stub\Expected;
 use lucatume\WPBrowser\TestCase\WPTestCase;
@@ -391,9 +392,9 @@ class API_WooCommerce_WPUnit_Test extends WPTestCase {
 		);
 
 		$order = new WC_Order();
-		$order->add_meta_data( Order::BITCOIN_ADDRESS_META_KEY, 'xpub1234', true );
+		$order->add_meta_data( WC_Order_Meta_Helper::BITCOIN_ADDRESS_META_KEY, 'xpub1234', true );
 		$order->add_meta_data(
-			Order::ORDER_TOTAL_BITCOIN_AT_TIME_OF_PURCHASE_META_KEY,
+			WC_Order_Meta_Helper::ORDER_TOTAL_BITCOIN_AT_TIME_OF_PURCHASE_META_KEY,
 			array(
 				'amount'   => '0.1',
 				'currency' => 'BTC',
@@ -401,7 +402,7 @@ class API_WooCommerce_WPUnit_Test extends WPTestCase {
 			true
 		);
 		$order->add_meta_data(
-			Order::EXCHANGE_RATE_AT_TIME_OF_PURCHASE_META_KEY,
+			WC_Order_Meta_Helper::EXCHANGE_RATE_AT_TIME_OF_PURCHASE_META_KEY,
 			array(
 				'amount'   => '90000',
 				'currency' => 'USD',

@@ -13,6 +13,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Currency;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\UnknownCurrencyException;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Helpers\WC_Order_Meta_Helper;
 use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
 use Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
@@ -428,7 +429,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 		try {
 			/**
 			 *
-			 * @see Order::BITCOIN_ADDRESS_META_KEY
+			 * @see WC_Order_Meta_Helper::BITCOIN_ADDRESS_META_KEY
 			 * @see Bitcoin_Address::get_raw_address()
 			 */
 			$btc_address = $this->api_woocommerce->assign_unused_address_to_order( $order, $btc_total );
@@ -437,22 +438,20 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 			throw new BH_WP_Bitcoin_Gateway_Exception( 'Unable to find Bitcoin address to send to. Please choose another payment method.' );
 		}
 
+		$order_meta_helper = new WC_Order_Meta_Helper();
+
 		/**
 		 * Record the exchange rate at the time the order was placed.
 		 *
 		 * Although we're allowing for `::get_exchange_rate()` = `null` here, that should never happen since it was
 		 * checked before the gateway was offered as a payment option.
 		 */
-		$order->add_meta_data(
-			Order::EXCHANGE_RATE_AT_TIME_OF_PURCHASE_META_KEY,
-			$this->api->get_exchange_rate( Currency::of( $order->get_currency() ) )?->jsonSerialize()
-		);
+		$exchange_rate = $this->api->get_exchange_rate( Currency::of( $order->get_currency() ) );
+		if ( $exchange_rate ) {
+			$order_meta_helper->set_exchange_rate( $order, $exchange_rate );
+		}
 
-		// Record the amount the customer has been asked to pay in BTC.
-		$order->add_meta_data(
-			Order::ORDER_TOTAL_BITCOIN_AT_TIME_OF_PURCHASE_META_KEY,
-			$btc_total->jsonSerialize()
-		);
+		$order_meta_helper->set_btc_total_price( $order, $btc_total );
 
 		$btc_total_display = $btc_total->getAmount()->toFloat();
 

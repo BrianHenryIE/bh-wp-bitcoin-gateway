@@ -14,6 +14,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Address_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address_WP_Post_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Helpers\WC_Order_Meta_Helper;
 use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Order;
 use InvalidArgumentException;
@@ -149,8 +150,8 @@ class CLI extends WP_CLI_Command {
 						$this->logger->error( '`shop_order:{order_id}` is not a Bitcoin order', array( 'order_id' => $order_id ) );
 						return;
 					}
-					/** @var string|null $address */
-					$address = $order->get_meta( Order::BITCOIN_ADDRESS_META_KEY );
+					$order_meta_helper = new WC_Order_Meta_Helper();
+					$address           = $order_meta_helper->get_raw_payment_address( $order );
 					if ( empty( $address ) ) {
 						throw new InvalidArgumentException( 'Order ' . $order->get_id() . ' has no Bitcoin address' );
 					}
