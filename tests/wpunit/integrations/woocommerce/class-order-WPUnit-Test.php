@@ -277,8 +277,8 @@ class Order_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	protected function invokeMethod( object $object_instance, string $method_name, array $parameters = array() ) {
 		$reflection = new \ReflectionClass( get_class( $object_instance ) );
 		$method     = $reflection->getMethod( $method_name );
-		if (version_compare(PHP_VERSION, '8.1.0', '<')) {
-			$method->setAccessible(true);
+		if ( version_compare( PHP_VERSION, '8.1.0', '<' ) ) {
+			$method->setAccessible( true );
 		}
 
 		return $method->invokeArgs( $object_instance, $parameters );
