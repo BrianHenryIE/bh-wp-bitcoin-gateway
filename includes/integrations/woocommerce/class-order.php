@@ -46,6 +46,31 @@ class Order implements LoggerAwareInterface {
 	}
 
 	/**
+	 * Check hooked data is relevant / can return a WC_Order.
+	 *
+	 * @param ?string $integration_id The plugin integration.
+	 * @param ?int    $order_post_id The order post_id.
+	 */
+	protected function get_wc_order(
+		?string $integration_id,
+		?int $order_post_id,
+	): ?WC_Order {
+
+		if ( WooCommerce_Integration::class !== $integration_id ) {
+			return null;
+		}
+
+		$order = wc_get_order( $order_post_id );
+
+		if ( ! ( $order instanceof WC_Order ) ) {
+			// TODO: log... trashed?
+			return null;
+		}
+
+		return $order;
+	}
+
+	/**
 	 * Record new transactions as order notes.
 	 *
 	 * @hooked bh_wp_bitcoin_gateway_new_transactions_seen
@@ -62,14 +87,19 @@ class Order implements LoggerAwareInterface {
 		Check_Address_For_Payment_Service_Result $check_address_for_payment_service_result,
 	): void {
 
-		if ( WooCommerce_Integration::class !== $integration_id ) {
+		$wc_order = $this->get_wc_order( $integration_id, $order_post_id );
+
+		if ( ! $wc_order ) {
 			return;
 		}
 
-		$order = wc_get_order( $order_post_id );
+		// TODO: Should also update the confirmed_received amount on the order meta.
 
-		if ( ! ( $order instanceof WC_Order ) ) {
-			// TODO: log... trashed?
+		$this->api_woocommerce->add_order_note_for_transactions(
+			$wc_order,
+			$check_address_for_payment_service_result->get_new_transactions()
+		);
+	}
 			return;
 		}
 
