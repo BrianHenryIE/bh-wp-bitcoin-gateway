@@ -44,14 +44,17 @@ class WC_Order_Meta_Helper implements LoggerAwareInterface {
 	 *
 	 * @param WC_Order        $wc_order The WooCommerce order.
 	 * @param Bitcoin_Address $payment_address The address object to read the address string from.
+	 * @param bool            $save_now Should `WC_Order::save()` be called immediately.
 	 */
-	public function set_raw_address( WC_Order $wc_order, Bitcoin_Address $payment_address ): void {
+	public function set_raw_address( WC_Order $wc_order, Bitcoin_Address $payment_address, bool $save_now = true ): void {
 		$wc_order->add_meta_data(
 			self::BITCOIN_ADDRESS_META_KEY,
 			$payment_address->get_raw_address(),
 			true
 		);
-		$wc_order->save();
+		if ( $save_now ) {
+			$wc_order->save();
+		}
 	}
 
 	/**
@@ -69,19 +72,21 @@ class WC_Order_Meta_Helper implements LoggerAwareInterface {
 	 *
 	 * Saves as JSON string, e.g. `{"amount":"0.0000543","currency":"BTC"}`.
 	 *
-	 * @see Bitcoin_Address::$target_amount
-	 *
 	 * @param WC_Order $wc_order The WooCommerce order.
 	 * @param Money    $btc_total The order total in BTC.
+	 * @param bool     $save_now Should `WC_Order::save()` be called immediately.
+	 * @see Bitcoin_Address::$target_amount
 	 */
-	public function set_btc_total_price( WC_Order $wc_order, Money $btc_total ): void {
+	public function set_btc_total_price( WC_Order $wc_order, Money $btc_total, bool $save_now = true ): void {
 		$money_json_string = wp_json_encode( $btc_total->jsonSerialize() );
 		$wc_order->add_meta_data(
 			self::ORDER_TOTAL_BITCOIN_AT_TIME_OF_PURCHASE_META_KEY,
 			$money_json_string,
 			true
 		);
-		$wc_order->save();
+		if ( $save_now ) {
+			$wc_order->save();
+		}
 	}
 
 	/**
@@ -111,15 +116,18 @@ class WC_Order_Meta_Helper implements LoggerAwareInterface {
 	 *
 	 * @param WC_Order $wc_order The WooCommerce order.
 	 * @param Money    $exchange_rate 1 BTC = x.
+	 * @param bool     $save_now Should `WC_Order::save()` be called immediately.
 	 */
-	public function set_exchange_rate( WC_Order $wc_order, Money $exchange_rate ): void {
+	public function set_exchange_rate( WC_Order $wc_order, Money $exchange_rate, bool $save_now = true ): void {
 		$exchange_rate_json_string = wp_json_encode( $exchange_rate->jsonSerialize() );
 		$wc_order->add_meta_data(
 			self::EXCHANGE_RATE_AT_TIME_OF_PURCHASE_META_KEY,
 			$exchange_rate_json_string,
 			true
 		);
-		$wc_order->save();
+		if ( $save_now ) {
+			$wc_order->save();
+		}
 	}
 
 	/**
@@ -149,15 +157,22 @@ class WC_Order_Meta_Helper implements LoggerAwareInterface {
 	 *
 	 * @param WC_Order $wc_order The order to save the meta on.
 	 * @param Money    $updated_confirmed_value The confirmed amount received in Bitcoin.
+	 * @param bool     $save_now Should `WC_Order::save()` be called immediately.
 	 */
-	public function set_confirmed_amount_received( WC_Order $wc_order, Money $updated_confirmed_value ): void {
+	public function set_confirmed_amount_received(
+		WC_Order $wc_order,
+		Money $updated_confirmed_value,
+		bool $save_now = true
+	): void {
 		$updated_confirmed_value_json_string = wp_json_encode( $updated_confirmed_value->jsonSerialize() );
 		$wc_order->add_meta_data(
 			self::BITCOIN_AMOUNT_CONFIRMED_RECEIVED_META_KEY,
 			$updated_confirmed_value_json_string,
 			true
 		);
-		$wc_order->save();
+		if ( $save_now ) {
+			$wc_order->save();
+		}
 	}
 
 	/**

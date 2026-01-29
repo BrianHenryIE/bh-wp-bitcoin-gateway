@@ -171,7 +171,7 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 			btc_total: $btc_total
 		);
 
-		$this->order_meta_helper->set_raw_address( $order, $btc_address );
+		$this->order_meta_helper->set_raw_address( wc_order: $order, payment_address: $btc_address, save_now: true );
 
 		$this->logger->info(
 			'Assigned `bh-bitcoin-address:{post_id}` {address} to `shop_order:{order_id}`.',
@@ -332,7 +332,11 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 			throw new BH_WP_Bitcoin_Gateway_Exception( 'Invalid amount_received: ' . $check_address_for_payment_service_result->confirmed_received->__toString() . ' is negative or zero.' );
 		}
 
-		$this->order_meta_helper->set_confirmed_amount_received( $wc_order, $check_address_for_payment_service_result->confirmed_received );
+		$this->order_meta_helper->set_confirmed_amount_received(
+			wc_order: $wc_order,
+			updated_confirmed_value: $check_address_for_payment_service_result->confirmed_received,
+			save_now: false
+		);
 
 		/**
 		 * We know there must be at least one transaction if we've summed them to the required amount!

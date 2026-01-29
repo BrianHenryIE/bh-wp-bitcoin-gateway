@@ -474,10 +474,11 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 		 */
 		$exchange_rate = $this->api->get_exchange_rate( Currency::of( $order->get_currency() ) );
 		if ( $exchange_rate ) {
-			$order_meta_helper->set_exchange_rate( $order, $exchange_rate );
+			$order_meta_helper->set_exchange_rate( wc_order: $order, exchange_rate:$exchange_rate, save_now: false );
 		}
 
-		$order_meta_helper->set_btc_total_price( $order, $btc_total );
+		// TODO: the `save_now` here might better be `false` depending on how `update_status` works.
+		$order_meta_helper->set_btc_total_price( wc_order: $order, btc_total:$btc_total, save_now: true );
 
 		$btc_total_display = $btc_total->getAmount()->toFloat();
 
