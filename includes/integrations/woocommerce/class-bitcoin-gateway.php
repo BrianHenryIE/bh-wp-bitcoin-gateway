@@ -397,6 +397,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 			$is_available_cache = json_decode( $is_available_cache_string, true );
 			if ( is_array( $is_available_cache )
 				&& isset( $is_available_cache['is_available'] )
+				&& is_bool( $is_available_cache['is_available'] )
 			) {
 				return $is_available_cache['is_available'];
 			}
