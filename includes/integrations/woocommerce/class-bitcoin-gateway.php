@@ -382,19 +382,44 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 	 */
 	public function is_available() {
 
-		// TODO: review `$this->is_available_cache` and when we should avoid db calls and http calls.
+		// Without the cache, when only one address was available, and an order was placed, we reached a point
+		// where no addresses were available, so the placing the order would fail in the UI. In the backend the
+		// order exists and the payment address is assigned.
+		// By caching it for 15 seconds, we should be ok.
+
+		// TODO: always keep more than two addresses available.
+
+		$is_available_cache_key = 'bh-wp-bitcoin-gateway-available:' . __CLASS__ . $this->id;
+
+		$is_available_cache_string = get_transient( $is_available_cache_key );
+		if ( is_string( $is_available_cache_string ) ) {
+			/** @var mixed|array{is_available:bool} $is_available_cache */
+			$is_available_cache = json_decode( $is_available_cache_string, true );
+			if ( is_array( $is_available_cache )
+				&& isset( $is_available_cache['is_available'] )
+			) {
+				return $is_available_cache['is_available'];
+			}
+		}
+
+		if ( is_bool( $this->is_available_cache ) ) {
+			return $this->is_available_cache;
+		}
 
 		if ( ! $this->api_woocommerce->is_unused_address_available_for_gateway( $this ) ) {
 			$this->is_available_cache = false;
-			return false;
-		}
-
-		if ( is_null( $this->api->get_exchange_rate( Currency::of( get_woocommerce_currency() ) ) ) ) {
+		} elseif ( is_null( $this->api->get_exchange_rate( Currency::of( get_woocommerce_currency() ) ) ) ) {
 			$this->is_available_cache = false;
-			return false;
+		} else {
+			$this->is_available_cache = parent::is_available();
 		}
 
-		$this->is_available_cache = parent::is_available();
+		set_transient(
+			$is_available_cache_key,
+			wp_json_encode( array( 'is_available' => $this->is_available_cache ) ),
+			15
+		);
+
 		return $this->is_available_cache;
 	}
 
