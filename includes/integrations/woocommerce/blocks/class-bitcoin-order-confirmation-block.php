@@ -158,7 +158,7 @@ class Bitcoin_Order_Confirmation_Block {
 			return array();
 		}
 
-		$order_details_formatted_array = $this->api->get_formatted_order_details( $order, false );
+		$order_details_formatted_array = $this->api->get_formatted_order_details( $order );
 		return Details_Formatter::camel_case_keys( $order_details_formatted_array );
 	}
 

@@ -2,6 +2,8 @@
 /**
  * Saved Bitcoin transaction stored as a WordPress custom post type.
  *
+ * TODO: record the API that the transaction was found on.
+ *
  * @package    brianhenryie/bh-wp-bitcoin-gateway
  */
 

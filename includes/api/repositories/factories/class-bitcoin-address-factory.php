@@ -55,6 +55,7 @@ class Bitcoin_Address_Factory {
 			modified_time: new DateTimeImmutable( $post->post_modified_gmt ),
 			status: Bitcoin_Address_Status::from( $post->post_status ),
 			target_amount: $this->get_target_amount_from_post( $post ),
+			integration_id: $this->get_integration_id_from_post_meta( $post ),
 			order_id: $this->get_order_id_from_post( $post ),
 			tx_ids: $this->get_tx_ids_from_post( $post ),
 			received: $this->get_received_from_post( $post ),
@@ -81,6 +82,15 @@ class Bitcoin_Address_Factory {
 		/** @var MoneySerializedArray|array{} $target_amount_meta */
 		$target_amount_meta = array_filter( (array) get_post_meta( $post->ID, Bitcoin_Address_WP_Post_Interface::TARGET_AMOUNT_META_KEY, true ) );
 		return empty( $target_amount_meta ) ? null : Money::of( ...$target_amount_meta );
+	}
+
+	/**
+	 * @param WP_Post $post The backing WP_Post for this Bitcoin_Address.
+	 */
+	protected function get_integration_id_from_post_meta( WP_Post $post ): ?string {
+		/** @var array|bool|float|int|resource|string|null|mixed $integration_id_meta */
+		$integration_id_meta = get_post_meta( $post->ID, Bitcoin_Address_WP_Post_Interface::INTEGRATION_ID_META_KEY, true );
+		return is_string( $integration_id_meta ) && ! empty( $integration_id_meta ) ? $integration_id_meta : null;
 	}
 
 	/**

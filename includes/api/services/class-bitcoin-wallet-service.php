@@ -21,7 +21,6 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Wallet_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Queries\WP_Posts_Query_Order;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Results\Get_Wallet_For_Xpub_Service_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
-use DateInterval;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use Psr\Log\LoggerAwareInterface;
@@ -265,7 +264,7 @@ class Bitcoin_Wallet_Service implements LoggerAwareInterface {
 
 		$address = $unused_addresses[ array_key_first( $unused_addresses ) ];
 
-		return new DateTimeImmutable()->sub( new DateInterval( 'PT10M' ) ) < $address->get_modified_time();
+		return $address->was_checked_recently();
 	}
 
 	/**
@@ -300,19 +299,19 @@ class Bitcoin_Wallet_Service implements LoggerAwareInterface {
 	 * @see Bitcoin_Address_Status::ASSIGNED
 	 *
 	 * @param Bitcoin_Address     $address The Bitcoin payment address to link.
-	 * @param string|class-string $integration The plugin that is using this address.
+	 * @param string|class-string $integration_id The plugin that is using this address.
 	 * @param int                 $order_id The post_id (e.g. WooCommerce order id) that transactions to this address represent payment for.
 	 * @param Money               $btc_total The target amount to be paid, after which the order should be updated.
 	 */
 	public function assign_order_to_bitcoin_payment_address(
 		Bitcoin_Address $address,
-		string $integration,
+		string $integration_id,
 		int $order_id,
 		Money $btc_total
 	): Bitcoin_Address {
 		$this->bitcoin_address_repository->assign_to_order(
 			address: $address,
-			integration: $integration,
+			integration_id: $integration_id,
 			order_id: $order_id,
 			btc_total: $btc_total,
 		);
@@ -373,11 +372,7 @@ class Bitcoin_Wallet_Service implements LoggerAwareInterface {
 
 		$updated_transactions_post_ids = $existing_meta_transactions_post_ids + $new_transactions_post_ids;
 
-		// We do want to set an empty array once to indicate we have checked the address for transactions, but if there are still none, skip the save operation.
-		if ( ! is_null( $address->get_tx_ids() ) && empty( $new_transactions_post_ids ) ) {
-			return;
-		}
-
+		// Even if we have no changes, we want to update the object's modified timestamp.
 		$this->bitcoin_address_repository->set_transactions_post_ids_to_address( $address, $updated_transactions_post_ids );
 	}
 }

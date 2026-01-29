@@ -8,11 +8,13 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\API;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\JsonMapper\JsonMapper_Helper;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Currency;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\UnknownCurrencyException;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Helpers\WC_Order_Meta_Helper;
 use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
 use Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
@@ -100,6 +102,8 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 	/**
 	 * Return the description for admin screens.
 	 *
+	 * @see parent::get_method_description()
+	 *
 	 * @return string
 	 */
 	public function get_method_description() {
@@ -108,6 +112,8 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 		$method_description .= PHP_EOL;
 		$method_description .= PHP_EOL;
 		$method_description .= $this->get_formatted_exchange_rate_string();
+		$method_description .= ' • ';
+		$method_description .= $this->get_view_scheduled_actions_link();
 
 		if ( $this->is_site_using_full_site_editing() ) {
 			$method_description .= PHP_EOL;
@@ -116,7 +122,29 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 		}
 
 		$filtered = apply_filters( 'woocommerce_gateway_method_description', $method_description, $this );
+
 		return is_string( $filtered ) ? $filtered : $method_description;
+	}
+
+	/**
+	 * Build a link to Action Scheduler's view, filtered to this plugin's jobs.
+	 */
+	protected function get_view_scheduled_actions_link(): string {
+		return sprintf(
+			'<a href="%s">View Scheduled Actions</a>',
+			add_query_arg(
+				array(
+					'page'    => 'action-scheduler',
+					'status'  => 'pending',
+					'orderby' => 'schedule',
+					'order'   => 'desc',
+					's'       => 'bh_wp_bitcoin_gateway',
+				),
+				admin_url(
+					'tools.php'
+				)
+			)
+		);
 	}
 
 	/**
@@ -354,19 +382,45 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 	 */
 	public function is_available() {
 
-		// TODO: review `$this->is_available_cache` and when we should avoid db calls and http calls.
+		// Without the cache, when only one address was available, and an order was placed, we reached a point
+		// where no addresses were available, so the placing the order would fail in the UI. In the backend the
+		// order exists and the payment address is assigned.
+		// By caching it for 15 seconds, we should be ok.
+
+		// TODO: always keep more than two addresses available.
+
+		$is_available_cache_key = 'bh-wp-bitcoin-gateway-available:' . __CLASS__ . $this->id;
+
+		$is_available_cache_string = get_transient( $is_available_cache_key );
+		if ( is_string( $is_available_cache_string ) ) {
+			/** @var mixed|array{is_available:bool} $is_available_cache */
+			$is_available_cache = json_decode( $is_available_cache_string, true );
+			if ( is_array( $is_available_cache )
+				&& isset( $is_available_cache['is_available'] )
+				&& is_bool( $is_available_cache['is_available'] )
+			) {
+				return $is_available_cache['is_available'];
+			}
+		}
+
+		if ( is_bool( $this->is_available_cache ) ) {
+			return $this->is_available_cache;
+		}
 
 		if ( ! $this->api_woocommerce->is_unused_address_available_for_gateway( $this ) ) {
 			$this->is_available_cache = false;
-			return false;
-		}
-
-		if ( is_null( $this->api->get_exchange_rate( Currency::of( get_woocommerce_currency() ) ) ) ) {
+		} elseif ( is_null( $this->api->get_exchange_rate( Currency::of( get_woocommerce_currency() ) ) ) ) {
 			$this->is_available_cache = false;
-			return false;
+		} else {
+			$this->is_available_cache = parent::is_available();
 		}
 
-		$this->is_available_cache = parent::is_available();
+		set_transient(
+			$is_available_cache_key,
+			wp_json_encode( array( 'is_available' => $this->is_available_cache ) ),
+			15
+		);
+
 		return $this->is_available_cache;
 	}
 
@@ -402,7 +456,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 		try {
 			/**
 			 *
-			 * @see Order::BITCOIN_ADDRESS_META_KEY
+			 * @see WC_Order_Meta_Helper::BITCOIN_ADDRESS_META_KEY
 			 * @see Bitcoin_Address::get_raw_address()
 			 */
 			$btc_address = $this->api_woocommerce->assign_unused_address_to_order( $order, $btc_total );
@@ -411,22 +465,21 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 			throw new BH_WP_Bitcoin_Gateway_Exception( 'Unable to find Bitcoin address to send to. Please choose another payment method.' );
 		}
 
+		$order_meta_helper = new WC_Order_Meta_Helper( new JsonMapper_Helper()->build() );
+
 		/**
 		 * Record the exchange rate at the time the order was placed.
 		 *
 		 * Although we're allowing for `::get_exchange_rate()` = `null` here, that should never happen since it was
 		 * checked before the gateway was offered as a payment option.
 		 */
-		$order->add_meta_data(
-			Order::EXCHANGE_RATE_AT_TIME_OF_PURCHASE_META_KEY,
-			$this->api->get_exchange_rate( Currency::of( $order->get_currency() ) )?->jsonSerialize()
-		);
+		$exchange_rate = $this->api->get_exchange_rate( Currency::of( $order->get_currency() ) );
+		if ( $exchange_rate ) {
+			$order_meta_helper->set_exchange_rate( wc_order: $order, exchange_rate:$exchange_rate, save_now: false );
+		}
 
-		// Record the amount the customer has been asked to pay in BTC.
-		$order->add_meta_data(
-			Order::ORDER_TOTAL_BITCOIN_AT_TIME_OF_PURCHASE_META_KEY,
-			$btc_total->jsonSerialize()
-		);
+		// TODO: the `save_now` here might better be `false` depending on how `update_status` works.
+		$order_meta_helper->set_btc_total_price( wc_order: $order, btc_total:$btc_total, save_now: true );
 
 		$btc_total_display = $btc_total->getAmount()->toFloat();
 

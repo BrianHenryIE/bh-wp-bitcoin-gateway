@@ -9,21 +9,24 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\UnknownCurrencyException;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
-use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Helpers\WC_Order_Meta_Helper;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
 use NumberFormatter;
 
 /**
- * Parse the values of WC_Bitcoin_Order_Interface into HTML and strings for output.
+ * Parse the values of WC_Bitcoin_Order into HTML and strings for output.
  */
 class Details_Formatter {
 
 	/**
 	 * Constructor
 	 *
-	 * @param WC_Bitcoin_Order_Interface $order The order we are about to print.
+	 * @param WC_Bitcoin_Order     $bitcoin_order The order we are about to print.
+	 * @param WC_Order_Meta_Helper $order_meta_helper Set/get typed metadata.
 	 */
 	public function __construct(
-		protected WC_Bitcoin_Order_Interface $order
+		protected WC_Bitcoin_Order $bitcoin_order,
+		protected WC_Order_Meta_Helper $order_meta_helper,
 	) {
 	}
 
@@ -31,9 +34,8 @@ class Details_Formatter {
 	 * ฿ U+0E3F THAI CURRENCY SYMBOL BAHT, decimal: 3647, HTML: &#3647;, UTF-8: 0xE0 0xB8 0xBF, block: Thai.
 	 */
 	public function get_btc_total_formatted(): string {
-		return $this->format_money_to_bitcoin(
-			$this->order->get_btc_total_price()
-		);
+		$btc_price = $this->order_meta_helper->get_btc_total_price( $this->bitcoin_order->get_wc_order() );
+		return $btc_price ? $this->format_money_to_bitcoin( $btc_price ) : '';
 	}
 
 	/**
@@ -64,7 +66,13 @@ class Details_Formatter {
 	 * TODO: This should display the store currency value for one Bitcoin at the time of order. Currently ~"90817.00".
 	 */
 	public function get_btc_exchange_rate_formatted(): string {
-		return $this->order->get_currency() . ' ' . wc_price( $this->order->get_btc_exchange_rate()->getAmount()->toFloat(), array( 'currency' => $this->order->get_currency() ) );
+		$exchange_rate = $this->order_meta_helper->get_exchange_rate( $this->bitcoin_order->get_wc_order() );
+		if ( ! $exchange_rate ) {
+			// TODO: log.
+			return '';
+		}
+		$exchange_rate_float = $exchange_rate->getAmount()->toFloat();
+		return $this->bitcoin_order->get_currency() . ' ' . wc_price( $exchange_rate_float, array( 'currency' => $this->bitcoin_order->get_currency() ) );
 	}
 
 	/**
@@ -74,7 +82,7 @@ class Details_Formatter {
 		/** @var array<string, string> $wc_order_statuses */
 		$wc_order_statuses = wc_get_order_statuses();
 
-		return $wc_order_statuses[ 'wc-' . $this->order->get_status() ] ?? null;
+		return $wc_order_statuses[ 'wc-' . $this->bitcoin_order->get_status() ] ?? null;
 	}
 
 	/**
@@ -82,7 +90,7 @@ class Details_Formatter {
 	 * updated when the Bitcoin_Address itself has last been checked for transactions.
 	 */
 	public function get_last_checked_time_formatted(): string {
-		if ( is_null( $this->order->get_last_checked_time() ) ) {
+		if ( is_null( $this->bitcoin_order->get_last_checked_time() ) ) {
 			return __( 'Never', 'bh-wp-bitcoin-gateway' );
 		}
 		/**
@@ -100,7 +108,7 @@ class Details_Formatter {
 		// The server time is not local time... maybe use their address?
 		// @see https://stackoverflow.com/tags/timezone/info
 
-		$last_checked = $this->order->get_last_checked_time();
+		$last_checked = $this->bitcoin_order->get_last_checked_time();
 		// @phpstan-ignore-next-line For some reason PHPStan isn't convinced this can be null.
 		if ( is_null( $last_checked ) ) {
 			return __( 'Never', 'bh-wp-bitcoin-gateway' );
@@ -115,7 +123,7 @@ class Details_Formatter {
 	 * The index of the derived address being used. TODO: no point displaying this to customers.
 	 */
 	public function get_btc_address_derivation_path_sequence_number(): string {
-		$sequence_number = $this->order->get_address()->get_derivation_path_sequence_number();
+		$sequence_number = $this->bitcoin_order->get_address()->get_derivation_path_sequence_number();
 		return "{$sequence_number}";
 	}
 
@@ -123,7 +131,7 @@ class Details_Formatter {
 	 * Get a clickable HTML element, to copy the payment address to the clipboard when clicked.
 	 */
 	public function get_xpub_js_span(): string {
-		$payment_address                  = $this->order->get_address()->get_raw_address();
+		$payment_address                  = $this->bitcoin_order->get_address()->get_raw_address();
 		$payment_address_friendly_display = substr( $payment_address, 0, 7 ) . ' ... ' . substr( $payment_address, - 3, 3 );
 		return "<span style=\"border-bottom: 1px dashed #999; word-wrap: break-word\" onclick=\"this.innerText = this.innerText === '{$payment_address}' ? '{$payment_address_friendly_display}' : '{$payment_address}';\" title=\"{$payment_address}\"'>{$payment_address_friendly_display}</span>";
 	}
@@ -138,10 +146,10 @@ class Details_Formatter {
 		 *
 		 * @var \DateTimeInterface $date_created
 		 */
-		$date_created = $this->order->get_date_created();
+		$date_created = $this->bitcoin_order->get_date_created();
 		$from         = $date_created->getTimestamp() - ( DAY_IN_SECONDS / 2 );
-		if ( ! is_null( $this->order->get_date_paid() ) ) {
-			$to = $this->order->get_date_paid()->getTimestamp() + ( DAY_IN_SECONDS / 2 );
+		if ( ! is_null( $this->bitcoin_order->get_date_paid() ) ) {
+			$to = $this->bitcoin_order->get_date_paid()->getTimestamp() + ( DAY_IN_SECONDS / 2 );
 		} else {
 			$to = $from + DAY_IN_SECONDS;
 		}
@@ -159,7 +167,7 @@ class Details_Formatter {
 		// e.g. there could be dynamic number of confirmations based on order total.
 
 		return $this->format_money_to_bitcoin(
-			$this->order->get_address()->get_amount_received() ?? Money::of( 0, 'BTC' )
+			$this->bitcoin_order->get_address()->get_amount_received() ?? Money::of( 0, 'BTC' )
 		);
 	}
 
@@ -170,10 +178,10 @@ class Details_Formatter {
 
 		// If the order is not marked paid, but has transactions, it is partly-paid.
 		switch ( true ) {
-			case $this->order->is_paid():
+			case $this->bitcoin_order->is_paid():
 				$result = __( 'Paid', 'bh-wp-bitcoin-gateway' );
 				break;
-			case $this->order->get_address()->get_amount_received()?->isGreaterThan( Money::of( 0, 'BTC' ) ):
+			case $this->bitcoin_order->get_address()->get_amount_received()?->isGreaterThan( Money::of( 0, 'BTC' ) ):
 				$result = __( 'Partly Paid', 'bh-wp-bitcoin-gateway' );
 				break;
 			default:
@@ -207,7 +215,7 @@ class Details_Formatter {
 		$result['parent_wallet_xpub_html']                     = $this->get_xpub_js_span();
 		$result['exchange_rate_url']                           = $this->get_exchange_rate_url();
 		$result['payment_status']                              = $this->get_friendly_status();
-		$result['payment_address']                             = $this->order->get_address()->get_raw_address();
+		$result['payment_address']                             = $this->bitcoin_order->get_address()->get_raw_address();
 
 		return $as_camel_case
 			? self::camel_case_keys( $result )

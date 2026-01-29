@@ -4,6 +4,8 @@
  *
  * TODO: Update the wp_post last modified time when updating metadata.
  *
+ * @see wp_update_post()
+ *
  * @package    brianhenryie/bh-wp-bitcoin-gateway
  */
 
@@ -12,6 +14,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\Admin\Addresses_List_Table;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Bitcoin_Gateway;
+use DateTimeImmutable;
 use DateTimeInterface;
 use InvalidArgumentException;
 
@@ -24,6 +27,7 @@ class Bitcoin_Address implements Bitcoin_Address_Interface {
 	 * Constructor
 	 *
 	 * TODO: allow setting `required_confirmations`.
+	 * TODO: allow setting `price_margin`.
 	 *
 	 * @param int                    $post_id The WordPress post ID for this address.
 	 * @param int                    $wallet_parent_post_id The post ID of the parent wallet.
@@ -33,6 +37,7 @@ class Bitcoin_Address implements Bitcoin_Address_Interface {
 	 * @param DateTimeInterface      $modified_time When the WP Post was last modified, presumably to check when the address was last checked.
 	 * @param Bitcoin_Address_Status $status The current status of the address.
 	 * @param ?Money                 $target_amount The target amount for payment.
+	 * @param ?string                $integration_id The plugin the order was placed with.
 	 * @param ?int                   $order_id The WooCommerce order ID associated with this address.
 	 * @param array<int,string>|null $tx_ids Transaction IDs as post_id:tx_id.
 	 * @param ?Money                 $received The sum of incoming transactions for the address.
@@ -48,6 +53,7 @@ class Bitcoin_Address implements Bitcoin_Address_Interface {
 		protected DateTimeInterface $modified_time,
 		protected Bitcoin_Address_Status $status = Bitcoin_Address_Status::UNKNOWN,
 		protected ?Money $target_amount = null,
+		protected ?string $integration_id = null,
 		protected ?int $order_id = null,
 		protected ?array $tx_ids = null,
 		protected ?Money $received = null,
@@ -140,5 +146,29 @@ class Bitcoin_Address implements Bitcoin_Address_Interface {
 	 */
 	public function get_modified_time(): DateTimeInterface {
 		return $this->modified_time;
+	}
+
+	/**
+	 * The internal name/id of the integration (WooCommerce...) that the address is assigned to.
+	 */
+	public function get_integration_id(): ?string {
+		return $this->integration_id;
+	}
+
+
+	/**
+	 * Was this address recently checked for transactions?
+	 *
+	 * There is no need to check more than once every ten minutes because that is the rate of blocks mined.
+	 *
+	 * `$address->get_modified_time() > (new DateTimeImmutable())->sub(new DateInterval('PT10M'))`.
+	 *
+	 * @param int $minutes Number of minutes until it is considered stale.
+	 */
+	public function was_checked_recently( int $minutes = 10 ): bool {
+		$now                = new DateTimeImmutable();
+		$threshold_seconds  = $minutes * constant( 'MINUTE_IN_SECONDS' );
+		$seconds_difference = $now->getTimestamp() - $this->modified_time->getTimestamp();
+		return $seconds_difference < $threshold_seconds;
 	}
 }

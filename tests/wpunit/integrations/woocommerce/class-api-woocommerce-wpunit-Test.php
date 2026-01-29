@@ -15,6 +15,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Helpers\WC_Order_Meta_Helper;
 use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
 use Codeception\Stub\Expected;
 use lucatume\WPBrowser\TestCase\WPTestCase;
@@ -32,6 +33,7 @@ class API_WooCommerce_WPUnit_Test extends WPTestCase {
 		?API_Interface $api = null,
 		?Bitcoin_Wallet_Service $wallet_service = null,
 		?Payment_Service $payment_service = null,
+		?WC_Order_Meta_Helper $order_meta_helper = null,
 		?Background_Jobs_Scheduler_Interface $background_jobs_scheduler = null,
 		?LoggerInterface $logger = null,
 	): API_WooCommerce {
@@ -39,6 +41,7 @@ class API_WooCommerce_WPUnit_Test extends WPTestCase {
 			api: $api ?? $this->makeEmpty( API_Interface::class ),
 			wallet_service: $wallet_service ?? $this->makeEmpty( Bitcoin_Wallet_Service::class ),
 			payment_service: $payment_service ?? $this->makeEmpty( Payment_Service::class ),
+			order_meta_helper: $order_meta_helper ?? $this->make( WC_Order_Meta_Helper::class ),
 			background_jobs_scheduler: $background_jobs_scheduler ?? $this->makeEmpty( Background_Jobs_Scheduler_Interface::class ),
 			logger: $logger ?? new ColorLogger(),
 		);
@@ -364,15 +367,15 @@ class API_WooCommerce_WPUnit_Test extends WPTestCase {
 
 	/**
 	 * @see API_WooCommerce::get_order_details
-	 * @see API_WooCommerce::refresh_order
+	 * @see API_WooCommerce::check_order_for_payment()
+	 * @see API_WooCommerce_Interface::check_order_for_payment()
 	 */
 	public function test_get_order_details_no_transactions(): void {
 
 		$address = $this->make(
 			Bitcoin_Address::class,
 			array(
-				'get_tx_ids'          => Expected::atLeastOnce( array() ),
-				'get_amount_received' => Expected::exactly( 1, Money::of( 0.01, 'BTC' ) ),
+				'get_tx_ids' => Expected::atLeastOnce( array() ),
 			)
 		);
 
@@ -383,23 +386,7 @@ class API_WooCommerce_WPUnit_Test extends WPTestCase {
 			)
 		);
 
-		$check_address_for_payment_service_result = new Check_Address_For_Payment_Service_Result(
-			update_address_transactions_result: new Update_Address_Transactions_Result(
-				queried_address: $address,
-				known_tx_ids_before: array(),
-				all_transactions: array( $this->makeEmpty( Transaction_Interface::class ) ),
-			),
-			blockchain_height: 12345,
-			required_confirmations: 3,
-			total_received: Money::of( 0.02, 'BTC' ),
-		);
-
-		$payment_service_mock = $this->make(
-			Payment_Service::class,
-			array(
-				'get_saved_transactions' => Expected::once( array() ),
-			)
-		);
+		$payment_service_mock = $this->make( Payment_Service::class );
 
 		$sut = $this->get_sut(
 			wallet_service: $bitcoin_wallet_service,
@@ -407,9 +394,9 @@ class API_WooCommerce_WPUnit_Test extends WPTestCase {
 		);
 
 		$order = new WC_Order();
-		$order->add_meta_data( Order::BITCOIN_ADDRESS_META_KEY, 'xpub1234', true );
+		$order->add_meta_data( WC_Order_Meta_Helper::BITCOIN_ADDRESS_META_KEY, 'xpub1234', true );
 		$order->add_meta_data(
-			Order::ORDER_TOTAL_BITCOIN_AT_TIME_OF_PURCHASE_META_KEY,
+			WC_Order_Meta_Helper::ORDER_TOTAL_BITCOIN_AT_TIME_OF_PURCHASE_META_KEY,
 			array(
 				'amount'   => '0.1',
 				'currency' => 'BTC',
@@ -417,81 +404,17 @@ class API_WooCommerce_WPUnit_Test extends WPTestCase {
 			true
 		);
 		$order->add_meta_data(
-			Order::EXCHANGE_RATE_AT_TIME_OF_PURCHASE_META_KEY,
+			WC_Order_Meta_Helper::EXCHANGE_RATE_AT_TIME_OF_PURCHASE_META_KEY,
 			array(
 				'amount'   => '90000',
 				'currency' => 'USD',
 			),
 			true
 		);
-		$order->add_meta_data( Order::LAST_CHECKED_META_KEY, new \DateTimeImmutable( '2024-01-15T14:30:00+00:00' ), true );
 		$order->save();
 
-		$result = $sut->get_order_details( $order, true );
+		$result = $sut->get_order_details( $order );
 
 		$this->assertEmpty( $result->get_address()->get_tx_ids() );
-	}
-
-	/**
-	 * @see API_WooCommerce::get_order_details
-	 * @see API_WooCommerce::refresh_order
-	 * @see API_WooCommerce::update_address_transactions
-	 */
-	public function test_get_order_details_no_refresh(): void {
-
-		$address = $this->make(
-			Bitcoin_Address::class,
-			array(
-				'get_tx_ids' => Expected::exactly( 2, array() ),
-			)
-		);
-
-		$bitcoin_wallet_service = $this->makeEmpty(
-			Bitcoin_Wallet_Service::class,
-			array(
-				'get_saved_address_by_bitcoin_payment_address' => Expected::once( $address ), // param: `xpub1234`.
-			)
-		);
-
-		$payment_service_mock = $this->make(
-			Payment_Service::class,
-			array(
-				'get_saved_transactions'    => Expected::once( array() ),
-				'check_address_for_payment' => Expected::never(),
-			)
-		);
-
-		$sut = $this->get_sut(
-			wallet_service: $bitcoin_wallet_service,
-			payment_service: $payment_service_mock
-		);
-
-		$order = new WC_Order();
-		$order->add_meta_data( Order::BITCOIN_ADDRESS_META_KEY, 'xpub1234', true );
-		$order->add_meta_data(
-			Order::ORDER_TOTAL_BITCOIN_AT_TIME_OF_PURCHASE_META_KEY,
-			array(
-				'amount'   => '0.00123',
-				'currency' => 'BTC',
-			),
-			true
-		);
-		$order->add_meta_data(
-			Order::EXCHANGE_RATE_AT_TIME_OF_PURCHASE_META_KEY,
-			array(
-				'amount'   => '90000',
-				'currency' => 'USD',
-			),
-			true
-		);
-		$order->add_meta_data( Order::LAST_CHECKED_META_KEY, new \DateTimeImmutable( '2024-01-15T14:30:00+00:00' ), true );
-		$order->save();
-
-		$result = $sut->get_order_details( $order, false );
-
-		$this->assertEquals( Money::of( '0.00123', 'BTC' ), $result->get_btc_total_price() );
-		$this->assertEquals( Money::of( '90000', 'USD' ), $result->get_btc_exchange_rate() );
-		$this->assertSame( $address, $result->get_address() );
-		$this->assertEquals( '2024-01-15 14:30:00', $result->get_last_checked_time()?->format( 'Y-m-d H:i:s' ) );
 	}
 }

@@ -41,9 +41,6 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 	/**
 	 * Given a bitcoin public key, get the WordPress post_id it is saved under.
 	 *
-	 * TODO: If a wallet post is deleted, but its addresses are not, and it is re-saved with
-	 * a new post_id, the orphaned addresses will behave unpredictably.
-	 *
 	 * @param string $address Xpub|ypub|zpub.
 	 *
 	 * @return int|null The post id if it exists, null if it is not found.
@@ -163,11 +160,6 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 	 * @return Bitcoin_Address[]
 	 */
 	public function get_unknown_bitcoin_addresses(): array {
-		// 'orderby'        => 'ID',
-		// 'order'          => 'ASC',
-		// TODO: Should this query use ID.asc as a way to order?
-		// TODO: updated_at is probably correct.
-
 		return $this->get_addresses_query(
 			new Bitcoin_Address_Query(
 				status: Bitcoin_Address_Status::UNKNOWN,
@@ -207,8 +199,16 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 		Bitcoin_Address_Query $query,
 		?WP_Posts_Query_Order $order = null,
 	): array {
+
+		$effective_order = $order ?? new WP_Posts_Query_Order(
+			order_by: 'ID',
+			order_direction: 'ASC',
+		);
+
 		/** @var WP_Post[] $posts */
-		$posts = get_posts( $query->to_query_array() + ( $order?->to_query_array() ?? array() ) );
+		$posts = get_posts(
+			$query->to_query_array() + $effective_order->to_query_array()
+		);
 
 		return array_map(
 			fn( WP_Post $wp_post ) => $this->bitcoin_address_factory->get_by_wp_post( $wp_post ),
@@ -243,8 +243,6 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 			xpub: $address,
 			derivation_path_sequence_index: $derivation_path_sequence_index,
 		);
-
-		// TODO: Validate address, throw exception.
 
 		/** @var WpUpdatePostArray $args */
 		$args = $query->to_query_array();
@@ -289,13 +287,13 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 	 * @see Bitcoin_Address_Status::ASSIGNED
 	 *
 	 * @param Bitcoin_Address     $address The Bitcoin payment address to link.
-	 * @param string|class-string $integration The plugin that is using this address.
+	 * @param string|class-string $integration_id The plugin that is using this address.
 	 * @param int                 $order_id The post_id (e.g. WooCommerce order id) that transactions to this address represent payment for.
 	 * @param Money               $btc_total The target amount to be paid, after which the order should be updated.
 	 */
 	public function assign_to_order(
 		Bitcoin_Address $address,
-		string $integration,
+		string $integration_id,
 		int $order_id,
 		Money $btc_total,
 	): void {
@@ -303,7 +301,7 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 			model: $address,
 			query: new Bitcoin_Address_Query(
 				status: Bitcoin_Address_Status::ASSIGNED,
-				integration: wp_slash( $integration ),
+				integration_id: wp_slash( $integration_id ),
 				associated_order_id: $order_id,
 				target_amount: $btc_total,
 			)

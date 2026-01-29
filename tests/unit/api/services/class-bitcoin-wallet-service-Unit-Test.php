@@ -506,7 +506,7 @@ class Bitcoin_Wallet_Service_Unit_Test extends \Codeception\Test\Unit {
 		$address = $this->make(
 			Bitcoin_Address::class,
 			array(
-				'get_tx_ids' => Expected::exactly( 2, null ),
+				'get_tx_ids' => Expected::once(),
 			)
 		);
 
@@ -561,7 +561,7 @@ class Bitcoin_Wallet_Service_Unit_Test extends \Codeception\Test\Unit {
 		$address = $this->make(
 			Bitcoin_Address::class,
 			array(
-				'get_tx_ids' => Expected::exactly( 2, null ),
+				'get_tx_ids' => Expected::once(),
 			)
 		);
 
@@ -592,8 +592,7 @@ class Bitcoin_Wallet_Service_Unit_Test extends \Codeception\Test\Unit {
 		$address = $this->make(
 			Bitcoin_Address::class,
 			array(
-				'get_tx_ids' => Expected::exactly(
-					2,
+				'get_tx_ids' => Expected::once(
 					array(
 						100 => 'txid_existing',
 					)
@@ -643,8 +642,7 @@ class Bitcoin_Wallet_Service_Unit_Test extends \Codeception\Test\Unit {
 		$address = $this->make(
 			Bitcoin_Address::class,
 			array(
-				'get_tx_ids' => Expected::exactly(
-					2,
+				'get_tx_ids' => Expected::once(
 					array(
 						100 => 'txid_existing',
 					)
@@ -667,35 +665,7 @@ class Bitcoin_Wallet_Service_Unit_Test extends \Codeception\Test\Unit {
 		$bitcoin_address_repository = $this->makeEmpty(
 			Bitcoin_Address_Repository::class,
 			array(
-				'set_transactions_post_ids_to_address' => Expected::never(),
-			)
-		);
-
-		$sut = $this->get_sut( bitcoin_address_repository: $bitcoin_address_repository );
-
-		$sut->update_address_transactions_posts( $address, $all_transactions );
-	}
-
-	/**
-	 * Test edge case: when get_tx_ids() is not null (address has been checked) but returns empty array,
-	 * and there are still no transactions to add, should skip the save operation.
-	 *
-	 * @covers ::update_address_transactions_posts
-	 */
-	public function test_update_address_transactions_posts_skip_save_when_already_checked_and_still_empty(): void {
-		$address = $this->make(
-			Bitcoin_Address::class,
-			array(
-				'get_tx_ids' => Expected::exactly( 2, array() ),
-			)
-		);
-
-		$all_transactions = array();
-
-		$bitcoin_address_repository = $this->makeEmpty(
-			Bitcoin_Address_Repository::class,
-			array(
-				'set_transactions_post_ids_to_address' => Expected::never(),
+				'set_transactions_post_ids_to_address' => Expected::once(),
 			)
 		);
 
@@ -713,8 +683,7 @@ class Bitcoin_Wallet_Service_Unit_Test extends \Codeception\Test\Unit {
 		$address = $this->make(
 			Bitcoin_Address::class,
 			array(
-				'get_tx_ids' => Expected::exactly(
-					2,
+				'get_tx_ids' => Expected::once(
 					array(
 						100 => 'txid_existing1',
 						101 => 'txid_existing2',
@@ -784,8 +753,7 @@ class Bitcoin_Wallet_Service_Unit_Test extends \Codeception\Test\Unit {
 		$address = $this->make(
 			Bitcoin_Address::class,
 			array(
-				'get_tx_ids' => Expected::exactly(
-					2,
+				'get_tx_ids' => Expected::once(
 					array(
 						100 => 'txid_existing',
 						101 => 'txid_existing2',

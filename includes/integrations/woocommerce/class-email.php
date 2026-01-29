@@ -63,7 +63,7 @@ class Email {
 		$order = wc_get_order( $order->get_id() );
 
 		try {
-			$template_args = $this->api->get_formatted_order_details( $order, false );
+			$template_args = $this->api->get_formatted_order_details( $order );
 		} catch ( \Exception $exception ) {
 			$this->logger->warning(
 				"Failed to get `shop_order:{$order->get_id()}` details for Email template: {$exception->getMessage()}",

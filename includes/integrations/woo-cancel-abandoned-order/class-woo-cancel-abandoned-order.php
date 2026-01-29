@@ -15,7 +15,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\Woo_Cancel_Abandoned_Orde
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
 use Exception;
 use RVOLA\WOO\CAO\CAO;
 use WC_Order;
@@ -80,7 +80,7 @@ class Woo_Cancel_Abandoned_Order {
 		}
 
 		try {
-			/** @var WC_Bitcoin_Order_Interface $bitcoin_order */
+			/** @var WC_Bitcoin_Order $bitcoin_order */
 			$bitcoin_order = $this->api_woocommerce->get_order_details( $order );
 		} catch ( Exception $exception ) {
 			// If something is going wrong, do not automatically cancel the order.

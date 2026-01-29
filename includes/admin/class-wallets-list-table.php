@@ -62,8 +62,6 @@ class Wallets_List_Table extends WP_Posts_List_Table {
 	/**
 	 * Define the custom columns for the post type.
 	 *
-	 * TODO: Only show the wallet column if there is more than one wallet.
-	 *
 	 * @return array<string, string> Column name : HTML output.
 	 */
 	public function get_columns() {

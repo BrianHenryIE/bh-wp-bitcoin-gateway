@@ -18,7 +18,7 @@ class Blockstream_Info_API_WPUnit_Test extends WPTestCase {
 
 		$logger = new ColorLogger();
 
-		$sut = new Blockstream_Info_API( $logger );
+		$sut = new Blockstream_Info_API_Extended( $logger );
 
 		$request_response = array(
 			'body'     => wp_json_encode(
@@ -57,9 +57,9 @@ class Blockstream_Info_API_WPUnit_Test extends WPTestCase {
 		// The pizza address.
 		$address = '1XPTgDRhN8RFnzniWCddobD9iKZatrvH4';
 
-		$result = $sut->get_address_balance( $address, 1 );
+		$result = $sut->get_received_by_address( $address, 1 );
 
-		$this->assertEquals( '0.00018142', (string) $result->get_confirmed_balance()->getAmount() );
+		$this->assertEquals( '0.00018142', (string) $result->getAmount() );
 	}
 
 	/**

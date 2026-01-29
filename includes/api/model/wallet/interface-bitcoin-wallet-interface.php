@@ -17,7 +17,7 @@ interface Bitcoin_Wallet_Interface {
 	/**
 	 * The current status of the wallet.
 	 *
-	 * TODO: Mark wallets inactive when removed from a gateway.
+	 * TODO: Mark wallets inactive when removed from a gateway; add wp_comment for changes.
 	 */
 	public function get_status(): Bitcoin_Wallet_Status;
 

@@ -63,7 +63,7 @@ class Thank_You {
 		$order = wc_get_order( $order_id );
 
 		try {
-			$template_args = $this->api->get_formatted_order_details( $order, false );
+			$template_args = $this->api->get_formatted_order_details( $order );
 		} catch ( Exception $exception ) {
 			// Exception sometimes occurs when an order has no Bitcoin address, although that's not likely the case here.
 			$this->logger->warning(

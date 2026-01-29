@@ -24,9 +24,9 @@ interface Bitcoin_Address_WP_Post_Interface {
 	 * @see Bitcoin_Wallet_Service::update_address_transactions_posts()
 	 * @see Payment_Service::update_address_transactions()
 	 */
-	const string TRANSACTIONS_META_KEY     = 'address_transactions';
-	const string RECEIVED_META_KEY         = 'cumulative_received';
-	const string INTEGRATION_NAME_META_KEY = 'integration_name';
-	const string ORDER_ID_META_KEY         = 'order_id';
-	const string TARGET_AMOUNT_META_KEY    = 'target_amount';
+	const string TRANSACTIONS_META_KEY   = 'address_transactions';
+	const string RECEIVED_META_KEY       = 'cumulative_received';
+	const string INTEGRATION_ID_META_KEY = 'integration_id';
+	const string ORDER_ID_META_KEY       = 'order_id';
+	const string TARGET_AMOUNT_META_KEY  = 'target_amount';
 }

@@ -5,13 +5,11 @@
  * * there are unused addresses available for orders
  * * assigned addresses are checked for payments
  *
- * After new orders, wait five minutes and check for payments.
- * While the destination address is waiting for payment, continue to schedule new checks every ten minutes (nblock generation time)
+ * After new orders, wait 15 minutes and check for payments (TODO: check mempool too).
+ * While the destination address is waiting for payment, continue to schedule new checks every ten minutes (block generation time)
  * Every hour, in case the previous check is not running correctly, check are there assigned Bitcoin addresses that we should check for transactions
  * Schedule background job to generate new addresses as needed (fall below threshold defined elsewhere)
  * After generating new addresses, check for existing transactions to ensure they are available to use
- *
- * TODO we need to always be checking the next address that might be assigned to ensure it is still unused.
  *
  * @package    brianhenryie/bh-wp-bitcoin-gateway
  */
@@ -28,6 +26,8 @@ use Psr\Log\LoggerInterface;
 
 /**
  * Functions to handle `do_action` initiated from Action Scheduler.
+ *
+ * @see BH_WP_Bitcoin_Gateway::define_action_scheduler_hooks()
  */
 class Background_Jobs_Actions_Handler implements Background_Jobs_Actions_Interface {
 	use LoggerAwareTrait;
@@ -88,8 +88,6 @@ class Background_Jobs_Actions_Handler implements Background_Jobs_Actions_Interfa
 	}
 
 	/**
-	 * TODO: add the add_action code!
-	 *
 	 * @hooked Background_Jobs_Actions_Interface::RECURRING_ENSURE_UNUSED_ADDRESSES_HOOK
 	 */
 	public function ensure_unused_addresses(): void {
@@ -162,9 +160,6 @@ class Background_Jobs_Actions_Handler implements Background_Jobs_Actions_Interfa
 	 * query the Blockchain API for updates,
 	 * on rate-limit error, reschedule a check after the rate limit expires,
 	 * reschedule another check in ten minutes if there are still addresses awaiting payment.
-	 *
-	 * TODO: ensure addresses' updated date is changed after querying for transactions
-	 * TODO: use wp_comments table to log
 	 *
 	 * If we have failed to check all the addresses that we should, so let's reschedule the check when
 	 * the rate limit expires. The addresses that were successfully checked should have their updated

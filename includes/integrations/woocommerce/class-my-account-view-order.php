@@ -56,7 +56,7 @@ class My_Account_View_Order {
 		$order = wc_get_order( $order_id );
 
 		try {
-			$template_args = $this->api->get_formatted_order_details( $order, false );
+			$template_args = $this->api->get_formatted_order_details( $order );
 		} catch ( Exception $exception ) {
 			// Exception occurs when an order has no Bitcoin address, e.g. if there was a problem fetching one as the
 			// order was created.

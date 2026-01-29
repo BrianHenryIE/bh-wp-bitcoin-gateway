@@ -61,6 +61,8 @@ class WooCommerce_Integration {
 		$this->define_email_hooks();
 		$this->define_my_account_hooks();
 
+		$this->define_order_hooks();
+
 		$this->define_admin_order_ui_hooks();
 
 		$this->define_woocommerce_features_hooks();
@@ -193,6 +195,17 @@ class WooCommerce_Integration {
 		$my_account_order = $this->container->get( My_Account_View_Order::class );
 
 		add_action( 'woocommerce_view_order', array( $my_account_order, 'print_status_instructions' ), 9 );
+	}
+
+	/**
+	 * Add hooks that trigger changes to the WooCommerce order object itself, fired by the bh-wp-bitcoin-gateway plugin!
+	 */
+	protected function define_order_hooks(): void {
+		/** @var Order $order */
+		$order = $this->container->get( Order::class );
+
+		add_action( 'bh_wp_bitcoin_gateway_new_transactions_seen', array( $order, 'new_transactions_seen' ), 10, 4 );
+		add_action( 'bh_wp_bitcoin_gateway_payment_received', array( $order, 'payment_received' ), 10, 4 );
 	}
 
 	/**

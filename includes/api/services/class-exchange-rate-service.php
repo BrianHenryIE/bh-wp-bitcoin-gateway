@@ -8,8 +8,6 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Services;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Exchange_Rate_API_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\JsonMapper\JsonMapper_DateTimeInterface;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\JsonMapper\JsonMapper_Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\Rate_Limit_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Results\Exchange_Rate_Service_Result;
@@ -19,13 +17,8 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Math\RoundingMode;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Currency;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\UnknownCurrencyException;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
-use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\Exception\BuilderException;
-use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\Exception\ClassFactoryException;
-use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\Handler\FactoryRegistry;
-use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\Handler\PropertyMapper;
-use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\JsonMapperBuilder;
+use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\JsonMapperInterface;
 use DateTimeImmutable;
-use DateTimeInterface;
 use JsonException;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
@@ -48,10 +41,12 @@ class Exchange_Rate_Service implements LoggerAwareInterface {
 	 * Constructor
 	 *
 	 * @param Exchange_Rate_API_Interface $exchange_rate_api External API to fetch exchange rate data from.
+	 * @param JsonMapperInterface         $json_mapper To parse JSON to typed objects.
 	 * @param LoggerInterface             $logger PSR logger for debug and errors.
 	 */
 	public function __construct(
 		protected Exchange_Rate_API_Interface $exchange_rate_api,
+		protected JsonMapperInterface $json_mapper,
 		LoggerInterface $logger,
 	) {
 		$this->setLogger( $logger );
@@ -214,46 +209,8 @@ class Exchange_Rate_Service implements LoggerAwareInterface {
 			return null;
 		}
 
-		try {
-			$factory_registry = new FactoryRegistry();
-
-			$factory_registry->addFactory(
-				DateTimeInterface::class,
-				new JsonMapper_DateTimeInterface()
-			);
-
-			$factory_registry->addFactory(
-				Money::class,
-				new JsonMapper_Money()
-			);
-		} catch ( ClassFactoryException $exception ) {
-			// Something must be wrong with the factory implementation.
-			// Definitely should not be a run-time error to just register them.
-			$this->logger->error( $exception->getMessage(), array( 'exception' => $exception ) );
-			return null;
-		}
-
-		// TODO: after testing, see what -> are unnecessary.
-		$property_mapper = new PropertyMapper( $factory_registry );
-
-		try {
-			$mapper = JsonMapperBuilder::new()
-				->withPropertyMapper( $property_mapper )
-				->withAttributesMiddleware()
-				->withDocBlockAnnotationsMiddleware()
-				->withTypedPropertiesMiddleware()
-				->withNamespaceResolverMiddleware()
-				->withObjectConstructorMiddleware( $factory_registry )
-				->build();
-		} catch ( BuilderException $exception ) {
-			// NB Just catching this / hiding it could result in constant API calls.
-			// So...? When there's an API error that's not external, we should rate limit internally somehow.
-			$this->logger->error( $exception->getMessage(), array( 'exception' => $exception ) );
-			return null;
-		}
-
 		/** @var Exchange_Rate_Service_Result $exchange_rate */
-		$exchange_rate = $mapper->mapToClassFromString(
+		$exchange_rate = $this->json_mapper->mapToClassFromString(
 			$exchange_rate_stored_transient_json_string,
 			Exchange_Rate_Service_Result::class
 		);

@@ -17,6 +17,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Bitcoin_Gateway;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Order;
 use DateTimeInterface;
+use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 use WC_Order;
@@ -25,7 +26,7 @@ use WC_Payment_Gateways;
 /**
  * @mixin WC_Order
  */
-class WC_Bitcoin_Order implements WC_Bitcoin_Order_Interface {
+class WC_Bitcoin_Order implements LoggerAwareInterface {
 	use LoggerAwareTrait;
 
 	/**
@@ -44,20 +45,6 @@ class WC_Bitcoin_Order implements WC_Bitcoin_Order_Interface {
 	 * @var int
 	 */
 	protected int $confirmations;
-
-	/**
-	 * The total amount of Bitcoin received at the payment address.
-	 *
-	 * @var Money
-	 */
-	protected Money $amount_received;
-
-	/**
-	 * The timestamp when the address was last checked for transactions.
-	 *
-	 * @var DateTimeInterface
-	 */
-	protected DateTimeInterface $last_checked_time;
 
 	/**
 	 * Magic method to proxy method calls to the underlying WooCommerce order.
@@ -94,23 +81,10 @@ class WC_Bitcoin_Order implements WC_Bitcoin_Order_Interface {
 	}
 
 	/**
-	 * The order price in Bitcoin at the time of purchase.
+	 * Get the original order object.
 	 */
-	public function get_btc_total_price(): Money {
-		/** @var array{amount:string, currency:string} $btc_total */
-		$btc_total = $this->wc_order->get_meta( Order::ORDER_TOTAL_BITCOIN_AT_TIME_OF_PURCHASE_META_KEY );
-
-		return Money::of( $btc_total['amount'], $btc_total['currency'] );
-	}
-
-	/**
-	 * The price of 1 Bitcoin at the time of purchase.
-	 */
-	public function get_btc_exchange_rate(): Money {
-		/** @var array{amount:string, currency:string} $rate_meta */
-		$rate_meta = $this->wc_order->get_meta( Order::EXCHANGE_RATE_AT_TIME_OF_PURCHASE_META_KEY );
-
-		return Money::of( $rate_meta['amount'], $rate_meta['currency'] );
+	public function get_wc_order(): WC_Order {
+		return $this->wc_order;
 	}
 
 	/**
@@ -129,21 +103,7 @@ class WC_Bitcoin_Order implements WC_Bitcoin_Order_Interface {
 		if ( is_null( $this->payment_address->get_tx_ids() ) ) {
 			return null;
 		}
-		/** @var DateTimeInterface|mixed $last_checked_time */
-		$last_checked_time = $this->wc_order->get_meta( Order::LAST_CHECKED_META_KEY );
-		return $last_checked_time instanceof DateTimeInterface ? $last_checked_time : null;
-	}
-
-	/**
-	 * Set the timestamp when the Bitcoin address was last checked for payments.
-	 *
-	 * @param DateTimeInterface $last_checked_time The timestamp of the last check.
-	 */
-	public function set_last_checked_time( DateTimeInterface $last_checked_time ): void {
-		// @phpstan-ignore-next-line This works fine.
-		$this->wc_order->add_meta_data( Order::LAST_CHECKED_META_KEY, $last_checked_time, true );
-		// TODO: Save?
-		$this->last_checked_time = $last_checked_time;
+		return $this->payment_address->get_modified_time();
 	}
 
 	/**
@@ -162,22 +122,5 @@ class WC_Bitcoin_Order implements WC_Bitcoin_Order_Interface {
 		}
 
 		return WC_Payment_Gateways::instance()->payment_gateways[ $this->wc_order->get_payment_method() ];
-	}
-
-	/**
-	 * Get the total value with the required number of confirmations at the last checked time.
-	 */
-	public function get_amount_received(): Money {
-		return $this->amount_received;
-	}
-
-	/**
-	 * Set the confirmed Bitcoin amount received for this order.
-	 *
-	 * @param Money $updated_confirmed_value The confirmed amount received in Bitcoin.
-	 */
-	public function set_amount_received( Money $updated_confirmed_value ): void {
-		$this->wc_order->add_meta_data( Order::BITCOIN_AMOUNT_RECEIVED_META_KEY, $updated_confirmed_value, true );
-		$this->amount_received = $updated_confirmed_value;
 	}
 }
