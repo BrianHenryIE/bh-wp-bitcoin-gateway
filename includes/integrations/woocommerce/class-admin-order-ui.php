@@ -136,7 +136,10 @@ class Admin_Order_UI {
 		$refresh = ! $order->is_paid();
 
 		try {
-			$template_args = $this->api->get_formatted_order_details( $order, $refresh );
+			if ( $refresh ) {
+				$this->api->check_order_for_payment( $order );
+			}
+			$template_args = $this->api->get_formatted_order_details( $order );
 		} catch ( \Exception $exception ) {
 			$this->logger->warning(
 				"Failed to get `shop_order:{$order_id}` details for admin order ui metabox template: {$exception->getMessage()}",

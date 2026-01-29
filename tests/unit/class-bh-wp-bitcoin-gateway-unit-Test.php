@@ -17,6 +17,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Admin\Register_List_Tables;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Blockchain_API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\Generate_Address_API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\JsonMapperInterface;
 use BrianHenryIE\WP_Bitcoin_Gateway\lucatume\DI52\Container;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\I18n;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Post_BH_Bitcoin_Address;
@@ -83,6 +84,12 @@ class BH_WP_Bitcoin_Gateway_Unit_Test extends \Codeception\Test\Unit {
 			API_WooCommerce_Interface::class,
 			function () {
 				return $this->makeEmpty( API_WooCommerce_Interface::class );
+			}
+		);
+		$container->bind(
+			JsonMapperInterface::class,
+			function () {
+				return $this->makeEmpty( JsonMapperInterface::class );
 			}
 		);
 		$container->bind(

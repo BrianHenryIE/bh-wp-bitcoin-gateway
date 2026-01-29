@@ -1,15 +1,9 @@
 <?php
 /**
- * Functions implemented by Background_Jobs class, used by API class to schedule jobs.
+ * Functions implemented by Background_Jobs class, used by API class and others to schedule jobs.
  *
  * @package brianhenryie/bh-wp-bitcoin-gateway
  */
-
-// TODO: every hour the exchange rate needs to be checked. When there are no new orders, we still need to check the
-// spare addresses so we know they haven't been used for some purpose outside here that might result in an order being
-// marked paid by mistake. Obv. when we have unpaid orders, we check them. Until?
-
-// ActionScheduler has an action/hook to listen to whose purpose is making sure no cron job has been forgotten.
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler;
 

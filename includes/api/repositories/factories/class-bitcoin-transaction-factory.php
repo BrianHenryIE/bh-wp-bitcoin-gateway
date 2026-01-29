@@ -9,17 +9,10 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Bitcoin_Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Bitcoin_Transaction_WP_Post_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\JsonMapper\JsonMapper_DateTimeInterface;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\JsonMapper\JsonMapper_Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction;
-use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
-use BrianHenryIE\WP_Bitcoin_Gateway\BtcRpcExplorer\JsonMapper\AssociativeArrayMiddleware;
 use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\Exception\BuilderException;
 use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\Exception\ClassFactoryException;
-use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\Handler\FactoryRegistry;
-use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\Handler\PropertyMapper;
-use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\JsonMapperBuilder;
-use DateTimeInterface;
+use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\JsonMapperInterface;
 use InvalidArgumentException;
 use WP_Post;
 
@@ -27,6 +20,14 @@ use WP_Post;
  * @phpstan-type MoneySerializedArray array{amount:string,currency:string}
  */
 class Bitcoin_Transaction_Factory {
+
+	/**
+	 * @param JsonMapperInterface $json_mapper To parse JSON to typed objects.
+	 */
+	public function __construct(
+		protected JsonMapperInterface $json_mapper,
+	) {
+	}
 
 	/**
 	 * Get a Bitcoin transaction by WordPress post ID.
@@ -49,7 +50,7 @@ class Bitcoin_Transaction_Factory {
 	/**
 	 * Takes a WP_Post and gets the values (primitives?) to create a Bitcoin_Transaction.
 	 *
-	 * TODO: Transactions.
+	 * TODO: inject JsonMapper.
 	 *
 	 * @param WP_Post $post The backing WP_Post for this Bitcoin_Transaction.
 	 *
@@ -58,32 +59,8 @@ class Bitcoin_Transaction_Factory {
 	 */
 	public function get_by_wp_post( WP_Post $post ): Bitcoin_Transaction {
 
-		$factory_registry = new FactoryRegistry();
-
-		$factory_registry->addFactory(
-			DateTimeInterface::class,
-			new JsonMapper_DateTimeInterface()
-		);
-
-		$factory_registry->addFactory(
-			Money::class,
-			new JsonMapper_Money()
-		);
-
-		// TODO: after testing, see what -> are unnecessary.
-		$property_mapper = new PropertyMapper( $factory_registry );
-		$mapper          = JsonMapperBuilder::new()
-			->withPropertyMapper( $property_mapper )
-			->withAttributesMiddleware()
-			->withDocBlockAnnotationsMiddleware()
-			->withTypedPropertiesMiddleware()
-			->withNamespaceResolverMiddleware()
-			->withObjectConstructorMiddleware( $factory_registry )
-			->build();
-		$mapper->push( new AssociativeArrayMiddleware() );
-
 		/** @var Transaction $transaction */
-		$transaction = $mapper->mapToClassFromString( $post->post_content, Transaction::class );
+		$transaction = $this->json_mapper->mapToClassFromString( $post->post_content, Transaction::class );
 
 		// If this is an empty array, something is up. We never save a transaction unless it is relevant to an address of ours.
 		/** @var array<int,string> $addresses post_id:bitcoin_address */

@@ -10,6 +10,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduler_I
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Blockchain_API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\Generate_Address_API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\JsonMapperInterface;
 use BrianHenryIE\WP_Bitcoin_Gateway\lucatume\DI52\Container as DI52_Container;
 use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
 use Codeception\Test\Unit;
@@ -60,6 +61,12 @@ class WooCommerce_Integration_Unit_Test extends Unit {
 			Generate_Address_API_Interface::class,
 			function () {
 				return $this->makeEmpty( Generate_Address_API_Interface::class );
+			}
+		);
+		$container->bind(
+			JsonMapperInterface::class,
+			function () {
+				return $this->makeEmpty( JsonMapperInterface::class );
 			}
 		);
 		$container->bind(
@@ -140,6 +147,29 @@ class WooCommerce_Integration_Unit_Test extends Unit {
 		\WP_Mock::expectActionAdded(
 			'woocommerce_checkout_init',
 			array( new AnyInstance( Checkout::class ), 'ensure_one_address_for_payment' ),
+		);
+
+		$app = new WooCommerce_Integration( $this->get_container() );
+		$app->register_hooks();
+	}
+
+	/**
+	 * @covers ::define_order_hooks
+	 */
+	public function test_define_order_hooks(): void {
+
+		\WP_Mock::expectActionAdded(
+			'bh_wp_bitcoin_gateway_new_transactions_seen',
+			array( new AnyInstance( Order::class ), 'new_transactions_seen' ),
+			10,
+			4
+		);
+
+		\WP_Mock::expectActionAdded(
+			'bh_wp_bitcoin_gateway_payment_received',
+			array( new AnyInstance( Order::class ), 'payment_received' ),
+			10,
+			4
 		);
 
 		$app = new WooCommerce_Integration( $this->get_container() );

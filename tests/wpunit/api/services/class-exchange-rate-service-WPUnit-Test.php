@@ -4,14 +4,30 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Services;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Exchange_Rate_API_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\JsonMapper\JsonMapper_Helper;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Currency;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
+use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\JsonMapperInterface;
 use Codeception\Stub\Expected;
+use lucatume\WPBrowser\TestCase\WPTestCase;
+use Psr\Log\LoggerInterface;
 
 /**
  * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Exchange_Rate_Service
  */
-class Exchange_Rate_Service_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
+class Exchange_Rate_Service_WPUnit_Test extends WPTestCase {
+
+	protected function get_sut(
+		?Exchange_Rate_API_Interface $exchange_rate_api_mock = null,
+		?JsonMapperInterface $json_mapper = null,
+		?LoggerInterface $logger = null,
+	): Exchange_Rate_Service {
+		return new Exchange_Rate_Service(
+			$exchange_rate_api_mock ?? $this->makeEmpty( Exchange_Rate_API_Interface::class ),
+			json_mapper: $json_mapper ?? new JsonMapper_Helper()->build(),
+			logger: $logger ?? new ColorLogger(),
+		);
+	}
 
 	/**
 	 * @covers ::get_exchange_rate
@@ -28,8 +44,7 @@ class Exchange_Rate_Service_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPT
 				'get_exchange_rate' => Expected::once( Money::of( '89000', 'USD' ) ),
 			)
 		);
-		$test_logger            = new ColorLogger();
-		$sut                    = new Exchange_Rate_Service( $exchange_rate_api_mock, $test_logger );
+		$sut                    = $this->get_sut( $exchange_rate_api_mock );
 
 		$result1 = $sut->get_exchange_rate( Currency::of( 'USD' ) );
 
@@ -59,8 +74,7 @@ class Exchange_Rate_Service_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPT
 				'get_exchange_rate' => Expected::never(),
 			)
 		);
-		$test_logger            = new ColorLogger();
-		$sut                    = new Exchange_Rate_Service( $exchange_rate_api_mock, $test_logger );
+		$sut                    = $this->get_sut( $exchange_rate_api_mock );
 
 		$json = <<<'EOD'
 				{
@@ -96,8 +110,7 @@ class Exchange_Rate_Service_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPT
 				'get_exchange_rate' => Expected::never(),
 			)
 		);
-		$test_logger            = new ColorLogger();
-		$sut                    = new Exchange_Rate_Service( $exchange_rate_api_mock, $test_logger );
+		$sut                    = $this->get_sut( $exchange_rate_api_mock );
 
 		$json = <<<'EOD'
 				{
@@ -141,8 +154,7 @@ class Exchange_Rate_Service_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPT
 				),
 			)
 		);
-		$test_logger            = new ColorLogger();
-		$sut                    = new Exchange_Rate_Service( $exchange_rate_api_mock, $test_logger );
+		$sut                    = $this->get_sut( $exchange_rate_api_mock );
 
 		$this->expectException( \BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception::class );
 		$this->expectExceptionMessage( 'No exchange rate available' );
@@ -161,8 +173,7 @@ class Exchange_Rate_Service_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPT
 				'get_exchange_rate' => Expected::never(),
 			)
 		);
-		$test_logger            = new ColorLogger();
-		$sut                    = new Exchange_Rate_Service( $exchange_rate_api_mock, $test_logger );
+		$sut                    = $this->get_sut( $exchange_rate_api_mock );
 
 		$json = <<<'EOD'
 				{
@@ -200,8 +211,7 @@ class Exchange_Rate_Service_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPT
 				'get_exchange_rate' => Expected::never(),
 			)
 		);
-		$test_logger            = new ColorLogger();
-		$sut                    = new Exchange_Rate_Service( $exchange_rate_api_mock, $test_logger );
+		$sut                    = $this->get_sut( $exchange_rate_api_mock );
 
 		$json = <<<'EOD'
 				{
@@ -237,8 +247,7 @@ class Exchange_Rate_Service_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPT
 				'get_exchange_rate' => Expected::once( Money::of( '91000', 'USD' ) ),
 			)
 		);
-		$test_logger            = new ColorLogger();
-		$sut                    = new Exchange_Rate_Service( $exchange_rate_api_mock, $test_logger );
+		$sut                    = $this->get_sut( $exchange_rate_api_mock );
 
 		$result = $sut->update_exchange_rate( Currency::of( 'USD' ) );
 
@@ -259,8 +268,7 @@ class Exchange_Rate_Service_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPT
 				'get_exchange_rate' => Expected::once( Money::of( '92000', 'USD' ) ),
 			)
 		);
-		$test_logger            = new ColorLogger();
-		$sut                    = new Exchange_Rate_Service( $exchange_rate_api_mock, $test_logger );
+		$sut                    = $this->get_sut( $exchange_rate_api_mock );
 
 		$json = <<<'EOD'
 				{
@@ -298,8 +306,7 @@ class Exchange_Rate_Service_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPT
 				'get_exchange_rate' => Expected::once( Money::of( '93000', 'GBP' ) ),
 			)
 		);
-		$test_logger            = new ColorLogger();
-		$sut                    = new Exchange_Rate_Service( $exchange_rate_api_mock, $test_logger );
+		$sut                    = $this->get_sut( $exchange_rate_api_mock );
 
 		$result = $sut->update_exchange_rate( Currency::of( 'GBP' ) );
 
@@ -334,8 +341,7 @@ class Exchange_Rate_Service_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPT
 				),
 			)
 		);
-		$test_logger            = new ColorLogger();
-		$sut                    = new Exchange_Rate_Service( $exchange_rate_api_mock, $test_logger );
+		$sut                    = $this->get_sut( $exchange_rate_api_mock );
 
 		$usd_result = $sut->get_exchange_rate( Currency::of( 'USD' ) );
 		$eur_result = $sut->get_exchange_rate( Currency::of( 'EUR' ) );
@@ -357,8 +363,7 @@ class Exchange_Rate_Service_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPT
 				'get_exchange_rate' => Expected::once( Money::of( '94000', 'USD' ) ),
 			)
 		);
-		$test_logger            = new ColorLogger();
-		$sut                    = new Exchange_Rate_Service( $exchange_rate_api_mock, $test_logger );
+		$sut                    = $this->get_sut( $exchange_rate_api_mock );
 
 		$first_result  = $sut->get_exchange_rate( Currency::of( 'USD' ) );
 		$second_result = $sut->get_exchange_rate( Currency::of( 'USD' ) );
@@ -378,8 +383,7 @@ class Exchange_Rate_Service_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPT
 				'get_exchange_rate' => Expected::never(),
 			)
 		);
-		$test_logger            = new ColorLogger();
-		$sut                    = new Exchange_Rate_Service( $exchange_rate_api_mock, $test_logger );
+		$sut                    = $this->get_sut( $exchange_rate_api_mock );
 
 		$json = <<<'EOD'
 				{
@@ -423,8 +427,7 @@ class Exchange_Rate_Service_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPT
 				},
 			)
 		);
-		$test_logger            = new ColorLogger();
-		$sut                    = new Exchange_Rate_Service( $exchange_rate_api_mock, $test_logger );
+		$sut                    = $this->get_sut( $exchange_rate_api_mock );
 
 		$usd_result = $sut->update_exchange_rate( Currency::of( 'USD' ) );
 		$eur_result = $sut->update_exchange_rate( Currency::of( 'EUR' ) );

@@ -61,17 +61,19 @@ abstract readonly class WP_Post_Query_Abstract {
 	/**
 	 * @return string[] List of valid field in the WP_Query.
 	 *
-	 * TODO: Mark which fields are indexed.
+	 * @see wordpress/wp-admin/includes/schema.php:159
 	 */
 	protected function get_valid_keys(): array {
 		return array(
-			'post_type',
-			'post_name',
+			'ID', // Indexed.
+			'post_date', // Indexed 3rd `(post_type,post_status,post_date...)`.
+			'post_type', // Indexed.
+			'post_name', // Indexed.
 			'post_content',
 			'post_excerpt',
 			'post_title',
-			'post_status',
-			'post_parent',
+			'post_status', // Indexed 2nd `(post_type,post_status...)`.
+			'post_parent', // Indexed.
 			'numberposts',
 			'orderby',
 			'order',
@@ -109,7 +111,6 @@ abstract readonly class WP_Post_Query_Abstract {
 			if ( is_array( $value ) ) {
 				return wp_json_encode( $value );
 			}
-			// TODO: if DateTimeInterface serialize as something legible, if we're using it.
 			return $value;
 		};
 

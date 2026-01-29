@@ -10,11 +10,13 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Bitcoin_Transaction;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Results\Check_Address_For_Payment_Service_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Math\BigNumber;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
-use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
 use WC_Order;
 
 interface API_WooCommerce_Interface {
@@ -59,11 +61,21 @@ interface API_WooCommerce_Interface {
 	 * Return the current Bitcoin details for an order, optionally refresh.
 	 *
 	 * @param WC_Order $wc_order   WooCommerce order object.
-	 * @param bool     $refresh Query remote APIs to refresh the details, or just return cached data.
 	 *
-	 * @return WC_Bitcoin_Order_Interface
+	 * @return WC_Bitcoin_Order
 	 */
-	public function get_order_details( WC_Order $wc_order, bool $refresh = true ): WC_Bitcoin_Order_Interface;
+	public function get_order_details( WC_Order $wc_order ): WC_Bitcoin_Order;
+
+	/**
+	 * Synchronously remotely query the blockchain for new payments.
+	 *
+	 * This should only be run on user interaction. There will be a cron job checking it regularly anyway. This is
+	 * almost like a pedestrian crossing button, or an elevator button. It might make a tiny difference but the
+	 * system should already be managing it.
+	 *
+	 * @param WC_Order $order The order, presumably with Bitcoin chosen at checkout, to look for payments for.
+	 */
+	public function check_order_for_payment( WC_Order $order ): void;
 
 	/**
 	 * Determine do we have any fresh address available for this gateway.
@@ -88,10 +100,27 @@ interface API_WooCommerce_Interface {
 	 * Returns the array from `get_order_details()` with additional keys for printing in HTML/email.
 	 *
 	 * @param WC_Order $order The WooCommerce order.
-	 * @param bool     $refresh Should an API request be made to check for new transactions, or just use existing data.
 	 *
 	 * @return array<string, string|null|Money|BigNumber|array<Bitcoin_Transaction>>
 	 * @throws BH_WP_Bitcoin_Gateway_Exception When the order has no Bitcoin address.
 	 */
-	public function get_formatted_order_details( WC_Order $order, bool $refresh = true ): array;
+	public function get_formatted_order_details( WC_Order $order ): array;
+
+	/**
+	 * Record (log) newly seen transactions as order notes.
+	 *
+	 * The signature on this will probably change so we can pass the confirmed/unconfirmed amounts to the printer.
+	 *
+	 * @param WC_Order                     $order The order <- the payment address <- the new transactions.
+	 * @param array<Transaction_Interface> $new_transactions List of transactions.
+	 */
+	public function add_order_note_for_transactions( WC_Order $order, array $new_transactions ): void;
+
+	/**
+	 * Set a WooCommerce order paid with the data from the Payment_Service.
+	 *
+	 * @param WC_Order                                 $wc_order The order to mark paid (wc-completed).
+	 * @param Check_Address_For_Payment_Service_Result $check_address_for_payment_service_result The payment details.
+	 */
+	public function mark_order_paid( WC_Order $wc_order, Check_Address_For_Payment_Service_Result $check_address_for_payment_service_result, ): void;
 }
