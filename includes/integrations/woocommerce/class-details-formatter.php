@@ -34,7 +34,7 @@ class Details_Formatter {
 	 * ฿ U+0E3F THAI CURRENCY SYMBOL BAHT, decimal: 3647, HTML: &#3647;, UTF-8: 0xE0 0xB8 0xBF, block: Thai.
 	 */
 	public function get_btc_total_formatted(): string {
-		$btc_price = $this->order_meta_helper->get_btc_total_price( $this->bitcoin_order );
+		$btc_price = $this->order_meta_helper->get_btc_total_price( $this->bitcoin_order->get_wc_order() );
 		return $btc_price ? $this->format_money_to_bitcoin( $btc_price ) : '';
 	}
 
@@ -66,7 +66,7 @@ class Details_Formatter {
 	 * TODO: This should display the store currency value for one Bitcoin at the time of order. Currently ~"90817.00".
 	 */
 	public function get_btc_exchange_rate_formatted(): string {
-		$exchange_rate = $this->order_meta_helper->get_exchange_rate( $this->bitcoin_order );
+		$exchange_rate = $this->order_meta_helper->get_exchange_rate( $this->bitcoin_order->get_wc_order() );
 		if ( ! $exchange_rate ) {
 			// TODO: log.
 			return '';

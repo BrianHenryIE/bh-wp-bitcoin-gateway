@@ -81,6 +81,13 @@ class WC_Bitcoin_Order implements LoggerAwareInterface {
 	}
 
 	/**
+	 * Get the original order object.
+	 */
+	public function get_wc_order(): WC_Order {
+		return $this->wc_order;
+	}
+
+	/**
 	 * Get the Bitcoin payment address associated with this order.
 	 */
 	public function get_address(): Bitcoin_Address {
