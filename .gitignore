@@ -89,3 +89,6 @@ tests/e2e/test-results.json
 patches.lock.json
 /tests/e2e-pw/setup/bh-wp-bitcoin-gateway
 /gh-pages
+
+# Behat
+/tests/features/cache/

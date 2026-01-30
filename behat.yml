@@ -1,0 +1,17 @@
+default:
+  suites:
+    default:
+      contexts:
+        - WP_CLI\Tests\Context\FeatureContext
+      paths:
+        - tests/features
+
+# Database Configuration:
+# By default, tests use SQLite (set via WP_CLI_TEST_DBTYPE environment variable).
+# To use MySQL instead, run: WP_CLI_TEST_DBTYPE=mysql vendor/bin/behat
+#
+# MySQL setup (if needed):
+# CREATE DATABASE IF NOT EXISTS wp_cli_test;
+# GRANT ALL PRIVILEGES ON wp_cli_test.* TO "wp_cli_test"@"localhost" IDENTIFIED BY "password1";
+#
+# For SQLite (default), no additional setup is required.

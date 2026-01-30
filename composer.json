@@ -162,6 +162,7 @@
   "require-dev": {
     "10up/wp_mock": "^1.1.0",
     "antecedent/patchwork": "^2.2.3",
+    "behat/behat": "^v3.15.0",
     "brianhenryie/color-logger": "*",
     "brianhenryie/php-codecoverage-markdown": "^0.1|^1",
     "brianhenryie/strauss": "^0.26.3",
@@ -182,6 +183,7 @@
     "wp-api/basic-auth": "^1",
     "wp-cli/dist-archive-command": "dev-main",
     "wp-cli/wp-cli-bundle": "^2.12",
+    "wp-cli/wp-cli-tests": "^4.3",
     "wp-coding-standards/wpcs": "^3.3",
     "wpackagist-plugin/bh-wc-set-gateway-by-url": ">=1.2",
     "wpackagist-plugin/checkout-fees-for-woocommerce": ">=2.9",
@@ -264,6 +266,15 @@
       "vendor/bin/codecept run wpunit --coverage wpunit.cov",
       "phpcov merge --clover tests/_output/clover.xml --html tests/_output/html tests/_output;",
       "open tests/_output/html/index.html"
+    ],
+    "behat": [
+      "WP_CLI_TEST_DBTYPE=sqlite vendor/bin/behat --format=pretty"
+    ],
+    "behat-mysql": [
+      "WP_CLI_TEST_DBTYPE=mysql vendor/bin/behat --format=pretty"
+    ],
+    "behat-feature": [
+      "WP_CLI_TEST_DBTYPE=sqlite vendor/bin/behat --format=pretty"
     ],
     "cs-fix": [
       "phpcbf || true",
