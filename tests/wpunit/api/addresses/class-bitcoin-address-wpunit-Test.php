@@ -224,7 +224,6 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 		$this->markTestIncomplete( 'should a Bitcoin_Address object have setters?' );
 
 		$post_property = new ReflectionProperty( Bitcoin_Address::class, 'post' );
-		$post_property->setAccessible( true );
 
 		$bitcoin_address_factory    = new Bitcoin_Address_Factory();
 		$bitcoin_address_repository = new Bitcoin_Address_Repository( $bitcoin_address_factory );
