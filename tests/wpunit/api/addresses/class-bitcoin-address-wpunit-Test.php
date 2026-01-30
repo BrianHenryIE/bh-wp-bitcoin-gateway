@@ -118,9 +118,11 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 				'post_status' => 'used',
 				'meta_input'  => array(
 					Bitcoin_Address_WP_Post_Interface::DERIVATION_PATH_SEQUENCE_NUMBER_META_KEY => 123,
-					Bitcoin_Address_WP_Post_Interface::CONFIRMED_AMOUNT_RECEIVED_META_KEY => array(
-						'amount'   => '1.23456789',
-						'currency' => 'BTC',
+					Bitcoin_Address_WP_Post_Interface::CONFIRMED_AMOUNT_RECEIVED_META_KEY => json_encode(
+						array(
+							'amount'   => '1.23456789',
+							'currency' => 'BTC',
+						)
 					),
 				),
 			)
