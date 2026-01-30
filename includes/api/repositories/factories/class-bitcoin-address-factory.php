@@ -8,10 +8,12 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address_Status;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address_WP_Post_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
+use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\JsonMapperInterface;
 use DateMalformedStringException;
 use DateTimeImmutable;
 use InvalidArgumentException;
@@ -21,6 +23,14 @@ use WP_Post;
  * @phpstan-type MoneySerializedArray array{amount:string,currency:string}
  */
 class Bitcoin_Address_Factory {
+
+	/**
+	 * @param JsonMapperInterface $json_mapper To parse JSON to typed objects.
+	 */
+	public function __construct(
+		protected JsonMapperInterface $json_mapper,
+	) {
+	}
 
 	/**
 	 * @param int $post_id The WordPress post id this wallet is stored under.
@@ -79,9 +89,16 @@ class Bitcoin_Address_Factory {
 	 * @param WP_Post $post The backing WP_Post for this Bitcoin_Address.
 	 */
 	protected function get_target_amount_from_post( WP_Post $post ): ?Money {
-		/** @var MoneySerializedArray|array{} $target_amount_meta */
-		$target_amount_meta = array_filter( (array) get_post_meta( $post->ID, Bitcoin_Address_WP_Post_Interface::TARGET_AMOUNT_META_KEY, true ) );
-		return empty( $target_amount_meta ) ? null : Money::of( ...$target_amount_meta );
+		/** @var mixed $target_amount_meta_json_string */
+		$target_amount_meta_json_string = get_post_meta( $post->ID, Bitcoin_Address_WP_Post_Interface::TARGET_AMOUNT_META_KEY, true );
+		if ( ! is_string( $target_amount_meta_json_string ) ) {
+			return null;
+		}
+		try {
+			return $this->json_mapper->mapToClassFromString( $target_amount_meta_json_string, Money::class );
+		} catch ( \Exception $exception ) {
+			return null;
+		}
 	}
 
 	/**
