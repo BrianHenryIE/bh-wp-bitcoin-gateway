@@ -148,8 +148,15 @@ class Bitcoin_Address_Factory {
 	 * @param WP_Post $post The backing WP_Post for this Bitcoin_Address.
 	 */
 	protected function get_received_from_post( WP_Post $post ): ?Money {
-		/** @var MoneySerializedArray|array{} $received_meta */
-		$received_meta = array_filter( (array) get_post_meta( $post->ID, Bitcoin_Address_WP_Post_Interface::RECEIVED_META_KEY, true ) );
-		return empty( $received_meta ) ? null : Money::of( ...$received_meta );
+		/** @var mixed|MoneySerializedArray $confirmed_amount_received_meta */
+		$confirmed_amount_received_meta = get_post_meta( $post->ID, Bitcoin_Address_WP_Post_Interface::CONFIRMED_AMOUNT_RECEIVED_META_KEY, true );
+		if ( ! is_string( $confirmed_amount_received_meta ) ) {
+			return null;
+		}
+		try {
+			return $this->json_mapper->mapToClassFromString( $confirmed_amount_received_meta, Money::class );
+		} catch ( \Exception $exception ) {
+			return null;
+		}
 	}
 }
