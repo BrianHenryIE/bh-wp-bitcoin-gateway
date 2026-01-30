@@ -10,6 +10,7 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Admin;
 
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\JsonMapper\JsonMapper_Helper;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories\Bitcoin_Address_Factory;
@@ -120,7 +121,7 @@ class Addresses_List_Table extends WP_Posts_List_Table {
 	 * @throws BH_WP_Bitcoin_Gateway_Exception When the post/post id does not match a bh-bitcoin-address cpt.
 	 */
 	protected function get_bitcoin_address_object( WP_Post $post ): Bitcoin_Address {
-		$bitcoin_address_factory = new Bitcoin_Address_Factory();
+		$bitcoin_address_factory = new Bitcoin_Address_Factory( new JsonMapper_Helper()->build() );
 		return $bitcoin_address_factory->get_by_wp_post( $post );
 	}
 

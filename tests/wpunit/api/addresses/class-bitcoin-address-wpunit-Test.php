@@ -2,6 +2,7 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet;
 
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\JsonMapper\JsonMapper_Helper;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Address_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories\Bitcoin_Address_Factory;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
@@ -117,12 +118,17 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 				'post_status' => 'used',
 				'meta_input'  => array(
 					Bitcoin_Address_WP_Post_Interface::DERIVATION_PATH_SEQUENCE_NUMBER_META_KEY => 123,
-					Bitcoin_Address_WP_Post_Interface::RECEIVED_META_KEY => array( '1.23456789', 'BTC' ),
+					Bitcoin_Address_WP_Post_Interface::CONFIRMED_AMOUNT_RECEIVED_META_KEY => json_encode(
+						array(
+							'amount'   => '1.23456789',
+							'currency' => 'BTC',
+						)
+					),
 				),
 			)
 		);
 
-		$bitcoin_address_factory    = new Bitcoin_Address_Factory();
+		$bitcoin_address_factory    = new Bitcoin_Address_Factory( new JsonMapper_Helper()->build() );
 		$bitcoin_address_repository = new Bitcoin_Address_Repository( $bitcoin_address_factory );
 
 		$sut = $bitcoin_address_repository->get_by_post_id( $post_id );
@@ -176,7 +182,7 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 			)
 		);
 
-		$bitcoin_address_factory    = new Bitcoin_Address_Factory();
+		$bitcoin_address_factory    = new Bitcoin_Address_Factory( new JsonMapper_Helper()->build() );
 		$bitcoin_address_repository = new Bitcoin_Address_Repository( $bitcoin_address_factory );
 
 		$sut = $bitcoin_address_repository->get_by_post_id( $post_id );
@@ -200,7 +206,7 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 			)
 		);
 
-		$bitcoin_address_factory    = new Bitcoin_Address_Factory();
+		$bitcoin_address_factory    = new Bitcoin_Address_Factory( new JsonMapper_Helper()->build() );
 		$bitcoin_address_repository = new Bitcoin_Address_Repository( $bitcoin_address_factory );
 
 		$sut = $bitcoin_address_repository->get_by_post_id( $post_id );

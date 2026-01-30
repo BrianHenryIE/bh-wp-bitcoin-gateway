@@ -10,6 +10,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Bitcoin_Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Bitcoin_Wallet_Service;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Payment_Service;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Helpers\WC_Order_Meta_Helper;
 
 interface Bitcoin_Address_WP_Post_Interface {
 
@@ -24,9 +25,13 @@ interface Bitcoin_Address_WP_Post_Interface {
 	 * @see Bitcoin_Wallet_Service::update_address_transactions_posts()
 	 * @see Payment_Service::update_address_transactions()
 	 */
-	const string TRANSACTIONS_META_KEY   = 'address_transactions';
-	const string RECEIVED_META_KEY       = 'cumulative_received';
-	const string INTEGRATION_ID_META_KEY = 'integration_id';
-	const string ORDER_ID_META_KEY       = 'order_id';
-	const string TARGET_AMOUNT_META_KEY  = 'target_amount';
+	const string TRANSACTIONS_META_KEY = 'address_transactions';
+
+	/**
+	 * @see WC_Order_Meta_Helper::BITCOIN_AMOUNT_CONFIRMED_RECEIVED_META_KEY
+	 */
+	const string CONFIRMED_AMOUNT_RECEIVED_META_KEY = 'confirmed_amount_received';
+	const string INTEGRATION_ID_META_KEY            = 'integration_id';
+	const string ORDER_ID_META_KEY                  = 'order_id';
+	const string TARGET_AMOUNT_META_KEY             = 'target_amount';
 }

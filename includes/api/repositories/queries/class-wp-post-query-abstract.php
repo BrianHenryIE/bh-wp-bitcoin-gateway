@@ -14,6 +14,7 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Queries;
 
 use BackedEnum;
+use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use InvalidArgumentException;
 
 /**
@@ -105,8 +106,8 @@ abstract readonly class WP_Post_Query_Abstract {
 			if ( $value instanceof BackedEnum ) {
 				return $value->value;
 			}
-			if ( $value instanceof \BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money ) {
-				return $value->jsonSerialize();
+			if ( $value instanceof Money ) {
+				return wp_json_encode( $value->jsonSerialize() );
 			}
 			if ( is_array( $value ) ) {
 				return wp_json_encode( $value );
