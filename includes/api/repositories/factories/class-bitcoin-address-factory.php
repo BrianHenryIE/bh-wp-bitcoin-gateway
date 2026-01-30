@@ -89,7 +89,7 @@ class Bitcoin_Address_Factory {
 	 * @param WP_Post $post The backing WP_Post for this Bitcoin_Address.
 	 */
 	protected function get_target_amount_from_post( WP_Post $post ): ?Money {
-		/** @var mixed $target_amount_meta_json_string */
+		/** @var mixed|MoneySerializedArray $target_amount_meta_json_string */
 		$target_amount_meta_json_string = get_post_meta( $post->ID, Bitcoin_Address_WP_Post_Interface::TARGET_AMOUNT_META_KEY, true );
 		if ( ! is_string( $target_amount_meta_json_string ) ) {
 			return null;
