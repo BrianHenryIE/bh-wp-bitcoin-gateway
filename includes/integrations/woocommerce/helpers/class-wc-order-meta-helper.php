@@ -8,6 +8,7 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Helpers;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address_WP_Post_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\JsonMapperInterface;
 use Exception;
@@ -27,7 +28,10 @@ class WC_Order_Meta_Helper implements LoggerAwareInterface {
 
 	const string ORDER_TOTAL_BITCOIN_AT_TIME_OF_PURCHASE_META_KEY = 'bh_wp_bitcoin_gateway_bitcoin_total_at_time_of_purchase';
 
-	const string BITCOIN_AMOUNT_CONFIRMED_RECEIVED_META_KEY = 'bh_wp_bitcoin_gateway_bitcoin_amount_confirmed_received';
+	/**
+	 * @see Bitcoin_Address_WP_Post_Interface::CONFIRMED_AMOUNT_RECEIVED_META_KEY
+	 */
+	const string BITCOIN_AMOUNT_CONFIRMED_RECEIVED_META_KEY = 'bh_wp_bitcoin_gateway_bitcoin_confirmed_amount_received';
 
 	/**
 	 * Constructor
