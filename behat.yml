@@ -2,9 +2,32 @@ default:
   suites:
     default:
       contexts:
-        - WP_CLI\Tests\Context\FeatureContext
+        - BrianHenryIE\WP_Bitcoin_Gateway\FeatureContext
       paths:
         - tests/features
+  extensions:
+    DVDoug\Behat\CodeCoverage\Extension:
+      filter:
+        include:
+          directories:
+            'includes': ~
+        exclude:
+          directories:
+            'vendor': ~
+            'vendor-prefixed': ~
+            'tests': ~
+      reports:
+        clover:
+          target: tests/_output/behat-clover.xml
+        html:
+          target: tests/_output/behat-html
+          lowUpperBound: 50
+          highLowerBound: 90
+        text:
+          showColors: true
+          showOnlySummary: false
+        php:
+          target: tests/_output/behat-coverage.php
 
 # Database Configuration:
 # By default, tests use SQLite (set via WP_CLI_TEST_DBTYPE environment variable).

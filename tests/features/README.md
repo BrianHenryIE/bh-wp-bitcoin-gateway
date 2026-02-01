@@ -49,8 +49,8 @@ WP_CLI_TEST_DBTYPE=mysql vendor/bin/behat
 ### Run a specific feature file
 
 ```bash
-WP_CLI_TEST_DBTYPE=sqlite vendor/bin/behat features/generate-new-addresses.feature
-WP_CLI_TEST_DBTYPE=sqlite vendor/bin/behat features/check-transactions.feature
+WP_CLI_TEST_DBTYPE=sqlite vendor/bin/behat tests/features/generate-new-addresses.feature
+WP_CLI_TEST_DBTYPE=sqlite vendor/bin/behat tests/features/check-transactions.feature
 ```
 
 ### Run with verbose output
@@ -58,6 +58,27 @@ WP_CLI_TEST_DBTYPE=sqlite vendor/bin/behat features/check-transactions.feature
 ```bash
 WP_CLI_TEST_DBTYPE=sqlite vendor/bin/behat --format=pretty --verbose
 ```
+
+### Run with code coverage
+
+```bash
+composer behat-coverage
+```
+
+This will:
+- Run all Behat tests with code coverage enabled (using SQLite)
+- Generate an HTML coverage report at `tests/_output/behat-html/index.html`
+- Generate a Clover XML report at `tests/_output/behat-clover.xml` (for CI/CD)
+- Generate a PHP coverage object at `tests/_output/behat-coverage.php`
+- Display coverage summary in the terminal
+
+To view the HTML report after running:
+
+```bash
+open tests/_output/behat-html/index.html
+```
+
+**Note:** Code coverage requires Xdebug or PCOV to be installed and enabled in your PHP installation.
 
 ## Database Configuration
 
@@ -161,6 +182,58 @@ The following environment variables can be used to customize test execution:
 - `WP_CLI_TEST_DBUSER` - Database user (default: `wp_cli_test`)
 - `WP_CLI_TEST_DBPASS` - Database password (default: `password1`)
 - `WP_CLI_TEST_DBHOST` - Database host (default: `127.0.0.1`)
+- `BEHAT_CODE_COVERAGE` - Enable code coverage: `1` or `true` (automatically set by `composer behat-coverage`)
+
+## Code Coverage
+
+The Behat tests are configured with code coverage using `dvdoug/behat-code-coverage`. The coverage configuration is set in `behat.yml` and includes:
+
+### Coverage Scope
+
+**Included directories:**
+- `includes/` - Main plugin code
+
+**Excluded directories:**
+- `vendor/` - Third-party dependencies
+- `vendor-prefixed/` - Prefixed dependencies (via Strauss)
+- `tests/` - Test code itself
+
+### Generated Reports
+
+1. **HTML Report** (`tests/_output/behat-html/index.html`)
+   - Visual, browsable coverage report
+   - Shows line-by-line coverage
+   - Color-coded coverage indicators
+
+2. **Clover XML** (`tests/_output/behat-clover.xml`)
+   - Machine-readable format
+   - Used by CI/CD tools and coverage services
+   - Compatible with PHPUnit's clover format
+
+3. **PHP Object** (`tests/_output/behat-coverage.php`)
+   - Serialized PHP coverage data
+   - Can be merged with other coverage data using `phpcov`
+
+4. **Text Summary**
+   - Displayed in terminal after test run
+   - Shows percentage coverage per directory/file
+
+### Merging Coverage with PHPUnit
+
+To get combined coverage from both PHPUnit and Behat tests:
+
+```bash
+# Run PHPUnit tests with coverage
+composer test-coverage
+
+# Run Behat tests with coverage
+composer behat-coverage
+
+# Merge coverage reports (requires phpunit/phpcov)
+phpcov merge --clover tests/_output/merged-clover.xml \
+  --html tests/_output/merged-html \
+  tests/_output
+```
 
 ## References
 
@@ -168,3 +241,4 @@ The following environment variables can be used to customize test execution:
 - [WordPress SQLite Integration](https://wordpress.org/plugins/sqlite-database-integration/)
 - [Behat Documentation](https://docs.behat.org/)
 - [WP-CLI Behat Tests Guide](https://make.wordpress.org/cli/handbook/guides/behat-tests/)
+- [dvdoug/behat-code-coverage](https://github.com/dvdoug/behat-code-coverage)
