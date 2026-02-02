@@ -49,6 +49,7 @@ class WP_Post_Repository_WP_Unit_Test extends WPTestCase {
 
 		$bitcoin_address_object = $bitcoin_address_repository->get_by_post_id( $bitcoin_address->get_post_id() );
 
+		// Without this, the test runs too fast and the date+time is the same. TODO: edit the wp_post to have an earlier time set.
 		sleep( 1 );
 
 		$bitcoin_address_repository->set_status( $bitcoin_address_object, Bitcoin_Address_Status::USED );
