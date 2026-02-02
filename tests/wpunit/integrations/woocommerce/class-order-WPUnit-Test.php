@@ -25,7 +25,14 @@ class Order_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 		$logger               = new ColorLogger();
 		$sut                  = new Order( $api_woocommerce_mock, $logger );
 
-		$result = $this->invokeMethod( $sut, 'get_wc_order', array( 'SomeOtherIntegration', 123 ) );
+		$result = $this->invokeMethod(
+			$sut,
+			'get_wc_order',
+			array(
+				'integration_id' => 'SomeOtherIntegration',
+				'order_post_id'  => 123,
+			)
+		);
 
 		$this->assertNull( $result );
 	}
@@ -39,7 +46,14 @@ class Order_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 		$logger               = new ColorLogger();
 		$sut                  = new Order( $api_woocommerce_mock, $logger );
 
-		$result = $this->invokeMethod( $sut, 'get_wc_order', array( WooCommerce_Integration::class, 99999 ) );
+		$result = $this->invokeMethod(
+			$sut,
+			'get_wc_order',
+			array(
+				'integration_id' => WooCommerce_Integration::class,
+				'order_post_id'  => 99999,
+			)
+		);
 
 		$this->assertNull( $result );
 	}
@@ -56,7 +70,14 @@ class Order_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 		$logger               = new ColorLogger();
 		$sut                  = new Order( $api_woocommerce_mock, $logger );
 
-		$result = $this->invokeMethod( $sut, 'get_wc_order', array( WooCommerce_Integration::class, $order->get_id() ) );
+		$result = $this->invokeMethod(
+			$sut,
+			'get_wc_order',
+			array(
+				'integration_id' => WooCommerce_Integration::class,
+				'order_post_id'  => $order->get_id(),
+			)
+		);
 
 		$this->assertInstanceOf( WC_Order::class, $result );
 		$this->assertEquals( $order->get_id(), $result->get_id() );
@@ -76,16 +97,23 @@ class Order_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 		$logger               = new ColorLogger();
 		$sut                  = new Order( $api_woocommerce_mock, $logger );
 
-		$bitcoin_address_mock                          = $this->makeEmpty( Bitcoin_Address::class );
-		$check_address_for_payment_service_result_mock = $this->makeEmpty(
-			Check_Address_For_Payment_Service_Result::class
+		$bitcoin_address_mock                     = $this->makeEmpty( Bitcoin_Address::class );
+		$check_address_for_payment_service_result = new Check_Address_For_Payment_Service_Result(
+			update_address_transactions_result: new Update_Address_Transactions_Result(
+				queried_address: $bitcoin_address_mock,
+				known_tx_ids_before: array(),
+				all_transactions: array(),
+			),
+			blockchain_height: 123456,
+			required_confirmations: 6,
+			confirmed_received: Money::of( 0, 'BTC' )
 		);
 
 		$sut->new_transactions_seen(
 			'SomeOtherIntegration',
 			123,
 			$bitcoin_address_mock,
-			$check_address_for_payment_service_result_mock
+			$check_address_for_payment_service_result
 		);
 	}
 
@@ -103,16 +131,23 @@ class Order_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 		$logger               = new ColorLogger();
 		$sut                  = new Order( $api_woocommerce_mock, $logger );
 
-		$bitcoin_address_mock                          = $this->makeEmpty( Bitcoin_Address::class );
-		$check_address_for_payment_service_result_mock = $this->makeEmpty(
-			Check_Address_For_Payment_Service_Result::class
+		$bitcoin_address_mock                     = $this->makeEmpty( Bitcoin_Address::class );
+		$check_address_for_payment_service_result = new Check_Address_For_Payment_Service_Result(
+			update_address_transactions_result: new Update_Address_Transactions_Result(
+				queried_address: $bitcoin_address_mock,
+				known_tx_ids_before: array(),
+				all_transactions: array(),
+			),
+			blockchain_height: 123456,
+			required_confirmations: 6,
+			confirmed_received: Money::of( 0, 'BTC' )
 		);
 
 		$sut->new_transactions_seen(
 			WooCommerce_Integration::class,
 			99999,
 			$bitcoin_address_mock,
-			$check_address_for_payment_service_result_mock
+			$check_address_for_payment_service_result
 		);
 	}
 
@@ -148,7 +183,7 @@ class Order_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 			all_transactions:    array()
 		);
 
-		$check_address_for_payment_service_result_mock = new Check_Address_For_Payment_Service_Result(
+		$check_address_for_payment_service_result = new Check_Address_For_Payment_Service_Result(
 			update_address_transactions_result: $update_address_transactions_result,
 			blockchain_height:                   800000,
 			required_confirmations:              3,
@@ -159,7 +194,7 @@ class Order_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 			WooCommerce_Integration::class,
 			$order->get_id(),
 			$bitcoin_address_mock,
-			$check_address_for_payment_service_result_mock
+			$check_address_for_payment_service_result
 		);
 	}
 
@@ -177,16 +212,23 @@ class Order_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 		$logger               = new ColorLogger();
 		$sut                  = new Order( $api_woocommerce_mock, $logger );
 
-		$bitcoin_address_mock                          = $this->makeEmpty( Bitcoin_Address::class );
-		$check_address_for_payment_service_result_mock = $this->makeEmpty(
-			Check_Address_For_Payment_Service_Result::class
+		$bitcoin_address_mock                     = $this->makeEmpty( Bitcoin_Address::class );
+		$check_address_for_payment_service_result = new Check_Address_For_Payment_Service_Result(
+			update_address_transactions_result: new Update_Address_Transactions_Result(
+				queried_address: $bitcoin_address_mock,
+				known_tx_ids_before: array(),
+				all_transactions: array(),
+			),
+			blockchain_height: 123456,
+			required_confirmations: 6,
+			confirmed_received: Money::of( 0, 'BTC' )
 		);
 
 		$sut->payment_received(
 			'SomeOtherIntegration',
 			123,
 			$bitcoin_address_mock,
-			$check_address_for_payment_service_result_mock
+			$check_address_for_payment_service_result
 		);
 	}
 
@@ -204,16 +246,23 @@ class Order_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 		$logger               = new ColorLogger();
 		$sut                  = new Order( $api_woocommerce_mock, $logger );
 
-		$bitcoin_address_mock                          = $this->makeEmpty( Bitcoin_Address::class );
-		$check_address_for_payment_service_result_mock = $this->makeEmpty(
-			Check_Address_For_Payment_Service_Result::class
+		$bitcoin_address_mock                     = $this->makeEmpty( Bitcoin_Address::class );
+		$check_address_for_payment_service_result = new Check_Address_For_Payment_Service_Result(
+			update_address_transactions_result: new Update_Address_Transactions_Result(
+				queried_address: $bitcoin_address_mock,
+				known_tx_ids_before: array( 123 => 'abc' ),
+				all_transactions: array(),
+			),
+			blockchain_height: 123456,
+			required_confirmations: 6,
+			confirmed_received: Money::of( 0, 'BTC' )
 		);
 
 		$sut->payment_received(
 			WooCommerce_Integration::class,
 			99999,
 			$bitcoin_address_mock,
-			$check_address_for_payment_service_result_mock
+			$check_address_for_payment_service_result
 		);
 	}
 

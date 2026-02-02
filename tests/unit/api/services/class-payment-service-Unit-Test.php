@@ -340,7 +340,7 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 	 */
 	public function test_update_address_transactions(): void {
 
-		$transaction = new Transaction(
+		$transaction_from_api = new Transaction(
 			tx_id: 'transaction_from_api',
 			block_time: new DateTimeImmutable( 'now' ),
 			version: 1,
@@ -358,20 +358,32 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 			Blockchain_API_Interface::class,
 			array(
 				'get_transactions_received' => Expected::once(
-					function ( string $address ) use ( $transaction ): array {
+					function ( string $address ) use ( $transaction_from_api ): array {
 						assert( 'xpub' === $address );
-						return array( $transaction );
+						return array( $transaction_from_api );
 					}
 				),
 			)
 		);
 
-		$bitcoin_transaction = $this->make(
-			Bitcoin_Transaction::class,
-			array(
-				'get_txid'    => 'transaction_from_wp_post',
-				'get_post_id' => 567,
-			)
+		$transaction_from_wp_post = new Transaction(
+			tx_id: 'transaction_from_wp_post',
+			block_time: new DateTimeImmutable( 'now' ),
+			version: 1,
+			v_in: array(),
+			v_out: array(
+				new Transaction_VOut(
+					value: Money::of( 100000000, 'BTC' ),
+					scriptpubkey_address: 'raw_address',
+				),
+			),
+			block_height: 123,
+		);
+
+		$bitcoin_transaction = new Bitcoin_Transaction(
+			post_id: 567,
+			transaction: $transaction_from_wp_post,
+			bitcoin_addresses: array()
 		);
 
 		$bitcoin_transaction_repository = $this->makeEmpty(

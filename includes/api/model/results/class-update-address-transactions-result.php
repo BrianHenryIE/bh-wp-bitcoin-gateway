@@ -12,7 +12,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_Interface;
 /**
  * @used-by API::update_address_transactions()
  */
-class Update_Address_Transactions_Result {
+readonly class Update_Address_Transactions_Result {
 
 	/**
 	 * Constructor

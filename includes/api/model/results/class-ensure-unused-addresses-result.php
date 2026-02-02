@@ -15,7 +15,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet;
 /**
  * @used-by API::ensure_unused_addresses()
  */
-class Ensure_Unused_Addresses_Result {
+readonly class Ensure_Unused_Addresses_Result {
 
 	/**
 	 * Constructor

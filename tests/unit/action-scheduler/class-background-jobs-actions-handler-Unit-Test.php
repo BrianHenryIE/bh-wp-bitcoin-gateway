@@ -397,7 +397,7 @@ class Background_Jobs_Actions_Handler_Unit_Test extends \Codeception\Test\Unit {
 		$api = $this->makeEmpty(
 			API_Background_Jobs_Interface::class,
 			array(
-				'ensure_unused_addresses_for_wallet' => Expected::once( $result ),
+				'ensure_unused_addresses_for_wallet_synchronously' => Expected::once( $result ),
 			)
 		);
 
@@ -441,7 +441,7 @@ class Background_Jobs_Actions_Handler_Unit_Test extends \Codeception\Test\Unit {
 		$api = $this->makeEmpty(
 			API_Background_Jobs_Interface::class,
 			array(
-				'ensure_unused_addresses_for_wallet' => Expected::once( $result ),
+				'ensure_unused_addresses_for_wallet_synchronously' => Expected::once( $result ),
 			)
 		);
 
@@ -496,7 +496,7 @@ class Background_Jobs_Actions_Handler_Unit_Test extends \Codeception\Test\Unit {
 		$api = $this->makeEmpty(
 			API_Background_Jobs_Interface::class,
 			array(
-				'ensure_unused_addresses_for_wallet' => Expected::once( $result ),
+				'ensure_unused_addresses_for_wallet_synchronously' => Expected::once( $result ),
 			)
 		);
 
@@ -540,7 +540,7 @@ class Background_Jobs_Actions_Handler_Unit_Test extends \Codeception\Test\Unit {
 		$api = $this->makeEmpty(
 			API_Background_Jobs_Interface::class,
 			array(
-				'ensure_unused_addresses_for_wallet' => Expected::once( $result ),
+				'ensure_unused_addresses_for_wallet_synchronously' => Expected::once( $result ),
 			)
 		);
 

@@ -13,7 +13,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Results\Check_Address_For_Payme
 /**
  * @used-by API::check_address_for_payment()
  */
-class Check_Address_For_Payment_Result extends Check_Address_For_Payment_Service_Result {
+readonly class Check_Address_For_Payment_Result extends Check_Address_For_Payment_Service_Result {
 
 	/**
 	 * Constructor
@@ -24,8 +24,8 @@ class Check_Address_For_Payment_Result extends Check_Address_For_Payment_Service
 	 */
 	public function __construct(
 		Check_Address_For_Payment_Service_Result $check_address_for_payment_service_result,
-		public readonly bool $is_paid,
-		public readonly Bitcoin_Address $refreshed_address,
+		public bool $is_paid,
+		public Bitcoin_Address $refreshed_address,
 	) {
 		parent::__construct(
 			update_address_transactions_result: $check_address_for_payment_service_result->update_address_transactions_result,
