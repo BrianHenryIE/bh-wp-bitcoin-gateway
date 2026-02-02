@@ -19,6 +19,8 @@ parameters:
         - vendor/php-stubs/woocommerce-stubs/woocommerce-packages-stubs.php
     scanFiles:
         - vendor/antecedent/patchwork/Patchwork.php
+        - vendor/lucatume/wp-browser/includes/core-phpunit/includes/factory/class-wp-unittest-factory.php
+        - vendor/lucatume/wp-browser/includes/core-phpunit/includes/factory/class-wp-unittest-factory-for-post.php
     scanDirectories:
         - vendor-prefixed
 #        - wp-content/plugins/...

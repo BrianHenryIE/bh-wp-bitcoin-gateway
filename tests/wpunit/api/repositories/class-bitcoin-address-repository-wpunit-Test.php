@@ -2,6 +2,8 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories;
 
+use BrianHenryIE\ColorLogger\ColorLogger;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\JsonMapper\JsonMapper_Helper;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address_Status;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address_WP_Post_Interface;
@@ -22,7 +24,7 @@ class Bitcoin_Address_Repository_WPUnit_Test extends WPTestCase {
 	protected function setUp(): void {
 		parent::setUp();
 
-		$bitcoin_address_factory = new Bitcoin_Address_Factory();
+		$bitcoin_address_factory = new Bitcoin_Address_Factory( new JsonMapper_Helper()->build(), new ColorLogger() );
 		$this->sut               = new Bitcoin_Address_Repository( $bitcoin_address_factory );
 
 		$bitcoin_wallet_factory  = new Bitcoin_Wallet_Factory();

@@ -36,6 +36,9 @@
         "tests/integration",
         "tests/wpunit",
         "tests/unit"
+      ],
+      "BrianHenryIE\\WP_Bitcoin_Gateway\\Tests\\Features\\": [
+        "tests/features/bootstrap"
       ]
     },
     "classmap": [
@@ -162,27 +165,31 @@
   "require-dev": {
     "10up/wp_mock": "^1.1.0",
     "antecedent/patchwork": "^2.2.3",
+    "behat/behat": "^v3.15.0",
     "brianhenryie/color-logger": "*",
     "brianhenryie/php-codecoverage-markdown": "^0.1|^1",
     "brianhenryie/strauss": "^0.26.3",
     "dealerdirect/phpcodesniffer-composer-installer": "^1.2",
+    "dvdoug/behat-code-coverage": "^5.3",
     "impress-org/give-next-gen": "^0.2",
     "impress-org/givewp-example-gateway": "dev-master",
     "johnpbloch/wordpress": "*",
     "lucatume/wp-browser": "^4.5.11",
     "php-stubs/woocommerce-stubs": "*",
-    "phpcompatibility/phpcompatibility-wp": "^2|^3",
-    "phpstan/extension-installer": "^1.4.3",
+    "phpcompatibility/phpcompatibility-wp": "*",
+    "phpstan/extension-installer": "*",
+    "phpstan/phpstan": "^2",
     "phpunit/phpcov": "^8.2",
-    "szepeviktor/phpstan-wordpress": "^2.0.3",
+    "szepeviktor/phpstan-wordpress": "^2",
     "woocommerce/woocommerce": "dev-trunk",
     "woocommerce/woocommerce-gateway-dummy": "*",
-    "woocommerce/woocommerce-sniffs": "^1.0",
+    "woocommerce/woocommerce-sniffs": "*",
     "wordpress/wordpress": "*",
     "wp-api/basic-auth": "^1",
     "wp-cli/dist-archive-command": "dev-main",
     "wp-cli/wp-cli-bundle": "^2.12",
-    "wp-coding-standards/wpcs": "^3.3",
+    "wp-cli/wp-cli-tests": "dev-main#eee3c22b04e81d5932913a3136dea0a5b31cd208",
+    "wp-coding-standards/wpcs": "*",
     "wpackagist-plugin/bh-wc-set-gateway-by-url": ">=1.2",
     "wpackagist-plugin/checkout-fees-for-woocommerce": ">=2.9",
     "wpackagist-plugin/crypto-payments-woo": ">=1.2",
@@ -264,6 +271,24 @@
       "vendor/bin/codecept run wpunit --coverage wpunit.cov",
       "phpcov merge --clover tests/_output/clover.xml --html tests/_output/html tests/_output;",
       "open tests/_output/html/index.html"
+    ],
+    "behat": [
+      "WP_CLI_TEST_DBTYPE=sqlite vendor/bin/behat --format=pretty"
+    ],
+    "behat-coverage": [
+      "rm -f tests/_output/behat-*.xml tests/_output/behat-*.php || true",
+      "rm -rf tests/_output/behat-html || true",
+      "WP_CLI_TEST_DBTYPE=sqlite vendor/bin/behat --format=pretty",
+      "echo '\n✓ Coverage reports generated:'",
+      "echo '  - HTML: tests/_output/behat-html/index.html'",
+      "echo '  - Clover XML: tests/_output/behat-clover.xml'",
+      "echo '  - PHP: tests/_output/behat-coverage.php'"
+    ],
+    "behat-mysql": [
+      "WP_CLI_TEST_DBTYPE=mysql vendor/bin/behat --format=pretty"
+    ],
+    "behat-feature": [
+      "WP_CLI_TEST_DBTYPE=sqlite vendor/bin/behat --format=pretty"
     ],
     "cs-fix": [
       "phpcbf || true",

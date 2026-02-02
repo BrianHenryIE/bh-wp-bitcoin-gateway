@@ -1,0 +1,40 @@
+default:
+  suites:
+    default:
+      contexts:
+        - BrianHenryIE\WP_Bitcoin_Gateway\FeatureContext
+      paths:
+        - tests/features
+  extensions:
+    DVDoug\Behat\CodeCoverage\Extension:
+      filter:
+        include:
+          directories:
+            'includes': ~
+        exclude:
+          directories:
+            'vendor': ~
+            'vendor-prefixed': ~
+            'tests': ~
+      reports:
+        clover:
+          target: tests/_output/behat-clover.xml
+        html:
+          target: tests/_output/behat-html
+          lowUpperBound: 50
+          highLowerBound: 90
+        text:
+          showColors: true
+          showOnlySummary: false
+        php:
+          target: tests/_output/behat-coverage.php
+
+# Database Configuration:
+# By default, tests use SQLite (set via WP_CLI_TEST_DBTYPE environment variable).
+# To use MySQL instead, run: WP_CLI_TEST_DBTYPE=mysql vendor/bin/behat
+#
+# MySQL setup (if needed):
+# CREATE DATABASE IF NOT EXISTS wp_cli_test;
+# GRANT ALL PRIVILEGES ON wp_cli_test.* TO "wp_cli_test"@"localhost" IDENTIFIED BY "password1";
+#
+# For SQLite (default), no additional setup is required.

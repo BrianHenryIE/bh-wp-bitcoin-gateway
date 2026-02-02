@@ -10,18 +10,18 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\JsonMapper\JsonMapper_Helper;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories\Bitcoin_Address_Factory;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Address_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address_WP_Post_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Helpers\WC_Order_Meta_Helper;
 use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Order;
+use BrianHenryIE\WP_Bitcoin_Gateway\WP_CLI_Logger\WP_CLI_Logger;
+use Exception;
 use InvalidArgumentException;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
-use WC_Order;
+use Psr\Log\NullLogger;
 use WP_CLI;
 use WP_CLI\ExitException;
 use WP_CLI_Command;
@@ -35,14 +35,12 @@ class CLI extends WP_CLI_Command {
 	/**
 	 * Constructor.
 	 *
-	 * @param API_Interface             $api The main plugin functions.
-	 * @param API_WooCommerce_Interface $woocommerce_api The main plugin functions.
-	 * @param Settings_Interface        $settings The plugin's settings.
-	 * @param LoggerInterface           $logger A PSR logger.
+	 * @param API_Interface      $api The main plugin functions.
+	 * @param Settings_Interface $settings The plugin's settings.
+	 * @param LoggerInterface    $logger A PSR logger.
 	 */
 	public function __construct(
 		protected API_Interface $api,
-		protected API_WooCommerce_Interface $woocommerce_api,
 		protected Settings_Interface $settings,
 		LoggerInterface $logger
 	) {
@@ -51,11 +49,13 @@ class CLI extends WP_CLI_Command {
 	}
 
 	/**
-	 * Generate new addresses for all gateways.
+	 * Generate new addresses.
+	 *
+	 * TODO: Should be an option to mark it used (i.e. generate it for external use).
 	 *
 	 * ## OPTIONS
 	 *
-	 * [--<debug>=bh-wp-bitcoin-gateway]
+	 * [--debug=bh-wp-bitcoin-gateway]
 	 * : Show detailed progress.
 	 *
 	 * ## EXAMPLES
@@ -77,12 +77,11 @@ class CLI extends WP_CLI_Command {
 		// Print a summary of the table.
 
 		WP_CLI::log( 'Finished generate-new-addresses.' );
+		WP_CLI::log( 'Success' );
 	}
 
 	/**
 	 * Query the blockchain for updates for an address or order.
-	 *
-	 * TODO: This doesn't seem to actually update the order!
 	 *
 	 * See also: `wp post list --post_type=shop_order --post_status=wc-on-hold --meta_key=_payment_gateway --meta_value=bitcoin_gateway --format=ids`.
 	 * `wp post list --post_type=shop_order --post_status=wc-on-hold --meta_key=_payment_gateway --meta_value=bitcoin_gateway --format=ids | xargs -0 -d ' ' -I % wp bh-bitcoin check-transactions % --debug=bh-wp-bitcoin-gateway`
@@ -91,7 +90,7 @@ class CLI extends WP_CLI_Command {
 	 * ## OPTIONS
 	 *
 	 * <input>
-	 * : The order id or Bitcoin address.
+	 * : A payment address string, payment address post_id, or order id.
 	 *
 	 * [--format=<format>]
 	 * Render output in a specific format.
@@ -104,7 +103,7 @@ class CLI extends WP_CLI_Command {
 	 * - yaml
 	 * ---
 	 *
-	 * [--<debug>=bh-wp-bitcoin-gateway]
+	 * [--debug=<bh-wp-bitcoin-gateway>]
 	 * : Show detailed progress.
 	 *
 	 * ## EXAMPLES
@@ -126,64 +125,69 @@ class CLI extends WP_CLI_Command {
 	 */
 	public function check_transactions( array $args, array $assoc_args ): void {
 
+		/** @var string $input */
 		$input  = $args[0];
-		$format = isset( $assoc_args['format'] ) ? $assoc_args['format'] : 'table';
+		$format = $assoc_args['format'] ?? 'table';
 
-		$bitcoin_address_factory    = new Bitcoin_Address_Factory();
+		// TODO: use BH WP_CLI_Logger here.
+		$bitcoin_address_factory    = new Bitcoin_Address_Factory( new JsonMapper_Helper()->build(), new NullLogger() );
 		$bitcoin_address_repository = new Bitcoin_Address_Repository( $bitcoin_address_factory );
 
 		try {
-			switch ( get_post_type( intval( $input ) ) ) {
-				case Bitcoin_Address_WP_Post_Interface::POST_TYPE:
-					$this->logger->debug( 'CLI input was `bh-bitcoin-address:{input}`', array( 'input' => $input ) );
-					$bitcoin_address = $bitcoin_address_factory->get_by_wp_post_id( intval( $input ) );
-					break;
-				case 'shop_order':
-					$order_id = intval( $input );
-					$this->logger->debug( 'CLI input was WooCommerce `shop_order:{order_id}`', array( 'order_id' => $order_id ) );
-					/**
-					 * This was already determined to be an order!
-					 *
-					 * @var WC_Order $order
-					 */
-					$order = wc_get_order( $order_id );
-					if ( ! $this->woocommerce_api->is_order_has_bitcoin_gateway( $order_id ) ) {
-						$this->logger->error( '`shop_order:{order_id}` is not a Bitcoin order', array( 'order_id' => $order_id ) );
-						return;
-					}
-					$order_meta_helper = new WC_Order_Meta_Helper( new JsonMapper_Helper()->build() );
-					$address           = $order_meta_helper->get_raw_payment_address( $order );
-					if ( empty( $address ) ) {
-						throw new InvalidArgumentException( 'Order ' . $order->get_id() . ' has no Bitcoin address' );
-					}
-					$bitcoin_address_post_id = $bitcoin_address_repository->get_post_id_for_address( $address );
-					if ( is_null( $bitcoin_address_post_id ) ) {
-						$this->logger->error(
-							'Could not find Bitcoin address object for address {address} from order id {input}.',
-							array(
-								'address' => $address,
-								'input'   => $input,
-							)
-						);
-						return;
-					}
-					$bitcoin_address = $bitcoin_address_repository->get_by_post_id( $bitcoin_address_post_id );
-					break;
-				default:
-					// Assuming a raw address has been input.
-					$bitcoin_address_post_id = $bitcoin_address_repository->get_post_id_for_address( $input );
-					if ( is_null( $bitcoin_address_post_id ) ) {
-						$this->logger->error( 'Could not find Bitcoin address object for {input}.', array( 'input' => $input ) );
-						return;
-					}
-					$bitcoin_address = $bitcoin_address_repository->get_by_post_id( $bitcoin_address_post_id );
+			if ( ! is_numeric( $input ) ) {
+				// Assuming a raw address has been input.
+				$bitcoin_address_post_id = $bitcoin_address_repository->get_post_id_for_address( $input );
+				if ( is_null( $bitcoin_address_post_id ) ) {
+					$this->logger->error( 'Could not find Bitcoin address object for {input}.', array( 'input' => $input ) );
+					WP_CLI::error(
+						sprintf(
+							'Could not find Bitcoin address object for %s.',
+							$input
+						)
+					);
+				}
+				try {
+					$payment_address = $bitcoin_address_repository->get_by_post_id( $bitcoin_address_post_id );
+				} catch ( Exception $exception ) {
+					$this->logger->error(
+						'Could not find Bitcoin address object for {input}.',
+						array(
+							'exception' => $exception,
+							'input'     => $input,
+						)
+					);
+					WP_CLI::error(
+						sprintf(
+							'Could not find Bitcoin address object for %s.',
+							$input
+						)
+					);
+				}
+			} elseif ( Bitcoin_Address_WP_Post_Interface::POST_TYPE === get_post_type( intval( $input ) ) ) {
+				$this->logger->debug( 'CLI input was `bh-bitcoin-address:{input}`', array( 'input' => $input ) );
+				$payment_address = $bitcoin_address_factory->get_by_wp_post_id( intval( $input ) );
+
+			} else {
+
+				$input_order_id = intval( $input );
+				/**
+				 * @param int $input_order_id The CLI input, presumed to be an order id.
+				 * @var ?Bitcoin_Address $payment_address
+				 */
+				$payment_address = apply_filters( 'bh_wp_bitcoin_gateway_get_address_for_order', null, $input_order_id );
+
+				if ( is_null( $payment_address ) ) {
+					WP_CLI::error( 'Unable to determine payment address from input.' );
+				}
+
+				if ( ! ( $payment_address instanceof Bitcoin_Address ) ) {
+					WP_CLI::error( 'Invalid value returned from filter.' );
+				}
 			}
 
-			$result = $this->api->check_address_for_payment( $bitcoin_address );
+			$result = $this->api->check_address_for_payment( $payment_address );
 
 			$is_updated = $result->is_updated();
-
-			// TODO: Check for WooCommerce active.
 
 			$formatted = array(
 				'address' => $result->queried_address->get_raw_address(),
@@ -200,7 +204,7 @@ class CLI extends WP_CLI_Command {
 
 			WP_CLI::log( 'Finished update-address.' );
 
-		} catch ( \Exception $exception ) {
+		} catch ( Exception $exception ) {
 			WP_CLI::error( $exception->getMessage() );
 		}
 	}

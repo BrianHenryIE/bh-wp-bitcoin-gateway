@@ -52,6 +52,7 @@ abstract class WP_Post_Repository_Abstract {
 
 		$new_meta = isset( $args['meta_input'] ) ? $args['meta_input'] : array();
 
+		// Flatten the `get_post_meta()` result which treats all keys as not-single values.
 		$args['meta_input'] = array();
 		foreach ( $existing_meta as $key => $value ) {
 			if ( is_array( $value ) && count( $value ) === 1 && array_key_first( $value ) === 0 ) {

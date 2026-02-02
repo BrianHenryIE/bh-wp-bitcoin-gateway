@@ -12,15 +12,34 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address_Status;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address_WP_Post_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
+use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\JsonMapperInterface;
 use DateMalformedStringException;
 use DateTimeImmutable;
 use InvalidArgumentException;
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerAwareTrait;
+use Psr\Log\LoggerInterface;
+use Throwable;
 use WP_Post;
 
 /**
  * @phpstan-type MoneySerializedArray array{amount:string,currency:string}
  */
-class Bitcoin_Address_Factory {
+class Bitcoin_Address_Factory implements LoggerAwareInterface {
+	use LoggerAwareTrait;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param JsonMapperInterface $json_mapper To parse JSON to typed objects.
+	 * @param LoggerInterface     $logger PSR logger for failures parsing metadata to values.
+	 */
+	public function __construct(
+		protected JsonMapperInterface $json_mapper,
+		LoggerInterface $logger,
+	) {
+		$this->setLogger( $logger );
+	}
 
 	/**
 	 * @param int $post_id The WordPress post id this wallet is stored under.
@@ -79,9 +98,10 @@ class Bitcoin_Address_Factory {
 	 * @param WP_Post $post The backing WP_Post for this Bitcoin_Address.
 	 */
 	protected function get_target_amount_from_post( WP_Post $post ): ?Money {
-		/** @var MoneySerializedArray|array{} $target_amount_meta */
-		$target_amount_meta = array_filter( (array) get_post_meta( $post->ID, Bitcoin_Address_WP_Post_Interface::TARGET_AMOUNT_META_KEY, true ) );
-		return empty( $target_amount_meta ) ? null : Money::of( ...$target_amount_meta );
+		return $this->get_json_mapped_money_from_post(
+			post_id: $post->ID,
+			meta_key: Bitcoin_Address_WP_Post_Interface::TARGET_AMOUNT_META_KEY
+		);
 	}
 
 	/**
@@ -131,8 +151,56 @@ class Bitcoin_Address_Factory {
 	 * @param WP_Post $post The backing WP_Post for this Bitcoin_Address.
 	 */
 	protected function get_received_from_post( WP_Post $post ): ?Money {
-		/** @var MoneySerializedArray|array{} $received_meta */
-		$received_meta = array_filter( (array) get_post_meta( $post->ID, Bitcoin_Address_WP_Post_Interface::RECEIVED_META_KEY, true ) );
-		return empty( $received_meta ) ? null : Money::of( ...$received_meta );
+		return $this->get_json_mapped_money_from_post(
+			post_id: $post->ID,
+			meta_key: Bitcoin_Address_WP_Post_Interface::CONFIRMED_AMOUNT_RECEIVED_META_KEY
+		);
+	}
+
+	/**
+	 * Use JSON Mapper to parse the meta value to a Money object, if it cannot be parsed, record a warning and return null.
+	 *
+	 * @param int    $post_id The ID of the WP Post that contained the invalid value.
+	 * @param string $meta_key The name of the value we were looking for.
+	 */
+	protected function get_json_mapped_money_from_post( int $post_id, string $meta_key ): ?Money {
+		/** @var mixed|MoneySerializedArray $meta_value */
+		$meta_value = get_post_meta( $post_id, $meta_key, true );
+		if ( ! is_string( $meta_value ) ) {
+			$this->log_meta_value_warning( $post_id, $meta_key, $meta_value );
+			return null;
+		}
+		try {
+			return $this->json_mapper->mapToClassFromString( $meta_value, Money::class );
+		} catch ( Throwable $exception ) {
+			$this->log_meta_value_warning( $post_id, $meta_key, $meta_value, $exception );
+			return null;
+		}
+	}
+
+	/**
+	 * Log a useful message when the meta value could not be parsed to a Money object.
+	 *
+	 * @see LoggerInterface::warning()
+	 * @param int        $post_id Id for the WP_Post holding the data.
+	 * @param string     $meta_key The key.
+	 * @param mixed      $meta_value The saved value, not empty.
+	 * @param ?Throwable $exception Potentially thrown exception.
+	 */
+	protected function log_meta_value_warning(
+		int $post_id,
+		string $meta_key,
+		mixed $meta_value,
+		?Throwable $exception = null
+	): void {
+		$this->logger->warning(
+			'Failed to parse payment address meta {meta_key} as Money for post id {post_id}, value: {meta_value}',
+			array(
+				'exception'  => $exception,
+				'meta_key'   => $meta_key, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+				'post_id'    => $post_id,
+				'meta_value' => $meta_value, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+			)
+		);
 	}
 }
