@@ -133,22 +133,27 @@ class Bitcoin_Address_Factory implements LoggerAwareInterface {
 	protected function get_tx_ids_from_post( WP_Post $post ): ?array {
 		/** @var string|null|mixed $tx_ids_meta */
 		$tx_ids_meta = get_post_meta( $post->ID, Bitcoin_Address_WP_Post_Interface::TRANSACTIONS_META_KEY, true );
+		if ( empty( $tx_ids_meta ) && ! is_array( $tx_ids_meta ) ) {
+			return null;
+		}
 		if ( ! is_string( $tx_ids_meta ) ) {
+			$this->log_meta_value_warning( $post->ID, Bitcoin_Address_WP_Post_Interface::TRANSACTIONS_META_KEY, 'array of txids', $tx_ids_meta );
 			return null;
 		}
 		/** @var array<int,string>|null|mixed $tx_ids_meta_array */
 		$tx_ids_meta_array = json_decode( $tx_ids_meta, true );
-		if ( is_array( $tx_ids_meta_array ) ) {
-			foreach ( $tx_ids_meta_array as $post_id => $tx_id ) {
-				if ( ! is_int( $post_id ) || ! is_string( $tx_id ) ) {
-					// TODO: Log error? Add a fail-hard debug flag?
-					return null;
-				}
-			}
-			/** @var array<int,string> $tx_ids_meta_array */
-			return $tx_ids_meta_array;
+		if ( ! is_array( $tx_ids_meta_array ) ) {
+			$this->log_meta_value_warning( $post->ID, Bitcoin_Address_WP_Post_Interface::TRANSACTIONS_META_KEY, 'array of txids', $tx_ids_meta );
+			return null;
 		}
-		return null;
+		foreach ( $tx_ids_meta_array as $post_id => $tx_id ) {
+			if ( ! is_int( $post_id ) || ! is_string( $tx_id ) ) {
+				$this->log_meta_value_warning( $post->ID, Bitcoin_Address_WP_Post_Interface::TRANSACTIONS_META_KEY, 'array of txids', $tx_ids_meta );
+				return null;
+			}
+		}
+		/** @var array<int,string> $tx_ids_meta_array */
+		return $tx_ids_meta_array;
 	}
 
 	/**
@@ -174,13 +179,13 @@ class Bitcoin_Address_Factory implements LoggerAwareInterface {
 			return null;
 		}
 		if ( ! is_string( $meta_value ) ) {
-			$this->log_meta_value_warning( $post_id, $meta_key, $meta_value );
+			$this->log_meta_value_warning( $post_id, $meta_key, 'Money', $meta_value );
 			return null;
 		}
 		try {
 			return $this->json_mapper->mapToClassFromString( $meta_value, Money::class );
 		} catch ( Throwable $exception ) {
-			$this->log_meta_value_warning( $post_id, $meta_key, $meta_value, $exception );
+			$this->log_meta_value_warning( $post_id, $meta_key, 'Money', $meta_value, $exception );
 			return null;
 		}
 	}
@@ -189,23 +194,26 @@ class Bitcoin_Address_Factory implements LoggerAwareInterface {
 	 * Log a useful message when the meta value could not be parsed to a Money object.
 	 *
 	 * @see LoggerInterface::warning()
-	 * @param int        $post_id Id for the WP_Post holding the data.
+	 * @param int        $post_id ID for the WP_Post holding the data.
 	 * @param string     $meta_key The key.
+	 * @param string     $type Human-readable type for the message.
 	 * @param mixed      $meta_value The saved value, not empty.
 	 * @param ?Throwable $exception Potentially thrown exception.
 	 */
 	protected function log_meta_value_warning(
 		int $post_id,
 		string $meta_key,
+		string $type,
 		mixed $meta_value,
 		?Throwable $exception = null
 	): void {
 		$this->logger->warning(
-			'Failed to parse payment address meta {meta_key} as Money for post id {post_id}, value: {meta_value}',
+			'Failed to parse payment address meta {meta_key} as {type} for post id {post_id}, value: {meta_value}',
 			array(
 				'exception'  => $exception,
-				'meta_key'   => $meta_key, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
 				'post_id'    => $post_id,
+				'meta_key'   => $meta_key, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+				'type'       => $type,
 				'meta_value' => $meta_value, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
 			)
 		);
