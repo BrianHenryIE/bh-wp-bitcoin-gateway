@@ -24,7 +24,7 @@ readonly class Wallet_Generation_Result extends Get_Wallet_For_Xpub_Service_Resu
 	 */
 	public function __construct(
 		Get_Wallet_For_Xpub_Service_Result $get_wallet_for_xpub_service_result,
-		readonly bool $did_schedule_ensure_addresses,
+		public bool $did_schedule_ensure_addresses,
 	) {
 		$get_wallet_for_xpub_service_result_array = (array) $get_wallet_for_xpub_service_result;
 		parent::__construct( ...$get_wallet_for_xpub_service_result_array );
