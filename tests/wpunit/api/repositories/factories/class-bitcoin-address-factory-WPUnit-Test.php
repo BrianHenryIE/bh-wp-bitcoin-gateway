@@ -200,7 +200,15 @@ class Bitcoin_Address_Factory_WPUnit_Test extends WPTestCase {
 		);
 
 		$post = get_post( $post_id );
-		$sut  = $this->get_sut();
+
+		$logger = $this->makeEmpty(
+			LoggerInterface::class,
+			array(
+				'warning' => Expected::never(),
+			)
+		);
+
+		$sut = $this->get_sut( logger: $logger );
 
 		$reflection = new \ReflectionClass( $sut );
 		$method     = $reflection->getMethod( 'get_target_amount_from_post' );
