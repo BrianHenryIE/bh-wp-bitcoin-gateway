@@ -27,7 +27,7 @@ class Bitcoin_Wallet_Query_Unit_Test extends Unit {
 		WP_Mock::userFunction(
 			'wp_json_encode',
 			array(
-				'return' => fn( $value ) => json_encode( $value ),
+				'return' => json_encode( ... ),
 			)
 		);
 	}

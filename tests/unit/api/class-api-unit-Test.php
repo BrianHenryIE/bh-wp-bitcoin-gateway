@@ -32,7 +32,7 @@ class API_Unit_Test extends \Codeception\Test\Unit {
 		WP_Mock::setUp();
 
 		/** @phpstan-ignore argument.type */
-		WP_Mock::passthruFunction( 'wp_json_encode', array( 'return' => fn( $value ) => json_encode( $value ) ) );
+		WP_Mock::passthruFunction( 'wp_json_encode', array( 'return' => json_encode( ... ) ) );
 	}
 
 	protected function tearDown(): void {

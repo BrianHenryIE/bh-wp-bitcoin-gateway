@@ -73,7 +73,7 @@ class BH_WP_Bitcoin_Gateway {
 		/** @var I18n $plugin_i18n */
 		$plugin_i18n = $this->container->get( I18n::class );
 
-		add_action( 'init', array( $plugin_i18n, 'load_plugin_textdomain' ) );
+		add_action( 'init', $plugin_i18n->load_plugin_textdomain( ... ) );
 	}
 
 	/**
@@ -89,10 +89,10 @@ class BH_WP_Bitcoin_Gateway {
 		$settings        = $this->container->get( Settings_Interface::class );
 		$plugin_basename = $settings->get_plugin_basename();
 
-		add_filter( "plugin_action_links_{$plugin_basename}", array( $plugins_page, 'add_settings_action_link' ) );
-		add_filter( "plugin_action_links_{$plugin_basename}", array( $plugins_page, 'add_orders_action_link' ) );
+		add_filter( "plugin_action_links_{$plugin_basename}", $plugins_page->add_settings_action_link( ... ) );
+		add_filter( "plugin_action_links_{$plugin_basename}", $plugins_page->add_orders_action_link( ... ) );
 
-		add_filter( 'plugin_row_meta', array( $plugins_page, 'split_author_link_into_two_links' ), 10, 2 );
+		add_filter( 'plugin_row_meta', $plugins_page->split_author_link_into_two_links( ... ), 10, 2 );
 	}
 
 	/**
@@ -102,16 +102,16 @@ class BH_WP_Bitcoin_Gateway {
 
 		/** @var Post_BH_Bitcoin_Wallet $wallet */
 		$wallet = $this->container->get( Post_BH_Bitcoin_Wallet::class );
-		add_action( 'init', array( $wallet, 'register_wallet_post_type' ) );
+		add_action( 'init', $wallet->register_wallet_post_type( ... ) );
 
 		/** @var Post_BH_Bitcoin_Address $address */
 		$address = $this->container->get( Post_BH_Bitcoin_Address::class );
-		add_action( 'init', array( $address, 'register_address_post_type' ) );
-		add_action( 'parse_query', array( $address, 'add_post_statuses' ) );
+		add_action( 'init', $address->register_address_post_type( ... ) );
+		add_action( 'parse_query', $address->add_post_statuses( ... ) );
 
 		/** @var Post_BH_Bitcoin_Transaction $transaction_post_type */
 		$transaction_post_type = $this->container->get( Post_BH_Bitcoin_Transaction::class );
-		add_action( 'init', array( $transaction_post_type, 'register_transaction_post_type' ) );
+		add_action( 'init', $transaction_post_type->register_transaction_post_type( ... ) );
 	}
 
 	/**
@@ -122,17 +122,17 @@ class BH_WP_Bitcoin_Gateway {
 		/** @var Background_Jobs_Actions_Interface $background_jobs_actions_handler */
 		$background_jobs_actions_handler = $this->container->get( Background_Jobs_Actions_Interface::class );
 
-		add_action( 'action_scheduler_run_recurring_actions_schedule_hook', array( $background_jobs_actions_handler, 'add_action_scheduler_repeating_actions' ) );
+		add_action( 'action_scheduler_run_recurring_actions_schedule_hook', $background_jobs_actions_handler->add_action_scheduler_repeating_actions( ... ) );
 
-		add_action( Background_Jobs_Actions_Interface::UPDATE_EXCHANGE_RATE_HOOK, array( $background_jobs_actions_handler, 'update_exchange_rate' ) );
+		add_action( Background_Jobs_Actions_Interface::UPDATE_EXCHANGE_RATE_HOOK, $background_jobs_actions_handler->update_exchange_rate( ... ) );
 
-		add_action( Background_Jobs_Actions_Interface::RECURRING_ENSURE_UNUSED_ADDRESSES_HOOK, array( $background_jobs_actions_handler, 'ensure_unused_addresses' ) );
-		add_action( Background_Jobs_Actions_Interface::SINGLE_ENSURE_UNUSED_ADDRESSES_HOOK, array( $background_jobs_actions_handler, 'single_ensure_unused_addresses' ) );
+		add_action( Background_Jobs_Actions_Interface::RECURRING_ENSURE_UNUSED_ADDRESSES_HOOK, $background_jobs_actions_handler->ensure_unused_addresses( ... ) );
+		add_action( Background_Jobs_Actions_Interface::SINGLE_ENSURE_UNUSED_ADDRESSES_HOOK, $background_jobs_actions_handler->single_ensure_unused_addresses( ... ) );
 
-		add_action( Background_Jobs_Actions_Interface::GENERATE_NEW_ADDRESSES_HOOK, array( $background_jobs_actions_handler, 'generate_new_addresses' ) );
+		add_action( Background_Jobs_Actions_Interface::GENERATE_NEW_ADDRESSES_HOOK, $background_jobs_actions_handler->generate_new_addresses( ... ) );
 
-		add_action( Background_Jobs_Actions_Interface::CHECK_NEW_ADDRESSES_TRANSACTIONS_HOOK, array( $background_jobs_actions_handler, 'check_new_addresses_for_transactions' ) );
-		add_action( Background_Jobs_Actions_Interface::CHECK_ASSIGNED_ADDRESSES_TRANSACTIONS_HOOK, array( $background_jobs_actions_handler, 'check_assigned_addresses_for_transactions' ) );
+		add_action( Background_Jobs_Actions_Interface::CHECK_NEW_ADDRESSES_TRANSACTIONS_HOOK, $background_jobs_actions_handler->check_new_addresses_for_transactions( ... ) );
+		add_action( Background_Jobs_Actions_Interface::CHECK_ASSIGNED_ADDRESSES_TRANSACTIONS_HOOK, $background_jobs_actions_handler->check_assigned_addresses_for_transactions( ... ) );
 	}
 
 	/**
@@ -143,8 +143,8 @@ class BH_WP_Bitcoin_Gateway {
 		/** @var Register_List_Tables $register_list_tables */
 		$register_list_tables = $this->container->get( Register_List_Tables::class );
 
-		add_filter( 'wp_list_table_class_name', array( $register_list_tables, 'register_bitcoin_address_table' ), 10, 2 );
-		add_filter( 'wp_list_table_class_name', array( $register_list_tables, 'register_bitcoin_wallet_table' ), 10, 2 );
+		add_filter( 'wp_list_table_class_name', $register_list_tables->register_bitcoin_address_table( ... ), 10, 2 );
+		add_filter( 'wp_list_table_class_name', $register_list_tables->register_bitcoin_wallet_table( ... ), 10, 2 );
 	}
 
 	/**
@@ -170,8 +170,8 @@ class BH_WP_Bitcoin_Gateway {
 		$cli = $this->container->get( CLI::class );
 
 		try {
-			WP_CLI::add_command( 'bh-bitcoin generate-new-addresses', array( $cli, 'generate_new_addresses' ) );
-			WP_CLI::add_command( 'bh-bitcoin check-transactions', array( $cli, 'check_transactions' ) );
+			WP_CLI::add_command( 'bh-bitcoin generate-new-addresses', $cli->generate_new_addresses( ... ) );
+			WP_CLI::add_command( 'bh-bitcoin check-transactions', $cli->check_transactions( ... ) );
 		} catch ( Exception $e ) {
 			/** @var LoggerInterface $logger */
 			$logger = $this->container->get( LoggerInterface::class );

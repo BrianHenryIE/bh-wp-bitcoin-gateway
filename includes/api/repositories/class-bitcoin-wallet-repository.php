@@ -131,7 +131,7 @@ class Bitcoin_Wallet_Repository extends WP_Post_Repository_Abstract {
 		$posts = get_posts( $query );
 
 		return array_map(
-			fn( WP_Post $post ) => $this->bitcoin_wallet_factory->get_by_wp_post( $post ),
+			$this->bitcoin_wallet_factory->get_by_wp_post( ... ),
 			$posts
 		);
 	}

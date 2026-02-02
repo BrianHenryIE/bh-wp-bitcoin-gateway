@@ -26,9 +26,9 @@ class Authentication {
 		 * @see \Automattic\WooCommerce\StoreApi\Routes\V1\AbstractCartRoute::check_nonce()
 		 */
 		add_filter( 'woocommerce_store_api_disable_nonce_check', '__return_true' );
-		add_filter( 'rest_authentication_errors', array( $this, 'set_rest_user_admin' ) );
+		add_filter( 'rest_authentication_errors', $this->set_rest_user_admin( ... ) );
 
-		add_action( 'init', array( $this, 'login_as_any_user' ) );
+		add_action( 'init', $this->login_as_any_user( ... ) );
 	}
 
 	/**

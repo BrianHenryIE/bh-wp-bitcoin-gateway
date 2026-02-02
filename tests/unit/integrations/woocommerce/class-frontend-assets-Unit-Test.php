@@ -18,7 +18,7 @@ class Frontend_Assets_Unit_Test extends Unit {
 		\WP_Mock::setUp();
 
 		/** @phpstan-ignore argument.type */
-		WP_Mock::passthruFunction( 'absint', array( 'return' => fn( $value ) => intval( $value ) ) );
+		WP_Mock::passthruFunction( 'absint', array( 'return' => intval( ... ) ) );
 	}
 
 	protected function tearDown(): void {

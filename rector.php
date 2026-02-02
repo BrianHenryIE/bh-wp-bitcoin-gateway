@@ -32,7 +32,7 @@ return RectorConfig::configure()
 		)
 	)
 	->withPhpSets(
-		php80: true,
+		php81: true,
 	)
 	->withPreparedSets(
 		deadCode: false,

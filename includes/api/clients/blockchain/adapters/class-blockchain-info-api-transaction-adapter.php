@@ -35,8 +35,8 @@ class Blockchain_Info_Api_Transaction_Adapter {
 			tx_id: $transaction->getHash(),
 			block_time: new DateTimeImmutable( '@' . $transaction->getTime(), new DateTimeZone( 'UTC' ) ),
 			version: $transaction->getVer(),
-			v_in: array_map( array( $this, 'map_t_in' ), $transaction->getInputs() ),
-			v_out: array_map( array( $this, 'map_v_out' ), $transaction->getOut() ),
+			v_in: array_map( $this->map_t_in( ... ), $transaction->getInputs() ),
+			v_out: array_map( $this->map_v_out( ... ), $transaction->getOut() ),
 			block_height: $transaction->getBlockHeight(),
 		);
 	}

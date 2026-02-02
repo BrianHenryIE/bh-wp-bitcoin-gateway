@@ -151,7 +151,7 @@ class Background_Jobs_Actions_Handler_Unit_Test extends \Codeception\Test\Unit {
 						source: 'test',
 						updated_exchange_rate: new Exchange_Rate_Service_Result(
 							rate: Money::of( '90000', 'USD' ),
-							api_classname: $this::class,
+							api_classname: static::class,
 							date_saved: new DateTimeImmutable(),
 						),
 					)
@@ -180,7 +180,7 @@ class Background_Jobs_Actions_Handler_Unit_Test extends \Codeception\Test\Unit {
 						source: 'test',
 						updated_exchange_rate: new Exchange_Rate_Service_Result(
 							rate: Money::of( '90000', 'USD' ),
-							api_classname: $this::class,
+							api_classname: static::class,
 							date_saved: new DateTimeImmutable(),
 						),
 					)
@@ -212,7 +212,7 @@ class Background_Jobs_Actions_Handler_Unit_Test extends \Codeception\Test\Unit {
 						source: 'test',
 						updated_exchange_rate: new Exchange_Rate_Service_Result(
 							rate: Money::of( '90000', 'USD' ),
-							api_classname: $this::class,
+							api_classname: static::class,
 							date_saved: new DateTimeImmutable(),
 						),
 					)
@@ -244,7 +244,7 @@ class Background_Jobs_Actions_Handler_Unit_Test extends \Codeception\Test\Unit {
 						source: 'woocommerce',
 						updated_exchange_rate: new Exchange_Rate_Service_Result(
 							rate: Money::of( '85000', 'EUR' ),
-							api_classname: $this::class,
+							api_classname: static::class,
 							date_saved: new DateTimeImmutable(),
 						),
 					)
@@ -342,7 +342,7 @@ class Background_Jobs_Actions_Handler_Unit_Test extends \Codeception\Test\Unit {
 						source: 'woocommerce',
 						updated_exchange_rate: new Exchange_Rate_Service_Result(
 							rate: Money::of( '75000', 'GBP' ),
-							api_classname: $this::class,
+							api_classname: static::class,
 							date_saved: new DateTimeImmutable(),
 							previous_cached_exchange_rate: null,
 						),

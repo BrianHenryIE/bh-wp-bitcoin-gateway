@@ -24,9 +24,9 @@ class Themes {
 	 * Add hooks to register the REST endpoints.
 	 */
 	public function register_hooks(): void {
-		add_action( 'rest_api_init', array( $this, 'register_activate_theme_route' ) );
-		add_action( 'rest_api_init', array( $this, 'register_get_theme_list_route' ) );
-		add_action( 'rest_api_init', array( $this, 'register_test_helper_rest_active_theme_route' ) );
+		add_action( 'rest_api_init', $this->register_activate_theme_route( ... ) );
+		add_action( 'rest_api_init', $this->register_get_theme_list_route( ... ) );
+		add_action( 'rest_api_init', $this->register_test_helper_rest_active_theme_route( ... ) );
 	}
 
 	/**
@@ -40,7 +40,7 @@ class Themes {
 			'/activate',
 			array(
 				'methods'             => 'POST',
-				'callback'            => array( $this, 'activate_custom_theme_callback' ),
+				'callback'            => $this->activate_custom_theme_callback( ... ),
 				'permission_callback' => '__return_true',
 			)
 		);
@@ -57,7 +57,7 @@ class Themes {
 			'/get-theme-list',
 			array(
 				'methods'             => 'GET',
-				'callback'            => array( $this, 'theme_list_function' ),
+				'callback'            => $this->theme_list_function( ... ),
 				'permission_callback' => '__return_true',
 			)
 		);
@@ -74,7 +74,7 @@ class Themes {
 			'/active_theme',
 			array(
 				'methods'             => 'GET',
-				'callback'            => array( $this, 'active_theme' ),
+				'callback'            => $this->active_theme( ... ),
 				'permission_callback' => '__return_true',
 			)
 		);

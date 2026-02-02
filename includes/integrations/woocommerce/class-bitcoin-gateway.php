@@ -91,10 +91,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 		 */
 		add_action(
 			'woocommerce_update_options_payment_gateways_' . $this->id,
-			array(
-				$this,
-				'process_admin_options',
-			)
+			$this->process_admin_options( ... )
 		);
 		add_action( 'admin_notices', array( $this, 'display_errors' ), 9999 );
 	}

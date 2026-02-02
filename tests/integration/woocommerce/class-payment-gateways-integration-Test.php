@@ -35,8 +35,7 @@ class Payment_Gateway_Integration_Test extends WPTestCase {
 
 		$reflection = new ReflectionClass( $sut_gateway );
 		$property   = $reflection->getProperty( 'logger' );
-		$property->setAccessible( true );
-		$logger = $property->getValue( $sut_gateway );
+		$logger     = $property->getValue( $sut_gateway );
 
 		$this->assertFalse( $logger instanceof NullLogger );
 		$this->assertInstanceOf( BH_WP_PSR_Logger::class, $logger );
