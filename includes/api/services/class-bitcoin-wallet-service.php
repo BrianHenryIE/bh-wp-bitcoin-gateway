@@ -58,18 +58,12 @@ class Bitcoin_Wallet_Service implements LoggerAwareInterface {
 
 		if ( $existing_wallet ) {
 
-			$has_gateway_recorded = function ( Bitcoin_Wallet $wallet, array $gateway_details ): bool {
-				foreach ( $wallet->get_associated_gateways_details() as $saved_gateway_detail ) {
-					if (
-						$saved_gateway_detail['integration'] === $gateway_details['integration']
+			$has_gateway_recorded = ( fn( Bitcoin_Wallet $wallet, array $gateway_details ): bool => array_any(
+				$wallet->get_associated_gateways_details(),
+				fn( $saved_gateway_detail ) => $saved_gateway_detail['integration'] === $gateway_details['integration']
 					&&
-						$saved_gateway_detail['gateway_id'] === $gateway_details['gateway_id']
-					) {
-						return true;
-					}
-				}
-				return false;
-			};
+				$saved_gateway_detail['gateway_id'] === $gateway_details['gateway_id']
+			) );
 
 			if ( $gateway_details && ! $has_gateway_recorded( $existing_wallet, $gateway_details ) ) {
 				$this->bitcoin_wallet_repository->append_gateway_details( $existing_wallet, $gateway_details );

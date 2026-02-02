@@ -423,7 +423,7 @@ class API implements API_Interface, API_Background_Jobs_Interface {
 			$this->logger->error( $exception->getMessage() );
 
 			$this->background_jobs_scheduler->schedule_check_newly_generated_bitcoin_addresses_for_transactions(
-				( new DateTimeImmutable() )->add( new DateInterval( 'PT15M' ) ),
+				new DateTimeImmutable()->add( new DateInterval( 'PT15M' ) ),
 			);
 		}
 
