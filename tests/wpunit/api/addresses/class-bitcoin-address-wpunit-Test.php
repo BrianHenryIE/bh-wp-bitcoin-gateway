@@ -7,6 +7,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\JsonMapper\JsonMapper_Helper;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Address_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories\Bitcoin_Address_Factory;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
+use lucatume\WPBrowser\TestCase\WPTestCase;
 use ReflectionProperty;
 use WP_Post;
 
@@ -14,37 +15,6 @@ use WP_Post;
  * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address
  */
 class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
-
-	/**
-	 * @covers ::get_order_id
-	 */
-	public function test_get_order_id_after_set(): void {
-
-		$this->markTestIncomplete( 'should it be possible for a Bitcoin_Address object to exist without a post_id?' );
-
-		$bitcoin_address_factory    = new Bitcoin_Address_Factory();
-		$bitcoin_address_repository = new Bitcoin_Address_Repository( $bitcoin_address_factory );
-
-		$wallet = $this->makeEmpty( Bitcoin_Wallet::class );
-
-		$bitcoin_address_post_id = $bitcoin_address_repository->save_new_address(
-			new Bitcoin_Address_Query(
-				wallet_wp_post_parent_id: $wallet->get_post_id(),
-				xpub: 'address',
-				derivation_path_sequence_index: 2
-			)
-		);
-
-		$sut = $bitcoin_address_repository->get_by_post_id( $bitcoin_address_post_id );
-
-		$sut->set_order_id( 123 );
-
-		$sut = $bitcoin_address_repository->get_by_post_id( $bitcoin_address_post_id );
-
-		$result = $sut->get_order_id();
-
-		$this->assertEquals( 123, $result );
-	}
 
 	/**
 	 * @covers ::get_amount_received
