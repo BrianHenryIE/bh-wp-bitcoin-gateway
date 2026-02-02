@@ -170,7 +170,7 @@ class Background_Jobs_Scheduler implements Background_Jobs_Scheduler_Interface {
 			return;
 		}
 
-		$date_time = $date_time ?? new DateTimeImmutable( 'now' );
+		$date_time ??= new DateTimeImmutable( 'now' );
 		as_schedule_single_action(
 			timestamp: $date_time->getTimestamp(),
 			hook: Background_Jobs_Actions_Interface::CHECK_ASSIGNED_ADDRESSES_TRANSACTIONS_HOOK,
@@ -214,7 +214,7 @@ class Background_Jobs_Scheduler implements Background_Jobs_Scheduler_Interface {
 			return;
 		}
 
-		$datetime = $datetime ?? new DateTimeImmutable( 'now' );
+		$datetime ??= new DateTimeImmutable( 'now' );
 
 		as_schedule_single_action(
 			timestamp: $datetime->getTimestamp(),

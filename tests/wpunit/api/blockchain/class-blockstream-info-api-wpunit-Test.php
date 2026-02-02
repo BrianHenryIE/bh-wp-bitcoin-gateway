@@ -49,9 +49,7 @@ class Blockstream_Info_API_WPUnit_Test extends WPTestCase {
 
 		add_filter(
 			'pre_http_request',
-			function () use ( $request_response ) {
-				return $request_response;
-			}
+			fn() => $request_response
 		);
 
 		// The pizza address.
@@ -101,9 +99,7 @@ class Blockstream_Info_API_WPUnit_Test extends WPTestCase {
 
 		add_filter(
 			'pre_http_request',
-			function () use ( $request_response ) {
-				return $request_response;
-			}
+			fn() => $request_response
 		);
 
 		// The pizza address.
@@ -353,9 +349,7 @@ class Blockstream_Info_API_WPUnit_Test extends WPTestCase {
 
 		add_filter(
 			'pre_http_request',
-			function () use ( $request_response ) {
-				return $request_response;
-			}
+			fn() => $request_response
 		);
 
 		$address = '1AJbsFZ64EpEfS5UAjAfcUG8pH8Jn3rn1F';
@@ -387,9 +381,7 @@ class Blockstream_Info_API_WPUnit_Test extends WPTestCase {
 
 		add_filter(
 			'pre_http_request',
-			function () use ( $request_response ) {
-				return $request_response;
-			}
+			fn() => $request_response
 		);
 
 		$address = '1AJbsFZ64EpEfS5UAjAfcUG8pH8Jn3rn1F';
@@ -418,9 +410,7 @@ class Blockstream_Info_API_WPUnit_Test extends WPTestCase {
 
 		add_filter(
 			'pre_http_request',
-			function () use ( $request_response ) {
-				return $request_response;
-			}
+			fn() => $request_response
 		);
 
 		$address = '1AJbsFZ64EpEfS5UAjAfcUG8pH8Jn3rn1F';
@@ -461,9 +451,7 @@ class Blockstream_Info_API_WPUnit_Test extends WPTestCase {
 
 		add_filter(
 			'pre_http_request',
-			function () use ( $request_response ) {
-				return $request_response;
-			}
+			fn() => $request_response
 		);
 
 		$address = 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh';

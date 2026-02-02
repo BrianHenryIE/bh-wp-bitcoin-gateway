@@ -330,14 +330,12 @@ class Exchange_Rate_Service_WPUnit_Test extends WPTestCase {
 			array(
 				'get_exchange_rate' => Expected::exactly(
 					3,
-					function ( Currency $currency ) {
-						return match ( $currency->getCurrencyCode() ) {
+					fn( Currency $currency ) => match ( $currency->getCurrencyCode() ) {
 							'USD' => Money::of( '90000', 'USD' ),
 							'EUR' => Money::of( '85000', 'EUR' ),
 							'GBP' => Money::of( '75000', 'GBP' ),
 							default => throw new \Exception( 'Unexpected currency' ),
-						};
-					}
+						}
 				),
 			)
 		);

@@ -239,21 +239,17 @@ class API implements API_Interface, API_Background_Jobs_Interface {
 		 * @param array<int, array<Bitcoin_Address>> $unused_addresses_by_wallet
 		 * @param int $required_count
 		 */
-		$all_wallets_have_enough_addresses_fn = function ( array $unused_addresses_by_wallet, int $required_count ): bool {
-			return array_reduce(
-				$unused_addresses_by_wallet,
-				/**
+		$all_wallets_have_enough_addresses_fn = ( fn( array $unused_addresses_by_wallet, int $required_count ): bool => array_reduce(
+			$unused_addresses_by_wallet,
+			/**
 				 * This is definitely safe to ignore.
 				 * "Parameter #2 $callback of function array_reduce expects callable(bool, mixed): bool, Closure(bool, array): bool given".
 				 *
 				 * @phpstan-ignore argument.type
 				 */
-				function ( bool $carry, array $addresses ) use ( $required_count ): bool {
-					return $carry && count( $addresses ) >= $required_count;
-				},
-				true
-			);
-		};
+				fn( bool $carry, array $addresses ): bool => $carry && count( $addresses ) >= $required_count,
+			true
+		) );
 
 		foreach ( $unused_addresses as $address ) {
 			$address_wallet_id = $address->get_wallet_parent_post_id();
@@ -427,7 +423,7 @@ class API implements API_Interface, API_Background_Jobs_Interface {
 			$this->logger->error( $exception->getMessage() );
 
 			$this->background_jobs_scheduler->schedule_check_newly_generated_bitcoin_addresses_for_transactions(
-				( new DateTimeImmutable() )->add( new DateInterval( 'PT15M' ) ),
+				new DateTimeImmutable()->add( new DateInterval( 'PT15M' ) ),
 			);
 		}
 

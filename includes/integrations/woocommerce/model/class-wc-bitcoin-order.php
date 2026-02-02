@@ -34,7 +34,7 @@ class WC_Bitcoin_Order implements LoggerAwareInterface {
 	 *
 	 * @var Bitcoin_Gateway|null
 	 */
-	protected ?Bitcoin_Gateway $gateway;
+	protected ?Bitcoin_Gateway $gateway = null;
 
 	/**
 	 * The number of confirmations the order needs for transactions.

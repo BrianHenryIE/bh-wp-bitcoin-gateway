@@ -37,7 +37,7 @@ class Bitcoin_Transaction_Repository_WPUnit_Test extends WPTestCase {
 
 		$bitcoin_address = $bitcoin_address_repository->save_new_address( $wallet, 1, 'payment_address_345' );
 
-		$json_mapper                 = ( new JsonMapper_Helper() )->build();
+		$json_mapper                 = new JsonMapper_Helper()->build();
 		$bitcoin_transaction_factory = new Bitcoin_Transaction_Factory( $json_mapper );
 		$sut                         = new Bitcoin_Transaction_Repository( $bitcoin_transaction_factory );
 

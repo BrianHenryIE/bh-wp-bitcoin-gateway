@@ -58,20 +58,7 @@ class Bitcoin_Wallet_Service implements LoggerAwareInterface {
 
 		if ( $existing_wallet ) {
 
-			$has_gateway_recorded = function ( Bitcoin_Wallet $wallet, array $gateway_details ): bool {
-				foreach ( $wallet->get_associated_gateways_details() as $saved_gateway_detail ) {
-					if (
-						$saved_gateway_detail['integration'] === $gateway_details['integration']
-					&&
-						$saved_gateway_detail['gateway_id'] === $gateway_details['gateway_id']
-					) {
-						return true;
-					}
-				}
-				return false;
-			};
-
-			if ( $gateway_details && ! $has_gateway_recorded( $existing_wallet, $gateway_details ) ) {
+			if ( $gateway_details && ! $this->has_gateway_recorded( $existing_wallet, $gateway_details ) ) {
 				$this->bitcoin_wallet_repository->append_gateway_details( $existing_wallet, $gateway_details );
 			}
 
@@ -94,6 +81,23 @@ class Bitcoin_Wallet_Service implements LoggerAwareInterface {
 			is_new: true,
 		);
 	}
+
+	/**
+	 * Check does is a wallet associated with a gateway.
+	 *
+	 * @param Bitcoin_Wallet $wallet The Wallet which may have multiple gateways attached.
+	 * @param array{integration:class-string, gateway_id:string} $gateway_details Optional gateway id to associate the wallet with.
+	 */
+	protected function has_gateway_recorded( Bitcoin_Wallet $wallet, array $gateway_details ): bool {
+		return array_any(
+			$wallet->get_associated_gateways_details(),
+			fn( $saved_gateway_detail ) =>
+				$saved_gateway_detail['integration'] === $gateway_details['integration']
+				&&
+			$saved_gateway_detail['gateway_id'] === $gateway_details['gateway_id']
+		);
+	}
+
 
 	/**
 	 * Given a post_id, get the Bitcoin_Wallet.

@@ -242,10 +242,7 @@ class WooCommerce_Integration {
 
 		add_filter(
 			'bh_wp_bitcoin_gateway_gateway_link',
-			array(
-				$address_list_table,
-				'woocommerce_gateway_link',
-			),
+			$address_list_table->woocommerce_gateway_link( ... ),
 			10,
 			5
 		);

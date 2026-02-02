@@ -24,14 +24,10 @@ class Frontend_Asssets_WPUnit_Test extends WPTestCase {
 			Settings_Interface::class,
 			array(
 				'get_plugin_version' => Expected::once(
-					function () {
-						return '1.0.0';
-					}
+					fn() => '1.0.0'
 				),
 				'get_plugin_dir'     => Expected::once(
-					function () {
-						return codecept_root_dir();
-					}
+					fn() => codecept_root_dir()
 				),
 			)
 		);
@@ -39,9 +35,7 @@ class Frontend_Asssets_WPUnit_Test extends WPTestCase {
 			API_WooCommerce_Interface::class,
 			array(
 				'is_order_has_bitcoin_gateway' => Expected::once(
-					function ( $order_id ) {
-						return true;
-					}
+					fn( $order_id ) => true
 				),
 				'get_formatted_order_details'  => Expected::once( array() ),
 			)

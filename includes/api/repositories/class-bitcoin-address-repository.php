@@ -211,7 +211,7 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 		);
 
 		return array_map(
-			fn( WP_Post $wp_post ) => $this->bitcoin_address_factory->get_by_wp_post( $wp_post ),
+			$this->bitcoin_address_factory->get_by_wp_post( ... ),
 			$posts
 		);
 	}

@@ -79,7 +79,7 @@ class Bitstamp_API implements Exchange_Rate_API_Interface {
 		 *
 		 * @var array{timestamp:string, open:string, high:string, low:string, last:string, volume:string, vwap:string, bid:string, ask:string, side:string, open_24:string, percent_change_24:string, market_type:string} $response
 		 */
-		$response = json_decode( $request_response['body'], true, 512, JSON_THROW_ON_ERROR );
+		$response = json_decode( (string) $request_response['body'], true, 512, JSON_THROW_ON_ERROR );
 
 		return Money::of( $response['last'], $currency );
 	}

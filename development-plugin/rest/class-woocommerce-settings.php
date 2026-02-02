@@ -16,7 +16,7 @@ class WooCommerce_Settings {
 	 * Add hooks to register the REST endpoints.
 	 */
 	public function register_hooks(): void {
-		add_filter( 'rest_pre_dispatch', array( $this, 'show_settings_in_rest' ) );
+		add_filter( 'rest_pre_dispatch', $this->show_settings_in_rest( ... ) );
 	}
 
 	/**

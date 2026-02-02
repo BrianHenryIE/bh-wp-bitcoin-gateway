@@ -76,14 +76,14 @@ class Bitcoin_Order_Confirmation_Block {
 					),
 				),
 				'provides_context' => $provides_context,
-				'render_callback'  => array( $this, 'render_block' ),
+				'render_callback'  => $this->render_block( ... ),
 			)
 		);
 
 		// TODO: move out of here for legibility.
 		add_filter(
 			'render_block_context',
-			array( $this, 'add_order_id_context' ),
+			$this->add_order_id_context( ... ),
 			10,
 			3
 		);

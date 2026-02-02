@@ -74,7 +74,7 @@ class Bitfinex_API implements Exchange_Rate_API_Interface {
 		/**
 		 * @var array{0:array{0:string,1:int,2:float,3:int,4:float,5:int,6:float,7:int,8:float,9:int,10:int}} $response_body
 		 */
-		$response_body = json_decode( $request_response['body'], true, 512, JSON_THROW_ON_ERROR );
+		$response_body = json_decode( (string) $request_response['body'], true, 512, JSON_THROW_ON_ERROR );
 
 		// Multiple rates can be queried at the same time.
 

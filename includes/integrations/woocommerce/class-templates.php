@@ -22,17 +22,11 @@ class Templates {
 	const BITCOIN_PAID_TEMPLATE_NAME   = 'bitcoin-paid.php';
 
 	/**
-	 * Used to get the plugin directory URL.
-	 */
-	protected Settings_Interface $settings;
-
-	/**
 	 * Constructor.
 	 *
 	 * @param Settings_Interface $settings The plugin settings.
 	 */
-	public function __construct( Settings_Interface $settings ) {
-		$this->settings = $settings;
+	public function __construct( protected Settings_Interface $settings ) {
 	}
 
 	/**

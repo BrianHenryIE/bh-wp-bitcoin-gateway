@@ -91,10 +91,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 		 */
 		add_action(
 			'woocommerce_update_options_payment_gateways_' . $this->id,
-			array(
-				$this,
-				'process_admin_options',
-			)
+			$this->process_admin_options( ... )
 		);
 		add_action( 'admin_notices', array( $this, 'display_errors' ), 9999 );
 	}
@@ -155,7 +152,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 	protected function get_formatted_exchange_rate_string(): string {
 		try {
 			$currency = Currency::of( get_woocommerce_currency() );
-		} catch ( UnknownCurrencyException $e ) {
+		} catch ( UnknownCurrencyException ) {
 			$currency = Currency::of( 'USD' );
 		}
 		$exchange_rate = $this->api->get_exchange_rate( $currency );
@@ -328,9 +325,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 		);
 		$products = array_filter(
 			$products,
-			function ( WC_Product $product ): bool {
-				return $product->is_purchasable();
-			}
+			fn( WC_Product $product ): bool => $product->is_purchasable()
 		);
 		if ( ! empty( $products ) ) {
 			$a_product = array_pop( $products );
@@ -389,7 +384,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 
 		// TODO: always keep more than two addresses available.
 
-		$is_available_cache_key = 'bh-wp-bitcoin-gateway-available:' . __CLASS__ . $this->id;
+		$is_available_cache_key = 'bh-wp-bitcoin-gateway-available:' . self::class . $this->id;
 
 		$is_available_cache_string = get_transient( $is_available_cache_key );
 		if ( is_string( $is_available_cache_string ) ) {

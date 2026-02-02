@@ -82,7 +82,7 @@ class Woo_Cancel_Abandoned_Order {
 		try {
 			/** @var WC_Bitcoin_Order $bitcoin_order */
 			$bitcoin_order = $this->api_woocommerce->get_order_details( $order );
-		} catch ( Exception $exception ) {
+		} catch ( Exception ) {
 			// If something is going wrong, do not automatically cancel the order.
 			return false;
 		}

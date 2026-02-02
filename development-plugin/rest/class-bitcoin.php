@@ -21,7 +21,7 @@ class Bitcoin {
 	 * Add hooks to register the REST endpoint/s.
 	 */
 	public function register_hooks(): void {
-		add_action( 'rest_api_init', array( $this, 'register_bitcoin_wallets_routes' ) );
+		add_action( 'rest_api_init', $this->register_bitcoin_wallets_routes( ... ) );
 	}
 
 	/**
@@ -35,7 +35,7 @@ class Bitcoin {
 			'/bitcoin_wallets',
 			array(
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'list_bitcoin_wallets' ),
+				'callback'            => $this->list_bitcoin_wallets( ... ),
 				'permission_callback' => '__return_true',
 			)
 		);
@@ -45,7 +45,7 @@ class Bitcoin {
 			'/bitcoin_wallets',
 			array(
 				'methods'             => WP_REST_Server::DELETABLE,
-				'callback'            => array( $this, 'reset_bitcoin_data' ),
+				'callback'            => $this->reset_bitcoin_data( ... ),
 				'permission_callback' => '__return_true',
 			)
 		);
@@ -64,14 +64,12 @@ class Bitcoin {
 		);
 
 		$result = array_map(
-			static function ( \WP_Post $post ): array {
-				return array(
-					'id'     => $post->ID,
-					'title'  => $post->post_title,
-					'name'   => $post->post_name,
-					'status' => $post->post_status,
-				);
-			},
+			static fn( \WP_Post $post ): array => array(
+				'id'     => $post->ID,
+				'title'  => $post->post_title,
+				'name'   => $post->post_name,
+				'status' => $post->post_status,
+			),
 			$wallet_posts
 		);
 
@@ -132,7 +130,7 @@ class Bitcoin {
 				'message'       => 'Bitcoin wallet/address posts reset.',
 				'deleted'       => $deleted,
 				'deleted_count' => array_map(
-					fn( array $post_ids ) => count( $post_ids ),
+					count( ... ),
 					$deleted
 				),
 			),

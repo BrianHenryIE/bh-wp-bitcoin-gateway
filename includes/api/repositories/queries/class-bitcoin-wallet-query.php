@@ -27,6 +27,7 @@ readonly class Bitcoin_Wallet_Query extends WP_Post_Query_Abstract {
 	 *
 	 * @return array<string,mixed> $map to:from
 	 */
+	#[\Override]
 	protected function get_wp_post_fields(): array {
 		$wp_post_fields = array();
 

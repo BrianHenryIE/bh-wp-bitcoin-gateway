@@ -18,7 +18,7 @@ class WooCommerce_Order {
 	 * Add the action.
 	 */
 	public function register_hooks(): void {
-		add_action( 'admin_footer', array( $this, 'order_link' ) );
+		add_action( 'admin_footer', $this->order_link( ... ) );
 	}
 
 	/**

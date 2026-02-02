@@ -18,9 +18,9 @@ class WooCommerce_Customer {
 	 * Add hooks to register the REST endpoint and AJAX handler.
 	 */
 	public function register_hooks(): void {
-		add_action( 'wp_ajax_e2e_set_customer_data', array( $this, 'ajax_set_customer_data' ) );
-		add_action( 'wp_ajax_nopriv_e2e_set_customer_data', array( $this, 'ajax_set_customer_data' ) );
-		add_filter( 'woocommerce_get_script_data', array( $this, 'add_nonce_to_woocommerce_params' ) );
+		add_action( 'wp_ajax_e2e_set_customer_data', $this->ajax_set_customer_data( ... ) );
+		add_action( 'wp_ajax_nopriv_e2e_set_customer_data', $this->ajax_set_customer_data( ... ) );
+		add_filter( 'woocommerce_get_script_data', $this->add_nonce_to_woocommerce_params( ... ) );
 	}
 
 	/**

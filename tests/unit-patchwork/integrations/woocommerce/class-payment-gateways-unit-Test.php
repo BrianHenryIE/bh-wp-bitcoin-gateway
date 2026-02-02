@@ -21,6 +21,7 @@ class Payment_Gateways_Unit_Test extends Unit {
 		\WP_Mock::setUp();
 	}
 
+	#[\Override]
 	public function tearDown(): void {
 		\WP_Mock::tearDown();
 		parent::tearDown();

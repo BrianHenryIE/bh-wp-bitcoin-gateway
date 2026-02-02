@@ -79,7 +79,7 @@ class Bitcoin_API_Contract_Test extends WPTestCase {
 
 		$result = $sut->get_transactions_received( $sent_to );
 
-		$logger->info( get_class( $sut ) );
+		$logger->info( $sut::class );
 		$logger->info( json_encode( $result, JSON_THROW_ON_ERROR ) );
 
 		/** @var Transaction_Interface $first_transaction */

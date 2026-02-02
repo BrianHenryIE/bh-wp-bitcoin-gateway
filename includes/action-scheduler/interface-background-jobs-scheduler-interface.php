@@ -32,9 +32,8 @@ interface Background_Jobs_Scheduler_Interface {
 
 	/**
 	 * Schedule a job to generate new addresses.
-	 *
-	 * @deprecated In favour of ensure-unused-addresses functions.
 	 */
+	#[\Deprecated( message: 'In favour of ensure-unused-addresses functions.' )]
 	public function schedule_generate_new_addresses(): void;
 
 	/**

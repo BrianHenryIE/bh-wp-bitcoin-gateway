@@ -155,7 +155,7 @@ class Bitcoin_Address_Repository_WPUnit_Test extends WPTestCase {
 		$order_id  = 123;
 		$btc_total = Money::of( '0.001', 'BTC' );
 
-		$this->sut->assign_to_order( $address, get_class( $this ), $order_id, $btc_total );
+		$this->sut->assign_to_order( $address, static::class, $order_id, $btc_total );
 
 		$updated_address = $this->sut->get_by_post_id( $address->get_post_id() );
 

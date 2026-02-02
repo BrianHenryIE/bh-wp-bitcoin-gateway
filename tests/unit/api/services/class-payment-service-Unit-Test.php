@@ -28,9 +28,10 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 		WP_Mock::setUp();
 
 		/** @phpstan-ignore argument.type */
-		WP_Mock::passthruFunction( 'wp_json_encode', array( 'return' => fn( $value ) => json_encode( $value ) ) );
+		WP_Mock::passthruFunction( 'wp_json_encode', array( 'return' => json_encode( ... ) ) );
 	}
 
+	#[\Override]
 	protected function tearDown(): void {
 		parent::tearDown();
 		WP_Mock::tearDown();
@@ -86,7 +87,6 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 
 		$reflection = new ReflectionClass( $sut );
 		$method     = $reflection->getMethod( 'get_blockchain_height' );
-		$method->setAccessible( true );
 
 		$result = $method->invoke( $sut );
 
@@ -140,7 +140,6 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 
 		$reflection = new ReflectionClass( $sut );
 		$method     = $reflection->getMethod( 'get_blockchain_height' );
-		$method->setAccessible( true );
 
 		$result = $method->invoke( $sut );
 
@@ -193,7 +192,6 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 
 		$reflection = new ReflectionClass( $sut );
 		$method     = $reflection->getMethod( 'get_blockchain_height' );
-		$method->setAccessible( true );
 
 		$result = $method->invoke( $sut );
 
@@ -238,7 +236,6 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 
 		$reflection = new ReflectionClass( $sut );
 		$method     = $reflection->getMethod( 'get_blockchain_height' );
-		$method->setAccessible( true );
 
 		$result = $method->invoke( $sut );
 
@@ -283,7 +280,6 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 
 		$reflection = new ReflectionClass( $sut );
 		$method     = $reflection->getMethod( 'get_blockchain_height' );
-		$method->setAccessible( true );
 
 		$result = $method->invoke( $sut );
 
@@ -333,7 +329,6 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 
 		$reflection = new ReflectionClass( $sut );
 		$method     = $reflection->getMethod( 'get_blockchain_height' );
-		$method->setAccessible( true );
 
 		$result = $method->invoke( $sut );
 
@@ -383,12 +378,7 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 			Bitcoin_Transaction_Repository::class,
 			array(
 				'save_new' => Expected::once(
-					function (
-						Transaction_Interface $transaction,
-						Bitcoin_Address $address,
-					) use ( $bitcoin_transaction ): Bitcoin_Transaction {
-						return $bitcoin_transaction;
-					}
+					fn( Transaction_Interface $transaction, Bitcoin_Address $address ): Bitcoin_Transaction => $bitcoin_transaction
 				),
 			)
 		);

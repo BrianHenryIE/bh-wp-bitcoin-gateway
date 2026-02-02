@@ -90,9 +90,7 @@ class Bitcoin_Gateway_WPUnit_Test extends WPTestCase {
 			API_Interface::class,
 			array(
 				'get_exchange_rate' => Expected::once(
-					function ( Currency $currency ) {
-						return Money::of( '0.0', Currency::of( 'USD' ) );
-					}
+					fn( Currency $currency ) => Money::of( '0.0', Currency::of( 'USD' ) )
 				),
 			)
 		);
@@ -100,9 +98,7 @@ class Bitcoin_Gateway_WPUnit_Test extends WPTestCase {
 			API_WooCommerce_Interface::class,
 			array(
 				'is_unused_address_available_for_gateway' => Expected::once(
-					function ( Bitcoin_Gateway $gateway ) {
-						return true;
-					}
+					fn( Bitcoin_Gateway $gateway ) => true
 				),
 			)
 		);
@@ -124,9 +120,7 @@ class Bitcoin_Gateway_WPUnit_Test extends WPTestCase {
 			API_WooCommerce_Interface::class,
 			array(
 				'is_fresh_address_available_for_gateway' => Expected::once(
-					function ( Bitcoin_Gateway $gateway ) {
-						return false;
-					}
+					fn( Bitcoin_Gateway $gateway ) => false
 				),
 			)
 		);
@@ -207,9 +201,7 @@ class Bitcoin_Gateway_WPUnit_Test extends WPTestCase {
 			API_Interface::class,
 			array(
 				'convert_fiat_to_btc' => Expected::once(
-					function ( Money $money ) {
-						return $money;
-					}
+					fn( Money $money ) => $money
 				),
 			)
 		);
@@ -253,9 +245,7 @@ class Bitcoin_Gateway_WPUnit_Test extends WPTestCase {
 			API_Interface::class,
 			array(
 				'get_exchange_rate' => Expected::once(
-					function ( Currency $currency ) {
-						return Money::of( '100000', $currency );
-					}
+					fn( Currency $currency ) => Money::of( '100000', $currency )
 				),
 			)
 		);

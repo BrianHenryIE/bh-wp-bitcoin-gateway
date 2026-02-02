@@ -73,9 +73,7 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 		$bitcoin_gateways = $this->get_bitcoin_gateways();
 
 		$gateway_ids = array_map(
-			function ( WC_Payment_Gateway $gateway ): string {
-				return $gateway->id;
-			},
+			fn( WC_Payment_Gateway $gateway ): string => $gateway->id,
 			$bitcoin_gateways
 		);
 
@@ -355,14 +353,13 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 	 *
 	 * TODO: show ~"unconfirmed total =..., confirmed total = ...".
 	 *
-	 * @deprecated This function signature is expected to change to pass data for totals. Please don't use it directly.
-	 *
 	 * @used-by Order::new_transactions_seen()
 	 * @used-by self::refresh_order()
 	 *
 	 * @param WC_Order                     $order The WooCommerce order to record the new transactions for.
 	 * @param array<Transaction_Interface> $new_transactions The transactions.
 	 */
+	#[\Deprecated( message: "This function signature is expected to change to pass data for totals. Please don't use it directly." )]
 	public function add_order_note_for_transactions( WC_Order $order, array $new_transactions ): void {
 		$note = Transaction_Formatter::get_order_note( $new_transactions );
 		$order->add_order_note( $note );

@@ -37,7 +37,7 @@ $btc_logo_url = BH_WP_BITCOIN_GATEWAY_URL . '/assets/bitcoin.png';
 	<img alt="Bitcoin logo" class="bh_wp_bitcoin_gateway_logo" src="<?php echo esc_attr( $btc_logo_url ); ?>">
 
 	<a href="<?php echo esc_url( $bitcoin_href_address, array( 'bitcoin' ) ); ?>">
-		<img src="<?php echo esc_attr( ( new QRCode() )->render( $bitcoin_href_address ) ); ?>" alt="<?php esc_attr_e( 'Payment QR Code', 'bh-wp-bitcoin-gateway' ); ?>" />
+		<img src="<?php echo esc_attr( new QRCode()->render( $bitcoin_href_address ) ); ?>" alt="<?php esc_attr_e( 'Payment QR Code', 'bh-wp-bitcoin-gateway' ); ?>" />
 	</a>
 	</div>
 

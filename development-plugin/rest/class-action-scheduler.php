@@ -29,8 +29,8 @@ class Action_Scheduler {
 	 * Add hooks to register the REST endpoints.
 	 */
 	public function register_hooks(): void {
-		add_action( 'rest_api_init', array( $this, 'register_action_scheduler_search' ) );
-		add_action( 'rest_api_init', array( $this, 'register_action_scheduler_delete' ) );
+		add_action( 'rest_api_init', $this->register_action_scheduler_search( ... ) );
+		add_action( 'rest_api_init', $this->register_action_scheduler_delete( ... ) );
 	}
 
 	/**
@@ -46,7 +46,7 @@ class Action_Scheduler {
 			'/action_scheduler/search',
 			array(
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'action_scheduler_search' ),
+				'callback'            => $this->action_scheduler_search( ... ),
 				'permission_callback' => '__return_true',
 			)
 		);
@@ -69,9 +69,9 @@ class Action_Scheduler {
 		/**
 		 * @see ActionScheduler_DBStore::get_query_actions_sql()
 		 */
-		$search['per_page'] = $search['per_page'] ?? 200;
-		$search['orderby']  = $search['orderby'] ?? 'date';
-		$search['order']    = $search['order'] ?? 'ASC';
+		$search['per_page'] ??= 200;
+		$search['orderby']  ??= 'date';
+		$search['order']    ??= 'ASC';
 		/** @var array<ActionScheduler_Action> $scheduled_actions */
 		$scheduled_actions = as_get_scheduled_actions( $search );
 
@@ -134,7 +134,7 @@ class Action_Scheduler {
 			'/action_scheduler/(?P<id>[\d]+)',
 			array(
 				'methods'             => WP_REST_Server::DELETABLE,
-				'callback'            => array( $this, 'action_scheduler_delete' ),
+				'callback'            => $this->action_scheduler_delete( ... ),
 				'permission_callback' => '__return_true',
 			)
 		);

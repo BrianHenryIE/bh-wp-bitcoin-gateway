@@ -18,9 +18,10 @@ class Frontend_Assets_Unit_Test extends Unit {
 		\WP_Mock::setUp();
 
 		/** @phpstan-ignore argument.type */
-		WP_Mock::passthruFunction( 'absint', array( 'return' => fn( $value ) => intval( $value ) ) );
+		WP_Mock::passthruFunction( 'absint', array( 'return' => intval( ... ) ) );
 	}
 
+	#[\Override]
 	protected function tearDown(): void {
 		parent::tearDown();
 		\WP_Mock::tearDown();
@@ -45,9 +46,7 @@ class Frontend_Assets_Unit_Test extends Unit {
 			API_WooCommerce_Interface::class,
 			array(
 				'is_order_has_bitcoin_gateway' => Expected::once(
-					function ( int $order_id ) {
-						return true;
-					}
+					fn( int $order_id ) => true
 				),
 			)
 		);
@@ -55,9 +54,7 @@ class Frontend_Assets_Unit_Test extends Unit {
 			Settings_Interface::class,
 			array(
 				'get_plugin_version' => Expected::once(
-					function () {
-						return '1.0.0';
-					}
+					fn() => '1.0.0'
 				),
 				'get_plugin_url'     => $plugin_root_url,
 			)

@@ -72,7 +72,7 @@ class Blockstream_Info_API implements Blockchain_API_Interface, LoggerAwareInter
 		}
 		if ( 429 === $request_response['response']['code'] ) {
 			/** @var array{error:string, message:string} $blockstream_rate_limit_response */
-			$blockstream_rate_limit_response = json_decode( $request_response['body'], true, 512, JSON_THROW_ON_ERROR );
+			$blockstream_rate_limit_response = json_decode( (string) $request_response['body'], true, 512, JSON_THROW_ON_ERROR );
 			throw new Rate_Limit_Exception(
 				reset_time: null,
 				message: $blockstream_rate_limit_response['message']
@@ -86,7 +86,7 @@ class Blockstream_Info_API implements Blockchain_API_Interface, LoggerAwareInter
 		/**
 		 * @var BlockStreamApiTransactionArray[] $blockstream_transactions
 		 */
-		$blockstream_transactions = json_decode( $request_response['body'], true, 512, JSON_THROW_ON_ERROR );
+		$blockstream_transactions = json_decode( (string) $request_response['body'], true, 512, JSON_THROW_ON_ERROR );
 
 		$adapter = new BlockStream_Info_API_Transaction_Adapter();
 
@@ -98,7 +98,7 @@ class Blockstream_Info_API implements Blockchain_API_Interface, LoggerAwareInter
 		 * @var Transaction_Interface[] $transactions
 		 */
 		$transactions = array_map(
-			fn( array $blockstream_transaction ) => $adapter->adapt( $blockstream_transaction ),
+			$adapter->adapt( ... ),
 			$blockstream_transactions
 		);
 

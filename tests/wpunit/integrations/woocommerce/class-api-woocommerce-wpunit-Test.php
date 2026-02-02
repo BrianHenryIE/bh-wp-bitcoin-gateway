@@ -86,9 +86,7 @@ class API_WooCommerce_WPUnit_Test extends WPTestCase {
 
 		$all_bitcoin_gateways = array_reduce(
 			$result,
-			function ( bool $carry, WC_Payment_Gateway $gateway ): bool {
-				return $carry && ( $gateway instanceof Bitcoin_Gateway );
-			},
+			fn( bool $carry, WC_Payment_Gateway $gateway ): bool => $carry && ( $gateway instanceof Bitcoin_Gateway ),
 			true
 		);
 
