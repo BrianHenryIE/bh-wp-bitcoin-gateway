@@ -164,7 +164,7 @@
     "antecedent/patchwork": "^2.2.3",
     "brianhenryie/color-logger": "*",
     "brianhenryie/php-codecoverage-markdown": "^0.1|^1",
-    "brianhenryie/strauss": "^0.26.3",
+    "brianhenryie/strauss": "^0.26.4",
     "dealerdirect/phpcodesniffer-composer-installer": "^1.2",
     "impress-org/give-next-gen": "^0.2",
     "impress-org/givewp-example-gateway": "dev-master",
