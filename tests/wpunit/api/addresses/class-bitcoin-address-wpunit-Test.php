@@ -2,6 +2,7 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet;
 
+use BrianHenryIE\ColorLogger\ColorLogger;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\JsonMapper\JsonMapper_Helper;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Address_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories\Bitcoin_Address_Factory;
@@ -128,7 +129,7 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 			)
 		);
 
-		$bitcoin_address_factory    = new Bitcoin_Address_Factory( new JsonMapper_Helper()->build() );
+		$bitcoin_address_factory    = new Bitcoin_Address_Factory( new JsonMapper_Helper()->build(), new ColorLogger() );
 		$bitcoin_address_repository = new Bitcoin_Address_Repository( $bitcoin_address_factory );
 
 		$sut = $bitcoin_address_repository->get_by_post_id( $post_id );
@@ -182,7 +183,7 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 			)
 		);
 
-		$bitcoin_address_factory    = new Bitcoin_Address_Factory( new JsonMapper_Helper()->build() );
+		$bitcoin_address_factory    = new Bitcoin_Address_Factory( new JsonMapper_Helper()->build(), new ColorLogger() );
 		$bitcoin_address_repository = new Bitcoin_Address_Repository( $bitcoin_address_factory );
 
 		$sut = $bitcoin_address_repository->get_by_post_id( $post_id );
@@ -206,7 +207,7 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 			)
 		);
 
-		$bitcoin_address_factory    = new Bitcoin_Address_Factory( new JsonMapper_Helper()->build() );
+		$bitcoin_address_factory    = new Bitcoin_Address_Factory( new JsonMapper_Helper()->build(), new ColorLogger() );
 		$bitcoin_address_repository = new Bitcoin_Address_Repository( $bitcoin_address_factory );
 
 		$sut = $bitcoin_address_repository->get_by_post_id( $post_id );

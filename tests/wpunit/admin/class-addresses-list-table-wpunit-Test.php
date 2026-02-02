@@ -76,7 +76,7 @@ class Addresses_List_Table_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTe
 		$bitcoin_wallet_repository = new Bitcoin_Wallet_Repository( $bitcoin_wallet_factory );
 		$wallet                    = $bitcoin_wallet_repository->save_new( 'xpub1a2s3d4f5gabcdef' );
 
-		$bitcoin_address_factory    = new Bitcoin_Address_Factory( new JsonMapper_Helper()->build() );
+		$bitcoin_address_factory    = new Bitcoin_Address_Factory( new JsonMapper_Helper()->build(), new ColorLogger() );
 		$bitcoin_address_repository = new Bitcoin_Address_Repository( $bitcoin_address_factory );
 
 		$bitcoin_address = $bitcoin_address_repository->save_new_address(

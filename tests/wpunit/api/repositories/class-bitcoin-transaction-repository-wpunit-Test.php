@@ -2,6 +2,7 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories;
 
+use BrianHenryIE\ColorLogger\ColorLogger;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\JsonMapper\JsonMapper_Helper;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories\Bitcoin_Address_Factory;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories\Bitcoin_Transaction_Factory;
@@ -31,7 +32,7 @@ class Bitcoin_Transaction_Repository_WPUnit_Test extends WPTestCase {
 
 		$wallet = $bitcoin_wallet_repository->save_new( 'xpub123' );
 
-		$bitcoin_address_factory    = new Bitcoin_Address_Factory( new JsonMapper_Helper()->build() );
+		$bitcoin_address_factory    = new Bitcoin_Address_Factory( new JsonMapper_Helper()->build(), new ColorLogger() );
 		$bitcoin_address_repository = new Bitcoin_Address_Repository( $bitcoin_address_factory );
 
 		$bitcoin_address = $bitcoin_address_repository->save_new_address( $wallet, 1, 'payment_address_345' );
