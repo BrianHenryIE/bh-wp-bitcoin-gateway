@@ -93,8 +93,6 @@ class Bitcoin_Order_WPUnit_Test extends WPTestCase {
 	 */
 	public function test_get_status(): void {
 
-		$this->markTestSkipped( 'Unsure why: Test code or tested code did not (only) close its own output buffers' );
-
 		$order = new WC_Order();
 		$order->set_payment_method( 'bitcoin' );
 		$order->set_status( 'on-hold' );
