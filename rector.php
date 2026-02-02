@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use Rector\Config\RectorConfig;
+use Rector\Php54\Rector\Array_\LongArrayToShortArrayRector;
+use Rector\Php80\Rector\Switch_\ChangeSwitchToMatchRector;
 
 return RectorConfig::configure()
 	->withPaths(
@@ -21,6 +23,12 @@ return RectorConfig::configure()
 		array(
 			__DIR__ . '/includes/vendor',
 			__DIR__ . '/includes/vendor-prefixed',
+		)
+	)
+	->withSkip(
+		array(
+			LongArrayToShortArrayRector::class,
+			ChangeSwitchToMatchRector::class,
 		)
 	)
 	->withPhpSets(
