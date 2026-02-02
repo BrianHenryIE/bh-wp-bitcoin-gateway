@@ -14,6 +14,7 @@ class Menu_Unit_Test extends \Codeception\Test\Unit {
 		\WP_Mock::setUp();
 	}
 
+	#[\Override]
 	protected function tearDown(): void {
 		parent::tearDown();
 		\WP_Mock::tearDown();

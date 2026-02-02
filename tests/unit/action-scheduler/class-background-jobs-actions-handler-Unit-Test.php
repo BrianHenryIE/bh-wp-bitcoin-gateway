@@ -26,6 +26,7 @@ class Background_Jobs_Actions_Handler_Unit_Test extends \Codeception\Test\Unit {
 		WP_Mock::setUp();
 	}
 
+	#[\Override]
 	public function tearDown(): void {
 		WP_Mock::tearDown();
 		parent::tearDown();

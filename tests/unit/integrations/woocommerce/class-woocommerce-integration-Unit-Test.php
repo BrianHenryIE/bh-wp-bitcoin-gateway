@@ -28,6 +28,7 @@ class WooCommerce_Integration_Unit_Test extends Unit {
 		\WP_Mock::setUp();
 	}
 
+	#[\Override]
 	protected function tearDown(): void {
 		parent::tearDown();
 		\WP_Mock::tearDown();

@@ -96,6 +96,7 @@ class Addresses_List_Table_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTe
 		);
 	}
 
+	#[\Override]
 	public function tearDown(): void {
 		parent::tearDown();
 

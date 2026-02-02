@@ -19,6 +19,7 @@ class Woo_Cancel_Abandoned_Order_Integration_Unit_Test extends Unit {
 		\WP_Mock::setUp();
 	}
 
+	#[\Override]
 	protected function tearDown(): void {
 		parent::tearDown();
 		\WP_Mock::tearDown();

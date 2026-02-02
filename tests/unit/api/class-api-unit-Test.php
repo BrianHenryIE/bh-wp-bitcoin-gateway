@@ -35,6 +35,7 @@ class API_Unit_Test extends \Codeception\Test\Unit {
 		WP_Mock::passthruFunction( 'wp_json_encode', array( 'return' => json_encode( ... ) ) );
 	}
 
+	#[\Override]
 	protected function tearDown(): void {
 		parent::tearDown();
 		WP_Mock::tearDown();

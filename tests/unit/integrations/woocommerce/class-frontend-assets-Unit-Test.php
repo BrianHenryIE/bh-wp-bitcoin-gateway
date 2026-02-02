@@ -21,6 +21,7 @@ class Frontend_Assets_Unit_Test extends Unit {
 		WP_Mock::passthruFunction( 'absint', array( 'return' => intval( ... ) ) );
 	}
 
+	#[\Override]
 	protected function tearDown(): void {
 		parent::tearDown();
 		\WP_Mock::tearDown();

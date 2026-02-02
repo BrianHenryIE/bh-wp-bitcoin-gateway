@@ -38,6 +38,7 @@ class Exchange_Rate_Service_Unit_Test extends \Codeception\Test\Unit {
 		);
 	}
 
+	#[\Override]
 	protected function tearDown(): void {
 		parent::tearDown();
 		WP_Mock::tearDown();

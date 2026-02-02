@@ -12,6 +12,7 @@ use WP_Mock;
  */
 class Bitcoin_Wallet_Query_Unit_Test extends Unit {
 
+	#[\Override]
 	protected function setUp(): void {
 		WP_Mock::setUp();
 
@@ -32,6 +33,7 @@ class Bitcoin_Wallet_Query_Unit_Test extends Unit {
 		);
 	}
 
+	#[\Override]
 	protected function tearDown(): void {
 		WP_Mock::tearDown();
 	}

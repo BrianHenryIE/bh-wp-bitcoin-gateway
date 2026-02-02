@@ -17,6 +17,7 @@ class Transaction_Formatter_Unit_Test extends Unit {
 		\WP_Mock::passthruFunction( 'esc_url' );
 	}
 
+	#[\Override]
 	protected function tearDown(): void {
 		parent::tearDown();
 		\WP_Mock::tearDown();

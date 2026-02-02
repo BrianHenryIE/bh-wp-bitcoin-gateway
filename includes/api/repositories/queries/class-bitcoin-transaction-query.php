@@ -28,6 +28,7 @@ readonly class Bitcoin_Transaction_Query extends WP_Post_Query_Abstract {
 	 *
 	 * @return array<string,mixed> $map to:from
 	 */
+	#[\Override]
 	protected function get_wp_post_fields(): array {
 		$fields = array();
 
