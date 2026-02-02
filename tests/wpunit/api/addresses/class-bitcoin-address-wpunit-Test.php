@@ -16,43 +16,6 @@ use WP_Post;
 class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 
 	/**
-	 * When using `update_post_meta()` the last modified time of the post does not change. This
-	 * is a test to see will it update if we use `update_post( array( 'meta_input' => array() )` instead.
-	 */
-	public function test_last_modified_time_is_updated(): void {
-
-		$this->markTestIncomplete( 'Manipulation fo the object has moved to the repository.' );
-
-		$bitcoin_address_factory    = new Bitcoin_Address_Factory();
-		$bitcoin_address_repository = new Bitcoin_Address_Repository( $bitcoin_address_factory );
-
-		$wallet = $this->makeEmpty( Bitcoin_Wallet::class );
-
-		$bitcoin_address = $bitcoin_address_repository->save_new_address(
-			wallet:             $wallet,
-			derivation_path_sequence_index: 2,
-			address: 'address',
-		);
-
-		/** @var WP_Post $bitcoin_address_post */
-		$bitcoin_address_post = get_post( $bitcoin_address->get_post_id() );
-
-		$last_modified_time_before = $bitcoin_address_post->post_modified_gmt;
-
-		$bitcoin_address_object = $bitcoin_address_repository->get_by_post_id( $bitcoin_address->get_post_id() );
-
-		sleep( 1 );
-
-		$bitcoin_address_object->set_order_id( 123 );
-
-		/** @var WP_Post $bitcoin_address_post */
-		$bitcoin_address_post = get_post( $bitcoin_address->get_post_id() );
-
-		$last_modified_time_after = $bitcoin_address_post->post_modified_gmt;
-
-		$this->assertNotEquals( $last_modified_time_before, $last_modified_time_after );
-	}
-	/**
 	 * @covers ::get_order_id
 	 */
 	public function test_get_order_id_after_set(): void {
