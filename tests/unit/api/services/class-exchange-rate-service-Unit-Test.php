@@ -4,9 +4,11 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Services;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Exchange_Rate_API_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\JsonMapper\JsonMapper_Helper;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Results\Exchange_Rate_Service_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Currency;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
+use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\JsonMapperInterface;
 use BrianHenryIE\WP_Bitcoin_Gateway\phpDocumentor\Reflection\DocBlock\StandardTagFactory;
 use Codeception\Stub\Expected;
 use DateTimeImmutable;
@@ -45,10 +47,12 @@ class Exchange_Rate_Service_Unit_Test extends \Codeception\Test\Unit {
 
 	protected function get_sut(
 		?Exchange_Rate_API_Interface $exchange_rate_api = null,
+		?JsonMapperInterface $json_mapper = null,
 		?LoggerInterface $logger = null,
 	): Exchange_Rate_Service {
 		return new Exchange_Rate_Service(
 			exchange_rate_api: $exchange_rate_api ?? $this->makeEmpty( Exchange_Rate_API_Interface::class ),
+			json_mapper: $json_mapper ?? new JsonMapper_Helper()->build(),
 			logger: $logger ?? new ColorLogger(),
 		);
 	}
@@ -57,14 +61,6 @@ class Exchange_Rate_Service_Unit_Test extends \Codeception\Test\Unit {
 	 * @covers ::get_exchange_rate
 	 */
 	public function test_get_exchange_rate_already_stored(): void {
-
-		if ( \WP_Mock::usingPatchwork() ) {
-			/**
-			 * @see StandardTagFactory::createTag()
-			 * @ese AbstractPHPStanFactory::create()
-			 */
-			$this->markTestSkipped( 'This test fails when Patchwork is enabled – jsonmapper fails.' );
-		}
 
 		$exchange_rate_api_mock = $this->makeEmpty(
 			Exchange_Rate_API_Interface::class,

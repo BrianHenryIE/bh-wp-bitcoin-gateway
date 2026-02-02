@@ -56,10 +56,6 @@ class Transaction_Adapters_Unit_Test extends Unit {
 	 */
 	public function test_all_adapters_match( string $adapter_class, string $transaction_class, string $json ): void {
 
-		if ( WP_Mock::usingPatchwork() ) {
-			$this->markTestSkipped( 'This test fails when Patchwork is enabled – jsonmapper fails.' );
-		}
-
 		if ( 'array' === $transaction_class ) {
 			/** @var BlockStreamApiTransactionArray $transaction */
 			$transaction = json_decode( $json, true );

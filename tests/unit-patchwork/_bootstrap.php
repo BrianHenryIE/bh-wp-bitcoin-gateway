@@ -20,7 +20,15 @@ if ( function_exists( 'xdebug_info' ) ) {
 	$xdebug_info = array();
 }
 
-WP_Mock::setUsePatchwork( false );
+/**
+ * Do not use Patchwork if coverage is enabled.
+ * There is an out of memory error occurring.
+ *
+ * `WP_Mock::setUsePatchwork( ! in_array( 'coverage', $xdebug_info, true ) );`
+ *
+ * @see https://patchwork2.org/
+ */
+WP_Mock::setUsePatchwork( true );
 WP_Mock::bootstrap();
 
 /** @var string $project_root_dir Defined in {@see /tests/bootstrap.php} */

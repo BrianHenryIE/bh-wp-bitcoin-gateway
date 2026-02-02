@@ -22,10 +22,6 @@ class Blockchain_Info_API_Unit_Test extends \Codeception\Test\Unit {
 	 */
 	public function test_get_transactions(): void {
 
-		if ( \WP_Mock::usingPatchwork() ) {
-			$this->markTestSkipped( 'This test fails when Patchwork is enabled – jsonmapper fails.' );
-		}
-
 		$logger = new ColorLogger();
 
 		$mapper = new JsonMapperFactory()->bestFit();
