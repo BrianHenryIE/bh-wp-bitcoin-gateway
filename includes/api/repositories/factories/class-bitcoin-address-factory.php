@@ -176,6 +176,7 @@ class Bitcoin_Address_Factory implements LoggerAwareInterface {
 		/** @var mixed|MoneySerializedArray $meta_value */
 		$meta_value = get_post_meta( $post_id, $meta_key, true );
 		if ( empty( $meta_value ) ) {
+			// Empty meta is valid for unassigned addresses and those without transactions.
 			return null;
 		}
 		if ( ! is_string( $meta_value ) ) {
