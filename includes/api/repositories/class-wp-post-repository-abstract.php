@@ -50,7 +50,7 @@ abstract class WP_Post_Repository_Abstract {
 		$args       = $query->to_query_array();
 		$args['ID'] = $model->get_post_id();
 
-		$new_meta = isset( $args['meta_input'] ) ? $args['meta_input'] : array();
+		$new_meta = $args['meta_input'] ?? array();
 
 		// Flatten the `get_post_meta()` result which treats all keys as not-single values.
 		$args['meta_input'] = array();
