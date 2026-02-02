@@ -58,7 +58,7 @@
 		"@wordpress/e2e-test-utils-playwright": "^1.39",
 		"@wordpress/env": "^10.39",
 		"@wordpress/scripts": "^31.3",
-		"@wordpress/stylelint-config": "^23.30",
+		"@wordpress/stylelint-config": "^23.31",
 		"dotenv": "^17.2",
 		"eslint-plugin-import": "^2.32",
 		"eslint-plugin-jest": "^29.12",
