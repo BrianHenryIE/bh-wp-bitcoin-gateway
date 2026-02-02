@@ -4,7 +4,11 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\JsonMapper\JsonMapper_Helper;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address_WP_Post_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Address_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\JsonMapperInterface;
 use Codeception\Stub\Expected;
@@ -24,6 +28,59 @@ class Bitcoin_Address_Factory_WPUnit_Test extends WPTestCase {
 			json_mapper: $json_mapper ?? new JsonMapper_Helper()->build(),
 			logger: $logger ?? new ColorLogger()
 		);
+	}
+
+	/**
+	 * @covers ::get_order_id_from_post
+	 */
+	public function test_get_order_id_null_before_set(): void {
+
+		$sut = $this->get_sut();
+
+		$bitcoin_address_repository = new Bitcoin_Address_Repository( $sut );
+		$wallet                     = $this->makeEmpty( Bitcoin_Wallet::class );
+
+		$bitcoin_address = $bitcoin_address_repository->save_new_address(
+			wallet: $wallet,
+			derivation_path_sequence_index: 2,
+			address: 'address',
+		);
+
+		$sut = $sut->get_by_wp_post_id( $bitcoin_address->get_post_id() );
+
+		$result = $sut->get_order_id();
+
+		$this->assertNull( $result );
+	}
+
+	/**
+	 * @covers ::get_order_id_from_post
+	 */
+	public function test_get_order_id_after_set(): void {
+
+		$sut = $this->get_sut();
+
+		$bitcoin_address_repository = new Bitcoin_Address_Repository( $sut );
+		$wallet                     = $this->makeEmpty( Bitcoin_Wallet::class );
+
+		$new_payment_address = $bitcoin_address_repository->save_new_address(
+			wallet: $wallet,
+			derivation_path_sequence_index: 2,
+			address: 'address'
+		);
+
+		$bitcoin_address_repository->assign_to_order(
+			address: $new_payment_address,
+			integration_id: __METHOD__,
+			order_id: 123,
+			btc_total: Money::of( 0.00002, 'BTC' )
+		);
+
+		$new_payment_address_after = $bitcoin_address_repository->refresh( $new_payment_address );
+
+		$result = $new_payment_address_after->get_order_id();
+
+		$this->assertEquals( 123, $result );
 	}
 
 	/**
@@ -144,7 +201,15 @@ class Bitcoin_Address_Factory_WPUnit_Test extends WPTestCase {
 		);
 
 		$post = get_post( $post_id );
-		$sut  = $this->get_sut();
+
+		$logger = $this->makeEmpty(
+			LoggerInterface::class,
+			array(
+				'warning' => Expected::never(),
+			)
+		);
+
+		$sut = $this->get_sut( logger: $logger );
 
 		$reflection = new \ReflectionClass( $sut );
 		$method     = $reflection->getMethod( 'get_target_amount_from_post' );
@@ -266,7 +331,7 @@ class Bitcoin_Address_Factory_WPUnit_Test extends WPTestCase {
 		$logger = $this->makeEmpty(
 			LoggerInterface::class,
 			array(
-				'warning' => Expected::once(),
+				'warning' => Expected::never(),
 			)
 		);
 
@@ -360,6 +425,7 @@ class Bitcoin_Address_Factory_WPUnit_Test extends WPTestCase {
 	public function test_log_meta_value_warning_calls_logger_with_correct_parameters(): void {
 		$post_id    = 123;
 		$meta_key   = 'test_meta_key';
+		$type       = 'TestType';
 		$meta_value = array( 'invalid' => 'value' );
 
 		$logger = $this->makeEmpty(
@@ -382,7 +448,7 @@ class Bitcoin_Address_Factory_WPUnit_Test extends WPTestCase {
 		$reflection = new \ReflectionClass( $sut );
 		$method     = $reflection->getMethod( 'log_meta_value_warning' );
 
-		$method->invoke( $sut, $post_id, $meta_key, $meta_value );
+		$method->invoke( $sut, $post_id, $meta_key, $type, $meta_value );
 	}
 
 	/**
@@ -391,18 +457,21 @@ class Bitcoin_Address_Factory_WPUnit_Test extends WPTestCase {
 	public function test_log_meta_value_warning_with_exception(): void {
 		$post_id    = 456;
 		$meta_key   = 'another_meta_key';
+		$type       = 'AnotherType';
 		$meta_value = 'invalid string';
+		$extra      = 'additional information';
 		$exception  = new \Exception( 'Test exception' );
 
 		$logger = $this->makeEmpty(
 			LoggerInterface::class,
 			array(
 				'warning' => Expected::once(
-					function ( $message, $context ) use ( $post_id, $meta_key, $meta_value, $exception ) {
+					function ( $message, $context ) use ( $post_id, $meta_key, $meta_value, $extra, $exception ) {
 						$this->assertStringContainsString( 'Failed to parse payment address meta', $message );
 						$this->assertEquals( $meta_key, $context['meta_key'] );
 						$this->assertEquals( $post_id, $context['post_id'] );
 						$this->assertEquals( $meta_value, $context['meta_value'] );
+						$this->assertEquals( $extra, $context['extra'] );
 						$this->assertSame( $exception, $context['exception'] );
 					}
 				),
@@ -414,6 +483,345 @@ class Bitcoin_Address_Factory_WPUnit_Test extends WPTestCase {
 		$reflection = new \ReflectionClass( $sut );
 		$method     = $reflection->getMethod( 'log_meta_value_warning' );
 
-		$method->invoke( $sut, $post_id, $meta_key, $meta_value, $exception );
+		$method->invoke( $sut, $post_id, $meta_key, $type, $meta_value, $extra, $exception );
+	}
+
+
+	/**
+	 * Test the immediately invoked function which throws an exception does not run until the null coalesce operator
+	 * evaluates the left hand side.
+	 *
+	 * @covers ::get_derivation_path_sequence_number_from_post
+	 */
+	public function test_get_derivation_path_sequence_number_from_post_exception(): void {
+
+		$sut                        = $this->get_sut();
+		$bitcoin_address_repository = new Bitcoin_Address_Repository( $sut );
+
+		$wallet = $this->makeEmpty( Bitcoin_Wallet::class );
+
+		$payment_address = $bitcoin_address_repository->save_new_address(
+			wallet: $wallet,
+			derivation_path_sequence_index: 2,
+			address: 'address',
+		);
+
+		delete_post_meta( $payment_address->get_post_id(), Bitcoin_Address_WP_Post_Interface::DERIVATION_PATH_SEQUENCE_NUMBER_META_KEY );
+
+		$this->expectException( BH_WP_Bitcoin_Gateway_Exception::class );
+
+		$sut->get_by_wp_post_id( $payment_address->get_post_id() );
+	}
+
+	/**
+	 * @covers ::get_tx_ids_from_post
+	 */
+	public function test_get_tx_ids_from_post_with_valid_data(): void {
+		/** @var int $post_id */
+		$post_id = $this->factory()->post->create(
+			array(
+				'post_type' => Bitcoin_Address_WP_Post_Interface::POST_TYPE,
+			)
+		);
+
+		$tx_ids = array(
+			123 => 'txid_abc123',
+			456 => 'txid_def456',
+			789 => 'txid_ghi789',
+		);
+
+		update_post_meta( $post_id, Bitcoin_Address_WP_Post_Interface::TRANSACTIONS_META_KEY, wp_json_encode( $tx_ids ) );
+
+		$post = get_post( $post_id );
+		$sut  = $this->get_sut();
+
+		$reflection = new \ReflectionClass( $sut );
+		$method     = $reflection->getMethod( 'get_tx_ids_from_post' );
+
+		$result = $method->invoke( $sut, $post );
+
+		$this->assertIsArray( $result );
+		$this->assertCount( 3, $result );
+		$this->assertEquals( 'txid_abc123', $result[123] );
+		$this->assertEquals( 'txid_def456', $result[456] );
+		$this->assertEquals( 'txid_ghi789', $result[789] );
+	}
+
+	/**
+	 * @covers ::get_tx_ids_from_post
+	 */
+	public function test_get_tx_ids_from_post_with_empty_array(): void {
+		/** @var int $post_id */
+		$post_id = $this->factory()->post->create(
+			array(
+				'post_type' => Bitcoin_Address_WP_Post_Interface::POST_TYPE,
+			)
+		);
+
+		update_post_meta( $post_id, Bitcoin_Address_WP_Post_Interface::TRANSACTIONS_META_KEY, wp_json_encode( array() ) );
+
+		$post = get_post( $post_id );
+		$sut  = $this->get_sut();
+
+		$reflection = new \ReflectionClass( $sut );
+		$method     = $reflection->getMethod( 'get_tx_ids_from_post' );
+
+		$result = $method->invoke( $sut, $post );
+
+		$this->assertIsArray( $result );
+		$this->assertEmpty( $result );
+	}
+
+	/**
+	 * @covers ::get_tx_ids_from_post
+	 */
+	public function test_get_tx_ids_from_post_with_no_meta(): void {
+		/** @var int $post_id */
+		$post_id = $this->factory()->post->create(
+			array(
+				'post_type' => Bitcoin_Address_WP_Post_Interface::POST_TYPE,
+			)
+		);
+
+		$post = get_post( $post_id );
+		$sut  = $this->get_sut();
+
+		$reflection = new \ReflectionClass( $sut );
+		$method     = $reflection->getMethod( 'get_tx_ids_from_post' );
+
+		$result = $method->invoke( $sut, $post );
+
+		$this->assertNull( $result );
+	}
+
+	/**
+	 * @covers ::get_tx_ids_from_post
+	 * @covers ::log_meta_value_warning
+	 */
+	public function test_get_tx_ids_from_post_with_non_string_value(): void {
+		/** @var int $post_id */
+		$post_id = $this->factory()->post->create(
+			array(
+				'post_type' => Bitcoin_Address_WP_Post_Interface::POST_TYPE,
+			)
+		);
+
+		// Store an array directly instead of JSON string.
+		update_post_meta(
+			$post_id,
+			Bitcoin_Address_WP_Post_Interface::TRANSACTIONS_META_KEY,
+			array( 123 => 'txid_abc' )
+		);
+
+		$post = get_post( $post_id );
+
+		$logger = $this->makeEmpty(
+			LoggerInterface::class,
+			array(
+				'warning' => Expected::once(),
+			)
+		);
+
+		$sut = $this->get_sut( logger: $logger );
+
+		$reflection = new \ReflectionClass( $sut );
+		$method     = $reflection->getMethod( 'get_tx_ids_from_post' );
+
+		$result = $method->invoke( $sut, $post );
+
+		$this->assertNull( $result );
+	}
+
+	/**
+	 * @covers ::get_tx_ids_from_post
+	 */
+	public function test_get_tx_ids_from_post_with_invalid_json(): void {
+		/** @var int $post_id */
+		$post_id = $this->factory()->post->create(
+			array(
+				'post_type' => Bitcoin_Address_WP_Post_Interface::POST_TYPE,
+			)
+		);
+
+		update_post_meta( $post_id, Bitcoin_Address_WP_Post_Interface::TRANSACTIONS_META_KEY, '{invalid json}' );
+
+		$post = get_post( $post_id );
+		$sut  = $this->get_sut();
+
+		$reflection = new \ReflectionClass( $sut );
+		$method     = $reflection->getMethod( 'get_tx_ids_from_post' );
+
+		$result = $method->invoke( $sut, $post );
+
+		$this->assertNull( $result );
+	}
+
+	/**
+	 * @covers ::get_tx_ids_from_post
+	 * @covers ::log_meta_value_warning
+	 */
+	public function test_get_tx_ids_from_post_with_string_keys(): void {
+		/** @var int $post_id */
+		$post_id = $this->factory()->post->create(
+			array(
+				'post_type' => Bitcoin_Address_WP_Post_Interface::POST_TYPE,
+			)
+		);
+
+		// JSON with non-numeric string keys (PHP json_decode converts numeric strings to ints).
+		$invalid_data = array(
+			'abc' => 'txid_abc',
+			'def' => 'txid_def',
+		);
+
+		update_post_meta( $post_id, Bitcoin_Address_WP_Post_Interface::TRANSACTIONS_META_KEY, wp_json_encode( $invalid_data ) );
+
+		$post = get_post( $post_id );
+
+		$logger = $this->makeEmpty(
+			LoggerInterface::class,
+			array(
+				'warning' => Expected::once(),
+			)
+		);
+
+		$sut = $this->get_sut( logger: $logger );
+
+		$reflection = new \ReflectionClass( $sut );
+		$method     = $reflection->getMethod( 'get_tx_ids_from_post' );
+
+		$result = $method->invoke( $sut, $post );
+
+		$this->assertNull( $result );
+	}
+
+	/**
+	 * @covers ::get_tx_ids_from_post
+	 * @covers ::log_meta_value_warning
+	 */
+	public function test_get_tx_ids_from_post_with_non_string_values(): void {
+		/** @var int $post_id */
+		$post_id = $this->factory()->post->create(
+			array(
+				'post_type' => Bitcoin_Address_WP_Post_Interface::POST_TYPE,
+			)
+		);
+
+		// JSON with integer values instead of strings.
+		$invalid_data = array(
+			123 => 12345,
+			456 => 67890,
+		);
+
+		update_post_meta( $post_id, Bitcoin_Address_WP_Post_Interface::TRANSACTIONS_META_KEY, wp_json_encode( $invalid_data ) );
+
+		$post = get_post( $post_id );
+
+		$logger = $this->makeEmpty(
+			LoggerInterface::class,
+			array(
+				'warning' => Expected::once(),
+			)
+		);
+
+		$sut = $this->get_sut( logger: $logger );
+
+		$reflection = new \ReflectionClass( $sut );
+		$method     = $reflection->getMethod( 'get_tx_ids_from_post' );
+
+		$result = $method->invoke( $sut, $post );
+
+		$this->assertNull( $result );
+	}
+
+	/**
+	 * @covers ::get_tx_ids_from_post
+	 * @covers ::log_meta_value_warning
+	 */
+	public function test_get_tx_ids_from_post_with_mixed_valid_invalid_entries(): void {
+		/** @var int $post_id */
+		$post_id = $this->factory()->post->create(
+			array(
+				'post_type' => Bitcoin_Address_WP_Post_Interface::POST_TYPE,
+			)
+		);
+
+		// Mix of valid and invalid entries - should fail validation.
+		$invalid_data = array(
+			123 => 'txid_valid',
+			456 => 789, // Invalid: integer instead of string.
+		);
+
+		update_post_meta( $post_id, Bitcoin_Address_WP_Post_Interface::TRANSACTIONS_META_KEY, wp_json_encode( $invalid_data ) );
+
+		$post = get_post( $post_id );
+
+		$logger = $this->makeEmpty(
+			LoggerInterface::class,
+			array(
+				'warning' => Expected::once(),
+			)
+		);
+
+		$sut = $this->get_sut( logger: $logger );
+
+		$reflection = new \ReflectionClass( $sut );
+		$method     = $reflection->getMethod( 'get_tx_ids_from_post' );
+
+		$result = $method->invoke( $sut, $post );
+
+		$this->assertNull( $result );
+	}
+
+	/**
+	 * @covers ::get_tx_ids_from_post
+	 */
+	public function test_get_tx_ids_from_post_with_single_transaction(): void {
+		/** @var int $post_id */
+		$post_id = $this->factory()->post->create(
+			array(
+				'post_type' => Bitcoin_Address_WP_Post_Interface::POST_TYPE,
+			)
+		);
+
+		$tx_ids = array( 100 => 'single_txid_abc123' );
+
+		update_post_meta( $post_id, Bitcoin_Address_WP_Post_Interface::TRANSACTIONS_META_KEY, wp_json_encode( $tx_ids ) );
+
+		$post = get_post( $post_id );
+		$sut  = $this->get_sut();
+
+		$reflection = new \ReflectionClass( $sut );
+		$method     = $reflection->getMethod( 'get_tx_ids_from_post' );
+
+		$result = $method->invoke( $sut, $post );
+
+		$this->assertIsArray( $result );
+		$this->assertCount( 1, $result );
+		$this->assertEquals( 'single_txid_abc123', $result[100] );
+	}
+
+	/**
+	 * @covers ::get_tx_ids_from_post
+	 */
+	public function test_get_tx_ids_from_post_with_empty_string(): void {
+		/** @var int $post_id */
+		$post_id = $this->factory()->post->create(
+			array(
+				'post_type' => Bitcoin_Address_WP_Post_Interface::POST_TYPE,
+			)
+		);
+
+		update_post_meta( $post_id, Bitcoin_Address_WP_Post_Interface::TRANSACTIONS_META_KEY, '' );
+
+		$post = get_post( $post_id );
+		$sut  = $this->get_sut();
+
+		$reflection = new \ReflectionClass( $sut );
+		$method     = $reflection->getMethod( 'get_tx_ids_from_post' );
+
+		$result = $method->invoke( $sut, $post );
+
+		$this->assertNull( $result );
 	}
 }

@@ -8,13 +8,16 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes;
 
+use lucatume\WPBrowser\TestCase\WPTestCase;
+use WP_Textdomain_Registry;
+
 /**
  * Class I18n_Test
  *
  * @see I18n
  * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\I18n
  */
-class I18n_WP_Unit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
+class I18n_WP_Unit_Test extends WPTestCase {
 
 	/**
 	 * Checks if the filter run by WordPress in the load_plugin_textdomain() function is called.
@@ -23,26 +26,20 @@ class I18n_WP_Unit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	 */
 	public function test_load_plugin_textdomain_function(): void {
 
-		$this->markTestSkipped( 'plugin_locale filter removed between 6.6.3 6.7.0.' );
+		/** @var WP_Textdomain_Registry $wp_textdomain_registry */
+		global $wp_textdomain_registry;
 
-		$called        = false;
-		$actual_domain = null;
-
-		$filter = function ( $locale, $domain ) use ( &$called, &$actual_domain ) {
-
-			$called        = true;
-			$actual_domain = $domain;
-
-			return $locale;
-		};
-
-		add_filter( 'plugin_locale', $filter, 10, 2 );
+		/** @var false $before */
+		$before = $wp_textdomain_registry->get( 'bh-wp-bitcoin-gateway', 'en-IE' );
 
 		$i18n = new I18n();
 
 		$i18n->load_plugin_textdomain();
 
-		$this->assertTrue( $called, 'plugin_locale filter not called within load_plugin_textdomain() suggesting it has not been set by the plugin.' );
-		$this->assertEquals( 'bh-wp-bitcoin-gateway', $actual_domain );
+		$after = $wp_textdomain_registry->get( 'bh-wp-bitcoin-gateway', 'en-IE' );
+
+		$this->assertNotSame( $before, $after );
+
+		$this->assertEquals( 'wp-content/plugins' . codecept_root_dir( 'languages/' ), $after );
 	}
 }

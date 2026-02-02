@@ -31,10 +31,6 @@ class Payment_Gateways_Unit_Test extends Unit {
 	 */
 	public function test_add_to_woocommerce(): void {
 
-		if ( ! function_exists( '\Patchwork\redefine' ) ) {
-			$this->markTestSkipped( 'Patchwork not loaded' );
-		}
-
 		\Patchwork\redefine(
 			array( Bitcoin_Gateway::class, 'init_form_fields' ),
 			function () {}
