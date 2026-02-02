@@ -55,7 +55,7 @@ class CLI extends WP_CLI_Command {
 	 *
 	 * ## OPTIONS
 	 *
-	 * [--<debug>=bh-wp-bitcoin-gateway]
+	 * [--debug=bh-wp-bitcoin-gateway]
 	 * : Show detailed progress.
 	 *
 	 * ## EXAMPLES
@@ -104,7 +104,7 @@ class CLI extends WP_CLI_Command {
 	 * - yaml
 	 * ---
 	 *
-	 * [--<debug>=bh-wp-bitcoin-gateway]
+	 * [--debug=<bh-wp-bitcoin-gateway>]
 	 * : Show detailed progress.
 	 *
 	 * ## EXAMPLES
