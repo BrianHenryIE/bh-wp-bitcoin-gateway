@@ -10,6 +10,7 @@ declare(strict_types=1);
 use Rector\Config\RectorConfig;
 use Rector\Php54\Rector\Array_\LongArrayToShortArrayRector;
 use Rector\Php80\Rector\Switch_\ChangeSwitchToMatchRector;
+use Rector\Php81\Rector\Array_\ArrayToFirstClassCallableRector;
 
 return RectorConfig::configure()
 	->withPaths(
@@ -32,8 +33,9 @@ return RectorConfig::configure()
 	)
 	->withSkip(
 		array(
-			LongArrayToShortArrayRector::class,
-			ChangeSwitchToMatchRector::class,
+			LongArrayToShortArrayRector::class, // WPCS says to use long array syntax.
+			ChangeSwitchToMatchRector::class, // In development plugin `WP_Env::wpenv_fix_url()`, I'd like a test before modifying the switch.
+			ArrayToFirstClassCallableRector::class, // I don't know how to test the new syntax with `WP_Mock::expectActionAdded()`.
 		)
 	)
 	->withPhpSets(
