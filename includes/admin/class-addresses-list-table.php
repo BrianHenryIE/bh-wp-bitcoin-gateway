@@ -66,7 +66,7 @@ class Addresses_List_Table extends WP_Posts_List_Table {
 		$post_type_object = get_post_type_object( $post_type_name );
 		$this->api        = $post_type_object->plugin_objects['api'];
 
-		add_filter( 'post_row_actions', $this->edit_row_actions( ... ), 10, 2 );
+		add_filter( 'post_row_actions', array( $this, 'edit_row_actions' ), 10, 2 );
 	}
 
 	/**

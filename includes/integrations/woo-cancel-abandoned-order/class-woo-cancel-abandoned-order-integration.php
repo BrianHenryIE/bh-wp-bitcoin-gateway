@@ -50,7 +50,7 @@ class Woo_Cancel_Abandoned_Order_Integration {
 		/** @var Woo_Cancel_Abandoned_Order $woo_cancel_abandoned_order */
 		$woo_cancel_abandoned_order = $this->container->get( Woo_Cancel_Abandoned_Order::class );
 
-		add_filter( 'woo_cao_gateways', $woo_cancel_abandoned_order->enable_cao_for_bitcoin( ... ) );
-		add_filter( 'woo_cao_before_cancel_order', $woo_cancel_abandoned_order->abort_canceling_partially_paid_order( ... ), 10, 3 );
+		add_filter( 'woo_cao_gateways', array( $woo_cancel_abandoned_order, 'enable_cao_for_bitcoin' ) );
+		add_filter( 'woo_cao_before_cancel_order', array( $woo_cancel_abandoned_order, 'abort_canceling_partially_paid_order' ), 10, 3 );
 	}
 }

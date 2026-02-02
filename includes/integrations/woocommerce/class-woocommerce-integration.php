@@ -78,18 +78,18 @@ class WooCommerce_Integration {
 		/** @var Frontend_Assets $plugin_frontend */
 		$plugin_frontend = $this->container->get( Frontend_Assets::class );
 
-		add_action( 'wp_enqueue_scripts', $plugin_frontend->enqueue_styles( ... ) );
-		add_action( 'wp_enqueue_scripts', $plugin_frontend->enqueue_scripts( ... ) );
+		add_action( 'wp_enqueue_scripts', array( $plugin_frontend, 'enqueue_styles' ) );
+		add_action( 'wp_enqueue_scripts', array( $plugin_frontend, 'enqueue_scripts' ) );
 
 		/** @var AJAX $ajax */
 		$ajax = $this->container->get( AJAX::class );
 
-		add_action( 'wp_ajax_bh_wp_bitcoin_gateway_refresh_order_details', $ajax->get_order_details( ... ) );
-		add_action( 'wp_ajax_nopriv_bh_wp_bitcoin_gateway_refresh_order_details', $ajax->get_order_details( ... ) );
+		add_action( 'wp_ajax_bh_wp_bitcoin_gateway_refresh_order_details', array( $ajax, 'get_order_details' ) );
+		add_action( 'wp_ajax_nopriv_bh_wp_bitcoin_gateway_refresh_order_details', array( $ajax, 'get_order_details' ) );
 
 		/** @var Bitcoin_Image_Block $bitcoin_image_block */
 		$bitcoin_image_block = $this->container->get( Bitcoin_Image_Block::class );
-		add_filter( 'get_block_type_variations', $bitcoin_image_block->add_bitcoin_image_variation( ... ), 10, 2 );
+		add_filter( 'get_block_type_variations', array( $bitcoin_image_block, 'add_bitcoin_image_variation' ), 10, 2 );
 	}
 
 	/**
@@ -101,7 +101,7 @@ class WooCommerce_Integration {
 		/** @var Templates $templates */
 		$templates = $this->container->get( Templates::class );
 
-		add_filter( 'wc_get_template', $templates->load_bitcoin_templates( ... ), 10, 5 );
+		add_filter( 'wc_get_template', array( $templates, 'load_bitcoin_templates' ), 10, 5 );
 	}
 
 	/**
@@ -114,15 +114,15 @@ class WooCommerce_Integration {
 		$payment_gateways = $this->container->get( Payment_Gateways::class );
 
 		// Register the payment gateway with WooCommerce.
-		add_filter( 'woocommerce_payment_gateways', $payment_gateways->add_to_woocommerce( ... ) );
+		add_filter( 'woocommerce_payment_gateways', array( $payment_gateways, 'add_to_woocommerce' ) );
 
 		// Register the payment gateway with WooCommerce Blocks checkout.
-		add_action( 'woocommerce_blocks_payment_method_type_registration', $payment_gateways->register_woocommerce_block_checkout_support( ... ) );
+		add_action( 'woocommerce_blocks_payment_method_type_registration', array( $payment_gateways, 'register_woocommerce_block_checkout_support' ) );
 
 		/** @var Menu $menu */
 		$menu = $this->container->get( Menu::class );
 
-		add_action( 'admin_menu', $menu->add_woocommerce_payments_submenu( ... ) );
+		add_action( 'admin_menu', array( $menu, 'add_woocommerce_payments_submenu' ) );
 	}
 
 	/**
@@ -133,7 +133,7 @@ class WooCommerce_Integration {
 		/** @var Checkout $checkout */
 		$checkout = $this->container->get( Checkout::class );
 
-		add_action( 'woocommerce_checkout_init', $checkout->ensure_one_address_for_payment( ... ) );
+		add_action( 'woocommerce_checkout_init', array( $checkout, 'ensure_one_address_for_payment' ) );
 	}
 
 	/**
@@ -143,35 +143,35 @@ class WooCommerce_Integration {
 
 		/** @var Thank_You $thank_you */
 		$thank_you = $this->container->get( Thank_You::class );
-		add_action( 'woocommerce_thankyou', $thank_you->print_instructions( ... ), 5 );
+		add_action( 'woocommerce_thankyou', array( $thank_you, 'print_instructions' ), 5 );
 
 		/** @var Bitcoin_Exchange_Rate_Block $bitcoin_exchange_rate_block */
 		$bitcoin_exchange_rate_block = $this->container->get( Bitcoin_Exchange_Rate_Block::class );
-		add_action( 'init', $bitcoin_exchange_rate_block->register_block( ... ) );
+		add_action( 'init', array( $bitcoin_exchange_rate_block, 'register_block' ) );
 
 		/** @var Bitcoin_Order_Confirmation_Block $bitcoin_order_confirmation_block */
 		$bitcoin_order_confirmation_block = $this->container->get( Bitcoin_Order_Confirmation_Block::class );
-		add_action( 'init', $bitcoin_order_confirmation_block->register_block( ... ) );
+		add_action( 'init', array( $bitcoin_order_confirmation_block, 'register_block' ) );
 
 		/** @var Bitcoin_Order_Payment_Status_Block $bitcoin_payment_status_block */
 		$bitcoin_payment_status_block = $this->container->get( Bitcoin_Order_Payment_Status_Block::class );
-		add_action( 'init', $bitcoin_payment_status_block->register_block( ... ) );
+		add_action( 'init', array( $bitcoin_payment_status_block, 'register_block' ) );
 
 		/** @var Bitcoin_Order_Payment_Address_Block $bitcoin_payment_address_block */
 		$bitcoin_payment_address_block = $this->container->get( Bitcoin_Order_Payment_Address_Block::class );
-		add_action( 'init', $bitcoin_payment_address_block->register_block( ... ) );
+		add_action( 'init', array( $bitcoin_payment_address_block, 'register_block' ) );
 
 		/** @var Bitcoin_Order_Payment_Total_Block $bitcoin_payment_total_block */
 		$bitcoin_payment_total_block = $this->container->get( Bitcoin_Order_Payment_Total_Block::class );
-		add_action( 'init', $bitcoin_payment_total_block->register_block( ... ) );
+		add_action( 'init', array( $bitcoin_payment_total_block, 'register_block' ) );
 
 		/** @var Bitcoin_Order_Payment_Amount_Received_Block $bitcoin_payment_amount_received_block */
 		$bitcoin_payment_amount_received_block = $this->container->get( Bitcoin_Order_Payment_Amount_Received_Block::class );
-		add_action( 'init', $bitcoin_payment_amount_received_block->register_block( ... ) );
+		add_action( 'init', array( $bitcoin_payment_amount_received_block, 'register_block' ) );
 
 		/** @var Bitcoin_Order_Payment_Last_Checked_Block $bitcoin_payment_last_checked_block */
 		$bitcoin_payment_last_checked_block = $this->container->get( Bitcoin_Order_Payment_Last_Checked_Block::class );
-		add_action( 'init', $bitcoin_payment_last_checked_block->register_block( ... ) );
+		add_action( 'init', array( $bitcoin_payment_last_checked_block, 'register_block' ) );
 	}
 
 	/**
@@ -183,7 +183,7 @@ class WooCommerce_Integration {
 		$email = $this->container->get( Email::class );
 
 		// TODO: Before table? best place?
-		add_action( 'woocommerce_email_before_order_table', $email->print_instructions( ... ), 10, 3 );
+		add_action( 'woocommerce_email_before_order_table', array( $email, 'print_instructions' ), 10, 3 );
 	}
 
 	/**
@@ -194,7 +194,7 @@ class WooCommerce_Integration {
 		/** @var My_Account_View_Order $my_account_order */
 		$my_account_order = $this->container->get( My_Account_View_Order::class );
 
-		add_action( 'woocommerce_view_order', $my_account_order->print_status_instructions( ... ), 9 );
+		add_action( 'woocommerce_view_order', array( $my_account_order, 'print_status_instructions' ), 9 );
 	}
 
 	/**
@@ -204,8 +204,8 @@ class WooCommerce_Integration {
 		/** @var Order $order */
 		$order = $this->container->get( Order::class );
 
-		add_action( 'bh_wp_bitcoin_gateway_new_transactions_seen', $order->new_transactions_seen( ... ), 10, 4 );
-		add_action( 'bh_wp_bitcoin_gateway_payment_received', $order->payment_received( ... ), 10, 4 );
+		add_action( 'bh_wp_bitcoin_gateway_new_transactions_seen', array( $order, 'new_transactions_seen' ), 10, 4 );
+		add_action( 'bh_wp_bitcoin_gateway_payment_received', array( $order, 'payment_received' ), 10, 4 );
 	}
 
 	/**
@@ -216,7 +216,7 @@ class WooCommerce_Integration {
 		/** @var Admin_Order_UI $admin_order_ui */
 		$admin_order_ui = $this->container->get( Admin_Order_UI::class );
 
-		add_action( 'add_meta_boxes', $admin_order_ui->register_address_transactions_meta_box( ... ) );
+		add_action( 'add_meta_boxes', array( $admin_order_ui, 'register_address_transactions_meta_box' ) );
 	}
 
 	/**
@@ -229,7 +229,7 @@ class WooCommerce_Integration {
 		/** @var HPOS $hpos */
 		$hpos = $this->container->get( HPOS::class );
 
-		add_action( 'before_woocommerce_init', $hpos->declare_compatibility( ... ) );
+		add_action( 'before_woocommerce_init', array( $hpos, 'declare_compatibility' ) );
 	}
 
 	/**
