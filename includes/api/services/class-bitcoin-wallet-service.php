@@ -85,7 +85,7 @@ class Bitcoin_Wallet_Service implements LoggerAwareInterface {
 	/**
 	 * Check does is a wallet associated with a gateway.
 	 *
-	 * @param Bitcoin_Wallet $wallet The Wallet which may have multiple gateways attached.
+	 * @param Bitcoin_Wallet                                     $wallet The Wallet which may have multiple gateways attached.
 	 * @param array{integration:class-string, gateway_id:string} $gateway_details Optional gateway id to associate the wallet with.
 	 */
 	protected function has_gateway_recorded( Bitcoin_Wallet $wallet, array $gateway_details ): bool {
