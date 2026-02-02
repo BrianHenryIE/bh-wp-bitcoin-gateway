@@ -331,7 +331,7 @@ class Bitcoin_Address_Factory_WPUnit_Test extends WPTestCase {
 		$logger = $this->makeEmpty(
 			LoggerInterface::class,
 			array(
-				'warning' => Expected::once(),
+				'warning' => Expected::never(),
 			)
 		);
 
@@ -489,7 +489,7 @@ class Bitcoin_Address_Factory_WPUnit_Test extends WPTestCase {
 	 */
 	public function test_get_derivation_path_sequence_number_from_post_exception(): void {
 
-		$sut = $this->get_sut();
+		$sut                        = $this->get_sut();
 		$bitcoin_address_repository = new Bitcoin_Address_Repository( $sut );
 
 		$wallet = $this->makeEmpty( Bitcoin_Wallet::class );
