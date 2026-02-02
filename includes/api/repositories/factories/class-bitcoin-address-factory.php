@@ -133,7 +133,7 @@ class Bitcoin_Address_Factory implements LoggerAwareInterface {
 	protected function get_tx_ids_from_post( WP_Post $post ): ?array {
 		/** @var string|null|mixed $tx_ids_meta */
 		$tx_ids_meta = get_post_meta( $post->ID, Bitcoin_Address_WP_Post_Interface::TRANSACTIONS_META_KEY, true );
-		if ( empty( $tx_ids_meta ) && ! is_array( $tx_ids_meta ) ) {
+		if ( empty( $tx_ids_meta ) ) {
 			return null;
 		}
 		if ( ! is_string( $tx_ids_meta ) ) {
