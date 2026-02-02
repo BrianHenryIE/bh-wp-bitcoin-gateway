@@ -143,7 +143,7 @@ class Bitcoin_Address_Factory implements LoggerAwareInterface {
 		/** @var array<int,string>|null|mixed $tx_ids_meta_array */
 		$tx_ids_meta_array = json_decode( $tx_ids_meta, true );
 		if ( ! is_array( $tx_ids_meta_array ) ) {
-			$this->log_meta_value_warning( $post->ID, Bitcoin_Address_WP_Post_Interface::TRANSACTIONS_META_KEY, 'array of txids', $tx_ids_meta );
+			$this->log_meta_value_warning( $post->ID, Bitcoin_Address_WP_Post_Interface::TRANSACTIONS_META_KEY, 'array of txids', $tx_ids_meta, json_last_error_msg() );
 			return null;
 		}
 		foreach ( $tx_ids_meta_array as $post_id => $tx_id ) {
@@ -186,7 +186,7 @@ class Bitcoin_Address_Factory implements LoggerAwareInterface {
 		try {
 			return $this->json_mapper->mapToClassFromString( $meta_value, Money::class );
 		} catch ( Throwable $exception ) {
-			$this->log_meta_value_warning( $post_id, $meta_key, 'Money', $meta_value, $exception );
+			$this->log_meta_value_warning( $post_id, $meta_key, 'Money', $meta_value, '', $exception );
 			return null;
 		}
 	}
@@ -194,27 +194,30 @@ class Bitcoin_Address_Factory implements LoggerAwareInterface {
 	/**
 	 * Log a useful message when the meta value could not be parsed to a Money object.
 	 *
-	 * @see LoggerInterface::warning()
 	 * @param int        $post_id ID for the WP_Post holding the data.
 	 * @param string     $meta_key The key.
 	 * @param string     $type Human-readable type for the message.
 	 * @param mixed      $meta_value The saved value, not empty.
-	 * @param ?Throwable $exception Potentially thrown exception.
+	 * @param string     $extra An extra note to include in the message, default empty.
+	 * @param ?Throwable $throwable Potentially thrown exception.
+	 * @see LoggerInterface::warning()
 	 */
 	protected function log_meta_value_warning(
 		int $post_id,
 		string $meta_key,
 		string $type,
 		mixed $meta_value,
-		?Throwable $exception = null
+		string $extra = '',
+		?Throwable $throwable = null
 	): void {
 		$this->logger->warning(
-			'Failed to parse payment address meta {meta_key} as {type} for post id {post_id}, value: {meta_value}',
+			'Failed to parse payment address meta {meta_key} as {type} for post id {post_id} {extra}, value: {meta_value}',
 			array(
-				'exception'  => $exception,
+				'exception'  => $throwable,
 				'post_id'    => $post_id,
 				'meta_key'   => $meta_key, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
 				'type'       => $type,
+				'extra'      => $extra,
 				'meta_value' => $meta_value, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
 			)
 		);

@@ -459,17 +459,19 @@ class Bitcoin_Address_Factory_WPUnit_Test extends WPTestCase {
 		$meta_key   = 'another_meta_key';
 		$type       = 'AnotherType';
 		$meta_value = 'invalid string';
+		$extra      = 'additional information';
 		$exception  = new \Exception( 'Test exception' );
 
 		$logger = $this->makeEmpty(
 			LoggerInterface::class,
 			array(
 				'warning' => Expected::once(
-					function ( $message, $context ) use ( $post_id, $meta_key, $meta_value, $exception ) {
+					function ( $message, $context ) use ( $post_id, $meta_key, $meta_value, $extra, $exception ) {
 						$this->assertStringContainsString( 'Failed to parse payment address meta', $message );
 						$this->assertEquals( $meta_key, $context['meta_key'] );
 						$this->assertEquals( $post_id, $context['post_id'] );
 						$this->assertEquals( $meta_value, $context['meta_value'] );
+						$this->assertEquals( $extra, $context['extra'] );
 						$this->assertSame( $exception, $context['exception'] );
 					}
 				),
@@ -481,7 +483,7 @@ class Bitcoin_Address_Factory_WPUnit_Test extends WPTestCase {
 		$reflection = new \ReflectionClass( $sut );
 		$method     = $reflection->getMethod( 'log_meta_value_warning' );
 
-		$method->invoke( $sut, $post_id, $meta_key, $type, $meta_value, $exception );
+		$method->invoke( $sut, $post_id, $meta_key, $type, $meta_value, $extra, $exception );
 	}
 
 
