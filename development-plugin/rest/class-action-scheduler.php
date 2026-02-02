@@ -69,9 +69,9 @@ class Action_Scheduler {
 		/**
 		 * @see ActionScheduler_DBStore::get_query_actions_sql()
 		 */
-		$search['per_page'] = $search['per_page'] ?? 200;
-		$search['orderby']  = $search['orderby'] ?? 'date';
-		$search['order']    = $search['order'] ?? 'ASC';
+		$search['per_page'] ??= 200;
+		$search['orderby']  ??= 'date';
+		$search['order']    ??= 'ASC';
 		/** @var array<ActionScheduler_Action> $scheduled_actions */
 		$scheduled_actions = as_get_scheduled_actions( $search );
 

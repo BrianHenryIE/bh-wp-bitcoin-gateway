@@ -64,14 +64,12 @@ class Bitcoin {
 		);
 
 		$result = array_map(
-			static function ( \WP_Post $post ): array {
-				return array(
-					'id'     => $post->ID,
-					'title'  => $post->post_title,
-					'name'   => $post->post_name,
-					'status' => $post->post_status,
-				);
-			},
+			static fn( \WP_Post $post ): array => array(
+				'id'     => $post->ID,
+				'title'  => $post->post_title,
+				'name'   => $post->post_name,
+				'status' => $post->post_status,
+			),
 			$wallet_posts
 		);
 

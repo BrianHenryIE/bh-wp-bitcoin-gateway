@@ -73,9 +73,7 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 		$bitcoin_gateways = $this->get_bitcoin_gateways();
 
 		$gateway_ids = array_map(
-			function ( WC_Payment_Gateway $gateway ): string {
-				return $gateway->id;
-			},
+			fn( WC_Payment_Gateway $gateway ): string => $gateway->id,
 			$bitcoin_gateways
 		);
 
