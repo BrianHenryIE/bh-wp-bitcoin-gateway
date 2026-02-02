@@ -23,6 +23,10 @@ use Throwable;
 use WP_Post;
 
 /**
+ * Some fields are optional (e.g. target amount is only set after an address is assigned) and errors with those
+ * (i.e. parsing meta values to objects) fail soft with warnings logged. Non-optional field throw exceptions on
+ * failures.
+ *
  * @phpstan-type MoneySerializedArray array{amount:string,currency:string}
  */
 class Bitcoin_Address_Factory implements LoggerAwareInterface {
@@ -166,6 +170,9 @@ class Bitcoin_Address_Factory implements LoggerAwareInterface {
 	protected function get_json_mapped_money_from_post( int $post_id, string $meta_key ): ?Money {
 		/** @var mixed|MoneySerializedArray $meta_value */
 		$meta_value = get_post_meta( $post_id, $meta_key, true );
+		if ( empty( $meta_value ) ) {
+			return null;
+		}
 		if ( ! is_string( $meta_value ) ) {
 			$this->log_meta_value_warning( $post_id, $meta_key, $meta_value );
 			return null;
