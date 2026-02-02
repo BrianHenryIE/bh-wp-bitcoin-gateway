@@ -4,6 +4,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\JsonMapper\JsonMapper_Helper;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address_WP_Post_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet;
@@ -479,5 +480,30 @@ class Bitcoin_Address_Factory_WPUnit_Test extends WPTestCase {
 		$method     = $reflection->getMethod( 'log_meta_value_warning' );
 
 		$method->invoke( $sut, $post_id, $meta_key, $meta_value, $exception );
+	}
+
+
+	/**
+	 * Test the immediately invoked function which throws an exception does not run until the null coalesce operator
+	 * evaluates the left hand side.
+	 */
+	public function test_get_derivation_path_sequence_number_from_post_exception(): void {
+
+		$sut = $this->get_sut();
+		$bitcoin_address_repository = new Bitcoin_Address_Repository( $sut );
+
+		$wallet = $this->makeEmpty( Bitcoin_Wallet::class );
+
+		$payment_address = $bitcoin_address_repository->save_new_address(
+			wallet: $wallet,
+			derivation_path_sequence_index: 2,
+			address: 'address',
+		);
+
+		delete_post_meta( $payment_address->get_post_id(), Bitcoin_Address_WP_Post_Interface::DERIVATION_PATH_SEQUENCE_NUMBER_META_KEY );
+
+		$this->expectException( BH_WP_Bitcoin_Gateway_Exception::class );
+
+		$sut->get_by_wp_post_id( $payment_address->get_post_id() );
 	}
 }

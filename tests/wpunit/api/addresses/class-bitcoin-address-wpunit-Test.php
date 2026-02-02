@@ -93,39 +93,4 @@ class Bitcoin_Address_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCas
 
 		$this->assertNull( $result );
 	}
-
-	/**
-	 * Test the immediately invoked function which throws an exception does not run until the null coalesce operator
-	 * evaluates the left hand side.
-	 */
-	public function test_refresh_address(): void {
-		$this->markTestIncomplete( 'should a Bitcoin_Address object have setters?' );
-
-		$post_property = new ReflectionProperty( Bitcoin_Address::class, 'post' );
-
-		$bitcoin_address_factory    = new Bitcoin_Address_Factory();
-		$bitcoin_address_repository = new Bitcoin_Address_Repository( $bitcoin_address_factory );
-
-		$wallet = $this->makeEmpty( Bitcoin_Wallet::class );
-
-		$bitcoin_address_post_id = $bitcoin_address_repository->save_new_address(
-			new Bitcoin_Address_Query(
-				wallet_wp_post_parent_id: $wallet->get_post_id(),
-				xpub: 'address',
-				derivation_path_sequence_index: 2
-			)
-		);
-
-		$bitcoin_address_object = $bitcoin_address_repository->get_by_post_id( $bitcoin_address_post_id );
-
-		( fn() => $this->refresh_wp_post() )->call( $bitcoin_address_object );
-
-		/** @var WP_Post $post */
-		$post     = $post_property->getValue( $bitcoin_address_object );
-		$post->ID = 999;
-
-		$this->expectException( \RuntimeException::class );
-
-		( fn() => $this->refresh_wp_post() )->call( $bitcoin_address_object );
-	}
 }
