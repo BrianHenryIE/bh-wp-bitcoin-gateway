@@ -1,4 +1,9 @@
 <?php
+/**
+ * Rector rules to automatically refactor code to modern syntax.
+ *
+ * @package brianhenryie/bh-wp-bitcoin-gateway
+ */
 
 declare(strict_types=1);
 
@@ -32,6 +37,19 @@ return RectorConfig::configure()
 		)
 	)
 	->withPhpSets(
+        php83: true,
+		php82: true,
+		php81: true,
+		php80: true,
+		php74: true,
+		php73: true,
+		php72: true,
+		php71: true,
+		php70: true,
+		php56: true,
+		php55: true,
+		php54: true,
+		php53: true,
 		php84: true,
 	)
 	->withPreparedSets(
