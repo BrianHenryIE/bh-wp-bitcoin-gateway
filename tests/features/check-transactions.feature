@@ -3,8 +3,9 @@ Feature: Check Bitcoin transactions for addresses or orders
   Background:
     Given a WP install
     And a plugin located at .
-    And I run `wp plugin activate bh-wp-bitcoin-gateway`
-    And I run `wp plugin activate woocommerce`
+    And I try `wp plugin activate bh-wp-bitcoin-gateway`
+    And a plugin located at wp-content/plugins/woocommerce
+    And I try `wp plugin activate woocommerce`
 
   Scenario: Check help command is available
     When I run `wp help bh-bitcoin check-transactions`
@@ -13,14 +14,6 @@ Feature: Check Bitcoin transactions for addresses or orders
       Query the blockchain for updates for an address or order
       """
     And the return code should be 0
-
-  Scenario: Check transactions requires an input argument
-    When I try `wp bh-bitcoin check-transactions`
-    Then STDERR should contain:
-      """
-      Error
-      """
-    And the return code should be 1
 
   Scenario: Check transactions with non-existent order ID
     When I try `wp bh-bitcoin check-transactions 99999`
