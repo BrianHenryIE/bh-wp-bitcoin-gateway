@@ -55,7 +55,7 @@
 		"@woocommerce/dependency-extraction-webpack-plugin": "^2.2",
 		"@wordpress/block-editor": "^15.11",
 		"@wordpress/e2e-test-utils": "^11.34",
-		"@wordpress/e2e-test-utils-playwright": "^1.38",
+		"@wordpress/e2e-test-utils-playwright": "^1.39",
 		"@wordpress/env": "^10.39",
 		"@wordpress/scripts": "^31.3",
 		"@wordpress/stylelint-config": "^23.30",
