@@ -110,7 +110,7 @@ class WC_Order_Meta_Helper implements LoggerAwareInterface {
 				$btc_total_meta_string,
 				Money::class
 			);
-		} catch ( Exception $exception ) {
+		} catch ( Exception ) {
 			return null;
 		}
 	}
@@ -151,7 +151,7 @@ class WC_Order_Meta_Helper implements LoggerAwareInterface {
 				$exchange_rate_meta_json_string,
 				Money::class
 			);
-		} catch ( Exception $exception ) {
+		} catch ( Exception ) {
 			return null;
 		}
 	}
@@ -194,7 +194,7 @@ class WC_Order_Meta_Helper implements LoggerAwareInterface {
 				$confirmed_amount_meta_string,
 				Money::class
 			);
-		} catch ( Exception $exception ) {
+		} catch ( Exception ) {
 			return null;
 		}
 	}

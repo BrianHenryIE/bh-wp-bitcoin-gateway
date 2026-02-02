@@ -69,7 +69,7 @@ class AJAX_WPUnit_Test extends WPTestCase {
 		try {
 			$sut->get_order_details();
 			// phpcs:disable Generic.CodeAnalysis.EmptyStatement.DetectedCatch
-		} catch ( Exception $e ) {
+		} catch ( Exception ) {
 			// We're only using an exception here to avoid `die()` being called.
 		}
 

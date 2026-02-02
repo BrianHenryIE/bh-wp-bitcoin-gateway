@@ -24,9 +24,7 @@ class Admin_Order_UI_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase
 			API_WooCommerce_Interface::class,
 			array(
 				'is_order_has_bitcoin_gateway' => Expected::once(
-					function ( int $order_id ) {
-						return true;
-					}
+					fn( int $order_id ) => true
 				),
 			)
 		);
@@ -67,9 +65,7 @@ class Admin_Order_UI_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase
 			API_WooCommerce_Interface::class,
 			array(
 				'is_order_has_bitcoin_gateway' => Expected::once(
-					function ( int $order_id ) {
-						return false;
-					}
+					fn( int $order_id ) => false
 				),
 			)
 		);
@@ -109,9 +105,7 @@ class Admin_Order_UI_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase
 			API_WooCommerce_Interface::class,
 			array(
 				'is_order_has_bitcoin_gateway' => Expected::once(
-					function ( int $order_id ): bool {
-						return true;
-					}
+					fn( int $order_id ): bool => true
 				),
 				'get_formatted_order_details'  => Expected::once(
 					function ( $order ): array {

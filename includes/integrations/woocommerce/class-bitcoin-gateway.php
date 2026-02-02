@@ -155,7 +155,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 	protected function get_formatted_exchange_rate_string(): string {
 		try {
 			$currency = Currency::of( get_woocommerce_currency() );
-		} catch ( UnknownCurrencyException $e ) {
+		} catch ( UnknownCurrencyException ) {
 			$currency = Currency::of( 'USD' );
 		}
 		$exchange_rate = $this->api->get_exchange_rate( $currency );

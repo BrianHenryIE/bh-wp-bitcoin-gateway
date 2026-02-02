@@ -36,9 +36,7 @@ class Bitfinex_API_Integration_Test extends \lucatume\WPBrowser\TestCase\WPTestC
 
 		add_filter(
 			'pre_http_request',
-			function () use ( $request_response ) {
-				return $request_response;
-			}
+			fn() => $request_response
 		);
 
 		$result = $sut->get_exchange_rate( Currency::of( 'USD' ) );

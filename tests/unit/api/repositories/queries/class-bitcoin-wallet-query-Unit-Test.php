@@ -106,11 +106,11 @@ class Bitcoin_Wallet_Query_Unit_Test extends Unit {
 	public function test_constructor_with_gateway_refs(): void {
 		$gateway_refs = array(
 			array(
-				'integration' => get_class( $this ),
+				'integration' => static::class,
 				'gateway_id'  => 'gateway_1',
 			),
 			array(
-				'integration' => get_class( $this ),
+				'integration' => static::class,
 				'gateway_id'  => 'gateway_2',
 			),
 		);
@@ -160,11 +160,11 @@ class Bitcoin_Wallet_Query_Unit_Test extends Unit {
 		$status       = Bitcoin_Wallet_Status::ACTIVE;
 		$gateway_refs = array(
 			array(
-				'integration' => get_class( $this ),
+				'integration' => static::class,
 				'gateway_id'  => 'gateway_1',
 			),
 			array(
-				'integration' => get_class( $this ),
+				'integration' => static::class,
 				'gateway_id'  => 'gateway_2',
 			),
 		);
@@ -291,7 +291,7 @@ class Bitcoin_Wallet_Query_Unit_Test extends Unit {
 			status: Bitcoin_Wallet_Status::ACTIVE,
 			gateway_refs: array(
 				array(
-					'integration' => get_class( $this ),
+					'integration' => static::class,
 					'gateway_id'  => 'single_gateway',
 				),
 			),
@@ -345,7 +345,7 @@ class Bitcoin_Wallet_Query_Unit_Test extends Unit {
 	public function test_gateway_refs_single_gateway(): void {
 		$gateway_refs = array(
 			array(
-				'integration' => get_class( $this ),
+				'integration' => static::class,
 				'gateway_id'  => 'single_gateway',
 			),
 		);
@@ -366,15 +366,15 @@ class Bitcoin_Wallet_Query_Unit_Test extends Unit {
 	public function test_gateway_refs_multiple_gateways(): void {
 		$gateway_refs = array(
 			array(
-				'integration' => get_class( $this ),
+				'integration' => static::class,
 				'gateway_id'  => 'gateway_1',
 			),
 			array(
-				'integration' => get_class( $this ),
+				'integration' => static::class,
 				'gateway_id'  => 'gateway_2',
 			),
 			array(
-				'integration' => get_class( $this ),
+				'integration' => static::class,
 				'gateway_id'  => 'gateway_3',
 			),
 		);

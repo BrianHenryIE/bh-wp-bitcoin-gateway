@@ -87,10 +87,8 @@ class Bitcoin_Wallet_Service_Unit_Test extends \Codeception\Test\Unit {
 			array(
 				'get_post_id_for_address' => Expected::exactly(
 					2,
-					function ( string $address ): ?int {
-						// Return null to indicate address doesn't exist yet.
-						return null;
-					}
+					// Return null to indicate address doesn't exist yet.
+						fn( string $address ): ?int => null
 				),
 				'save_new'                => Expected::exactly(
 					2,
@@ -116,14 +114,12 @@ class Bitcoin_Wallet_Service_Unit_Test extends \Codeception\Test\Unit {
 					}
 				),
 				'refresh'                   => Expected::once(
-					function ( Bitcoin_Wallet $wallet ): Bitcoin_Wallet {
-						return $this->make(
-							Bitcoin_Wallet::class,
-							array(
-								'get_address_index' => Expected::once( 1 ),
-							)
-						);
-					}
+					fn( Bitcoin_Wallet $wallet ): Bitcoin_Wallet => $this->make(
+						Bitcoin_Wallet::class,
+						array(
+							'get_address_index' => Expected::once( 1 ),
+						)
+					)
 				),
 			)
 		);
@@ -210,14 +206,12 @@ class Bitcoin_Wallet_Service_Unit_Test extends \Codeception\Test\Unit {
 					}
 				),
 				'refresh'                   => Expected::once(
-					function ( Bitcoin_Wallet $wallet ): Bitcoin_Wallet {
-						return $this->make(
-							Bitcoin_Wallet::class,
-							array(
-								'get_address_index' => Expected::once( 7 ),
-							)
-						);
-					}
+					fn( Bitcoin_Wallet $wallet ): Bitcoin_Wallet => $this->make(
+						Bitcoin_Wallet::class,
+						array(
+							'get_address_index' => Expected::once( 7 ),
+						)
+					)
 				),
 			)
 		);
@@ -255,9 +249,7 @@ class Bitcoin_Wallet_Service_Unit_Test extends \Codeception\Test\Unit {
 			array(
 				'generate_address' => Expected::exactly(
 					5,
-					function ( string $xpub_param, int $index ): string {
-						return 'bc1qaddress' . $index;
-					}
+					fn( string $xpub_param, int $index ): string => 'bc1qaddress' . $index
 				),
 			)
 		);
@@ -268,14 +260,12 @@ class Bitcoin_Wallet_Service_Unit_Test extends \Codeception\Test\Unit {
 				'get_post_id_for_address' => Expected::exactly( 5, null ),
 				'save_new'                => Expected::exactly(
 					5,
-					function ( Bitcoin_Wallet $wallet, int $index, string $address ): Bitcoin_Address {
-						return $this->make(
-							Bitcoin_Address::class,
-							array(
-								'get_raw_address' => $address,
-							)
-						);
-					}
+					fn( Bitcoin_Wallet $wallet, int $index, string $address ): Bitcoin_Address => $this->make(
+						Bitcoin_Address::class,
+						array(
+							'get_raw_address' => $address,
+						)
+					)
 				),
 			)
 		);
@@ -289,14 +279,12 @@ class Bitcoin_Wallet_Service_Unit_Test extends \Codeception\Test\Unit {
 					}
 				),
 				'refresh'                   => Expected::once(
-					function ( Bitcoin_Wallet $wallet ): Bitcoin_Wallet {
-						return $this->make(
-							Bitcoin_Wallet::class,
-							array(
-								'get_address_index' => Expected::once( 4 ),
-							)
-						);
-					}
+					fn( Bitcoin_Wallet $wallet ): Bitcoin_Wallet => $this->make(
+						Bitcoin_Wallet::class,
+						array(
+							'get_address_index' => Expected::once( 4 ),
+						)
+					)
 				),
 			)
 		);
@@ -369,16 +357,14 @@ class Bitcoin_Wallet_Service_Unit_Test extends \Codeception\Test\Unit {
 					return null;
 				},
 				'get_by_post_id'          => Expected::once(
-					function () {
-						return new Bitcoin_Address(
-							post_id: 123,
-							wallet_parent_post_id: 4,
-							raw_address: 'bc1qaddress0',
-							derivation_path_sequence_number: 123,
-							created_time: new DateTimeImmutable(),
-							modified_time: new DateTimeImmutable(),
-						);
-					}
+					fn() => new Bitcoin_Address(
+						post_id: 123,
+						wallet_parent_post_id: 4,
+						raw_address: 'bc1qaddress0',
+						derivation_path_sequence_number: 123,
+						created_time: new DateTimeImmutable(),
+						modified_time: new DateTimeImmutable(),
+					)
 				),
 				'save_new'                => Expected::exactly(
 					2,
@@ -409,14 +395,12 @@ class Bitcoin_Wallet_Service_Unit_Test extends \Codeception\Test\Unit {
 					}
 				},
 				'refresh'                   => Expected::once(
-					function ( Bitcoin_Wallet $wallet ): Bitcoin_Wallet {
-							return $this->make(
-								Bitcoin_Wallet::class,
-								array(
-									'get_address_index' => Expected::once( 2 ),
-								)
-							);
-					}
+					fn( Bitcoin_Wallet $wallet ): Bitcoin_Wallet => $this->make(
+						Bitcoin_Wallet::class,
+						array(
+							'get_address_index' => Expected::once( 2 ),
+						)
+					)
 				),
 			)
 		);

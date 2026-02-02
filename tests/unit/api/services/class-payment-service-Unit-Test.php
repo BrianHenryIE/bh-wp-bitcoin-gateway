@@ -383,12 +383,7 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 			Bitcoin_Transaction_Repository::class,
 			array(
 				'save_new' => Expected::once(
-					function (
-						Transaction_Interface $transaction,
-						Bitcoin_Address $address,
-					) use ( $bitcoin_transaction ): Bitcoin_Transaction {
-						return $bitcoin_transaction;
-					}
+					fn( Transaction_Interface $transaction, Bitcoin_Address $address ): Bitcoin_Transaction => $bitcoin_transaction
 				),
 			)
 		);

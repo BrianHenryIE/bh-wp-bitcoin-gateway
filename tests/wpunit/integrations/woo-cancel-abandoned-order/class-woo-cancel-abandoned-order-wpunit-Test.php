@@ -76,9 +76,7 @@ class Woo_Cancel_Abandoned_Order_Unit_Test extends WPTestCase {
 			API_Interface::class,
 			array(
 				'get_saved_transactions' => Expected::once(
-					function () {
-						return array( 'not', 'empty' );
-					}
+					fn() => array( 'not', 'empty' )
 				),
 			)
 		);

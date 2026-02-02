@@ -55,14 +55,12 @@ class Background_Jobs_Actions_Handler_Unit_Test extends \Codeception\Test\Unit {
 			API_Background_Jobs_Interface::class,
 			array(
 				'generate_new_addresses' => Expected::once(
-					function () {
-						return array(
-							new Addresses_Generation_Result(
-								wallet: $this->make( Bitcoin_Wallet::class ),
-								new_addresses: array(), // @phpstan-ignore argument.type
-							),
-						);
-					}
+					fn() => array(
+						new Addresses_Generation_Result(
+							wallet: $this->make( Bitcoin_Wallet::class ),
+							new_addresses: array(), // @phpstan-ignore argument.type
+						),
+					)
 				),
 			)
 		);
@@ -86,9 +84,7 @@ class Background_Jobs_Actions_Handler_Unit_Test extends \Codeception\Test\Unit {
 			API_Background_Jobs_Interface::class,
 			array(
 				'check_new_addresses_for_transactions' => Expected::once(
-					function () {
-						return new Check_Assigned_Addresses_For_Transactions_Result( 1 );
-					}
+					fn() => new Check_Assigned_Addresses_For_Transactions_Result( 1 )
 				),
 			)
 		);
@@ -117,9 +113,7 @@ class Background_Jobs_Actions_Handler_Unit_Test extends \Codeception\Test\Unit {
 			API_Background_Jobs_Interface::class,
 			array(
 				'check_assigned_addresses_for_payment' => Expected::once(
-					function () {
-						return new Check_Assigned_Addresses_For_Transactions_Result( 2 );
-					}
+					fn() => new Check_Assigned_Addresses_For_Transactions_Result( 2 )
 				),
 			)
 		);
@@ -152,17 +146,15 @@ class Background_Jobs_Actions_Handler_Unit_Test extends \Codeception\Test\Unit {
 			API_Background_Jobs_Interface::class,
 			array(
 				'update_exchange_rate' => Expected::once(
-					function () {
-						return new Update_Exchange_Rate_Result(
-							requested_exchange_rate_currency: 'USD',
-							source: 'test',
-							updated_exchange_rate: new Exchange_Rate_Service_Result(
-								rate: Money::of( '90000', 'USD' ),
-								api_classname: get_class( $this ),
-								date_saved: new DateTimeImmutable(),
-							),
-						);
-					}
+					fn() => new Update_Exchange_Rate_Result(
+						requested_exchange_rate_currency: 'USD',
+						source: 'test',
+						updated_exchange_rate: new Exchange_Rate_Service_Result(
+							rate: Money::of( '90000', 'USD' ),
+							api_classname: $this::class,
+							date_saved: new DateTimeImmutable(),
+						),
+					)
 				),
 			)
 		);
@@ -183,17 +175,15 @@ class Background_Jobs_Actions_Handler_Unit_Test extends \Codeception\Test\Unit {
 			API_Background_Jobs_Interface::class,
 			array(
 				'update_exchange_rate' => Expected::once(
-					function () {
-						return new Update_Exchange_Rate_Result(
-							requested_exchange_rate_currency: 'USD',
-							source: 'test',
-							updated_exchange_rate: new Exchange_Rate_Service_Result(
-								rate: Money::of( '90000', 'USD' ),
-								api_classname: get_class( $this ),
-								date_saved: new DateTimeImmutable(),
-							),
-						);
-					}
+					fn() => new Update_Exchange_Rate_Result(
+						requested_exchange_rate_currency: 'USD',
+						source: 'test',
+						updated_exchange_rate: new Exchange_Rate_Service_Result(
+							rate: Money::of( '90000', 'USD' ),
+							api_classname: $this::class,
+							date_saved: new DateTimeImmutable(),
+						),
+					)
 				),
 			)
 		);
@@ -217,17 +207,15 @@ class Background_Jobs_Actions_Handler_Unit_Test extends \Codeception\Test\Unit {
 			API_Background_Jobs_Interface::class,
 			array(
 				'update_exchange_rate' => Expected::once(
-					function () {
-						return new Update_Exchange_Rate_Result(
-							requested_exchange_rate_currency: 'USD',
-							source: 'test',
-							updated_exchange_rate: new Exchange_Rate_Service_Result(
-								rate: Money::of( '90000', 'USD' ),
-								api_classname: get_class( $this ),
-								date_saved: new DateTimeImmutable(),
-							),
-						);
-					}
+					fn() => new Update_Exchange_Rate_Result(
+						requested_exchange_rate_currency: 'USD',
+						source: 'test',
+						updated_exchange_rate: new Exchange_Rate_Service_Result(
+							rate: Money::of( '90000', 'USD' ),
+							api_classname: $this::class,
+							date_saved: new DateTimeImmutable(),
+						),
+					)
 				),
 			)
 		);
@@ -251,17 +239,15 @@ class Background_Jobs_Actions_Handler_Unit_Test extends \Codeception\Test\Unit {
 			API_Background_Jobs_Interface::class,
 			array(
 				'update_exchange_rate' => Expected::once(
-					function () {
-						return new Update_Exchange_Rate_Result(
-							requested_exchange_rate_currency: 'EUR',
-							source: 'woocommerce',
-							updated_exchange_rate: new Exchange_Rate_Service_Result(
-								rate: Money::of( '85000', 'EUR' ),
-								api_classname: get_class( $this ),
-								date_saved: new DateTimeImmutable(),
-							),
-						);
-					}
+					fn() => new Update_Exchange_Rate_Result(
+						requested_exchange_rate_currency: 'EUR',
+						source: 'woocommerce',
+						updated_exchange_rate: new Exchange_Rate_Service_Result(
+							rate: Money::of( '85000', 'EUR' ),
+							api_classname: $this::class,
+							date_saved: new DateTimeImmutable(),
+						),
+					)
 				),
 			)
 		);
@@ -304,7 +290,7 @@ class Background_Jobs_Actions_Handler_Unit_Test extends \Codeception\Test\Unit {
 					function () {
 						$previous_rate = new Exchange_Rate_Service_Result(
 							rate: Money::of( '88000', 'USD' ),
-							api_classname: get_class( $this ),
+							api_classname: static::class,
 							date_saved: new DateTimeImmutable( '-1 hour' ),
 						);
 
@@ -313,7 +299,7 @@ class Background_Jobs_Actions_Handler_Unit_Test extends \Codeception\Test\Unit {
 							source: 'woocommerce',
 							updated_exchange_rate: new Exchange_Rate_Service_Result(
 								rate: Money::of( '90000', 'USD' ),
-								api_classname: get_class( $this ),
+								api_classname: static::class,
 								date_saved: new DateTimeImmutable(),
 								previous_cached_exchange_rate: $previous_rate,
 							),
@@ -351,18 +337,16 @@ class Background_Jobs_Actions_Handler_Unit_Test extends \Codeception\Test\Unit {
 			API_Background_Jobs_Interface::class,
 			array(
 				'update_exchange_rate' => Expected::once(
-					function () {
-						return new Update_Exchange_Rate_Result(
-							requested_exchange_rate_currency: 'GBP',
-							source: 'woocommerce',
-							updated_exchange_rate: new Exchange_Rate_Service_Result(
-								rate: Money::of( '75000', 'GBP' ),
-								api_classname: get_class( $this ),
-								date_saved: new DateTimeImmutable(),
-								previous_cached_exchange_rate: null,
-							),
-						);
-					}
+					fn() => new Update_Exchange_Rate_Result(
+						requested_exchange_rate_currency: 'GBP',
+						source: 'woocommerce',
+						updated_exchange_rate: new Exchange_Rate_Service_Result(
+							rate: Money::of( '75000', 'GBP' ),
+							api_classname: $this::class,
+							date_saved: new DateTimeImmutable(),
+							previous_cached_exchange_rate: null,
+						),
+					)
 				),
 			)
 		);

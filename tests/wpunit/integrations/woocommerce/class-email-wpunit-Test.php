@@ -21,9 +21,7 @@ class Email_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 			API_WooCommerce_Interface::class,
 			array(
 				'is_bitcoin_gateway' => Expected::once(
-					function ( $gateway_id ) {
-						return true;
-					}
+					fn( $gateway_id ) => true
 				),
 			)
 		);
@@ -86,9 +84,7 @@ class Email_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 			API_WooCommerce_Interface::class,
 			array(
 				'is_bitcoin_gateway' => Expected::once(
-					function ( $gateway_id ) {
-						return false;
-					}
+					fn( $gateway_id ) => false
 				),
 			)
 		);
@@ -127,9 +123,7 @@ class Email_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 			API_WooCommerce_Interface::class,
 			array(
 				'is_bitcoin_gateway'          => Expected::once(
-					function ( $gateway_id ) {
-						return true;
-					}
+					fn( $gateway_id ) => true
 				),
 				'get_formatted_order_details' => Expected::once(
 					function ( $order ) {

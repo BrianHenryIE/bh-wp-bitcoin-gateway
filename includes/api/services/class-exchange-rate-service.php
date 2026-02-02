@@ -74,16 +74,16 @@ class Exchange_Rate_Service implements LoggerAwareInterface {
 
 		try {
 			$exchange_rate_service_result = $this->fetch_exchange_rate( $currency );
-		} catch ( Rate_Limit_Exception $e ) {
+		} catch ( Rate_Limit_Exception ) {
 			// TODO: set up background job.
 			return null;
-		} catch ( UnknownCurrencyException $e ) {
+		} catch ( UnknownCurrencyException ) {
 			// Ignore this error.
 			// It could only happen if the currency of the Money object passed to the function was not
 			// recognised by brick/money which doesn't make sense. I.e. the exception would have happened
 			// before this function was called.
 			return null;
-		} catch ( JsonException $e ) {
+		} catch ( JsonException ) {
 			// TODO: decide if this should be logged inside the API class.
 			return null;
 		}
@@ -124,7 +124,7 @@ class Exchange_Rate_Service implements LoggerAwareInterface {
 
 		return $this->set_cached_exchange_rate(
 			rate: $exchange_rate_money,
-			api_classname: get_class( $this->exchange_rate_api )
+			api_classname: $this->exchange_rate_api::class
 		);
 	}
 

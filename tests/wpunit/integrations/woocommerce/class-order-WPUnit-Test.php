@@ -275,7 +275,7 @@ class Order_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	 * @throws \ReflectionException If the method does not exist.
 	 */
 	protected function invokeMethod( object $object_instance, string $method_name, array $parameters = array() ) {
-		$reflection = new \ReflectionClass( get_class( $object_instance ) );
+		$reflection = new \ReflectionClass( $object_instance::class );
 		$method     = $reflection->getMethod( $method_name );
 
 		return $method->invokeArgs( $object_instance, $parameters );

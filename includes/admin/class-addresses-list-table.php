@@ -244,7 +244,7 @@ class Addresses_List_Table extends WP_Posts_List_Table {
 
 		try {
 			$bitcoin_address = $this->get_bitcoin_address_object( $item );
-		} catch ( Exception $exception ) {
+		} catch ( Exception ) {
 			return;
 		}
 
@@ -295,7 +295,7 @@ class Addresses_List_Table extends WP_Posts_List_Table {
 
 		try {
 			$bitcoin_wallet = $this->get_bitcoin_wallet_object( $bitcoin_address->get_wallet_parent_post_id() );
-		} catch ( Exception $exception ) {
+		} catch ( Exception ) {
 			return;
 		}
 

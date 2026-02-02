@@ -33,9 +33,7 @@ class Exchange_Rate_Service_Unit_Test extends \Codeception\Test\Unit {
 		WP_Mock::userFunction(
 			'wp_json_encode',
 			array(
-				'return' => function ( $value ) {
-					return json_encode( $value );
-				},
+				'return' => fn( $value ) => json_encode( $value ),
 			)
 		);
 	}
@@ -83,7 +81,7 @@ class Exchange_Rate_Service_Unit_Test extends \Codeception\Test\Unit {
 				'return' => json_encode(
 					new Exchange_Rate_Service_Result(
 						rate: Money::of( '65535', 'USD' ),
-						api_classname: get_class( $this ),
+						api_classname: static::class,
 						date_saved: new DateTimeImmutable(),
 					)
 				),
