@@ -5,6 +5,8 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories;
 use BrianHenryIE\ColorLogger\ColorLogger;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\JsonMapper\JsonMapper_Helper;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address_WP_Post_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Address_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\JsonMapperInterface;
 use Codeception\Stub\Expected;
@@ -24,6 +26,29 @@ class Bitcoin_Address_Factory_WPUnit_Test extends WPTestCase {
 			json_mapper: $json_mapper ?? new JsonMapper_Helper()->build(),
 			logger: $logger ?? new ColorLogger()
 		);
+	}
+
+	/**
+	 * @covers ::get_order_id_from_post
+	 */
+	public function test_get_order_id_null_before_set(): void {
+
+		$sut = $this->get_sut();
+
+		$bitcoin_address_repository = new Bitcoin_Address_Repository( $sut );
+		$wallet                     = $this->makeEmpty( Bitcoin_Wallet::class );
+
+		$bitcoin_address = $bitcoin_address_repository->save_new_address(
+			wallet: $wallet,
+			derivation_path_sequence_index: 2,
+			address: 'address',
+		);
+
+		$sut = $sut->get_by_wp_post_id( $bitcoin_address->get_post_id() );
+
+		$result = $sut->get_order_id();
+
+		$this->assertNull( $result );
 	}
 
 	/**
