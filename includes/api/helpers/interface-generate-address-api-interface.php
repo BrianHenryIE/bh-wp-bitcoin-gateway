@@ -5,6 +5,9 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers;
 
+/**
+ * @see https://learnmeabitcoin.com/technical/keys/hd-wallets/derivation-paths/
+ */
 interface Generate_Address_API_Interface {
 
 	/**
