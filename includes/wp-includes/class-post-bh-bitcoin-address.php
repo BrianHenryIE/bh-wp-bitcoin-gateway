@@ -18,8 +18,11 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes;
 
+use BrianHenryIE\WP_Bitcoin_Gateway\Admin\Addresses_List_Table;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address_Status;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address_WP_Post_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Address_Repository;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Wallet_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use WP_Query;
 
@@ -31,24 +34,46 @@ use WP_Query;
  * @see register_post_type()
  * @see register_post_status()
  *
+ * @see Addresses_List_Table
  * @see wp-admin/edit.php?post_type=bh-bitcoin-address
+ *
+ * @phpstan-import-type Address_List_Table_Dependencies_Array from Addresses_List_Table
  */
 class Post_BH_Bitcoin_Address {
 
 	/**
-	 * Array of plugin objects to pass to post types.
-	 *
-	 * @var array{api:API_Interface} $plugin_objects
+	 * The post type name for Bitcoin addresses.
 	 */
-	protected array $plugin_objects = array();
+	public const POST_TYPE = 'bh-bitcoin-address';
+
+	/**
+	 * Dependencies to pass to the WP_Post_Type object for use by the list table.
+	 *
+	 * Stored on the post type args and accessible via:
+	 * `get_post_type_object( 'bh-bitcoin-address' )->dependencies`
+	 *
+	 * @see Addresses_List_Table::__construct() Consumer of these dependencies.
+	 * @see self::get_dependencies_schema() For the expected array structure.
+	 *
+	 * @var array&Address_List_Table_Dependencies_Array $dependencies
+	 */
+	protected array $dependencies = array();
 
 	/**
 	 * Constructor
 	 *
-	 * @param API_Interface $api The main plugin functions.
+	 * @param API_Interface              $api The main plugin API for address operations (transactions, etc.).
+	 * @param Bitcoin_Address_Repository $bitcoin_address_repository To get the address details for the admin list table.
+	 * @param Bitcoin_Wallet_Repository  $bitcoin_wallet_repository To get the wallet integration details in the list table view.
 	 */
-	public function __construct( API_Interface $api ) {
-		$this->plugin_objects['api'] = $api;
+	public function __construct(
+		API_Interface $api,
+		Bitcoin_Address_Repository $bitcoin_address_repository,
+		Bitcoin_Wallet_Repository $bitcoin_wallet_repository,
+	) {
+		$this->dependencies['api']                        = $api;
+		$this->dependencies['bitcoin_address_repository'] = $bitcoin_address_repository;
+		$this->dependencies['bitcoin_wallet_repository']  = $bitcoin_wallet_repository;
 	}
 
 	/**
@@ -64,15 +89,20 @@ class Post_BH_Bitcoin_Address {
 			'menu_name'     => 'Bitcoin Addresses',
 		);
 		$args   = array(
-			'labels'         => $labels,
-			'description'    => 'Addresses used with WooCommerce Bitcoin gateways.',
-			'public'         => true,
-			'menu_position'  => 8,
-			'supports'       => array( 'title', 'thumbnail', 'excerpt', 'comments' ),
-			'has_archive'    => false,
-			'show_in_menu'   => false,
-			'plugin_objects' => $this->plugin_objects,
-			'show_in_rest'   => true,
+			'labels'        => $labels,
+			'description'   => 'Addresses used with WooCommerce Bitcoin gateways.',
+			'public'        => true,
+			'menu_position' => 8,
+			'supports'      => array( 'title', 'thumbnail', 'excerpt', 'comments' ),
+			'has_archive'   => false,
+			'show_in_menu'  => false,
+			'show_in_rest'  => true,
+			/**
+			 * Dependencies passed to the list table via the WP_Post_Type object.
+			 *
+			 * @see Addresses_List_Table::__construct() Where these are consumed.
+			 */
+			'dependencies'  => $this->dependencies,
 		);
 		register_post_type( Bitcoin_Address_WP_Post_Interface::POST_TYPE, $args );
 

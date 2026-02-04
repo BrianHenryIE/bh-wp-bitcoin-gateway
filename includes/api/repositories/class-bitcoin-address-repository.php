@@ -7,6 +7,7 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories;
 
+use BrianHenryIE\WP_Bitcoin_Gateway\Admin\Addresses_List_Table;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories\Bitcoin_Address_Factory;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Queries\Bitcoin_Address_Query;
@@ -16,6 +17,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Queries\WP_Posts_Query_Order;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
+use DateMalformedStringException;
 use WP_Post;
 use wpdb;
 
@@ -84,6 +86,16 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 	 */
 	public function get_by_post_id( int $post_id ): Bitcoin_Address {
 		return $this->bitcoin_address_factory->get_by_wp_post_id( $post_id );
+	}
+
+	/**
+	 * @used-by Addresses_List_Table
+	 *
+	 * @param WP_Post $post A WP_Post storing address information.
+	 * @throws DateMalformedStringException If the database date could not be parsed – very unlikely.
+	 */
+	public function get_by_wp_post( WP_Post $post ): Bitcoin_Address {
+		return $this->bitcoin_address_factory->get_by_wp_post( $post );
 	}
 
 	/**

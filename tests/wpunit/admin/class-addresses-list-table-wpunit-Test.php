@@ -14,12 +14,16 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Bitcoin_Gateway;
 use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Post_BH_Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Post_BH_Bitcoin_Wallet;
+use lucatume\WPBrowser\TestCase\WPTestCase;
 use WP_Post;
+use WP_Post_Type;
 
 /**
  * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\Admin\Addresses_List_Table
+ *
+ * @phpstan-import-type Address_List_Table_Dependencies_Array from Addresses_List_Table
  */
-class Addresses_List_Table_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
+class Addresses_List_Table_WPUnit_Test extends WPTestCase {
 
 	/**
 	 * The `$args` array used when constructing the Addresses_List_Table sut.
@@ -63,8 +67,16 @@ class Addresses_List_Table_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTe
 
 		\WC_Payment_Gateways::instance()->payment_gateways['bh_bitcoin'] = $bitcoin_gateway;
 
-		// Hopefully this is reset between tests?
-		$plugin_post_address_type = new Post_BH_Bitcoin_Address( $api );
+		$json_mapper = new JsonMapper_Helper()->build();
+		$logger      = new ColorLogger();
+
+		$bitcoin_address_factory    = new Bitcoin_Address_Factory( $json_mapper, $logger );
+		$bitcoin_address_repository = new Bitcoin_Address_Repository( $bitcoin_address_factory );
+
+		$bitcoin_wallet_factory    = new Bitcoin_Wallet_Factory();
+		$bitcoin_wallet_repository = new Bitcoin_Wallet_Repository( $bitcoin_wallet_factory );
+
+		$plugin_post_address_type = new Post_BH_Bitcoin_Address( $api, $bitcoin_address_repository, $bitcoin_wallet_repository );
 		$plugin_post_address_type->register_address_post_type();
 		$plugin_post_wallet_type = new Post_BH_Bitcoin_Wallet( $api );
 		$plugin_post_wallet_type->register_wallet_post_type();
@@ -101,6 +113,31 @@ class Addresses_List_Table_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTe
 		parent::tearDown();
 
 		unset( \WC_Payment_Gateways::instance()->payment_gateways['bh_bitcoin'] );
+	}
+
+	/**
+	 * Verify the constructor retrieves the API dependency from the post type object.
+	 *
+	 * The dependencies are registered via Post_BH_Bitcoin_Address::register_address_post_type()
+	 * and should be accessible on the WP_Post_Type object.
+	 *
+	 * @covers ::__construct
+	 */
+	public function test_constructor_retrieves_api_from_post_type_dependencies(): void {
+
+		/** @var WP_Post_Type&object{dependencies:array{api:API_Interface,bitcoin_address_repository:Bitcoin_Address_Repository,bitcoin_wallet_repository:Bitcoin_Wallet_Repository}} $post_type_object */
+		$post_type_object = get_post_type_object( 'bh-bitcoin-address' );
+
+		// The list table should be constructable and have the API available.
+		$sut = new Addresses_List_Table( $this->args );
+
+		// Use reflection to verify the API was set.
+		$reflection   = new \ReflectionClass( $sut );
+		$api_property = $reflection->getProperty( 'api' );
+		$api_value    = $api_property->getValue( $sut );
+
+		$this->assertInstanceOf( API_Interface::class, $api_value );
+		$this->assertSame( $post_type_object->dependencies['api'], $api_value );
 	}
 
 	/**
