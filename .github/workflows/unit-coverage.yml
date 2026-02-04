@@ -152,8 +152,10 @@ jobs:
             touch gh-pages/.nojekyll
           fi
 
-      - name: Pre-commit `git pull`
-        run: git pull
+      - name: Pre-commit `git pull gh-pages`
+        run: |
+          cd gh-pages
+          git pull gh-pages
 
       - name: Commit HTML code coverage + badge to gh-pages
         if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }}
