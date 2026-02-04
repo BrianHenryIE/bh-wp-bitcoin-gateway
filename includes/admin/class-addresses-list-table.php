@@ -362,7 +362,11 @@ class Addresses_List_Table extends WP_Posts_List_Table {
 
 			/** @var non-empty-string $link */
 			$link = ! empty( $gateway_href )
-				? sprintf( '<a href="%s">%s</a>', esc_url( $gateway_href, null, 'href' ), $gateway_text )
+				? sprintf(
+					'<a href="%s">%s</a>',
+					esc_url( $gateway_href, null, 'href' ),
+					esc_html( $gateway_text )
+				)
 				: $gateway_text;
 
 			printf(
