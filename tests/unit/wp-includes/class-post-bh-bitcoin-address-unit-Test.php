@@ -37,9 +37,9 @@ class Post_BH_Bitcoin_Address_Unit_Test extends Unit {
 		?Bitcoin_Wallet_Repository $bitcoin_wallet_repository = null,
 	): Post_BH_Bitcoin_Address {
 		return new Post_BH_Bitcoin_Address(
-			api: $api ?? $this->makeEmpty(API_Interface::class),
-			bitcoin_address_repository: $bitcoin_address_repository ?? $this->make(Bitcoin_Address_Repository::class),
-			bitcoin_wallet_repository: $bitcoin_wallet_repository ?? $this->make(Bitcoin_Wallet_Repository::class),
+			api: $api ?? $this->makeEmpty( API_Interface::class ),
+			bitcoin_address_repository: $bitcoin_address_repository ?? $this->make( Bitcoin_Address_Repository::class ),
+			bitcoin_wallet_repository: $bitcoin_wallet_repository ?? $this->make( Bitcoin_Wallet_Repository::class ),
 		);
 	}
 
@@ -50,11 +50,11 @@ class Post_BH_Bitcoin_Address_Unit_Test extends Unit {
 	 */
 	public function test_register_address_post_type_passes_dependencies(): void {
 
-		$api = $this->makeEmpty(API_Interface::class);
-		$bitcoin_address_repository = $this->make(Bitcoin_Address_Repository::class);
-		$bitcoin_wallet_repository = $this->make(Bitcoin_Wallet_Repository::class);
+		$api                        = $this->makeEmpty( API_Interface::class );
+		$bitcoin_address_repository = $this->make( Bitcoin_Address_Repository::class );
+		$bitcoin_wallet_repository  = $this->make( Bitcoin_Wallet_Repository::class );
 
-		$sut = $this->get_sut($api, $bitcoin_address_repository, $bitcoin_wallet_repository);
+		$sut = $this->get_sut( $api, $bitcoin_address_repository, $bitcoin_wallet_repository );
 
 		$captured_args = null;
 
@@ -74,7 +74,7 @@ class Post_BH_Bitcoin_Address_Unit_Test extends Unit {
 			)
 		);
 
-		\WP_Mock::passthruFunction('_x' );
+		\WP_Mock::passthruFunction( '_x' );
 
 		\WP_Mock::userFunction(
 			'_n_noop',
