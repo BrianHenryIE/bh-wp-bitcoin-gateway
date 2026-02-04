@@ -315,11 +315,11 @@ class Order_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	}
 
 	/**
-	 * Helper method to invoke protected/private methods.
+	 * Helper method to invoke protected/private methods. (Claude wrote this).
 	 *
-	 * @param object               $object_instance The object instance.
-	 * @param string               $method_name The method name to invoke.
-	 * @param array<string, mixed> $parameters The method parameters.
+	 * @param object       $object_instance The object instance.
+	 * @param string       $method_name The method name to invoke.
+	 * @param array<mixed> $parameters The method parameters.
 	 *
 	 * @return mixed
 	 * @throws \ReflectionException If the method does not exist.
