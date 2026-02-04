@@ -61,6 +61,8 @@ class Addresses_List_Table extends WP_Posts_List_Table {
 	 * @see _get_list_table()
 	 *
 	 * @param array{screen?:\WP_Screen} $args The data passed by WordPress.
+	 *
+	 * @throws BH_WP_Bitcoin_Gateway_Exception If the post type object does not have the dependencies this class needs.
 	 */
 	public function __construct( $args = array() ) {
 		parent::__construct( $args );
@@ -77,6 +79,10 @@ class Addresses_List_Table extends WP_Posts_List_Table {
 		 * @var WP_Post_Type&object{dependencies:Address_List_Table_Dependencies_Array} $post_type_object
 		 */
 		$post_type_object = get_post_type_object( $post_type_name );
+
+		if ( is_null( $post_type_object ) || ! isset( $post_type_object->dependencies ) ) {
+			throw new BH_WP_Bitcoin_Gateway_Exception( 'Addresses_List_Table constructed without required dependencies' );
+		}
 
 		$this->api                        = $post_type_object->dependencies['api'];
 		$this->bitcoin_address_repository = $post_type_object->dependencies['bitcoin_address_repository'];
