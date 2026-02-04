@@ -43,11 +43,11 @@ jobs:
         continue-on-error: true
         run: vendor/bin/phpcs -q -n --report=checkstyle | cs2pr
 
-      # TODO: only run this if the previous failed
       - name: Fail if there are still phpcs errors in the production code
         run: vendor/bin/phpcs includes
 
       - name: Commit PHPCBF changes
+        if: ${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' }}
         uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: "🤖 PHPCBF"
