@@ -152,6 +152,9 @@ jobs:
             touch gh-pages/.nojekyll
           fi
 
+      - name: Pre-commit `git pull`
+        run: git pull
+
       - name: Commit HTML code coverage + badge to gh-pages
         if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }}
         uses: stefanzweifel/git-auto-commit-action@v7
