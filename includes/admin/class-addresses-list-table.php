@@ -10,28 +10,29 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Admin;
 
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\JsonMapper\JsonMapper_Helper;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories\Bitcoin_Address_Factory;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Address_Repository;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Wallet_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address_WP_Post_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories\Bitcoin_Wallet_Factory;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\UnknownCurrencyException;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Bitcoin_Gateway;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Post_BH_Bitcoin_Address;
 use Exception;
-use Psr\Log\NullLogger;
 use WP_Post;
 use WP_Post_Type;
 use WP_Posts_List_Table;
+use WP_Screen;
 
 /**
  * Hooks into standard WP_List_Table actions and filters.
  *
  * @see wp-admin/edit.php?post_type=bh-bitcoin-address
  * @see WP_Posts_List_Table
+ *
+ * @phpstan-type Address_List_Table_Dependencies_Array array{api:API_Interface,bitcoin_address_repository:Bitcoin_Address_Repository,bitcoin_wallet_repository:Bitcoin_Wallet_Repository}
  */
 class Addresses_List_Table extends WP_Posts_List_Table {
 
@@ -43,11 +44,26 @@ class Addresses_List_Table extends WP_Posts_List_Table {
 	protected API_Interface $api;
 
 	/**
+	 * To get the full address details for display.
+	 */
+	protected Bitcoin_Address_Repository $bitcoin_address_repository;
+
+	/**
+	 * To get the integrations the address is related to.
+	 */
+	protected Bitcoin_Wallet_Repository $bitcoin_wallet_repository;
+
+	/**
 	 * Constructor
+	 *
+	 * Retrieves dependencies from the WP_Post_Type object that were registered
+	 * via Post_BH_Bitcoin_Address::register_address_post_type().
 	 *
 	 * @see _get_list_table()
 	 *
-	 * @param array{screen?:\WP_Screen} $args The data passed by WordPress.
+	 * @param array{screen?:WP_Screen} $args The data passed by WordPress.
+	 *
+	 * @throws BH_WP_Bitcoin_Gateway_Exception If the post type object does not exist or does not have the dependencies this class needs.
 	 */
 	public function __construct( $args = array() ) {
 		parent::__construct( $args );
@@ -58,13 +74,24 @@ class Addresses_List_Table extends WP_Posts_List_Table {
 		 * Since this object is instantiated because it was defined when registering the post type, it's
 		 * extremely unlikely the post type will not exist.
 		 *
-		 * @see Post_BH_Bitcoin_Address::$plugin_objects
+		 * @see Post_BH_Bitcoin_Address::$dependencies
 		 * @see Post_BH_Bitcoin_Address::register_address_post_type()
 		 *
-		 * @var WP_Post_Type&object{plugin_objects:array<string,API_Interface>} $post_type_object
+		 * @var WP_Post_Type&object{dependencies:Address_List_Table_Dependencies_Array} $post_type_object
 		 */
 		$post_type_object = get_post_type_object( $post_type_name );
-		$this->api        = $post_type_object->plugin_objects['api'];
+
+		// @phpstan-ignore-next-line function.impossibleType This could be null – I don't know how to use & in the type above with null.
+		if ( is_null( $post_type_object ) ) {
+			throw new BH_WP_Bitcoin_Gateway_Exception( 'Addresses_List_Table constructed before post type registered' );
+		}
+		if ( ! isset( $post_type_object->dependencies ) ) {
+			throw new BH_WP_Bitcoin_Gateway_Exception( 'Addresses_List_Table constructed without required dependencies' );
+		}
+
+		$this->api                        = $post_type_object->dependencies['api'];
+		$this->bitcoin_address_repository = $post_type_object->dependencies['bitcoin_address_repository'];
+		$this->bitcoin_wallet_repository  = $post_type_object->dependencies['bitcoin_wallet_repository'];
 
 		add_filter( 'post_row_actions', array( $this, 'edit_row_actions' ), 10, 2 );
 	}
@@ -114,16 +141,14 @@ class Addresses_List_Table extends WP_Posts_List_Table {
 	}
 
 	/**
-	 * Given a WP_Post, get the corresponding Bitcoin_Address object, using a local array to cache for this request/object.
+	 * Given a WP_Post, get the corresponding Bitcoin_Address object (TODO: use a local array to cache.).
 	 *
 	 * @param WP_Post $post The post the address information is stored under.
 	 *
-	 * @return Bitcoin_Address
 	 * @throws BH_WP_Bitcoin_Gateway_Exception When the post/post id does not match a bh-bitcoin-address cpt.
 	 */
 	protected function get_bitcoin_address_object( WP_Post $post ): Bitcoin_Address {
-		$bitcoin_address_factory = new Bitcoin_Address_Factory( new JsonMapper_Helper()->build(), new NullLogger() );
-		return $bitcoin_address_factory->get_by_wp_post( $post );
+		return $this->bitcoin_address_repository->get_by_wp_post( $post );
 	}
 
 	/**
@@ -135,8 +160,7 @@ class Addresses_List_Table extends WP_Posts_List_Table {
 	 * @throws UnknownCurrencyException TODO: we should catch this and return null, it's not important enough to crash.
 	 */
 	protected function get_bitcoin_wallet_object( int $post_id ): Bitcoin_Wallet {
-		$bitcoin_wallet_factory = new Bitcoin_Wallet_Factory();
-		return $bitcoin_wallet_factory->get_by_wp_post_id( $post_id );
+		return $this->bitcoin_wallet_repository->get_by_wp_post_id( $post_id );
 	}
 
 	/**
@@ -309,14 +333,15 @@ class Addresses_List_Table extends WP_Posts_List_Table {
 			$integration = $gateways_list_item['integration'];
 			$gateway_id  = $gateways_list_item['gateway_id'];
 
-			/** @var array{href?:string,text:string} $gateway_href_and_text */
+			/** @var array{href?:string|mixed,text?:string|mixed} $gateway_href_and_text */
 			$gateway_href_and_text = array(
 				'href' => '',
 				'text' => '',
 			);
 
+			// TODO: cache this.
 			/**
-			 * @param array{href?:string,text:string} $filtered_result
+			 * @param array{href?:string|mixed,text?:string|mixed} $filtered_result
 			 * @param non-empty-string $integration
 			 * @param non-empty-string $gateway_id
 			 * @param Bitcoin_Wallet $bitcoin_wallet
@@ -325,17 +350,23 @@ class Addresses_List_Table extends WP_Posts_List_Table {
 			 */
 			$gateway_href_and_text = apply_filters( 'bh_wp_bitcoin_gateway_gateway_link', $gateway_href_and_text, $integration, $gateway_id, $bitcoin_wallet, $bitcoin_address );
 
-			if ( ! empty( $gateway_href_and_text['href'] ) && is_string( $gateway_href_and_text['href'] ) ) {
-				$gateway_href = $gateway_href_and_text['href'];
-			} else {
-				$gateway_href = null;
-			}
-			/** @var string $gateway_text */
-			$gateway_text = ! empty( $gateway_href_and_text['text'] ) ? $gateway_href_and_text['text'] : $gateway_id;
+			/** @var ?non-empty-string $gateway_href */
+			$gateway_href = isset( $gateway_href_and_text['href'] ) && is_string( $gateway_href_and_text['href'] ) && '' !== $gateway_href_and_text['href']
+				? $gateway_href_and_text['href']
+				: null;
 
-			/** @var string $link */
+			/** @var non-empty-string $gateway_text */
+			$gateway_text = isset( $gateway_href_and_text['text'] ) && is_string( $gateway_href_and_text['text'] ) && '' !== $gateway_href_and_text['text']
+				? $gateway_href_and_text['text']
+				: $gateway_id;
+
+			/** @var non-empty-string $link */
 			$link = ! empty( $gateway_href )
-				? sprintf( '<a href="%s">%s</a>', $gateway_href, $gateway_text )
+				? sprintf(
+					'<a href="%s">%s</a>',
+					esc_url( $gateway_href, null, 'href' ),
+					esc_html( $gateway_text )
+				)
 				: $gateway_text;
 
 			printf(
@@ -368,7 +399,7 @@ class Addresses_List_Table extends WP_Posts_List_Table {
 	 * TODO: add a click handler to the update (query for new transactions) action.
 	 *
 	 * @hooked post_row_actions
-	 * @see \WP_Posts_List_Table::handle_row_actions()
+	 * @see WP_Posts_List_Table::handle_row_actions()
 	 *
 	 * @param array<string,string> $actions Action id : HTML.
 	 * @param WP_Post              $post     The post object.
