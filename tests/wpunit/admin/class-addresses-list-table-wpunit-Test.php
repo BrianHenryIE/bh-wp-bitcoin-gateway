@@ -84,7 +84,7 @@ class Addresses_List_Table_WPUnit_Test extends WPTestCase {
 		$address       = 'bc1qnlz39q0r40xnv200s9wjutj0fdxex6x8abcdef';
 		$address_index = 22;
 
-		$wallet                    = $bitcoin_wallet_repository->save_new( 'xpub1a2s3d4f5gabcdef' );
+		$wallet = $bitcoin_wallet_repository->save_new( 'xpub1a2s3d4f5gabcdef' );
 
 		$bitcoin_address = $bitcoin_address_repository->save_new_address(
 			wallet: $wallet,
