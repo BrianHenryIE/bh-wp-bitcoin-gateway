@@ -116,10 +116,12 @@ class Addresses_List_Table_WPUnit_Test extends WPTestCase {
 	}
 
 	/**
-	 * Verify the constructor retrieves the API dependency from the post type object.
+	 * Verify the constructor retrieves the dependencies from the post type object.
 	 *
 	 * The dependencies are registered via Post_BH_Bitcoin_Address::register_address_post_type()
 	 * and should be accessible on the WP_Post_Type object.
+	 *
+	 * @see Post_BH_Bitcoin_Address::register_address_post_type()
 	 *
 	 * @covers ::__construct
 	 */
@@ -132,12 +134,22 @@ class Addresses_List_Table_WPUnit_Test extends WPTestCase {
 		$sut = new Addresses_List_Table( $this->args );
 
 		// Use reflection to verify the API was set.
-		$reflection   = new \ReflectionClass( $sut );
+		$reflection = new \ReflectionClass( $sut );
+
 		$api_property = $reflection->getProperty( 'api' );
 		$api_value    = $api_property->getValue( $sut );
-
 		$this->assertInstanceOf( API_Interface::class, $api_value );
 		$this->assertSame( $post_type_object->dependencies['api'], $api_value );
+
+		$bitcoin_address_repository_property = $reflection->getProperty( 'bitcoin_address_repository' );
+		$bitcoin_address_repository_value    = $bitcoin_address_repository_property->getValue( $sut );
+		$this->assertInstanceOf( Bitcoin_Address_Repository::class, $bitcoin_address_repository_value );
+		$this->assertSame( $post_type_object->dependencies['bitcoin_address_repository'], $bitcoin_address_repository_value );
+
+		$bitcoin_wallet_repository_property = $reflection->getProperty( 'bitcoin_wallet_repository' );
+		$bitcoin_wallet_repository_value    = $bitcoin_wallet_repository_property->getValue( $sut );
+		$this->assertInstanceOf( Bitcoin_Wallet_Repository::class, $bitcoin_wallet_repository_value );
+		$this->assertSame( $post_type_object->dependencies['bitcoin_wallet_repository'], $bitcoin_wallet_repository_value );
 	}
 
 	/**
