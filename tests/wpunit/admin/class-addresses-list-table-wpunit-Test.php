@@ -63,21 +63,24 @@ class Addresses_List_Table_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTe
 
 		\WC_Payment_Gateways::instance()->payment_gateways['bh_bitcoin'] = $bitcoin_gateway;
 
-		// Hopefully this is reset between tests?
-		$plugin_post_address_type = new Post_BH_Bitcoin_Address( $api );
+		$json_mapper = new JsonMapper_Helper()->build();
+		$logger      = new ColorLogger();
+
+		$bitcoin_address_factory    = new Bitcoin_Address_Factory( $json_mapper, $logger );
+		$bitcoin_address_repository = new Bitcoin_Address_Repository( $bitcoin_address_factory );
+
+		$bitcoin_wallet_factory    = new Bitcoin_Wallet_Factory();
+		$bitcoin_wallet_repository = new Bitcoin_Wallet_Repository( $bitcoin_wallet_factory );
+
+		$plugin_post_address_type = new Post_BH_Bitcoin_Address( $api, $bitcoin_address_repository, $bitcoin_wallet_repository );
 		$plugin_post_address_type->register_address_post_type();
-		$plugin_post_wallet_type = new Post_BH_Bitcoin_Wallet( $api );
+		$plugin_post_wallet_type = new Post_BH_Bitcoin_Wallet( $api, $bitcoin_wallet_repository );
 		$plugin_post_wallet_type->register_wallet_post_type();
 
 		$address       = 'bc1qnlz39q0r40xnv200s9wjutj0fdxex6x8abcdef';
 		$address_index = 22;
 
-		$bitcoin_wallet_factory    = new Bitcoin_Wallet_Factory();
-		$bitcoin_wallet_repository = new Bitcoin_Wallet_Repository( $bitcoin_wallet_factory );
-		$wallet                    = $bitcoin_wallet_repository->save_new( 'xpub1a2s3d4f5gabcdef' );
-
-		$bitcoin_address_factory    = new Bitcoin_Address_Factory( new JsonMapper_Helper()->build(), new ColorLogger() );
-		$bitcoin_address_repository = new Bitcoin_Address_Repository( $bitcoin_address_factory );
+		$wallet = $bitcoin_wallet_repository->save_new( 'xpub1a2s3d4f5gabcdef' );
 
 		$bitcoin_address = $bitcoin_address_repository->save_new_address(
 			wallet: $wallet,

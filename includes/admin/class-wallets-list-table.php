@@ -7,11 +7,11 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Admin;
 
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories\Bitcoin_Wallet_Factory;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Wallet_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet_WP_Post_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet;
-use InvalidArgumentException;
 use WP_Post;
 use WP_Post_Type;
 use WP_Posts_List_Table;
@@ -22,6 +22,8 @@ use WP_Screen;
  *
  * @see wp-admin/edit.php?post_type=bh-bitcoin-wallet
  * @see WP_Posts_List_Table
+ *
+ * @phpstan-type Wallet_List_Table_Dependencies_Array array{api:API_Interface,bitcoin_wallet_repository:Bitcoin_Wallet_Repository}
  */
 class Wallets_List_Table extends WP_Posts_List_Table {
 
@@ -33,11 +35,21 @@ class Wallets_List_Table extends WP_Posts_List_Table {
 	protected API_Interface $api;
 
 	/**
+	 * To get the full wallet details for display.
+	 */
+	protected Bitcoin_Wallet_Repository $bitcoin_wallet_repository;
+
+	/**
 	 * Constructor
+	 *
+	 * Retrieves dependencies from the WP_Post_Type object that were registered
+	 * via Post_BH_Bitcoin_Wallet::register_wallet_post_type().
 	 *
 	 * @see _get_list_table()
 	 *
 	 * @param array{screen?:WP_Screen} $args The data passed by WordPress.
+	 *
+	 * @throws BH_WP_Bitcoin_Gateway_Exception If the post type object does not exist or does not have the dependencies this class needs.
 	 */
 	public function __construct( $args = array() ) {
 		parent::__construct( $args );
@@ -48,13 +60,23 @@ class Wallets_List_Table extends WP_Posts_List_Table {
 		 * Since this object is instantiated because it was defined when registering the post type, it's
 		 * extremely unlikely the post type will not exist.
 		 *
-		 * @see Post_BH_Bitcoin_Wallet::$plugin_objects
+		 * @see Post_BH_Bitcoin_Wallet::$dependencies
 		 * @see Post_BH_Bitcoin_Wallet::register_wallet_post_type()
 		 *
-		 * @var WP_Post_Type&object{plugin_objects:array<string,API_Interface>} $post_type_object
+		 * @var WP_Post_Type&object{dependencies:Wallet_List_Table_Dependencies_Array} $post_type_object
 		 */
 		$post_type_object = get_post_type_object( $post_type_name );
-		$this->api        = $post_type_object->plugin_objects['api'];
+
+		// @phpstan-ignore-next-line function.impossibleType This could be null – I don't know how to use & in the type above with null.
+		if ( is_null( $post_type_object ) ) {
+			throw new BH_WP_Bitcoin_Gateway_Exception( 'Wallets_List_Table constructed before post type registered' );
+		}
+		if ( ! isset( $post_type_object->dependencies ) ) {
+			throw new BH_WP_Bitcoin_Gateway_Exception( 'Wallets_List_Table constructed without required dependencies' );
+		}
+
+		$this->api                       = $post_type_object->dependencies['api'];
+		$this->bitcoin_wallet_repository = $post_type_object->dependencies['bitcoin_wallet_repository'];
 
 		add_filter( 'post_row_actions', array( $this, 'edit_row_actions' ), 10, 2 );
 	}
@@ -90,13 +112,14 @@ class Wallets_List_Table extends WP_Posts_List_Table {
 	}
 
 	/**
+	 * Given a WP_Post, get the corresponding Bitcoin_Wallet object (TODO: use a local array to cache.).
+	 *
 	 * @param WP_Post $post The post object for the current row.
 	 *
-	 * @throws InvalidArgumentException When the post is not a `bh-bitcoin-wallet` post type.
+	 * @throws BH_WP_Bitcoin_Gateway_Exception When the post is not a `bh-bitcoin-wallet` post type.
 	 */
 	protected function get_bitcoin_wallet_object( WP_Post $post ): Bitcoin_Wallet {
-		$bitcoin_wallet_factory = new Bitcoin_Wallet_Factory();
-		return $bitcoin_wallet_factory->get_by_wp_post( $post );
+		return $this->bitcoin_wallet_repository->get_by_wp_post( $post );
 	}
 
 	/**
@@ -121,7 +144,7 @@ class Wallets_List_Table extends WP_Posts_List_Table {
 	 * TODO: add a click handler to the update action.
 	 *
 	 * @hooked post_row_actions
-	 * @see \WP_Posts_List_Table::handle_row_actions()
+	 * @see WP_Posts_List_Table::handle_row_actions()
 	 *
 	 * @param array<string,string> $actions Action id : HTML.
 	 * @param WP_Post              $post    The post object.
