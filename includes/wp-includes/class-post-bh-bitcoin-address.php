@@ -37,14 +37,11 @@ use WP_Query;
  * @see Addresses_List_Table
  * @see wp-admin/edit.php?post_type=bh-bitcoin-address
  *
+ * @see Bitcoin_Address_WP_Post_Interface
+ *
  * @phpstan-import-type Address_List_Table_Dependencies_Array from Addresses_List_Table
  */
 class Post_BH_Bitcoin_Address {
-
-	/**
-	 * The post type name for Bitcoin addresses.
-	 */
-	public const POST_TYPE = 'bh-bitcoin-address';
 
 	/**
 	 * Dependencies to pass to the WP_Post_Type object for use by the list table.
