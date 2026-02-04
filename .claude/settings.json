@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php:*)",
+      "Bash(vendor/bin/*:*)",
+      "Bash(./vendor/bin/*:*)",
+      "Bash(composer:*)",
+      "Bash(composer *:*)",
+      "Bash(npm:*)",
+      "Bash(npm run *:*)",
+      "Bash(npx:*)",
+      "Bash(npx *:*)",
+      "Bash(git:*)",
+      "Bash(git *:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(cat:*)",
+      "Bash(ls:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(wc:*)",
+      "Bash(chmod:*)",
+      "Bash(wp:*)",
+      "Bash(wp *:*)"
+    ]
+  }
+}

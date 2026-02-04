@@ -14,7 +14,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Bitcoin_Wallet_Service;
 /**
  * @used-by Bitcoin_Wallet_Service::get_or_save_wallet_for_xpub()
  */
-class Get_Wallet_For_Xpub_Service_Result {
+readonly class Get_Wallet_For_Xpub_Service_Result {
 
 	/**
 	 * Constructor
@@ -25,10 +25,10 @@ class Get_Wallet_For_Xpub_Service_Result {
 	 * @param bool                                                $is_new Was the wallet new or existing.
 	 */
 	public function __construct(
-		public readonly string $xpub,
-		public readonly ?array $gateway_details,
-		public readonly Bitcoin_Wallet $wallet,
-		public readonly bool $is_new,
+		public string $xpub,
+		public ?array $gateway_details,
+		public Bitcoin_Wallet $wallet,
+		public bool $is_new,
 	) {
 	}
 }

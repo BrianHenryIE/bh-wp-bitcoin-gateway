@@ -14,7 +14,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
  * @used-by API::get_or_save_wallet_for_master_public_key()
  * @used-by API_Interface::get_or_save_wallet_for_master_public_key()
  */
-class Wallet_Generation_Result extends Get_Wallet_For_Xpub_Service_Result {
+readonly class Wallet_Generation_Result extends Get_Wallet_For_Xpub_Service_Result {
 
 	/**
 	 * Constructor.
@@ -24,7 +24,7 @@ class Wallet_Generation_Result extends Get_Wallet_For_Xpub_Service_Result {
 	 */
 	public function __construct(
 		Get_Wallet_For_Xpub_Service_Result $get_wallet_for_xpub_service_result,
-		public readonly bool $did_schedule_ensure_addresses,
+		public bool $did_schedule_ensure_addresses,
 	) {
 		$get_wallet_for_xpub_service_result_array = (array) $get_wallet_for_xpub_service_result;
 		parent::__construct( ...$get_wallet_for_xpub_service_result_array );

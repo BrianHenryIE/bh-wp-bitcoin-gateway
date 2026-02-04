@@ -15,7 +15,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
  * @used-by Payment_Service::check_address_for_payment()
  * @see Payment_Service::update_address_transactions()
  */
-class Check_Address_For_Payment_Service_Result extends Update_Address_Transactions_Result {
+readonly class Check_Address_For_Payment_Service_Result extends Update_Address_Transactions_Result {
 
 	/**
 	 * Constructor
@@ -26,10 +26,10 @@ class Check_Address_For_Payment_Service_Result extends Update_Address_Transactio
 	 * @param Money                              $confirmed_received The total received with the required confirmations.
 	 */
 	public function __construct(
-		protected Update_Address_Transactions_Result $update_address_transactions_result,
-		readonly public int $blockchain_height,
-		readonly public int $required_confirmations,
-		readonly public Money $confirmed_received,
+		protected Update_Address_Transactions_Result $update_address_transactions_result, // This is accessed by subclass.
+		public int $blockchain_height,
+		public int $required_confirmations,
+		public Money $confirmed_received,
 	) {
 		parent::__construct(
 			queried_address: $update_address_transactions_result->queried_address,

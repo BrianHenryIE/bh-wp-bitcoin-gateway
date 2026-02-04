@@ -12,7 +12,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address_Status;
 /**
  * @see API::mark_address_as_paid()
  */
-class Mark_Address_As_Paid_Result {
+readonly class Mark_Address_As_Paid_Result {
 
 	/**
 	 * Constructor.
@@ -21,8 +21,8 @@ class Mark_Address_As_Paid_Result {
 	 * @param Bitcoin_Address_Status $status_before The status of the address before it was marked as paid.
 	 */
 	public function __construct(
-		protected Bitcoin_Address $bitcoin_address,
-		protected Bitcoin_Address_Status $status_before,
+		public Bitcoin_Address $bitcoin_address,
+		public Bitcoin_Address_Status $status_before,
 	) {
 	}
 }
