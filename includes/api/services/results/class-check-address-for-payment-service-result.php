@@ -26,7 +26,7 @@ readonly class Check_Address_For_Payment_Service_Result extends Update_Address_T
 	 * @param Money                              $confirmed_received The total received with the required confirmations.
 	 */
 	public function __construct(
-		Update_Address_Transactions_Result $update_address_transactions_result,
+		protected Update_Address_Transactions_Result $update_address_transactions_result, // This is accessed by subclass.
 		public int $blockchain_height,
 		public int $required_confirmations,
 		public Money $confirmed_received,
