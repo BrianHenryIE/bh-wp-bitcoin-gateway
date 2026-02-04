@@ -153,6 +153,7 @@ jobs:
           fi
 
       - name: Pre-commit `git pull gh-pages`
+        if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }}
         run: |
           cd gh-pages
           git pull gh-pages
