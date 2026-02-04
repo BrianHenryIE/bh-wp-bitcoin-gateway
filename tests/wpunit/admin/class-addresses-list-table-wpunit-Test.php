@@ -125,7 +125,7 @@ class Addresses_List_Table_WPUnit_Test extends WPTestCase {
 	 */
 	public function test_constructor_retrieves_api_from_post_type_dependencies(): void {
 
-		/** @var WP_Post_Type&object{dependencies:array{api:API_Interface,bitcoin_address_repository:Bitcoin_Address_Repository,bitcoin_wallet_repository:Bitcoin_Wallet_Repository}} $post_type_object */
+		/** @var WP_Post_Type&object{dependencies:Address_List_Table_Dependencies_Array} $post_type_object */
 		$post_type_object = get_post_type_object( 'bh-bitcoin-address' );
 
 		// The list table should be constructable and have the API available.
