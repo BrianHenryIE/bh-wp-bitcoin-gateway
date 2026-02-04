@@ -24,6 +24,7 @@ use Exception;
 use WP_Post;
 use WP_Post_Type;
 use WP_Posts_List_Table;
+use WP_Screen;
 
 /**
  * Hooks into standard WP_List_Table actions and filters.
@@ -60,9 +61,9 @@ class Addresses_List_Table extends WP_Posts_List_Table {
 	 *
 	 * @see _get_list_table()
 	 *
-	 * @param array{screen?:\WP_Screen} $args The data passed by WordPress.
+	 * @param array{screen?:WP_Screen} $args The data passed by WordPress.
 	 *
-	 * @throws BH_WP_Bitcoin_Gateway_Exception If the post type object does not have the dependencies this class needs.
+	 * @throws BH_WP_Bitcoin_Gateway_Exception If the post type object does not exist or does not have the dependencies this class needs.
 	 */
 	public function __construct( $args = array() ) {
 		parent::__construct( $args );
@@ -80,7 +81,11 @@ class Addresses_List_Table extends WP_Posts_List_Table {
 		 */
 		$post_type_object = get_post_type_object( $post_type_name );
 
-		if ( is_null( $post_type_object ) || ! isset( $post_type_object->dependencies ) ) {
+		// @phpstan-ignore-next-line function.impossibleType This could be null – I don't know how to use & in the type above with null.
+		if ( is_null( $post_type_object ) ) {
+			throw new BH_WP_Bitcoin_Gateway_Exception( 'Addresses_List_Table constructed before post type registered' );
+		}
+		if ( ! isset( $post_type_object->dependencies ) ) {
 			throw new BH_WP_Bitcoin_Gateway_Exception( 'Addresses_List_Table constructed without required dependencies' );
 		}
 
@@ -389,7 +394,7 @@ class Addresses_List_Table extends WP_Posts_List_Table {
 	 * TODO: add a click handler to the update (query for new transactions) action.
 	 *
 	 * @hooked post_row_actions
-	 * @see \WP_Posts_List_Table::handle_row_actions()
+	 * @see WP_Posts_List_Table::handle_row_actions()
 	 *
 	 * @param array<string,string> $actions Action id : HTML.
 	 * @param WP_Post              $post     The post object.
