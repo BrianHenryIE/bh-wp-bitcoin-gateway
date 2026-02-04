@@ -57,7 +57,7 @@ class Post_BH_Bitcoin_Address {
 	 *
 	 * @var array&Address_List_Table_Dependencies_Array $dependencies
 	 */
-	protected array $dependencies = array();
+	protected array $dependencies;
 
 	/**
 	 * Constructor
@@ -71,9 +71,11 @@ class Post_BH_Bitcoin_Address {
 		Bitcoin_Address_Repository $bitcoin_address_repository,
 		Bitcoin_Wallet_Repository $bitcoin_wallet_repository,
 	) {
-		$this->dependencies['api']                        = $api;
-		$this->dependencies['bitcoin_address_repository'] = $bitcoin_address_repository;
-		$this->dependencies['bitcoin_wallet_repository']  = $bitcoin_wallet_repository;
+		$this->dependencies = array(
+			'api'                        => $api,
+			'bitcoin_address_repository' => $bitcoin_address_repository,
+			'bitcoin_wallet_repository'  => $bitcoin_wallet_repository,
+		);
 	}
 
 	/**
