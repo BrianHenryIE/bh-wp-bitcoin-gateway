@@ -59,7 +59,7 @@ class Post_BH_Bitcoin_Transaction {
 			'has_archive'    => false,
 			'show_in_menu'   => false,
 			'plugin_objects' => $this->plugin_objects,
-			'show_in_rest'   => true,
+			'show_in_rest'   => false, // TODO: change to `true` after ensuring correct authorization.
 		);
 		register_post_type( Bitcoin_Transaction_WP_Post_Interface::POST_TYPE, $args );
 	}
