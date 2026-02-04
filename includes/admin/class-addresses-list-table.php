@@ -338,15 +338,17 @@ class Addresses_List_Table extends WP_Posts_List_Table {
 			 */
 			$gateway_href_and_text = apply_filters( 'bh_wp_bitcoin_gateway_gateway_link', $gateway_href_and_text, $integration, $gateway_id, $bitcoin_wallet, $bitcoin_address );
 
-			if ( ! empty( $gateway_href_and_text['href'] ) && is_string( $gateway_href_and_text['href'] ) ) {
-				$gateway_href = $gateway_href_and_text['href'];
-			} else {
-				$gateway_href = null;
-			}
-			/** @var string $gateway_text */
-			$gateway_text = ! empty( $gateway_href_and_text['text'] ) ? $gateway_href_and_text['text'] : $gateway_id;
+			/** @var ?non-empty-string $gateway_href */
+			$gateway_href = isset( $gateway_href_and_text['href'] ) && is_string( $gateway_href_and_text['href'] ) && '' !== $gateway_href_and_text['href']
+				? $gateway_href_and_text['href']
+				: null;
 
-			/** @var string $link */
+			/** @var non-empty-string $gateway_text */
+			$gateway_text = isset( $gateway_href_and_text['text'] ) && is_string( $gateway_href_and_text['text'] ) && '' !== $gateway_href_and_text['text']
+				? $gateway_href_and_text['text']
+				: $gateway_id;
+
+			/** @var non-empty-string $link */
 			$link = ! empty( $gateway_href )
 				? sprintf( '<a href="%s">%s</a>', $gateway_href, $gateway_text )
 				: $gateway_text;
