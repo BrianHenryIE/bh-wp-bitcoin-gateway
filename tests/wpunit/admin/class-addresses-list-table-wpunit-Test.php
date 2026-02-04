@@ -4,6 +4,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\Admin;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\JsonMapper\JsonMapper_Helper;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories\Bitcoin_Address_Factory;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Address_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories\Bitcoin_Wallet_Factory;
@@ -108,6 +109,17 @@ class Addresses_List_Table_WPUnit_Test extends WPTestCase {
 		parent::tearDown();
 
 		unset( \WC_Payment_Gateways::instance()->payment_gateways['bh_bitcoin'] );
+	}
+
+	/**
+	 * @covers ::__construct
+	 */
+	public function test_constructor_throws_when_missing_dependencies(): void {
+		global $wp_post_types;
+		unset( $wp_post_types['bh-bitcoin-address']->dependencies );
+
+		$this->expectException( BH_WP_Bitcoin_Gateway_Exception::class );
+		new Addresses_List_Table( $this->args );
 	}
 
 	/**
