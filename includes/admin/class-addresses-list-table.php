@@ -141,7 +141,7 @@ class Addresses_List_Table extends WP_Posts_List_Table {
 	}
 
 	/**
-	 * Given a WP_Post, get the corresponding Bitcoin_Address object, using a local array to cache for this request/object.
+	 * Given a WP_Post, get the corresponding Bitcoin_Address object (TODO: use a local array to cache.).
 	 *
 	 * @param WP_Post $post The post the address information is stored under.
 	 *

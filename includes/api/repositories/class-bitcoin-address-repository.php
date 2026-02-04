@@ -89,7 +89,7 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 	}
 
 	/**
-	 * @used-by Addresses_List_Table
+	 * @used-by Addresses_List_Table::get_bitcoin_address_object()
 	 *
 	 * @param WP_Post $post A WP_Post storing address information.
 	 * @throws DateMalformedStringException If the database date could not be parsed – very unlikely.
