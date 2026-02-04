@@ -31,7 +31,7 @@ updates:
       include: "scope"
     labels:
       - "dependencies"
-      - "javascript"
+      - "js"
 
   # maintain dependencies for Composer
   - package-ecosystem: "composer"
