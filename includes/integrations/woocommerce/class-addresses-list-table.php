@@ -47,7 +47,7 @@ class Addresses_List_Table {
 
 		if ( ! isset( WC_Payment_Gateways::instance()->get_available_payment_gateways()[ $gateway_id ] ) ) {
 			return array(
-				'text' => sprintf( 'Unavailable WooCommerce: %s', $gateway_id ),
+				'text' => sprintf( 'WooCommerce: %s (unavailable)', $gateway_id ),
 			);
 		}
 
@@ -55,7 +55,7 @@ class Addresses_List_Table {
 		$gateway_instance = WC_Payment_Gateways::instance()->get_available_payment_gateways()[ $gateway_id ];
 
 		return array(
-			'href' => admin_url( sprintf( 'admin.php?page=wc-settings&tab=checkout&section=%s', $gateway_instance->title ) ),
+			'href' => admin_url( sprintf( 'admin.php?page=wc-settings&tab=checkout&section=%s', $gateway_instance->id ) ),
 			'text' => sprintf( 'WooCommerce: %s', $gateway_instance->title ),
 		);
 	}
