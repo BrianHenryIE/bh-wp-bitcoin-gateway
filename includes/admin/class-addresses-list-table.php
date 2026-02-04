@@ -339,6 +339,7 @@ class Addresses_List_Table extends WP_Posts_List_Table {
 				'text' => '',
 			);
 
+			// TODO: cache this.
 			/**
 			 * @param array{href?:string|mixed,text?:string|mixed} $filtered_result
 			 * @param non-empty-string $integration
