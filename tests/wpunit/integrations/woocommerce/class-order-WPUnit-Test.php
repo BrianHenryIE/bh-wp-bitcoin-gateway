@@ -8,6 +8,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Update_Address_Transactions_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Results\Check_Address_For_Payment_Service_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
+use ReflectionClass;
 use WC_Order;
 
 /**
@@ -29,8 +30,8 @@ class Order_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 			$sut,
 			'get_wc_order',
 			array(
-				'integration_id' => 'SomeOtherIntegration',
-				'order_post_id'  => 123,
+				'SomeOtherIntegration',
+				123,
 			)
 		);
 
@@ -50,8 +51,8 @@ class Order_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 			$sut,
 			'get_wc_order',
 			array(
-				'integration_id' => WooCommerce_Integration::class,
-				'order_post_id'  => 99999,
+				WooCommerce_Integration::class,
+				99999,
 			)
 		);
 
@@ -74,8 +75,8 @@ class Order_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 			$sut,
 			'get_wc_order',
 			array(
-				'integration_id' => WooCommerce_Integration::class,
-				'order_post_id'  => $order->get_id(),
+				WooCommerce_Integration::class,
+				$order->get_id(),
 			)
 		);
 
@@ -324,7 +325,7 @@ class Order_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	 * @throws \ReflectionException If the method does not exist.
 	 */
 	protected function invokeMethod( object $object_instance, string $method_name, array $parameters = array() ) {
-		$reflection = new \ReflectionClass( $object_instance::class );
+		$reflection = new ReflectionClass( $object_instance::class );
 		$method     = $reflection->getMethod( $method_name );
 
 		return $method->invokeArgs( $object_instance, $parameters );
