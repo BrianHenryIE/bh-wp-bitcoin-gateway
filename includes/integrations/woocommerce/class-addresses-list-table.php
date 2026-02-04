@@ -47,7 +47,7 @@ class Addresses_List_Table {
 
 		if ( ! isset( WC_Payment_Gateways::instance()->get_available_payment_gateways()[ $gateway_id ] ) ) {
 			return array(
-				'text' => sprintf( 'Unavailable WooCommerce: %s', $gateway_id ),
+				'text' => sprintf( 'WooCommerce: %s (unavailable)', $gateway_id ),
 			);
 		}
 
