@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "4832488de25d57bebc6bdbdf19a6a936",
+    "content-hash": "b94cfea5057b6e62e3d0137474d7581a",
     "packages": [
         {
             "name": "alleyinteractive/wordpress-autoloader",
@@ -3839,16 +3839,16 @@
         },
         {
             "name": "brianhenryie/strauss",
-            "version": "0.26.4",
+            "version": "0.26.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/BrianHenryIE/strauss.git",
-                "reference": "0ce27a1429fb6a5f30330fc8cc7ba497aaad46f0"
+                "reference": "f851edd511bc35ee563f46985bd0f355f67024eb"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/BrianHenryIE/strauss/zipball/0ce27a1429fb6a5f30330fc8cc7ba497aaad46f0",
-                "reference": "0ce27a1429fb6a5f30330fc8cc7ba497aaad46f0",
+                "url": "https://api.github.com/repos/BrianHenryIE/strauss/zipball/f851edd511bc35ee563f46985bd0f355f67024eb",
+                "reference": "f851edd511bc35ee563f46985bd0f355f67024eb",
                 "shasum": ""
             },
             "require": {
@@ -3915,9 +3915,9 @@
             "description": "Prefixes dependencies namespaces so they are unique to your plugin",
             "support": {
                 "issues": "https://github.com/BrianHenryIE/strauss/issues",
-                "source": "https://github.com/BrianHenryIE/strauss/tree/0.26.4"
+                "source": "https://github.com/BrianHenryIE/strauss/tree/0.26.5"
             },
-            "time": "2026-01-31T04:11:15+00:00"
+            "time": "2026-02-03T04:08:04+00:00"
         },
         {
             "name": "codeception/codeception",
@@ -15620,5 +15620,5 @@
     "platform-overrides": {
         "php": "8.4"
     },
-    "plugin-api-version": "2.9.0"
+    "plugin-api-version": "2.6.0"
 }
