@@ -95,7 +95,7 @@ class Post_BH_Bitcoin_Address {
 			'supports'      => array( 'title', 'thumbnail', 'excerpt', 'comments' ),
 			'has_archive'   => false,
 			'show_in_menu'  => false,
-			'show_in_rest'   => false, // TODO: change to `true` after ensuring correct authorization.
+			'show_in_rest'  => false, // TODO: change to `true` after ensuring correct authorization.
 			/**
 			 * Dependencies passed to the list table via the WP_Post_Type object.
 			 *
