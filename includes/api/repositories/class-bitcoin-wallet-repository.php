@@ -7,6 +7,7 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories;
 
+use BrianHenryIE\WP_Bitcoin_Gateway\Admin\Wallets_List_Table;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet_WP_Post_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories\Bitcoin_Wallet_Factory;
@@ -107,6 +108,16 @@ class Bitcoin_Wallet_Repository extends WP_Post_Repository_Abstract {
 	 */
 	public function get_by_wp_post_id( int $post_id ): Bitcoin_Wallet {
 		return $this->bitcoin_wallet_factory->get_by_wp_post_id( $post_id );
+	}
+
+	/**
+	 * @used-by Wallets_List_Table::get_bitcoin_wallet_object()
+	 *
+	 * @param WP_Post $post A WP_Post storing wallet information.
+	 * @throws UnknownCurrencyException If BTC is not correctly added to brick/money.
+	 */
+	public function get_by_wp_post( WP_Post $post ): Bitcoin_Wallet {
+		return $this->bitcoin_wallet_factory->get_by_wp_post( $post );
 	}
 
 	/**

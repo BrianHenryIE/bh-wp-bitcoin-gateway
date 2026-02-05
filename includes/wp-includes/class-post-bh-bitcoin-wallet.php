@@ -9,7 +9,9 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes;
 
+use BrianHenryIE\WP_Bitcoin_Gateway\Admin\Wallets_List_Table;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet_WP_Post_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Wallet_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 
 /**
@@ -18,24 +20,41 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
  * @see register_post_type()
  * @see register_post_status()
  *
+ * @see Wallets_List_Table
  * @see wp-admin/edit.php?post_type=bh-bitcoin-wallet
+ *
+ * @see Bitcoin_Wallet_WP_Post_Interface
+ *
+ * @phpstan-import-type Wallet_List_Table_Dependencies_Array from Wallets_List_Table
  */
 class Post_BH_Bitcoin_Wallet {
 
 	/**
-	 * Array of plugin objects to pass to post types.
+	 * Dependencies to pass to the WP_Post_Type object for use by the list table.
 	 *
-	 * @var array{api:API_Interface} $plugin_objects
+	 * Stored on the post type args and accessible via:
+	 * `get_post_type_object( 'bh-bitcoin-wallet' )->dependencies`
+	 *
+	 * @see Wallets_List_Table::__construct() Consumer of these dependencies.
+	 *
+	 * @var array&Wallet_List_Table_Dependencies_Array $dependencies
 	 */
-	protected array $plugin_objects = array();
+	protected array $dependencies;
 
 	/**
 	 * Constructor
 	 *
-	 * @param API_Interface $api The main plugin functions.
+	 * @param API_Interface             $api The main plugin API for wallet operations.
+	 * @param Bitcoin_Wallet_Repository $bitcoin_wallet_repository To get the wallet details for the admin list table.
 	 */
-	public function __construct( API_Interface $api ) {
-		$this->plugin_objects['api'] = $api;
+	public function __construct(
+		API_Interface $api,
+		Bitcoin_Wallet_Repository $bitcoin_wallet_repository,
+	) {
+		$this->dependencies = array(
+			'api'                       => $api,
+			'bitcoin_wallet_repository' => $bitcoin_wallet_repository,
+		);
 	}
 
 	/**
@@ -52,15 +71,20 @@ class Post_BH_Bitcoin_Wallet {
 		);
 
 		$args = array(
-			'labels'         => $labels,
-			'description'    => 'Wallets used with WooCommerce Bitcoin gateways.',
-			'public'         => true,
-			'menu_position'  => 8,
-			'supports'       => array( 'title', 'thumbnail', 'excerpt', 'comments' ),
-			'has_archive'    => false,
-			'show_in_menu'   => false,
-			'plugin_objects' => $this->plugin_objects,
+			'labels'        => $labels,
+			'description'   => 'Wallets used with WooCommerce Bitcoin gateways.',
+			'public'        => true,
+			'menu_position' => 8,
+			'supports'      => array( 'title', 'thumbnail', 'excerpt', 'comments' ),
+			'has_archive'   => false,
+			'show_in_menu'  => false,
 			'show_in_rest'   => false, // TODO: change to `true` after ensuring correct authorization.
+			/**
+			 * Dependencies passed to the list table via the WP_Post_Type object.
+			 *
+			 * @see Wallets_List_Table::__construct() Where these are consumed.
+			 */
+			'dependencies'  => $this->dependencies,
 		);
 
 		register_post_type( Bitcoin_Wallet_WP_Post_Interface::POST_TYPE, $args );

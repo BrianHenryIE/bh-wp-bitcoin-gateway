@@ -79,7 +79,7 @@ class Addresses_List_Table_WPUnit_Test extends WPTestCase {
 
 		$plugin_post_address_type = new Post_BH_Bitcoin_Address( $api, $bitcoin_address_repository, $bitcoin_wallet_repository );
 		$plugin_post_address_type->register_address_post_type();
-		$plugin_post_wallet_type = new Post_BH_Bitcoin_Wallet( $api );
+		$plugin_post_wallet_type = new Post_BH_Bitcoin_Wallet( $api, $bitcoin_wallet_repository );
 		$plugin_post_wallet_type->register_wallet_post_type();
 
 		$address       = 'bc1qnlz39q0r40xnv200s9wjutj0fdxex6x8abcdef';
