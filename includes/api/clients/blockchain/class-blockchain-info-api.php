@@ -79,7 +79,6 @@ class Blockchain_Info_Api implements Blockchain_API_Interface, LoggerAwareInterf
 
 		$adapter = new Blockchain_Info_Api_Transaction_Adapter();
 
-		// TODO: check this returns the array indexed by the txid.
 		return array_map(
 			$adapter->adapt( ... ),
 			$raw_address->getTxs()
