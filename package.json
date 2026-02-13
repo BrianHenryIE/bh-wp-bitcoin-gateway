@@ -62,7 +62,7 @@
 		"@wordpress/stylelint-config": "^23.31",
 		"dotenv": "^17.2",
 		"eslint-plugin-import": "^2.32",
-		"eslint-plugin-jest": "^29.12",
+		"eslint-plugin-jest": "^29.14",
 		"eslint-plugin-jsx-a11y": "^6.10",
 		"eslint-plugin-react": "^7.37",
 		"eslint-plugin-react-hooks": "^7.0",
