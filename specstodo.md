@@ -1,5 +1,6 @@
 A list of tests that should be written.
 
+* Outgoing rate limits – as though every outgoing request resulted in a 429 
 
 * When a WooCommerce order is placed, the email sent should contain the Bitcoin payment instructions
 * WooCommerce admin order ui should correctly display the last checked time
@@ -23,6 +24,8 @@ API T&Cs need to be linked from somewhere
 API logos need to be displayed (certainly for CoinGecko exchange rate)
 
 
+GitHub Actions phpcbf should not commit on PRs, only on merge to main.
+
 Code architecture:
 * API functions should all return strongly typed responses (with goal of intents/mcp)
 
@@ -32,3 +35,33 @@ Outside project:
 * bh-wp-private-uploads needs wpcs/phpstan/testing
 * wc-filter-orders-by-payment doesn't work with HPOS
 * 
+
+
+Website to market it:
+* must have the version number
+* must have the changelog
+* free to download from GitHub
+* pay for support
+* later, pay for access to Bitcoin node ()
+* explain in detail the support system
+* publish support statistics – time to resolve
+
+Broad plan:
+* brush up on design patterns
+* brush up on system design
+* rename the plugin to more generic 'crypto' rather than 'bitcoin'
+* add Monero as a payment method (which seems more orientated a daily transactions than HODL)
+* 
+
+
+test setting post_meta – does setting it multiple times erase any/all previous?
+
+
+Try out:
+
+https://github.com/pdepend/pdepend
+Rector
+https://github.com/bmitch/churn-php
+
+must run wordpress e2e tests with plugin activated
+

@@ -41,6 +41,8 @@ readonly class Check_Address_For_Payment_Service_Result extends Update_Address_T
 	/**
 	 * Is the confirmed amount greater than the required amount.
 	 *
+	 * TODO: `price_margin`.
+	 *
 	 * If the `target_amount` is `null` (addresses that have not been assigned to orders), this will return false.
 	 */
 	public function is_paid(): bool {

@@ -49,6 +49,10 @@ class Checkout implements LoggerAwareInterface {
 	 */
 	public function ensure_one_address_for_payment(): void {
 
+		// is_checkout()
+
+		// Why is woocommerce_checkout_init called on the post edit screen?
+
 		$bitcoin_gateways = $this->api_woocommerce->get_bitcoin_gateways();
 
 		foreach ( $bitcoin_gateways as $bitcoin_gateway ) {

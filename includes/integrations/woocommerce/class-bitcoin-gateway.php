@@ -384,6 +384,9 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 		// order exists and the payment address is assigned.
 		// By caching it for 15 seconds, we should be ok.
 
+		// TODO: use a "order-recently-placed" transient to set is_available=true for x seconds.
+		// TODO: use a cron-job to ensure unused addresses, rather than action scheduler (maybe)
+
 		// TODO: always keep more than two addresses available.
 
 		$is_available_cache_key = 'bh-wp-bitcoin-gateway-available:' . self::class . $this->id;

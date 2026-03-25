@@ -9,6 +9,12 @@ npx wp-env start --xdebug;
 BASEURL=http://localhost:8888 npx playwright test --ui &;
 ```
 
+* PHP code is in `includes`
+* JS code is in `src` and compiles to `assets/js`
+* Nothing in `includes/api` is hooked to anything 
+* `development-plugin` mostly adds REST endpoints for E2E tests
+
+
 ## Rough notes.
 
 List scripts:
