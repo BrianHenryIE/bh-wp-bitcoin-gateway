@@ -25,6 +25,8 @@ use WC_Order;
 use WC_Payment_Gateway;
 use WC_Product;
 
+// TODO: The image is huge at the shortcode checkout, limit it to ~25px
+
 /**
  * Simple instance of WC_Payment Gateway. Defines the admin settings and processes the payment.
  *
