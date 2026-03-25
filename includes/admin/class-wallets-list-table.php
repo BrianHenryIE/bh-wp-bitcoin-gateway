@@ -63,11 +63,10 @@ class Wallets_List_Table extends WP_Posts_List_Table {
 		 * @see Post_BH_Bitcoin_Wallet::$dependencies
 		 * @see Post_BH_Bitcoin_Wallet::register_wallet_post_type()
 		 *
-		 * @var WP_Post_Type&object{dependencies:Wallet_List_Table_Dependencies_Array} $post_type_object
+		 * @var null|(WP_Post_Type&object{dependencies:Wallet_List_Table_Dependencies_Array}) $post_type_object
 		 */
 		$post_type_object = get_post_type_object( $post_type_name );
 
-		// @phpstan-ignore-next-line function.impossibleType This could be null – I don't know how to use & in the type above with null.
 		if ( is_null( $post_type_object ) ) {
 			throw new BH_WP_Bitcoin_Gateway_Exception( 'Wallets_List_Table constructed before post type registered' );
 		}
