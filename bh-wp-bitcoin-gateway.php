@@ -184,3 +184,12 @@ $boot_integrations = function () use ( $container ): void {
 	}
 };
 add_action( 'plugins_loaded', $boot_integrations, 0 );
+
+/**
+ * TODO: Move to a class. Copy HPOS compatability as template.
+ */
+add_action( 'before_woocommerce_init', function() {
+	if ( class_exists( '\Automattic\WooCommerce\Utilities\FeaturesUtil' ) ) {
+		\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'cart_checkout_blocks', __FILE__, false );
+	}
+} );
