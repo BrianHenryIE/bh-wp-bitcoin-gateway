@@ -189,7 +189,7 @@
     "wp-api/basic-auth": "^1",
     "wp-cli/dist-archive-command": "dev-main",
     "wp-cli/wp-cli-bundle": "^2.12",
-    "wp-cli/wp-cli-tests": "dev-main#eee3c22b04e81d5932913a3136dea0a5b31cd208",
+    "wp-cli/wp-cli-tests": "dev-main#54466123c36d75322c40716d1750f5539fe4c0db",
     "wp-coding-standards/wpcs": "*",
     "wpackagist-plugin/bh-wc-set-gateway-by-url": ">=1.2",
     "wpackagist-plugin/checkout-fees-for-woocommerce": ">=2.9",

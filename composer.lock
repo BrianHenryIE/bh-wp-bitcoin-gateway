@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "b94cfea5057b6e62e3d0137474d7581a",
+    "content-hash": "888276e273f8884690da23f0c981678c",
     "packages": [
         {
             "name": "alleyinteractive/wordpress-autoloader",
@@ -15043,12 +15043,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/wp-cli/wp-cli-tests.git",
-                "reference": "eee3c22b04e81d5932913a3136dea0a5b31cd208"
+                "reference": "54466123c36d75322c40716d1750f5539fe4c0db"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/wp-cli/wp-cli-tests/zipball/eee3c22b04e81d5932913a3136dea0a5b31cd208",
-                "reference": "eee3c22b04e81d5932913a3136dea0a5b31cd208",
+                "url": "https://api.github.com/repos/wp-cli/wp-cli-tests/zipball/54466123c36d75322c40716d1750f5539fe4c0db",
+                "reference": "54466123c36d75322c40716d1750f5539fe4c0db",
                 "shasum": ""
             },
             "require": {
@@ -15128,7 +15128,7 @@
                 "issues": "https://github.com/wp-cli/wp-cli-tests/issues",
                 "source": "https://github.com/wp-cli/wp-cli-tests"
             },
-            "time": "2026-02-02T01:50:57+00:00"
+            "time": "2026-03-12T07:26:45+00:00"
         },
         {
             "name": "wp-cli/wp-config-transformer",
@@ -15620,5 +15620,5 @@
     "platform-overrides": {
         "php": "8.4"
     },
-    "plugin-api-version": "2.6.0"
+    "plugin-api-version": "2.9.0"
 }
