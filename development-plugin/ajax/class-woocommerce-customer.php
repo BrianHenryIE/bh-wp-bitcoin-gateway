@@ -26,8 +26,8 @@ class WooCommerce_Customer {
 	/**
 	 * Add our custom nonce to woocommerce_params for easy access.
 	 *
-	 * @param false|array $params WooCommerce params.
-	 * @return array{ajax_url:string, wc_ajax_url:string, i18n_view_cart:string, cart_url:string, is_cart:bool, cart_redirect_after_add:string}
+	 * @param false|array{ajax_url:string, wc_ajax_url:string, i18n_view_cart:string, cart_url:string, is_cart:bool, cart_redirect_after_add:string} $params WooCommerce params.
+	 * @return array{e2e_set_customer_data_nonce:string}
 	 */
 	public function add_nonce_to_woocommerce_params( $params ): array {
 		if ( ! is_array( $params ) ) {
