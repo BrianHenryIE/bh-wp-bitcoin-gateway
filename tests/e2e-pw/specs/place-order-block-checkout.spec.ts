@@ -11,7 +11,7 @@ import {
 	switchToBlocksTheme,
 	verifyTheme,
 } from '../helpers/rest/theme-switcher';
-import { fillBilling, useBlocksCheckout } from '../helpers/ui/checkout';
+import { useBlocksCheckout } from '../helpers/ui/checkout';
 import { configureBitcoinXpub } from '../helpers/ui/configure-bitcoin-xpub';
 import { createSimpleProduct } from '../helpers/ui/create-simple-product';
 import { placeBitcoinOrder } from '../helpers/ui/place-bitcoin-order';
