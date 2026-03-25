@@ -20,6 +20,7 @@
     "wp-content/plugins/basic-auth": "./wp-content/plugins/basic-auth",
     "wp-content/plugins/bh-wc-set-gateway-by-url": "./wp-content/plugins/bh-wc-set-gateway-by-url",
     "wp-content/plugins/checkout-fees-for-woocommerce": "./wp-content/plugins/checkout-fees-for-woocommerce",
+    "wp-content/plugins/coinsnap-for-givewp": "./wp-content/plugins/coinsnap-for-givewp",
     "wp-content/plugins/crypto-payments-woo": "./wp-content/plugins/crypto-payments-woo",
     "wp-content/plugins/decentralized-bitcoin-cryptodec-payment-gateway-for-woocommerce": "./wp-content/plugins/decentralized-bitcoin-cryptodec-payment-gateway-for-woocommerce",
     "wp-content/plugins/development-plugin": "./development-plugin",
