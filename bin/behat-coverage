@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+#
+# Wrapper script to run Behat with code coverage enabled
+#
+# Usage: bin/behat-coverage [behat options]
+#
+
+# Set the database type to SQLite by default if not already set
+export WP_CLI_TEST_DBTYPE="${WP_CLI_TEST_DBTYPE:-sqlite}"
+
+# Set XDEBUG_MODE to enable code coverage
+# Note: Setting this as an environment variable ensures Xdebug is in coverage mode
+export XDEBUG_MODE=coverage
+
+# Run Behat
+exec php vendor/bin/behat "$@"
