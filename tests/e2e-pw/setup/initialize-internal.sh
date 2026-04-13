@@ -37,8 +37,8 @@ wp rewrite structure /%year%/%monthnum%/%postname%/ --hard;
 # Prevent WooCommerce setup wizard from running.
 # It checks for the existence of the option 'woocommerce_version'.
 # WC_Install::is_new_install()
-wp option set woocommerce_version "10.0.4"
-wp transient delete _wc_activation_redirect
+wp option set woocommerce_version $(wp plugin get woocommerce --field=version);
+wp transient delete _wc_activation_redirect;
 
 # TODO: Pick a block theme that supports WooCommerce.
 # wp theme install storefront --activate;
