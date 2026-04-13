@@ -49,7 +49,7 @@ class Checkout implements LoggerAwareInterface {
 	 */
 	public function ensure_one_address_for_payment(): void {
 
-		// is_checkout()
+		// TODO: Guard with `is_checkout()`.
 
 		// Why is woocommerce_checkout_init called on the post edit screen?
 
