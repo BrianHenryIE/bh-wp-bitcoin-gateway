@@ -40,7 +40,7 @@
 	"homepage": "https://github.com/BrianHenryIE/bh-wp-bitcoin-gateway#readme",
 	"devDependencies": {
 		"@babel/eslint-parser": "^7.28",
-		"@playwright/test": "^1.58",
+		"@playwright/test": "^1.59",
 		"@testing-library/jest-dom": "^6.9",
 		"@testing-library/react": "^16.3",
 		"@testing-library/user-event": "^14.6",
