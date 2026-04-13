@@ -156,7 +156,7 @@
     "ext-intl": "*",
     "ext-json": "*",
     "alleyinteractive/wordpress-autoloader": "^1.1",
-    "art4/requests-psr18-adapter": "^1.0",
+    "art4/requests-psr18-adapter": "^1.4",
     "brianhenryie/bh-php-blockchain-info": "dev-main",
     "brianhenryie/bh-php-btc-rpc-explorer-api-client": "dev-main",
     "brianhenryie/bh-wp-logger": "*",
