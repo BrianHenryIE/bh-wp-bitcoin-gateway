@@ -183,7 +183,7 @@
     "impress-org/givewp-example-gateway": "dev-master",
     "johnpbloch/wordpress": "*",
     "kamazee/pr-filter": "*",
-    "lucatume/wp-browser": "^4.5.11",
+    "lucatume/wp-browser": "^4.5.15",
     "php-stubs/woocommerce-stubs": "*",
     "phpcompatibility/phpcompatibility-wp": "*",
     "phpstan/extension-installer": "*",
