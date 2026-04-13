@@ -45,24 +45,34 @@
       "tests/_support"
     ]
   },
-  "repositories": {
-    "wordpress/wordpress": {
+  "repositories": [
+    {
+      "name": "brianhenryie/pr-filter",
+      "type": "git",
+      "url": "https://github.com/BrianHenryIE/pr-filter"
+    },
+    {
+      "name": "wordpress/wordpress",
       "url": "https://github.com/WordPress/wordpress-develop.git",
       "type": "git"
     },
-    "wpackagist": {
+    {
+      "name": "wpackagist",
       "type": "composer",
       "url": "https://wpackagist.org"
     },
-    "brianhenryie/bh-php-blockchain-info": {
+    {
+      "name": "brianhenryie/bh-php-blockchain-info",
       "url": "https://github.com/BrianHenryIE/bh-php-blockchain-info",
       "type": "git"
     },
-    "brianhenryie/bh-php-btc-rpc-explorer-api-client": {
+    {
+      "name": "brianhenryie/bh-php-btc-rpc-explorer-api-client",
       "url": "https://github.com/BrianHenryIE/bh-php-btc-rpc-explorer-api-client",
       "type": "git"
     },
-    "impress-org/give-next-gen": {
+    {
+      "name": "impress-org/give-next-gen",
       "type": "package",
       "packagist.org": false,
       "package": {
@@ -81,7 +91,8 @@
         "installation-source": "dist"
       }
     },
-    "impress-org/givewp-example-gateway": {
+    {
+      "name": "impress-org/givewp-example-gateway",
       "type": "package",
       "packagist.org": false,
       "package": {
@@ -96,7 +107,8 @@
         "installation-source": "source"
       }
     },
-    "woocommerce/woocommerce": {
+    {
+      "name": "woocommerce/woocommerce",
       "type": "package",
       "package": {
         "name": "woocommerce/woocommerce",
@@ -109,7 +121,8 @@
         "installation-source": "dist"
       }
     },
-    "woocommerce/woocommerce-gateway-dummy": {
+    {
+      "name": "woocommerce/woocommerce-gateway-dummy",
       "type": "package",
       "package": {
         "name": "woocommerce/woocommerce-gateway-dummy",
@@ -121,7 +134,8 @@
         "installation-source": "dist"
       }
     },
-    "wp-api/basic-auth": {
+    {
+      "name": "wp-api/basic-auth",
       "type": "package",
       "package": {
         "name": "wp-api/basic-auth",
@@ -133,11 +147,9 @@
         },
         "installation-source": "dist"
       },
-      "only": [
-        "wp-api/basic-auth"
-      ]
+      "only": ["wp-api/basic-auth"]
     }
-  },
+  ],
   "require": {
     "php": ">=8.4",
     "ext-bcmath": "*",
@@ -170,6 +182,7 @@
     "impress-org/give-next-gen": "^0.2",
     "impress-org/givewp-example-gateway": "dev-master",
     "johnpbloch/wordpress": "*",
+    "kamazee/pr-filter": "*",
     "lucatume/wp-browser": "^4.5.11",
     "php-stubs/woocommerce-stubs": "*",
     "phpcompatibility/phpcompatibility-wp": "*",
