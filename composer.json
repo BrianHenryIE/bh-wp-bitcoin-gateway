@@ -25,7 +25,7 @@
     }
   },
   "autoload": {
-    "classmap":  [
+    "classmap": [
       "includes"
     ]
   },
@@ -121,7 +121,7 @@
         "installation-source": "dist"
       }
     },
-    "wp-api/basic-auth":{
+    "wp-api/basic-auth": {
       "type": "package",
       "package": {
         "name": "wp-api/basic-auth",
