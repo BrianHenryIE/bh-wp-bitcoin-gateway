@@ -25,7 +25,7 @@ use WC_Order;
 use WC_Payment_Gateway;
 use WC_Product;
 
-// TODO: The image is huge at the shortcode checkout, limit it to ~25px
+// TODO: The image is huge at the shortcode checkout, limit it to ~25px.
 
 /**
  * Simple instance of WC_Payment Gateway. Defines the admin settings and processes the payment.
@@ -385,7 +385,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 		// By caching it for 15 seconds, we should be ok.
 
 		// TODO: use a "order-recently-placed" transient to set is_available=true for x seconds.
-		// TODO: use a cron-job to ensure unused addresses, rather than action scheduler (maybe)
+		// TODO: use a cron-job to ensure unused addresses, rather than action scheduler (maybe).
 
 		// TODO: always keep more than two addresses available.
 
