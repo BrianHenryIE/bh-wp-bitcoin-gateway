@@ -62,10 +62,6 @@
       "url": "https://github.com/BrianHenryIE/bh-php-btc-rpc-explorer-api-client",
       "type": "git"
     },
-    "bitwasp/bitcoin-php": {
-      "url": "https://github.com/BrianHenryIE/bitcoin-php",
-      "type": "git"
-    },
     "impress-org/give-next-gen": {
       "type": "package",
       "packagist.org": false,
