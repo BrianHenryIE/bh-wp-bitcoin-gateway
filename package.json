@@ -50,7 +50,7 @@
 		"@types/react": "^18.3",
 		"@types/react-dom": "^18.3",
 		"@types/wordpress__block-editor": "^15.0",
-		"@typescript-eslint/eslint-plugin": "^8.54",
+		"@typescript-eslint/eslint-plugin": "^8.58",
 		"@typescript-eslint/parser": "^8.55",
 		"@woocommerce/dependency-extraction-webpack-plugin": "^4.0",
 		"@wordpress/block-editor": "^15.12",
