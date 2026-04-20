@@ -8,6 +8,12 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Clients;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\Rate_Limit_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction;
 
+// I think we need every client to implement the ~`bh_wp_bitcoin_blockchain_api_link` descriptive filter to be able to
+// attribute the information we have with where it came from.
+//
+// . E.g. so we can get the
+// url to link to the details of a transaction. SO we can att
+
 interface Blockchain_API_Interface {
 
 	/**
