@@ -27,26 +27,31 @@ export async function getActionSchedulerTableRowForOrder(
 
 	return ( await tableRow.count() ) > 0 ? tableRow : null;
 }
-
+/**
+ * Run a pending Action Scheduler job, identified by its hook name, via the wp-admin
+ * Tools → Scheduled Actions list table. Requires the page to be logged in as admin.
+ * @param page
+ * @param hook
+ */
 export async function runActionSchedulerScheduledEvent(
 	page: any,
 	hook: string
 ) {
 	const actionSchedulerUrl =
 		'/wp-admin/tools.php?page=action-scheduler&status=pending&s=' + hook;
-	await page.goto(actionSchedulerUrl);
+	await page.goto( actionSchedulerUrl );
 
 	const pendingJob = page.locator(
 		'td[data-colname="Hook"]:has-text("' + hook + '")'
 	);
 
-	if ((await pendingJob.count()) > 0) {
+	if ( ( await pendingJob.count() ) > 0 ) {
 		// Run the job
 		await pendingJob.hover();
-		const runButton = pendingJob.locator('.run a');
-		if ((await runButton.count()) > 0) {
+		const runButton = pendingJob.locator( '.run a' );
+		if ( ( await runButton.count() ) > 0 ) {
 			await runButton.click();
-			await page.waitForLoadState('networkidle');
+			await page.waitForLoadState( 'networkidle' );
 		}
 	}
 

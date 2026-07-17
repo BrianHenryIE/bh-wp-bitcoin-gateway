@@ -48,24 +48,60 @@ export async function updateCartCustomer(
 ): Promise< void > {
 	const baseURL: string = config.use.baseURL!;
 
-	// Visit any WooCommerce page to get the nonce (doesn't need to be checkout)
-	// The AJAX endpoint will initialize the session if needed
-	const currentUrl = page.url();
-	const isOnSite = currentUrl.startsWith( baseURL );
+	/**
+	 * The nonce is added to `window.woocommerce_params` by the development plugin, but only on
+	 * frontend pages where WooCommerce enqueues its scripts — not on wp-admin pages (whose URLs
+	 * also start with the baseURL), and not before the page's scripts have loaded (a race that
+	 * previously failed intermittently, particularly on Firefox). So: read it, and if it is not
+	 * present, navigate to the shop page and wait for it.
+	 */
+	type WindowWithWooCommerceParams = Window & {
+		woocommerce_params?: { e2e_set_customer_data_nonce?: string };
+	};
 
-	if ( ! isOnSite ) {
-		// Visit shop page if not already on the site
+	const readNonceFromWooCommerceParams = async (): Promise<
+		string | undefined
+	> =>
+		await page
+			.evaluate(
+				() =>
+					( window as WindowWithWooCommerceParams ).woocommerce_params
+						?.e2e_set_customer_data_nonce
+			)
+			.catch( () => undefined );
+
+	let setCustomerDataNonce = await readNonceFromWooCommerceParams();
+
+	if ( ! setCustomerDataNonce ) {
+		// Visit the shop page, where WooCommerce frontend scripts are enqueued.
+		// The AJAX endpoint will initialize the session if needed.
 		await page.goto( `${ baseURL }/shop` );
-		await page.waitForLoadState( 'networkidle' );
+		await page
+			.waitForFunction(
+				() =>
+					!! ( window as WindowWithWooCommerceParams )
+						.woocommerce_params?.e2e_set_customer_data_nonce,
+				undefined,
+				{ timeout: 15_000 }
+			)
+			.catch( () => undefined );
+		setCustomerDataNonce = await readNonceFromWooCommerceParams();
+	}
+
+	if ( ! setCustomerDataNonce ) {
+		throw new Error(
+			'`window.woocommerce_params.e2e_set_customer_data_nonce` not found on ' +
+				page.url() +
+				' — is the development plugin active and WooCommerce enqueuing frontend scripts?'
+		);
 	}
 
 	// Make the AJAX call from within the browser context to ensure session cookie is included
 	const result = await page.evaluate(
-		async ( { billing, shipping } ) => {
+		async ( { billing, shipping, security } ) => {
 			const formData = new URLSearchParams();
 			formData.append( 'action', 'e2e_set_customer_data' );
-			// @ts-ignore
-			formData.append( 'security', window.woocommerce_params.e2e_set_customer_data_nonce );
+			formData.append( 'security', security );
 
 			if ( billing ) {
 				formData.append( 'billing_first_name', billing.first_name );
@@ -112,6 +148,7 @@ export async function updateCartCustomer(
 		{
 			billing: billingAddress,
 			shipping: shippingAddress,
+			security: setCustomerDataNonce,
 		}
 	);
 
@@ -119,7 +156,9 @@ export async function updateCartCustomer(
 
 	if ( ! result.ok || ! result.body.success ) {
 		throw new Error(
-			`Failed to set customer data: ${ result.status } ${ JSON.stringify( result.body ) }`
+			`Failed to set customer data: ${ result.status } ${ JSON.stringify(
+				result.body
+			) }`
 		);
 	}
 }
@@ -163,8 +202,10 @@ export async function setDefaultShippingAddress( page: Page ): Promise< void > {
 	await updateCartCustomer( page, undefined, shippingAddress );
 }
 
-export async function setDefaultCustomerAddresses( page: Page ): Promise< void > {
-	console.log('setDefaultCustomerAddresses()');
+export async function setDefaultCustomerAddresses(
+	page: Page
+): Promise< void > {
+	console.log( 'setDefaultCustomerAddresses()' );
 
 	const billing = testConfig.addresses.customer.billing;
 

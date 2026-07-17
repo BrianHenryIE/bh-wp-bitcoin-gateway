@@ -6,6 +6,7 @@ import { test, expect } from '@playwright/test';
 /**
  * Internal dependencies
  */
+import { fetchActions } from '../helpers/rest/action-scheduler';
 import {
 	getBitcoinAddressCount,
 	deleteBitcoinAddresses,
@@ -14,7 +15,6 @@ import { configureBitcoinXpub } from '../helpers/ui/configure-bitcoin-xpub';
 import { createSimpleProduct } from '../helpers/ui/create-simple-product';
 import { loginAsAdmin } from '../helpers/ui/login';
 import { placeBitcoinOrder } from '../helpers/ui/place-bitcoin-order';
-import {fetchActions} from "../helpers/rest/action-scheduler";
 
 test.describe( 'Generate new addresses', () => {
 	test.beforeAll( async ( { browser } ) => {

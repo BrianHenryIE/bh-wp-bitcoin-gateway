@@ -7,10 +7,10 @@ import { Page, expect } from '@playwright/test';
  * Internal dependencies
  */
 import { testConfig } from '../../config/test-config';
+import { setDefaultCustomerAddresses } from '../rest/wc-cart';
 
 import { selectPaymentGateway } from './checkout';
 import { logout } from './login';
-import { setDefaultCustomerAddresses } from "../rest/wc-cart";
 
 async function selectBitcoinPaymentMethod( page: Page ) {
 	await selectPaymentGateway( page, 'bh_bitcoin' );
