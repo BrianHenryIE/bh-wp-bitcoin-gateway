@@ -7,10 +7,9 @@ import { registerPaymentMethod } from '@woocommerce/blocks-registry';
  * WordPress dependencies
  */
 import { getSetting } from '@woocommerce/settings';
-import React from 'react';
-
 import { decodeEntities } from '@wordpress/html-entities';
 import { __ } from '@wordpress/i18n';
+import React from 'react';
 
 // TODO: Is there a more correct way to import this than via Composer/PHP?
 /**

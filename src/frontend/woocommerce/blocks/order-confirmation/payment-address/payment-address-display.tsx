@@ -1,12 +1,15 @@
 /**
  * External dependencies
  */
+/**
+ * WordPress dependencies
+ */
+import { __ } from '@wordpress/i18n';
 import React, { useEffect, useState } from 'react';
 
 /**
  * WordPress dependencies
  */
-import { __ } from '@wordpress/i18n';
 
 interface PaymentAddressDisplayProps {
 	paymentAddress?: string;

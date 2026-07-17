@@ -4,9 +4,8 @@
 /**
  * External dependencies
  */
-import React, { useEffect, useState } from 'react';
-
 import { __ } from '@wordpress/i18n';
+import React, { useEffect, useState } from 'react';
 
 interface PaymentStatusDisplayProps {
 	paymentStatus?: string;

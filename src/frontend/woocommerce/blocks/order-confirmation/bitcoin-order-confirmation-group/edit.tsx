@@ -4,9 +4,8 @@
 /**
  * External dependencies
  */
-import React from 'react';
-
 import { useBlockProps, InnerBlocks } from '@wordpress/block-editor';
+import React from 'react';
 
 interface EditProps {
 	attributes: {

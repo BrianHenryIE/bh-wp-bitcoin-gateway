@@ -1,7 +1,6 @@
 /**
  * External dependencies
  */
-import React from 'react';
 
 /**
  * WordPress dependencies
@@ -9,6 +8,7 @@ import React from 'react';
 import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
 import { PanelBody, ToggleControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import React from 'react';
 
 /**
  * Internal dependencies
