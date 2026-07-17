@@ -2,9 +2,6 @@ name: Run PHPStan
 
 # Run PHPStan to annotate the code
 
-#  composer config repositories.brianhenryie/pr-filter git https://github.com/BrianHenryIE/pr-filter
-#  composer require --dev kamazee/pr-filter
-
 on:
   push:
     branches:
@@ -18,43 +15,63 @@ jobs:
 
     strategy:
       matrix:
-        php: [ '8.4', '8.5' ]
+        php: [ '8.4' ]
+
+    #    env:
+    #      COMPOSER_ALLOW_UNSAFE_PHAR_METADATA: 1 # "Refusing to parse a tar/phar archive on PHP < 8.0 because it is not safe to process untrusted archives on that PHP version."
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Install PHP
-        uses: shivammathur/setup-php@v2
+      - name: Checkout PR branch
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
-          php-version: ${{ matrix.php }}
-          tools: composer, cs2pr
-          extensions: zip
+          fetch-depth: 0 # needed for baseline comparison
 
-      - name: Install sponge
-        run: sudo apt-get install moreutils
+      - name: Set up PHP
+        uses: shivammathur/setup-php@ccf2c627fe61b1b4d924adfcbd19d661a18133a0 # v2.35.2
+        with:
+          php-version: 8.4
+          tools: composer:v2, cs2pr
+          extensions: fileinfo, gd
+          coverage: none
 
       - name: Run composer install
         run: composer install
 
-      - name: Run PHPStan at max level to add annotations to the code
-        id: phpstan_max
+      - name: Run PHPStan to add annotations to the code
         continue-on-error: true
-        run: |
-          vendor/bin/phpstan analyse -c phpstan.neon --level max --memory-limit 1G --error-format=checkstyle | cs2pr
+        run: vendor/bin/phpstan analyse -c phpstan.neon --level max --memory-limit 1G --error-format=checkstyle | cs2pr
 
-      # On merge to main, fail for any error in `includes`. TODO: add templates dir
-      - name: Run PHPStan to print errors on the includes directory in the normal format and fail hard (main)
-        run: vendor/bin/phpstan analyse includes -c phpstan.neon --memory-limit 1G
+      # On merge to main, fail for any error in `src`.
+      - name: Run PHPStan to add annotations to the code (main)
+        id: run-phpstan
+        run: vendor/bin/phpstan analyse src -c phpstan.neon --memory-limit 1G
         if: ${{ github.event_name != 'pull_request' }}
+        continue-on-error: true # Continue so we can commit the badge.
 
-      - name: Get changed files
-        if: ${{ github.event_name == 'pull_request' }}
-        id: changed_files_includes
-        uses: tj-actions/changed-files@v47
+      - name: Get PhpStan level
+        id: phpstan-level
+        run: |
+          # After adding the example commands at the top of the phpstan.neon file, which contain the word "level", we
+          # now have to use `tail`+`head` to skip the first few lines. (I'm sure there's a suitable regex, but this is
+          # easy to implement and follow)
+          LEVEL=$(tail -n +3 phpstan.neon | head -n 10 | grep level | sed "s/[^0-9]*//")
+          echo "level=$LEVEL" >> "$GITHUB_OUTPUT"
+
+      - name: Check success
+        if: ${{ github.event_name != 'pull_request' && steps.run-phpstan.outcome == 'success' }}
+        run: curl -o .github/phpstan.svg https://img.shields.io/badge/PHPStan-Level%20${{ steps.phpstan-level.outputs.level}}-2a5ea7.svg
+
+      - name: Check failures
+        if: ${{ github.event_name != 'pull_request' && steps.run-phpstan.outcome != 'success' }}
+        run: curl -o .github/phpstan.svg https://img.shields.io/badge/PHPStan-Level%20${{ steps.phpstan-level.outputs.level}}❌-lightgrey.svg
+
+      # This probably needs DEPLOY_KEY set for PRs and private repos
+      - name: Commit README badge changes
+        uses: stefanzweifel/git-auto-commit-action@v7
+        if: ${{ matrix.php == '8.4' && github.event_name != 'pull_request' }}
         with:
-          separator: ' '
-          files: 'includes/**/**.php'
+          file_pattern: ".github/phpstan.svg"
+          commit_message: "🤖 PhpStan"
 
       # This outputs `steps.pr_diff.outputs.diff_filename` and `steps.pr_diff.outputs.diff_contents`.
       - name: Get the PR diff
@@ -73,17 +90,42 @@ jobs:
         env:
           TARGET_BRANCH_REF_NAME: ${{ github.event.pull_request.base.ref }}
 
-      # On PRs, only fail for errors in important modified files.
-      - name: Run PHPStan at phpstan.neon level only on changed_files in includes directory
+      - name: Run PHPStan at phpstan.neon level only on files specified in phpstan.neon
         if: ${{ github.event_name == 'pull_request' }}
         continue-on-error: true
-        run: vendor/bin/phpstan analyse ${{ steps.changed_files_includes.outputs.all_changed_files }} -c phpstan.neon --memory-limit 1G --error-format=checkstyle | sponge phpstan-checkstyle.xml
+        run: vendor/bin/phpstan analyse -c phpstan.neon --memory-limit 1G --error-format=checkstyle > phpstan-checkstyle.xml
 
-      - name: Fail if there are still PHPStan errors in the modified files (pr)
+      # On PRs, print out the xml for debug.
+      - name: Debug log phpstan-checkstyle.xml
+        continue-on-error: true
+        if: ${{ github.event_name == 'pull_request' }}
+        run: cat ${{ env.CHECKSTYLE_FILENAME }}
+        env:
+          CHECKSTYLE_FILENAME: "phpstan-checkstyle.xml"
+
+      - name: Install kamazee/pr-filter
+        run: composer require --dev kamazee/pr-filter
+
+      - name: Generate filtered-checkstyle.xml – PHPStan errors only the modified lines in the pr diff
         if: ${{ github.event_name == 'pull_request' }}
         run: |
-          vendor/bin/prf filter-checkstyle ${{ env.DIFF_FILENAME }} ${{ env.CHECKSTYLE_FILENAME }}  filtered-checkstyle.xml --base-path=$(pwd)
-          cat filtered-checkstyle.xml | cs2pr
+          vendor/bin/prf filter-checkstyle ${{ env.DIFF_FILENAME }} ${{ env.CHECKSTYLE_FILENAME }} ${{ env.OUTPUT_FILENAME }} --base-path=$GITHUB_WORKSPACE
         env:
           DIFF_FILENAME: ${{ steps.pr_diff.outputs.diff_filename }}
           CHECKSTYLE_FILENAME: "phpstan-checkstyle.xml"
+          OUTPUT_FILENAME: "filtered-checkstyle.xml"
+
+      # We don't really care about the annotations of cs2pr here, but we use it to fail.
+      - name: Fail if there are still PHPStan errors in modified lines
+        if: ${{ github.event_name == 'pull_request' }}
+        run: |
+          cat ${{ env.FILTERED_CHECKSTYLE_FILENAME }} | cs2pr
+        env:
+          FILTERED_CHECKSTYLE_FILENAME: "filtered-checkstyle.xml"
+
+      # On PRs, print out the xml for debug.
+      - name: Debug log filtered-checkstyle.xml
+        if: ${{ failure() && github.event_name == 'pull_request' }}
+        run: cat ${{ env.CHECKSTYLE_FILENAME }}
+        env:
+          CHECKSTYLE_FILENAME: "filtered-checkstyle.xml"

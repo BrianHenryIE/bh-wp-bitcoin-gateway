@@ -30,7 +30,7 @@ jobs:
 
     strategy:
       matrix:
-        php: [ '8.4', '8.5' ]
+        php: [ '8.4', '8.5', '8.6' ]
 
     steps:
       - uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # v4.3.1
@@ -69,7 +69,16 @@ jobs:
       # NB: how would that affect tj-actions/changed-files?
 
       - name: Install PHP dependencies
+        if: ${{ github.event_name == 'pull_request' }}
+        run: composer update --verbose
+
+      - name: Install PHP dependencies (using update)
+        if: ${{ github.event_name != 'pull_request' }}
         run: composer install --verbose
+
+      - name: Install php-codecoverage-markdown for markdown report generation
+        if: ${{ matrix.php == env.COVERAGE_PHP_VERSION }}
+        run: composer require brianhenryie/php-codecoverage-markdown --dev --with-all-dependencies --no-scripts
 
       - name: Install JS dependencies
         run: npm install
