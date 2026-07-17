@@ -156,7 +156,9 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 	public function assign_unused_address_to_order( WC_Order $order, Money $btc_total ): Bitcoin_Address {
 		$this->logger->debug( 'Get fresh address for `shop_order:{order_id}`', array( 'order_id' => $order->get_id() ) );
 
-		$btc_address = $this->get_fresh_address_for_gateway( $this->get_bitcoin_gateways()[ $order->get_payment_method() ] );
+		$bitcoin_gateway = $this->get_bitcoin_gateways()[ $order->get_payment_method() ];
+
+		$btc_address = $this->get_fresh_address_for_gateway( $bitcoin_gateway );
 
 		if ( is_null( $btc_address ) ) {
 			throw new BH_WP_Bitcoin_Gateway_Exception( 'No Bitcoin addresses available.' );
@@ -184,6 +186,12 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 		$this->background_jobs_scheduler->schedule_single_check_assigned_addresses_for_transactions(
 			date_time: new DateTimeImmutable( 'now' )->add( new DateInterval( 'PT15M' ) )
 		);
+
+		// Queue a background job to prepare the next unused address, since this order has consumed one.
+		// (Local lookup — the wallet was created when the xpub was saved in the gateway settings, and
+		// `get_fresh_address_for_gateway()` above already returned null if the xpub was empty.)
+		$wallet_for_assigned_address = $this->wallet_service->get_or_save_wallet_for_xpub( (string) $bitcoin_gateway->get_xpub() )->wallet;
+		$this->background_jobs_scheduler->schedule_single_ensure_unused_addresses( $wallet_for_assigned_address );
 
 		return $refreshed_address;
 	}
