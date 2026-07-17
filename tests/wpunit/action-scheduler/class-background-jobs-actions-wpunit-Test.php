@@ -86,6 +86,10 @@ class Background_Jobs_Actions_WPUnit_Test extends WPTestCase {
 	}
 
 	/**
+	 * Rate-limit rescheduling is handled inside {@see \BrianHenryIE\WP_Bitcoin_Gateway\API\API::check_assigned_addresses_for_payment()};
+	 * this verifies the handler's safety-net catch for other implementations: reschedule at the reset
+	 * time and return without scheduling the regular ten-minute follow-up.
+	 *
 	 * @covers ::check_assigned_addresses_for_transactions
 	 */
 	public function test_check_assigned_addresses_for_transactions_action_rate_limit_failure_reschedules(): void {
@@ -101,13 +105,13 @@ class Background_Jobs_Actions_WPUnit_Test extends WPTestCase {
 		$wallet_service_mock       = $this->makeEmpty(
 			Bitcoin_Wallet_Service::class,
 			array(
-				'has_assigned_bitcoin_addresses' => Expected::once( false ),
+				'has_assigned_bitcoin_addresses' => Expected::never(),
 			)
 		);
 		$background_jobs_scheduler = $this->makeEmpty(
 			Background_Jobs_Scheduler_Interface::class,
 			array(
-				'schedule_check_assigned_addresses_for_transactions' => Expected::once(),
+				'schedule_single_check_assigned_addresses_for_transactions' => Expected::once( $reset_time ),
 			)
 		);
 
@@ -120,7 +124,5 @@ class Background_Jobs_Actions_WPUnit_Test extends WPTestCase {
 
 		/** @see Background_Jobs_Actions_Handler::check_assigned_addresses_for_transactions() */
 		$sut->check_assigned_addresses_for_transactions();
-
-		$this->markTestIncomplete( 'I think the rate-limit rescheduling should be done in the API class.' );
 	}
 }

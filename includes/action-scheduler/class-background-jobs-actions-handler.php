@@ -149,8 +149,30 @@ class Background_Jobs_Actions_Handler implements Background_Jobs_Actions_Interfa
 		try {
 			$result = $this->api->check_new_addresses_for_transactions();
 		} catch ( Rate_Limit_Exception $exception ) {
+			// Safety net: {@see API::check_addresses_for_transactions()} handles rate limits internally.
 			$this->background_jobs_scheduler->schedule_check_newly_generated_bitcoin_addresses_for_transactions(
 				$exception->get_reset_time()
+			);
+			return;
+		}
+
+		$this->logger->debug(
+			'Finished check_new_addresses_for_transactions() background job. Checked {checked_addresses_count} addresses, {unchecked_addresses_count} unchecked.',
+			array(
+				'checked_addresses_count'   => $result->get_checked_addresses_count(),
+				'unchecked_addresses_count' => count( $result->unchecked_addresses ),
+				'result'                    => $result,
+			)
+		);
+
+		if ( ! $result->is_complete() ) {
+			$this->logger->notice(
+				'check_new_addresses_for_transactions() stopped early: {incomplete_reason}',
+				array(
+					'incomplete_reason'           => $result->incomplete_reason,
+					'was_follow_up_job_scheduled' => $result->was_follow_up_job_scheduled,
+					'follow_up_job_time'          => $result->follow_up_job_time,
+				)
 			);
 		}
 	}
@@ -174,15 +196,30 @@ class Background_Jobs_Actions_Handler implements Background_Jobs_Actions_Interfa
 
 		try {
 			$result = $this->api->check_assigned_addresses_for_payment();
-
 		} catch ( Rate_Limit_Exception $rate_limit_exception ) {
+			// Safety net: {@see API::check_assigned_addresses_for_payment()} handles rate limits internally.
 			$this->background_jobs_scheduler->schedule_single_check_assigned_addresses_for_transactions(
 				$rate_limit_exception->get_reset_time()
 			);
+			return;
+		}
+
+		$this->logger->info(
+			'Finished check_assigned_addresses_for_transactions() background job. Checked {checked_addresses_count} addresses, {paid_addresses_count} paid, {unchecked_addresses_count} unchecked.',
+			array(
+				'checked_addresses_count'   => $result->get_checked_addresses_count(),
+				'paid_addresses_count'      => count( $result->get_paid_address_results() ),
+				'unchecked_addresses_count' => count( $result->unchecked_addresses ),
+				'result'                    => $result,
+			)
+		);
+
+		// When the API stopped early (rate limit / error), it has already scheduled a follow-up job.
+		if ( $result->was_follow_up_job_scheduled ) {
+			return;
 		}
 
 		// If we are still waiting for payments, schedule another check in ten minutes.
-		// TODO: Is this better placed in API class?
 		if ( $this->wallet_service->has_assigned_bitcoin_addresses() ) {
 			$this->background_jobs_scheduler->schedule_single_check_assigned_addresses_for_transactions(
 				new DateTimeImmutable( 'now' )->add( new DateInterval( 'PT10M' ) )

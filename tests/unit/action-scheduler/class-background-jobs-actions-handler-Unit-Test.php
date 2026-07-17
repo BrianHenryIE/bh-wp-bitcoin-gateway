@@ -6,6 +6,7 @@ use BrianHenryIE\ColorLogger\ColorLogger;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Update_Exchange_Rate_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Addresses_Generation_Result;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Check_Assigned_Addresses_For_Payment_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Check_Assigned_Addresses_For_Transactions_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Ensure_Unused_Addresses_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Bitcoin_Wallet_Service;
@@ -85,7 +86,7 @@ class Background_Jobs_Actions_Handler_Unit_Test extends \Codeception\Test\Unit {
 			API_Background_Jobs_Interface::class,
 			array(
 				'check_new_addresses_for_transactions' => Expected::once(
-					fn() => new Check_Assigned_Addresses_For_Transactions_Result( 1 )
+					fn() => new Check_Assigned_Addresses_For_Transactions_Result()
 				),
 			)
 		);
@@ -114,7 +115,7 @@ class Background_Jobs_Actions_Handler_Unit_Test extends \Codeception\Test\Unit {
 			API_Background_Jobs_Interface::class,
 			array(
 				'check_assigned_addresses_for_payment' => Expected::once(
-					fn() => new Check_Assigned_Addresses_For_Transactions_Result( 2 )
+					fn() => new Check_Assigned_Addresses_For_Payment_Result()
 				),
 			)
 		);

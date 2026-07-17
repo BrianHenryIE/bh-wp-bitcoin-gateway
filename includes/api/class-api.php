@@ -26,6 +26,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address_Status;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Check_Address_For_Payment_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\Rate_Limit_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Addresses_Generation_Result;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Check_Assigned_Addresses_For_Payment_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Check_Assigned_Addresses_For_Transactions_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Ensure_Unused_Addresses_Result;
@@ -372,9 +373,7 @@ class API implements API_Interface, API_Background_Jobs_Interface {
 		if ( empty( $addresses ) ) {
 			$this->logger->debug( 'No addresses with "unknown" status to check' );
 
-			return new Check_Assigned_Addresses_For_Transactions_Result(
-				count: 0
-			); // TODO: return something meaningful.
+			return new Check_Assigned_Addresses_For_Transactions_Result();
 		}
 
 		return $this->check_addresses_for_transactions( $addresses );
@@ -393,7 +392,12 @@ class API implements API_Interface, API_Background_Jobs_Interface {
 	 */
 	protected function check_addresses_for_transactions( array $addresses ): Check_Assigned_Addresses_For_Transactions_Result {
 
-		$result = array();
+		/** @var array<string, Model\Results\Update_Address_Transactions_Result> $update_address_transactions_results Keyed by raw Bitcoin address. */
+		$update_address_transactions_results = array();
+
+		$was_follow_up_job_scheduled = false;
+		$follow_up_job_time          = null;
+		$incomplete_reason           = null;
 
 		try {
 			foreach ( $addresses as $bitcoin_address ) {
@@ -407,48 +411,111 @@ class API implements API_Interface, API_Background_Jobs_Interface {
 					);
 				}
 
-				$result[ $bitcoin_address->get_raw_address() ] = $update_result;
+				$update_address_transactions_results[ $bitcoin_address->get_raw_address() ] = $update_result;
 			}
 		} catch ( Rate_Limit_Exception $exception ) {
 			// Reschedule if we hit 429 (there will always be at least one address to check if it 429s.).
+			$follow_up_job_time = $exception->get_reset_time();
 
 			$this->background_jobs_scheduler->schedule_check_newly_generated_bitcoin_addresses_for_transactions(
-				datetime: $exception->get_reset_time()
+				datetime: $follow_up_job_time
 			);
 
-			return new Check_Assigned_Addresses_For_Transactions_Result(
-				count: count( $result )
-			);
+			$was_follow_up_job_scheduled = true;
+			$incomplete_reason           = '' !== $exception->getMessage() ? $exception->getMessage() : 'Rate limited by blockchain API.';
 		} catch ( Exception $exception ) {
 			$this->logger->error( $exception->getMessage() );
 
+			$follow_up_job_time = new DateTimeImmutable()->add( new DateInterval( 'PT15M' ) );
+
 			$this->background_jobs_scheduler->schedule_check_newly_generated_bitcoin_addresses_for_transactions(
-				new DateTimeImmutable()->add( new DateInterval( 'PT15M' ) ),
+				$follow_up_job_time,
 			);
+
+			$was_follow_up_job_scheduled = true;
+			$incomplete_reason           = $exception->getMessage();
 		}
 
 		// TODO: After this is complete, there could be 0 fresh addresses (e.g. if we start at index 0 but 200 addresses
 		// are already used). => We really need to generate new addresses until we have some.
 
-		// TODO: Return something useful.
+		$unchecked_addresses = array_values(
+			array_filter(
+				$addresses,
+				fn( Bitcoin_Address $bitcoin_address ): bool => ! isset( $update_address_transactions_results[ $bitcoin_address->get_raw_address() ] )
+			)
+		);
+
 		return new Check_Assigned_Addresses_For_Transactions_Result(
-			count: count( $result )
+			update_address_transactions_results: $update_address_transactions_results,
+			unchecked_addresses: $unchecked_addresses,
+			was_follow_up_job_scheduled: $was_follow_up_job_scheduled,
+			follow_up_job_time: $follow_up_job_time,
+			incomplete_reason: $incomplete_reason,
 		);
 	}
 
 
 
 	/**
+	 * Check each assigned address for payment, stopping early on rate limit or error, in which case a
+	 * follow-up background job is scheduled to check the remaining addresses, and that is recorded in
+	 * the returned result object.
+	 *
 	 * @see Background_Jobs_Actions_Interface::check_assigned_addresses_for_transactions()
 	 * @used-by Background_Jobs_Actions_Handler::check_assigned_addresses_for_transactions()
 	 */
-	public function check_assigned_addresses_for_payment(): Check_Assigned_Addresses_For_Transactions_Result {
+	public function check_assigned_addresses_for_payment(): Check_Assigned_Addresses_For_Payment_Result {
 
-		foreach ( $this->wallet_service->get_assigned_bitcoin_addresses() as $bitcoin_address ) {
-			$this->check_address_for_payment( $bitcoin_address );
+		$assigned_addresses = $this->wallet_service->get_assigned_bitcoin_addresses();
+
+		/** @var array<string, Check_Address_For_Payment_Result> $check_address_for_payment_results Keyed by raw Bitcoin address. */
+		$check_address_for_payment_results = array();
+
+		$was_follow_up_job_scheduled = false;
+		$follow_up_job_time          = null;
+		$incomplete_reason           = null;
+
+		try {
+			foreach ( $assigned_addresses as $bitcoin_address ) {
+				$check_address_for_payment_results[ $bitcoin_address->get_raw_address() ] = $this->check_address_for_payment( $bitcoin_address );
+			}
+		} catch ( Rate_Limit_Exception $exception ) {
+			$follow_up_job_time = $exception->get_reset_time();
+
+			$this->background_jobs_scheduler->schedule_single_check_assigned_addresses_for_transactions(
+				date_time: $follow_up_job_time
+			);
+
+			$was_follow_up_job_scheduled = true;
+			$incomplete_reason           = '' !== $exception->getMessage() ? $exception->getMessage() : 'Rate limited by blockchain API.';
+		} catch ( Exception $exception ) {
+			$this->logger->error( $exception->getMessage() );
+
+			$follow_up_job_time = new DateTimeImmutable()->add( new DateInterval( 'PT15M' ) );
+
+			$this->background_jobs_scheduler->schedule_single_check_assigned_addresses_for_transactions(
+				date_time: $follow_up_job_time
+			);
+
+			$was_follow_up_job_scheduled = true;
+			$incomplete_reason           = $exception->getMessage();
 		}
-		// TODO: Return actual result with count of addresses checked.
-		return new Check_Assigned_Addresses_For_Transactions_Result( count:0 );
+
+		$unchecked_addresses = array_values(
+			array_filter(
+				$assigned_addresses,
+				fn( Bitcoin_Address $bitcoin_address ): bool => ! isset( $check_address_for_payment_results[ $bitcoin_address->get_raw_address() ] )
+			)
+		);
+
+		return new Check_Assigned_Addresses_For_Payment_Result(
+			check_address_for_payment_results: $check_address_for_payment_results,
+			unchecked_addresses: $unchecked_addresses,
+			was_follow_up_job_scheduled: $was_follow_up_job_scheduled,
+			follow_up_job_time: $follow_up_job_time,
+			incomplete_reason: $incomplete_reason,
+		);
 	}
 
 	/**

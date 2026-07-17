@@ -11,6 +11,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Update_Exchange_Rate_Resul
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\Rate_Limit_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Addresses_Generation_Result;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Check_Assigned_Addresses_For_Payment_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Check_Assigned_Addresses_For_Transactions_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Ensure_Unused_Addresses_Result;
 
@@ -37,9 +38,12 @@ interface API_Background_Jobs_Interface {
 	 * Check the list of assigned addresses for new transactions and mark them as complete as appropriate, which
 	 * will also mark related orders as paid.
 	 *
-	 * @throws Rate_Limit_Exception When the remote API refuses too many requests.
+	 * Implementations should handle rate limits internally — stop early, schedule a follow-up job, and record
+	 * that in the result object — rather than throw.
+	 *
+	 * @throws Rate_Limit_Exception When the remote API refuses too many requests (only if not handled internally).
 	 */
-	public function check_assigned_addresses_for_payment(): Check_Assigned_Addresses_For_Transactions_Result;
+	public function check_assigned_addresses_for_payment(): Check_Assigned_Addresses_For_Payment_Result;
 
 	/**
 	 * Make sure each wallet has payment addresses generated and that they have no previous transactions.

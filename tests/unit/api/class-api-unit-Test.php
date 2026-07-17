@@ -4,6 +4,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\API;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduler_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\Rate_Limit_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Update_Exchange_Rate_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_VOut;
@@ -13,6 +14,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Bitcoin_Wallet_Service;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Exchange_Rate_Service;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Payment_Service;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Results\Check_Address_For_Payment_Service_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Results\Exchange_Rate_Service_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Currency;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
@@ -124,7 +126,209 @@ class API_Unit_Test extends \Codeception\Test\Unit {
 
 		$result = $sut->check_new_addresses_for_transactions();
 
-		$this->assertEquals( 1, $result->count );
+		$this->assertSame( 1, $result->get_checked_addresses_count() );
+		$this->assertArrayHasKey( 'abcedf', $result->update_address_transactions_results );
+		$this->assertSame( $update_address_transactions_result, $result->update_address_transactions_results['abcedf'] );
+		$this->assertTrue( $result->is_complete() );
+		$this->assertFalse( $result->was_follow_up_job_scheduled );
+		$this->assertNull( $result->incomplete_reason );
+	}
+
+	/**
+	 * When the blockchain API rate limits mid-batch, the addresses checked so far should be in the result,
+	 * the remaining addresses should be listed as unchecked, and a follow-up job should be scheduled for
+	 * the rate limit's reset time.
+	 *
+	 * @covers ::check_new_addresses_for_transactions
+	 * @covers ::check_addresses_for_transactions
+	 */
+	public function test_check_new_addresses_for_transactions_rate_limited_mid_batch(): void {
+
+		$first_address = $this->makeEmpty(
+			Bitcoin_Address::class,
+			array(
+				'get_raw_address' => 'address1of2',
+				'get_status'      => Bitcoin_Address_Status::UNKNOWN,
+			)
+		);
+
+		$second_address = $this->makeEmpty(
+			Bitcoin_Address::class,
+			array(
+				'get_raw_address' => 'address2of2',
+				'get_status'      => Bitcoin_Address_Status::UNKNOWN,
+			)
+		);
+
+		$rate_limit_reset_time = new DateTimeImmutable( '+1 hour' );
+
+		$first_address_update_result = new Update_Address_Transactions_Result(
+			queried_address: $first_address,
+			known_tx_ids_before: null,
+			all_transactions: array()
+		);
+
+		$update_address_transactions_call_count = 0;
+		$payment_service_mock                   = $this->make(
+			Payment_Service::class,
+			array(
+				'update_address_transactions' => Expected::exactly(
+					2,
+					function () use ( &$update_address_transactions_call_count, $first_address_update_result, $rate_limit_reset_time ) {
+						++$update_address_transactions_call_count;
+						if ( 2 === $update_address_transactions_call_count ) {
+							throw new Rate_Limit_Exception( $rate_limit_reset_time );
+						}
+						return $first_address_update_result;
+					}
+				),
+			)
+		);
+
+		$wallet_service_mock = $this->make(
+			Bitcoin_Wallet_Service::class,
+			array(
+				'get_unknown_bitcoin_addresses'     => Expected::once( array( $first_address, $second_address ) ),
+				'set_payment_address_status'        => Expected::once(),
+				'update_address_transactions_posts' => Expected::once(),
+			)
+		);
+
+		$background_jobs_scheduler_mock = $this->makeEmpty(
+			Background_Jobs_Scheduler_Interface::class,
+			array(
+				'schedule_check_newly_generated_bitcoin_addresses_for_transactions' => Expected::once(),
+			)
+		);
+
+		$sut = $this->get_sut(
+			wallet_service: $wallet_service_mock,
+			payment_service: $payment_service_mock,
+			background_jobs_scheduler: $background_jobs_scheduler_mock,
+		);
+
+		$result = $sut->check_new_addresses_for_transactions();
+
+		$this->assertSame( 1, $result->get_checked_addresses_count() );
+		$this->assertArrayHasKey( 'address1of2', $result->update_address_transactions_results );
+		$this->assertFalse( $result->is_complete() );
+		$this->assertCount( 1, $result->unchecked_addresses );
+		$this->assertSame( $second_address, $result->unchecked_addresses[0] );
+		$this->assertTrue( $result->was_follow_up_job_scheduled );
+		$this->assertSame( $rate_limit_reset_time, $result->follow_up_job_time );
+		$this->assertNotNull( $result->incomplete_reason );
+	}
+
+	/**
+	 * @covers ::check_assigned_addresses_for_payment
+	 */
+	public function test_check_assigned_addresses_for_payment_returns_per_address_results(): void {
+
+		$assigned_address = $this->makeEmpty(
+			Bitcoin_Address::class,
+			array(
+				'get_raw_address'   => 'assignedaddress1',
+				'get_status'        => Bitcoin_Address_Status::ASSIGNED,
+				'get_target_amount' => null,
+			)
+		);
+
+		$check_address_for_payment_service_result = new Check_Address_For_Payment_Service_Result(
+			update_address_transactions_result: new Update_Address_Transactions_Result(
+				queried_address: $assigned_address,
+				known_tx_ids_before: null,
+				all_transactions: array()
+			),
+			blockchain_height: 800000,
+			required_confirmations: 3,
+			confirmed_received: Money::of( 0, 'BTC' ),
+		);
+
+		$payment_service_mock = $this->make(
+			Payment_Service::class,
+			array(
+				'check_address_for_payment' => Expected::once( $check_address_for_payment_service_result ),
+			)
+		);
+
+		$wallet_service_mock = $this->make(
+			Bitcoin_Wallet_Service::class,
+			array(
+				'get_assigned_bitcoin_addresses'    => Expected::once( array( $assigned_address ) ),
+				'update_address_transactions_posts' => Expected::once(),
+				'refresh_address'                   => Expected::once( $assigned_address ),
+			)
+		);
+
+		$sut = $this->get_sut(
+			wallet_service: $wallet_service_mock,
+			payment_service: $payment_service_mock,
+		);
+
+		$result = $sut->check_assigned_addresses_for_payment();
+
+		$this->assertSame( 1, $result->get_checked_addresses_count() );
+		$this->assertArrayHasKey( 'assignedaddress1', $result->check_address_for_payment_results );
+		$this->assertFalse( $result->check_address_for_payment_results['assignedaddress1']->is_paid );
+		$this->assertCount( 0, $result->get_paid_address_results() );
+		$this->assertTrue( $result->is_complete() );
+		$this->assertFalse( $result->was_follow_up_job_scheduled );
+	}
+
+	/**
+	 * When the blockchain API rate limits, a follow-up job should be scheduled for the reset time and
+	 * the unchecked addresses recorded in the result, rather than the exception propagating to the caller.
+	 *
+	 * @covers ::check_assigned_addresses_for_payment
+	 */
+	public function test_check_assigned_addresses_for_payment_rate_limited(): void {
+
+		$assigned_address = $this->makeEmpty(
+			Bitcoin_Address::class,
+			array(
+				'get_raw_address' => 'assignedaddress1',
+			)
+		);
+
+		$rate_limit_reset_time = new DateTimeImmutable( '+1 hour' );
+
+		$payment_service_mock = $this->make(
+			Payment_Service::class,
+			array(
+				'check_address_for_payment' => Expected::once(
+					fn() => throw new Rate_Limit_Exception( $rate_limit_reset_time )
+				),
+			)
+		);
+
+		$wallet_service_mock = $this->make(
+			Bitcoin_Wallet_Service::class,
+			array(
+				'get_assigned_bitcoin_addresses' => Expected::once( array( $assigned_address ) ),
+			)
+		);
+
+		$background_jobs_scheduler_mock = $this->makeEmpty(
+			Background_Jobs_Scheduler_Interface::class,
+			array(
+				'schedule_single_check_assigned_addresses_for_transactions' => Expected::once(),
+			)
+		);
+
+		$sut = $this->get_sut(
+			wallet_service: $wallet_service_mock,
+			payment_service: $payment_service_mock,
+			background_jobs_scheduler: $background_jobs_scheduler_mock,
+		);
+
+		$result = $sut->check_assigned_addresses_for_payment();
+
+		$this->assertSame( 0, $result->get_checked_addresses_count() );
+		$this->assertFalse( $result->is_complete() );
+		$this->assertCount( 1, $result->unchecked_addresses );
+		$this->assertSame( $assigned_address, $result->unchecked_addresses[0] );
+		$this->assertTrue( $result->was_follow_up_job_scheduled );
+		$this->assertSame( $rate_limit_reset_time, $result->follow_up_job_time );
 	}
 
 	/**

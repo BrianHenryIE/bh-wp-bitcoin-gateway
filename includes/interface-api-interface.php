@@ -10,6 +10,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Bitcoin_Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Addresses_Generation_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Check_Address_For_Payment_Result;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Check_Assigned_Addresses_For_Payment_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Check_Assigned_Addresses_For_Transactions_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Ensure_Unused_Addresses_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_Interface;
@@ -115,8 +116,11 @@ interface API_Interface {
 
 	/**
 	 * The main function for checking for payments received.
+	 *
+	 * Checks each assigned address, stopping early on rate limit or error, in which case a follow-up
+	 * background job is scheduled and recorded in the result.
 	 */
-	public function check_assigned_addresses_for_payment(): Check_Assigned_Addresses_For_Transactions_Result;
+	public function check_assigned_addresses_for_payment(): Check_Assigned_Addresses_For_Payment_Result;
 
 	/**
 	 * Query the blockchain for transactions for an address and mark it paid when appropriate.

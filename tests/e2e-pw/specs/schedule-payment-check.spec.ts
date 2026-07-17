@@ -1,4 +1,14 @@
 /**
+ * The plugin schedules a single shared `bh_wp_bitcoin_gateway_check_assigned_addresses_transactions`
+ * Action Scheduler job (no per-order args) when an order is placed, and the job reschedules itself
+ * while there are still assigned (unpaid) addresses.
+ *
+ * Earlier versions scheduled a per-order `bh_wp_bitcoin_gateway_check_unpaid_order` job with an
+ * `order_id` argument and cancelled it when the order was paid; these tests were rewritten when
+ * that design changed.
+ */
+
+/**
  * External dependencies
  */
 import { test, expect } from '@playwright/test';
@@ -8,19 +18,17 @@ import { test, expect } from '@playwright/test';
  */
 import {
 	ActionSchedulerItem,
-	deleteAction,
-	fetchActionsWithArgs,
+	fetchActions,
 } from '../helpers/rest/action-scheduler';
 import { switchToShortcodeTheme } from '../helpers/rest/theme-switcher';
-import {
-	getActionSchedulerTableRowForOrder,
-	runActionInRow,
-} from '../helpers/ui/action-scheduler';
+import { runActionSchedulerScheduledEvent } from '../helpers/ui/action-scheduler';
 import { configureBitcoinXpub } from '../helpers/ui/configure-bitcoin-xpub';
 import { createSimpleProduct } from '../helpers/ui/create-simple-product';
 import { loginAsAdmin } from '../helpers/ui/login';
 import { placeBitcoinOrder } from '../helpers/ui/place-bitcoin-order';
-import { setOrderStatus } from '../helpers/ui/wc-order';
+
+const CHECK_ASSIGNED_ADDRESSES_TRANSACTIONS_HOOK =
+	'bh_wp_bitcoin_gateway_check_assigned_addresses_transactions';
 
 test.describe( 'Schedule payment checks', () => {
 	test.beforeAll( async ( { browser } ) => {
@@ -30,32 +38,16 @@ test.describe( 'Schedule payment checks', () => {
 		await page.close();
 	} );
 
-	async function getPendingUnpaidOrderActionForOrder(
-		orderId: number
-	): Promise< [ Record< string, ActionSchedulerItem > ] > {
-		return await fetchActionsWithArgs(
-			'bh_wp_bitcoin_gateway_check_unpaid_order',
-			{ order_id: orderId }
+	async function fetchPendingCheckAssignedAddressesActions(): Promise<
+		Record< string, ActionSchedulerItem >[]
+	> {
+		// `future = false` so a past-due pending action (scheduled but not yet run) also counts.
+		const actions = await fetchActions(
+			CHECK_ASSIGNED_ADDRESSES_TRANSACTIONS_HOOK,
+			false
 		);
-	}
 
-	async function hasPendingUnpaidOrderActionForOrder(
-		orderId: number
-	): Promise< boolean > {
-		const actionsForOrder =
-			await getPendingUnpaidOrderActionForOrder( orderId );
-
-		return Object.entries( actionsForOrder ).length > 0;
-	}
-
-	async function deleteUnpaidOrderActions(
-		orderId: number
-	): Promise< void > {
-		const actionsForOrder =
-			await getPendingUnpaidOrderActionForOrder( orderId );
-		for ( const key of Object.keys( actionsForOrder ) ) {
-			await deleteAction( parseInt( key ) );
-		}
+		return actions.filter( ( action ) => action[ 1 ].status === 'pending' );
 	}
 
 	test( 'should schedule a payment check when a Bitcoin order is placed', async ( {
@@ -64,76 +56,61 @@ test.describe( 'Schedule payment checks', () => {
 		await switchToShortcodeTheme();
 
 		const orderId = await placeBitcoinOrder( page );
+		expect( orderId ).toBeGreaterThan( 0 );
 
-		// Login as admin to check action scheduler
-		await loginAsAdmin( page );
-
-		const isScheduled =
-			await hasPendingUnpaidOrderActionForOrder( orderId );
+		const pendingActions =
+			await fetchPendingCheckAssignedAddressesActions();
 		expect(
-			isScheduled,
-			`Expected bh_wp_bitcoin_gateway_check_unpaid_order Action Scheduler job for order_id:  ${ orderId }`
-		).toBe( true );
+			pendingActions.length,
+			`Expected a pending ${ CHECK_ASSIGNED_ADDRESSES_TRANSACTIONS_HOOK } Action Scheduler job after placing order ${ orderId }`
+		).toBeGreaterThanOrEqual( 1 );
 	} );
 
-	test( 'should schedule a payment check when a Bitcoin orders status is set to on-hold', async ( {
+	test( 'should not schedule a duplicate payment check when a second Bitcoin order is placed', async ( {
 		page,
 	} ) => {
-		const orderId = await placeBitcoinOrder( page );
+		await placeBitcoinOrder( page );
+		await placeBitcoinOrder( page );
 
-		// Login as admin
-		await loginAsAdmin( page );
-
-		await setOrderStatus( page, orderId, 'wc-pending' );
-		await deleteUnpaidOrderActions( orderId );
-		await setOrderStatus( page, orderId, 'wc-on-hold' );
-
-		const isScheduled =
-			await hasPendingUnpaidOrderActionForOrder( orderId );
-		expect( isScheduled ).toBe( true );
-	} );
-
-	test( 'should cancel the scheduled check when the order is marked paid', async ( {
-		page,
-	} ) => {
-		const orderId = await placeBitcoinOrder( page );
-
-		const isScheduledBefore =
-			await hasPendingUnpaidOrderActionForOrder( orderId );
-		expect( isScheduledBefore ).toBe( true );
-
-		await loginAsAdmin( page );
-		await setOrderStatus( page, orderId, 'wc-processing' );
-
-		await page.waitForLoadState( 'networkidle' );
-
-		const unpaidOrders =
-			await getPendingUnpaidOrderActionForOrder( orderId );
-		const isScheduledAfter = unpaidOrders.length === 0;
+		const pendingActions =
+			await fetchPendingCheckAssignedAddressesActions();
 		expect(
-			isScheduledAfter,
-			`Expected bh_wp_bitcoin_gateway_check_unpaid_order Action Scheduler job to be deleted for order_id:  ${ orderId }`
-		).toBe( false );
+			pendingActions.length,
+			`Expected exactly one pending ${ CHECK_ASSIGNED_ADDRESSES_TRANSACTIONS_HOOK } Action Scheduler job after placing two orders`
+		).toBe( 1 );
 	} );
 
 	test( 'should schedule new payment check after each check that does not have payment', async ( {
 		page,
 	} ) => {
 		const orderId = await placeBitcoinOrder( page );
+		expect( orderId ).toBeGreaterThan( 0 );
 
-		// Login as admin
+		// Login as admin to run the pending action from the Action Scheduler admin UI.
 		await loginAsAdmin( page );
 
-		const tableRowForOrder = await getActionSchedulerTableRowForOrder(
+		await runActionSchedulerScheduledEvent(
 			page,
-			orderId
+			CHECK_ASSIGNED_ADDRESSES_TRANSACTIONS_HOOK
 		);
-		if ( tableRowForOrder ) {
-			await runActionInRow( page, tableRowForOrder );
-		}
 
-		const isScheduled =
-			await hasPendingUnpaidOrderActionForOrder( orderId );
-		expect( isScheduled ).toBe( true );
+		// The order is unpaid, so its address is still assigned, so the job should have rescheduled itself.
+		const pendingActions =
+			await fetchPendingCheckAssignedAddressesActions();
+		expect(
+			pendingActions.length,
+			`Expected ${ CHECK_ASSIGNED_ADDRESSES_TRANSACTIONS_HOOK } Action Scheduler job to reschedule itself while order ${ orderId } is unpaid`
+		).toBeGreaterThanOrEqual( 1 );
 	} );
+
+	/**
+	 * Earlier versions cancelled the per-order scheduled check when the order was marked paid.
+	 * The current shared job stops rescheduling itself only when no addresses are assigned — a
+	 * manual (admin) status change does not unassign the address, so checks continue until the
+	 * blockchain confirms payment. If cancel-on-paid behavior is reintroduced, assert it here.
+	 */
+	test.fixme(
+		'should cancel the scheduled check when the order is marked paid',
+		async () => {}
+	);
 } );

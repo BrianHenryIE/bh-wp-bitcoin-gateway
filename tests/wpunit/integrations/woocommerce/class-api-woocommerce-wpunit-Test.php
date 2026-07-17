@@ -322,8 +322,19 @@ class API_WooCommerce_WPUnit_Test extends WPTestCase {
 		$bitcoin_wallet_service_mock = $this->makeEmpty(
 			Bitcoin_Wallet_Service::class,
 			array(
-				'get_or_save_wallet_for_xpub'             => Expected::once( $get_wallet_for_xpub_service_result ),
+				// Once inside `get_fresh_address_for_gateway()`, once to schedule address replenishment.
+				'get_or_save_wallet_for_xpub'             => Expected::exactly( 2, $get_wallet_for_xpub_service_result ),
 				'assign_order_to_bitcoin_payment_address' => Expected::once( $refreshed_address ),
+			)
+		);
+
+		$background_jobs_scheduler_mock = $this->makeEmpty(
+			Background_Jobs_Scheduler_Interface::class,
+			array(
+				// After assigning the address, a check-for-payment job is scheduled.
+				'schedule_single_check_assigned_addresses_for_transactions' => Expected::once(),
+				// And a job to replenish the just-consumed unused address.
+				'schedule_single_ensure_unused_addresses' => Expected::once(),
 			)
 		);
 
@@ -344,6 +355,7 @@ class API_WooCommerce_WPUnit_Test extends WPTestCase {
 		$sut = $this->get_sut(
 			api: $api_mock,
 			wallet_service: $bitcoin_wallet_service_mock,
+			background_jobs_scheduler: $background_jobs_scheduler_mock,
 		);
 
 		$wc_payment_gateways                              = WC_Payment_Gateways::instance();
