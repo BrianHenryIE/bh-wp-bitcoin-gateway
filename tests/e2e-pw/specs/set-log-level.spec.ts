@@ -9,7 +9,8 @@ import { test, expect } from '@playwright/test';
 import config from '../../../playwright.config';
 import { loginAsAdmin } from '../helpers/ui/login';
 
-test.describe( 'Set log level', () => {
+// Test skipped since bh-wp-logger not currently installed.
+test.skip( 'Set log level', () => {
 	test( 'should respect the log level that is saved on the gateway settings page', async ( {
 		page,
 	} ) => {
@@ -21,9 +22,9 @@ test.describe( 'Set log level', () => {
 			'/wp-admin/admin.php?page=wc-settings&tab=checkout&section=bh_bitcoin'
 		);
 
-		// Set log level to notice
+		// Set log level to notice. (Field id is `woocommerce_{gateway_id}_{field_key}`.)
 		await page.selectOption(
-			'#woocommerce_bitcoin_gateway_log_level',
+			'#woocommerce_bh_bitcoin_log_level',
 			'notice'
 		);
 
