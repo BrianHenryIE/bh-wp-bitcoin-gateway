@@ -32,7 +32,7 @@ export async function placeBitcoinOrder( page: Page ): Promise< number > {
 	await page.click( '.single_add_to_cart_button' );
 
 	// Set the billing+shipping details via API.
-	await setDefaultCustomerAddresses(page);
+	await setDefaultCustomerAddresses( page );
 
 	// Go to checkout
 	await page.goto( '/checkout/' );

@@ -27,28 +27,36 @@ test.describe( 'Generate new addresses', () => {
 	test( 'should ensure new addresses after placing order', async ( {
 		page,
 	} ) => {
-
 		const testStarted = new Date().toISOString();
 
 		/**
 		 * Delete all unused addresses
 		 */
-		const beforeDeletingUnusedCount = await getBitcoinAddressCount( 'unused' );
-		console.log('beforeDeletingUnusedCount: ' + beforeDeletingUnusedCount);
+		const beforeDeletingUnusedCount =
+			await getBitcoinAddressCount( 'unused' );
+		console.log(
+			'beforeDeletingUnusedCount: ' + beforeDeletingUnusedCount
+		);
 		if ( beforeDeletingUnusedCount > 0 ) {
-			await deleteBitcoinAddresses( beforeDeletingUnusedCount - 1, 'unused' );
+			await deleteBitcoinAddresses(
+				beforeDeletingUnusedCount - 1,
+				'unused'
+			);
 		}
 
-		const afterDeletingUnusedCount = await getBitcoinAddressCount( 'unused' );
-		console.log('afterDeletingUnusedCount: ' + afterDeletingUnusedCount);
-
+		const afterDeletingUnusedCount =
+			await getBitcoinAddressCount( 'unused' );
+		console.log( 'afterDeletingUnusedCount: ' + afterDeletingUnusedCount );
 
 		// Place an order to trigger address generation
 		await placeBitcoinOrder( page );
 
-		const actionQueued = await fetchActions('bh_wp_bitcoin_gateway_single_ensure_unused_addresses', false, testStarted);
+		const actionQueued = await fetchActions(
+			'bh_wp_bitcoin_gateway_single_ensure_unused_addresses',
+			false,
+			testStarted
+		);
 		expect( actionQueued.length ).toBe( 1 );
-
 	} );
 
 	// TODO: update to account for "trash"ed posts.
@@ -63,9 +71,7 @@ test.describe( 'Generate new addresses', () => {
 		// Get all address counts
 		const allCountElement = page.locator( '.all a .count' );
 		const allCountText = await allCountElement.textContent();
-		const allCount = parseInt(
-			allCountText?.replace( /\D/g, '' ) || '0'
-		);
+		const allCount = parseInt( allCountText?.replace( /\D/g, '' ) || '0' );
 
 		expect( allCount ).not.toEqual( 0 );
 

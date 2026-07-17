@@ -10,10 +10,10 @@ export type BitcoinWalletSummary = {
 	status: string;
 };
 
-export async function listBitcoinWallets(): Promise<{
+export async function listBitcoinWallets(): Promise< {
 	count: number;
 	data: BitcoinWalletSummary[];
-}> {
+} > {
 	const baseURL: string = config.use.baseURL!;
 	const url = `${ baseURL }/wp-json/e2e-test-helper/v1/bitcoin_wallets`;
 	const response: Response = await fetch( url );
@@ -23,8 +23,8 @@ export async function listBitcoinWallets(): Promise<{
 	};
 }
 
-export async function resetBitcoinData(): Promise<void> {
-	console.log('resetBitcoinData()');
+export async function resetBitcoinData(): Promise< void > {
+	console.log( 'resetBitcoinData()' );
 
 	const baseURL: string = config.use.baseURL!;
 	const url = `${ baseURL }/wp-json/e2e-test-helper/v1/bitcoin_wallets`;
@@ -35,8 +35,5 @@ export async function resetBitcoinData(): Promise<void> {
 		},
 	} );
 
-	console.log(response.body);
+	console.log( response.body );
 }
-
-
-

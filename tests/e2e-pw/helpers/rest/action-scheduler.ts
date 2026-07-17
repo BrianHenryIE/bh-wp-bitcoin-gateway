@@ -27,7 +27,7 @@ export interface ActionSchedulerItem {
 export async function fetchActions(
 	hook: string,
 	future: boolean = true,
-	since: string|null = null
+	since: string | null = null
 ): Promise< Record< string, ActionSchedulerItem >[] > {
 	let path = `/wp-json/e2e-test-helper/v1/action_scheduler/search?hook=${ hook }`;
 	// Does this include past-due?

@@ -16,10 +16,14 @@ test.describe( 'WooCommerce Bitcoin Gateway settings page', () => {
 		await loginAsAdmin( page );
 
 		// Navigate to Bitcoin gateway settings page
-		await page.goto( '/wp-admin/admin.php?page=wc-settings&tab=checkout&section=bh_bitcoin' );
+		await page.goto(
+			'/wp-admin/admin.php?page=wc-settings&tab=checkout&section=bh_bitcoin'
+		);
 
 		// Find the "View Scheduled Actions" link
-		const actionSchedulerLink = page.getByRole( 'link', { name: 'View Scheduled Actions' } );
+		const actionSchedulerLink = page.getByRole( 'link', {
+			name: 'View Scheduled Actions',
+		} );
 
 		// Assert the link is visible
 		await expect( actionSchedulerLink ).toBeVisible();
@@ -40,7 +44,9 @@ test.describe( 'WooCommerce Bitcoin Gateway settings page', () => {
 		await page.waitForURL( '**/tools.php?**' );
 
 		// Verify we're on the Action Scheduler page
-		await expect( page.getByRole( 'heading', { name: 'Scheduled Actions', level: 1 } ) ).toBeVisible();
+		await expect(
+			page.getByRole( 'heading', { name: 'Scheduled Actions', level: 1 } )
+		).toBeVisible();
 
 		// Verify the URL contains the search parameter
 		expect( page.url() ).toContain( 's=bh_wp_bitcoin_gateway' );
