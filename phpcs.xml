@@ -15,6 +15,7 @@
     <arg name="colors"/>
 
     <exclude-pattern>/assets/</exclude-pattern>
+    <exclude-pattern>/bin/</exclude-pattern>
     <exclude-pattern>/dist-archive/</exclude-pattern>
     <exclude-pattern>/node_modules/</exclude-pattern>
     <exclude-pattern>/scratch/</exclude-pattern>
@@ -25,6 +26,7 @@
     <exclude-pattern>/vendor-prefixed/*</exclude-pattern>
     <exclude-pattern>/vendor/*</exclude-pattern>
     <exclude-pattern>/wordpress/</exclude-pattern>
+    <exclude-pattern>/wp-content/otherplugins</exclude-pattern>
     <exclude-pattern>/wp-content/plugins</exclude-pattern>
     <exclude-pattern>/wp-content/themes</exclude-pattern>
     <exclude-pattern>/wp-content/uploads</exclude-pattern>
