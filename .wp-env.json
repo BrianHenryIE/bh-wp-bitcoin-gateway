@@ -3,7 +3,6 @@
     "WP_DEBUG_LOG": "/var/www/html/wp-content/debug.log"
   },
   "core": "WordPress/WordPress#7.0.1",
-  "mysqlPort": 33066,
   "lifecycleScripts": {
     "afterStart": "./tests/e2e-pw/setup/initialize-external.sh"
   },
@@ -28,7 +27,10 @@
     "wp-content/plugins/wp-crontrol": "./wp-content/plugins/wp-crontrol",
     "wp-content/plugins/wp-mail-logging": "./wp-content/plugins/wp-mail-logging"
   },
+  "mysqlPort": 33066,
   "phpVersion": "8.4",
-  "plugins": ["."],
+  "plugins": [
+    "."
+  ],
   "testsEnvironment": false
 }
