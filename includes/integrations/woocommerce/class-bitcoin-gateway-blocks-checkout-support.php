@@ -84,6 +84,7 @@ class Bitcoin_Gateway_Blocks_Checkout_Support extends AbstractPaymentMethodType 
 
 		wp_register_script( $handle, $script_url, $dependencies, $version, true );
 
+		// TODO: Should this be the file system path rather than the URL?!
 		wp_set_script_translations( $handle, 'bh-wp-bitcoin-gateway', $this->plugin_settings->get_plugin_url() . 'languages/' );
 
 		return array( $handle );
