@@ -62,9 +62,6 @@ jobs:
         with:
           env-file: .env.testing
 
-      - name: Install sponge
-        run: sudo apt-get install moreutils
-
       # TODO: merge master into this branch and run tests against what master will become, not just the isolated branch.
       # NB: how would that affect tj-actions/changed-files?
 

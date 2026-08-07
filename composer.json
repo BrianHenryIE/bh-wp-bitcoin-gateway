@@ -275,7 +275,8 @@
     ],
     "create-plugin-archive": [
       "wp i18n make-pot includes languages/$(basename \"$PWD\").pot --domain=$(basename \"$PWD\")",
-      "wp dist-archive . ./dist-archive --plugin-dirname=$(basename \"$PWD\") --create-target-dir"
+      "wp dist-archive . ./dist-archive --plugin-dirname=$(basename \"$PWD\") --create-target-dir",
+      "@sync-composer-wpenv"
     ],
     "github-actions": [
       "act -P ubuntu-latest=shivammathur/node:latest"
@@ -285,9 +286,7 @@
       "if [ ! \"$GITHUB_ACTIONS\" ]; then sed -i '' \"s/return \\[/return \\[\\n    'BTC' => \\['BTC', 0, 'Bitcoin', 8\\],/\" vendor-prefixed/brick/money/data/iso-currencies.php; fi"
     ],
     "sync-composer-wpenv": [
-      "for name in $(cat .wp-env.json | jq '.mappings | values[]' | sed -r 's/^\\\"|\\\"$//g'); do [ ! -d $name ] && [ ! -f $name ] && echo $name && jq 'del(.. | select(. ==\"'$name'\"))' .wp-env.json | sponge .wp-env.json || true; done",
-      "find wp-content/plugins -type d -depth 1 ! -type l | sort -h | jq -Rn '[inputs]' | jq 'reduce .[] as $item ({}; . + {$item:$item})' | jq '.[] |= \"./\\(.)\"' | jq '. | {mappings: .}' | jq --sort-keys -s '.[] * $existing[]' --slurpfile existing .wp-env.json | sponge .wp-env.json",
-      "INSTALLED_WORDPRESS_VERSION=$(cat composer.lock | jq --raw-output '.\"packages-dev\"[] | select(.name==\"johnpbloch/wordpress-core\") | .version'); cat .wp-env.json| jq '.core=\"WordPress/WordPress#'$INSTALLED_WORDPRESS_VERSION'\"' --sort-keys | sponge .wp-env.json"
+      "@php bin/sync-composer-wpenv.php"
     ]
   },
   "provide": {
