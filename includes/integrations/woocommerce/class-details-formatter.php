@@ -11,6 +11,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\UnknownCurrencyExcepti
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Helpers\WC_Order_Meta_Helper;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
+use DateTimeInterface;
 use NumberFormatter;
 
 /**
@@ -144,7 +145,8 @@ class Details_Formatter {
 		 * This supposedly could be null, but I can't imagine a scenario where WooCommerce returns an order object
 		 * that doesn't have a DateTime for created.
 		 *
-		 * @var \DateTimeInterface $date_created
+		 * @var DateTimeInterface $date_created
+		 * @phpstan-ignore varTag.type (doubtfully null)
 		 */
 		$date_created = $this->bitcoin_order->get_date_created();
 		$from         = $date_created->getTimestamp() - ( DAY_IN_SECONDS / 2 );
