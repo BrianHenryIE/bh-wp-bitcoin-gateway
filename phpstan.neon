@@ -92,3 +92,6 @@ parameters:
         - # Primary output of WP_Posts_Query_Order is an array whose elements are all optional. Let the test fail hard.
           identifier: offsetAccess.notFound
           path: tests/unit/api/repositories/queries/
+        - # Fix needed in `brianhenryie/bh-php-blockchain-info/src/Model/Transaction.php`
+          message: '/Parameter #1 \$callback of function array_map expects/'
+          path: includes/api/clients/blockchain/adapters/class-blockchain-info-api-transaction-adapter.php

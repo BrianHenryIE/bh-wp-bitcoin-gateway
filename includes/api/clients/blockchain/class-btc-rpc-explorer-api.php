@@ -12,6 +12,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Blockchain;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Blockchain_API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Blockchain\Adapters\Btc_Rpc_Explorer_Api_Transaction_Adapter;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\BtcRpcExplorer\BtcRpcExplorerApi;
 use BrianHenryIE\WP_Bitcoin_Gateway\BtcRpcExplorer\Model\TXSummary;
@@ -53,7 +54,7 @@ class Btc_Rpc_Explorer_Api implements Blockchain_API_Interface, LoggerAwareInter
 	 * If this doesn't work try {@see BtcRpcExplorerApi::extendedPublicKeyTransactions()}.
 	 *
 	 * @param string $btc_address The payment address as a string.
-	 * @return Transaction_Interface[]
+	 * @return Transaction[]
 	 */
 	public function get_transactions_received( string $btc_address ): array {
 		$address_summary = $this->api->addressSummary( $btc_address );

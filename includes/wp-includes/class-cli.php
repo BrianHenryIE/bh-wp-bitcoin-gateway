@@ -10,6 +10,7 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\JsonMapper\JsonMapper_Helper;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories\Bitcoin_Address_Factory;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Address_Repository;
@@ -171,8 +172,8 @@ class CLI extends WP_CLI_Command {
 
 				$input_order_id = intval( $input );
 				/**
+				 * @param ?Bitcoin_Address $payment_address
 				 * @param int $input_order_id The CLI input, presumed to be an order id.
-				 * @var ?Bitcoin_Address $payment_address
 				 */
 				$payment_address = apply_filters( 'bh_wp_bitcoin_gateway_get_address_for_order', null, $input_order_id );
 
@@ -180,6 +181,7 @@ class CLI extends WP_CLI_Command {
 					WP_CLI::error( 'Unable to determine payment address from input.' );
 				}
 
+				/** @phpstan-ignore-next-line instanceof.alwaysTrue (The filter really returns mixed) */
 				if ( ! ( $payment_address instanceof Bitcoin_Address ) ) {
 					WP_CLI::error( 'Invalid value returned from filter.' );
 				}
@@ -195,12 +197,19 @@ class CLI extends WP_CLI_Command {
 			);
 
 			if ( $is_updated ) {
-				$formatted['new_transactions'] = $result->get_new_transactions();
+				$formatted['new_transactions'] = implode(
+					',',
+					array_map(
+						fn( Transaction_Interface $transaction ) => $transaction->get_txid(),
+						$result->get_new_transactions()
+					)
+				);
 			}
 
-			$formatted['confirmed_received'] = $result->queried_address->get_amount_received();
+			$formatted['confirmed_received'] = (string) $result->queried_address->get_amount_received();
 
-			WP_CLI\Utils\format_items( $format, $formatted, array_keys( $formatted ) );
+			// This only ever prints one line.
+			WP_CLI\Utils\format_items( $format, array( $formatted ), array_keys( $formatted ) );
 
 			WP_CLI::log( 'Finished update-address.' );
 

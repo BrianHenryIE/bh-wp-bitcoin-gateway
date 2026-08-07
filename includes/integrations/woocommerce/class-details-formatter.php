@@ -227,8 +227,10 @@ class Details_Formatter {
 	/**
 	 * Convert an array's keys to camelCase, presumably to output for JavaScript.
 	 *
-	 * @param array<string,mixed> $array_with_keys Array to update.
-	 * @return array<string,mixed>
+	 * @template T
+	 *
+	 * @param array<string,T> $array_with_keys Array to update.
+	 * @return array<string,T>
 	 */
 	public static function camel_case_keys( array $array_with_keys ): array {
 		foreach ( $array_with_keys as $key => $value ) {

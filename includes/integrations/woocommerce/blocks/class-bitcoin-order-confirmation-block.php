@@ -92,9 +92,9 @@ class Bitcoin_Order_Confirmation_Block {
 	/**
 	 * Render callback for the bitcoin-order block.
 	 *
-	 * @param array    $attributes Block attributes.
-	 * @param string   $content    Block content.
-	 * @param WP_Block $block      Block instance.
+	 * @param array{orderId?:int} $attributes Block attributes.
+	 * @param string              $content    Block content.
+	 * @param WP_Block            $block      Block instance.
 	 * @return string Rendered block content.
 	 */
 	public function render_block( array $attributes, string $content, $block ): string {
@@ -186,11 +186,13 @@ class Bitcoin_Order_Confirmation_Block {
 			return absint( $GLOBALS['order-received'] );
 		}
 
-		// Check the key in the URL. The `key` is the ~nonce.
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		if ( function_exists( 'wc_get_order_id_by_order_key' ) && isset( $_GET['key'] ) && is_numeric( $_GET['key'] ) ) {
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			$order_id = wc_get_order_id_by_order_key( (string) absint( $_GET['key'] ) );
+		/**
+		 * Check the key in the URL. The `key` is the ~nonce.
+		 * `checkout/order-received/205/?key=wc_order_8l3w5l2TfQSjv`
+		 * phpcs:disable WordPress.Security.NonceVerification.Recommended
+		 */
+		if ( function_exists( 'wc_get_order_id_by_order_key' ) && isset( $_GET['key'] ) && is_string( $_GET['key'] ) ) {
+			$order_id = wc_get_order_id_by_order_key( sanitize_text_field( wp_unslash( $_GET['key'] ) ) );
 			if ( $order_id > 0 ) {
 				return $order_id;
 			}

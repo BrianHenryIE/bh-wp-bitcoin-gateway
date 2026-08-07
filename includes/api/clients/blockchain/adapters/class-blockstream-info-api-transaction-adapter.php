@@ -32,7 +32,7 @@ class BlockStream_Info_API_Transaction_Adapter {
 	/**
 	 * @param array&BlockStreamApiTransactionArray $blockstream_transaction The transaction data as returned by Blockstream.info API.
 	 */
-	public function adapt( array $blockstream_transaction ): Transaction_Interface {
+	public function adapt( array $blockstream_transaction ): Transaction {
 		return new Transaction(
 			tx_id: (string) $blockstream_transaction['txid'], // TODO: what is `$blockstream_transaction['status']['block_hash']`?
 			block_time: new DateTimeImmutable( '@' . $blockstream_transaction['status']['block_time'], new DateTimeZone( 'UTC' ) ),

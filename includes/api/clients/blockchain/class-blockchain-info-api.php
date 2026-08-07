@@ -17,9 +17,8 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Blockchain\Adapters\Blockchain_I
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\Art4\Requests\Psr\HttpClient;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Blockchain_API_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\BlockchainInfo\BlockchainInfoApi;
-use BrianHenryIE\WP_Bitcoin_Gateway\BlockchainInfo\Model\Transaction;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
@@ -66,7 +65,7 @@ class Blockchain_Info_Api implements Blockchain_API_Interface, LoggerAwareInterf
 	 *
 	 * @param string $btc_address The Bitcoin address to query for incoming transactions from the blockchain.
 	 *
-	 * @return Transaction_Interface[] Array of transactions where this address received funds.
+	 * @return Transaction[] Array of transactions where this address received funds.
 	 * @throws BH_WP_Bitcoin_Gateway_Exception When the API request fails or returns rate limit errors.
 	 */
 	public function get_transactions_received( string $btc_address ): array {

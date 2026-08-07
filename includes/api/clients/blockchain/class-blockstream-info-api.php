@@ -20,7 +20,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Blockchain_API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Blockchain\Adapters\BlockStream_Info_API_Transaction_Adapter;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\Rate_Limit_Exception;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction;
 use JsonException;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
@@ -53,7 +53,7 @@ class Blockstream_Info_API implements Blockchain_API_Interface, LoggerAwareInter
 	 *
 	 * @param string $btc_address The Bitcoin address to query.
 	 *
-	 * @return array<string, Transaction_Interface> Transactions keyed by txid.
+	 * @return array<string, Transaction> Transactions keyed by txid.
 	 *
 	 * @throws JsonException When JSON decoding of the API response fails.
 	 * @throws Rate_Limit_Exception When HTTP 429 is returned, indicating the rate limit has been exceeded.
@@ -95,7 +95,7 @@ class Blockstream_Info_API implements Blockchain_API_Interface, LoggerAwareInter
 		 *
 		 * @param array{txid:string, version:int, locktime:int, vin:array, vout:array, size:int, weight:int, fee:int, status:array{confirmed:bool, block_height:int, block_hash:string, block_time:int}} $blockstream_transaction
 		 *
-		 * @var Transaction_Interface[] $transactions
+		 * @var Transaction[] $transactions
 		 */
 		$transactions = array_map(
 			$adapter->adapt( ... ),

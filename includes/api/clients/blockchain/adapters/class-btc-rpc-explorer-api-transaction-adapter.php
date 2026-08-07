@@ -27,12 +27,12 @@ class Btc_Rpc_Explorer_Api_Transaction_Adapter {
 	 *
 	 * @param TXSummary $transaction The BTC RPC Explorer transaction object.
 	 * @param int       $block_height The block height for the transaction.
-	 * @return Transaction_Interface The adapted transaction.
+	 * @return Transaction The adapted transaction.
 	 */
 	public function adapt(
 		TXSummary $transaction,
 		int $block_height,
-	): Transaction_Interface {
+	): Transaction {
 		return new Transaction(
 			tx_id: $transaction->txId,
 			block_time: $transaction->getBlockTime(),

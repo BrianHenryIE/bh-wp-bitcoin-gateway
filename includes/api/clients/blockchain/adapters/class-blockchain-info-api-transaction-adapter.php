@@ -16,6 +16,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\BlockchainInfo\Model\Transaction as Blockcha
 use BrianHenryIE\WP_Bitcoin_Gateway\BlockchainInfo\Model\TransactionInput;
 use BrianHenryIE\WP_Bitcoin_Gateway\BlockchainInfo\Model\TransactionOut;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
+use DateMalformedStringException;
 use DateTimeImmutable;
 use DateTimeZone;
 
@@ -28,9 +29,11 @@ class Blockchain_Info_Api_Transaction_Adapter {
 	 * Adapt a Blockchain.info transaction to the internal transaction interface.
 	 *
 	 * @param BlockchainInfo_Transaction $transaction The Blockchain.info transaction object.
-	 * @return Transaction_Interface The adapted transaction.
+	 *
+	 * @return Transaction The adapted transaction.
+	 * @throws DateMalformedStringException Should not happen because we are using Unix time from an `int`.
 	 */
-	public function adapt( BlockchainInfo_Transaction $transaction ): Transaction_Interface {
+	public function adapt( BlockchainInfo_Transaction $transaction ): Transaction {
 		return new Transaction(
 			tx_id: $transaction->getHash(),
 			block_time: new DateTimeImmutable( '@' . $transaction->getTime(), new DateTimeZone( 'UTC' ) ),
