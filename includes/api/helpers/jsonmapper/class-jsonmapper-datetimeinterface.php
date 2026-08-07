@@ -26,7 +26,7 @@ class JsonMapper_DateTimeInterface {
 	/**
 	 * Callable function for parsing DateTimeInterface by JsonMapper factory.
 	 *
-	 * @param object{date?:string|mixed, timezone:string|mixed, timezone_type:int} $json_object The JSON object to parse to DateTimeInterface.
+	 * @param object{date?:string|mixed, timezone?:string|mixed, timezone_type?:int} $json_object The JSON object to parse to DateTimeInterface.
 	 *
 	 * @throws BH_WP_Bitcoin_Gateway_Exception If the object fails validation.
 	 * @throws DateMalformedStringException If the string provided is invalid.
@@ -35,7 +35,6 @@ class JsonMapper_DateTimeInterface {
 	public function __invoke( object $json_object ): DateTimeInterface {
 
 		$this->validate( $json_object );
-		/** @var object{date:string, timezone:string} $json_object */
 
 		return new DateTimeImmutable(
 			datetime: $json_object->date,
@@ -49,6 +48,8 @@ class JsonMapper_DateTimeInterface {
 	 * Confirm the JSON object has the expected keys in their expected types.
 	 *
 	 * @param object{date?:string|mixed, timezone?:string|mixed} $json_object The JSON string (as object) that JsonMapper has been told will parse to DateTimeInterface.
+	 *
+	 * @phpstan-assert object{date:non-empty-string, timezone:non-empty-string} $json_object
 	 *
 	 * @throws BH_WP_Bitcoin_Gateway_Exception If the object does not contain the necessary properties:types.
 	 */
