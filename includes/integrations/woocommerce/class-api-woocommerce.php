@@ -400,10 +400,21 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 		$result = $formatted->to_array();
 
 		// Raw data. TODO: convert `::get_btc_total_price(): Money`, use typed class with all strings.
-		$result['btc_total']           = $this->order_meta_helper->get_btc_total_price( $order );
-		$result['btc_exchange_rate']   = $this->order_meta_helper->get_exchange_rate( $order );
-		$result['btc_address']         = $order_details->get_address()->get_raw_address();
-		$result['transactions']        = $this->api->get_saved_transactions( $order_details->get_address() );
+		$result['btc_total']         = $this->order_meta_helper->get_btc_total_price( $order );
+		$result['btc_exchange_rate'] = $this->order_meta_helper->get_exchange_rate( $order );
+		$result['btc_address']       = $order_details->get_address()->get_raw_address();
+		$transactions                = $this->api->get_saved_transactions( $order_details->get_address() );
+
+		$result['formatted_transactions'] = array_map(
+			fn( Bitcoin_Transaction $transaction ) => array(
+				'time'  => $transaction->get_block_time()->format( DATE_ATOM ),
+				'url'   => sprintf( 'https://blockchain.com/explorer/transactions/btc/%s', $transaction->get_txid() ),
+				'txid'  => $transaction->get_txid(),
+				'value' => '', // TODO: Get the relevant value to the address in the transaction from `$transaction->get_v_out()`.
+			),
+			$transactions
+		);
+
 		$result['btc_amount_received'] = $order_details->get_address()->get_amount_received() ?? 'unknown';
 
 		// Objects.

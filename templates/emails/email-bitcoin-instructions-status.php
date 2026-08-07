@@ -16,12 +16,9 @@
  * @var WC_Order $order The order that Bitcoin is being used to pay.
  *
  * @var string $exchange_rate_url
- * @var string $btc_exchange_rate_formatted
  *
  * @package    brianhenryie/bh-wp-bitcoin-gateway
  */
-
-$btc_exchange_rate_formatted = wp_strip_all_tags( $btc_exchange_rate_formatted );
 
 if ( ! $order->is_paid() ) :
 
@@ -29,7 +26,7 @@ if ( ! $order->is_paid() ) :
 
 	?>
 
-	<p>Bitcoin price: <b><?php echo esc_html( $btc_total_formatted ); ?></b> (1 BTC = <?php echo esc_html( $btc_exchange_rate_formatted ); ?>).</p>
+	<p>Bitcoin price: <b><?php echo esc_html( $btc_total_formatted ); ?></b> (1 BTC = <?php echo esc_html( wp_strip_all_tags( $btc_exchange_rate_formatted ) ); ?>).</p>
 
 	<p>Payment Address: <a target="_blank" href="<?php echo esc_url( $bitcoin_href_address, array( 'bitcoin' ) ); ?>"><?php echo esc_html( $btc_address ); ?></a></p>
 

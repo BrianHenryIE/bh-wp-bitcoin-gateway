@@ -4,8 +4,8 @@
  *
  * TODO: ensure it is placed at the top of the metaboxes;
  *
- * @see \BrianHenryIE\WP_Bitcoin_Gateway\API_Interface::get_order_details()
- * @see \BrianHenryIE\WP_Bitcoin_Gateway\API\Details_Formatter
+ * @see \BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce::get_formatted_order_details()
+ * @see \BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Details_Formatter
  *
  * @var array<string, mixed> $args Associative array containing the result of `API_Interface::get_formatted_order_details()`, extracted into these variables:
  *
@@ -19,6 +19,7 @@
  * @var string $last_checked_time_formatted The last time a blockchain service was queried for updates to the payment address.
  * @var string $btc_address_derivation_path_sequence_number
  * @var string $parent_wallet_xpub_html
+ * @var array<array{time:string, txid:string, url:string}> $formatted_transactions
  *
  * @var string $exchange_rate_url
  * @var string $btc_exchange_rate
@@ -55,12 +56,12 @@
 		<td>Transactions:</td>
 		<td>
 			<?php
-			if ( empty( $transactions ) ) {
+			if ( empty( $formatted_transactions ) ) {
 				echo esc_html__( 'No transactions yet', 'bh-wp-bitcoin-gateway' );
 			} else {
 				echo '<ul>';
-				foreach ( $transactions as $transaction ) {
-					echo '<li>' . esc_html( $transaction['time']->format( DATE_ATOM ) ) . ' – <a href="' . esc_url( "https://blockchain.com/explorer/transactions/btc/{$transaction['txid']}" ) . '" target="_blank">' . esc_html( $transaction['txid'] ) . '</a> – ' . esc_html( $transaction['value'] ) . ' </li>';
+				foreach ( $formatted_transactions as $transaction ) {
+					echo '<li>' . esc_html( $transaction['time'] ) . ' – <a href="' . esc_url( $transaction['url'] ) . '" target="_blank">' . esc_html( $transaction['txid'] ) . '</a>'; // TODO: Print value.
 				}
 				echo '</ul>';
 			}

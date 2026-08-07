@@ -36,7 +36,7 @@ class Templates {
 	 *
 	 * `wc_get_template( 'bitcoin-paid.php', $formatted_order_details_array );`.
 	 *
-	 * @see woocommerce_locate_template
+	 * @see wc_locate_template()
 	 * @see https://wphave.com/include-woocommerce-templates-from-plugin/
 	 *
 	 * @hooked wc_get_template

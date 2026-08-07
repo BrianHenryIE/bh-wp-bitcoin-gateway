@@ -5,10 +5,10 @@
  *
  * @see \BrianHenryIE\WP_Bitcoin_Gateway\API_Interface::get_order_details()
  *
- * @var array{template_name:string, template_path:string, located:string, args:array} $action_args
+ * @var array{template_name:string, template_path:string, located:string, args:array<string,mixed>} $action_args
  * @var array<string, mixed> $args Associative array containing the result of `API_Interface::get_order_details()`, extracted into these variables:
  *
- * @var string $btc_logo_url // TODO
+ * @var string $btc_logo_url
  * @var string $payment_status 'Awaiting Payment'|'Partially Paid'|'Paid'.
  * @var string $btc_address Destination payment address.
  * @var string $btc_total Order total in BTC.
@@ -25,7 +25,6 @@ use BrianHenryIE\WP_Bitcoin_Gateway\chillerlan\QRCode\QRCode;
 
 $bitcoin_href_address = 'bitcoin:' . $btc_address . '?amount=' . $btc_total;
 
-$btc_logo_url = BH_WP_BITCOIN_GATEWAY_URL . '/assets/bitcoin.png';
 ?>
 
 <div class="bh-wp-bitcoin-gateway-details">

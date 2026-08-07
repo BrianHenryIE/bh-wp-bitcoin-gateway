@@ -76,6 +76,8 @@ class Thank_You {
 			return;
 		}
 
+		$template_args['btc_logo_url'] = plugin_dir_url( dirname( __DIR__, 2 ) ) . 'assets/bitcoin.png';
+
 		$template_args['template'] = self::TEMPLATE_NAME;
 
 		wc_get_template( self::TEMPLATE_NAME, $template_args );
