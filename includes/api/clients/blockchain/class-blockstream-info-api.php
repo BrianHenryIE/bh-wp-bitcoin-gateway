@@ -31,7 +31,7 @@ use Psr\Log\LoggerInterface;
  *
  * @phpstan-type BlockStreamApiTransactionVInArray array{txid:string, vout:int, prevout:array{scriptpubkey:string, scriptpubkey_asm:string, scriptpubkey_type:string, scriptpubkey_address:string, value:int}, scriptsig:string, scriptsig_asm:string, witness:array<string>, is_coinbase:bool, sequence:int, inner_redeemscript_asm:string, inner_witnewssscript_asm:string}
  * @phpstan-type BlockStreamApiTransactionVOutArray array{scriptpubkey:string, scriptpubkey_asm:string, scriptpubkey_type:string, scriptpubkey_address:string, value:int}
- * @phpstan-type BlockStreamApiTransactionArray array{txid:string, version:int, locktime:int, vin:BlockStreamApiTransactionVInArray, vout:BlockStreamApiTransactionVOutArray, size:int, weight:int, fee:int, status:array{confirmed:bool, block_height:int, block_hash:string, block_time:int}}
+ * @phpstan-type BlockStreamApiTransactionArray array{txid:string, version:int, locktime:int, vin:list<BlockStreamApiTransactionVInArray>, vout:list<BlockStreamApiTransactionVOutArray>, size:int, weight:int, fee:int, status:array{confirmed:bool, block_height:int, block_hash:string, block_time:int}}
  * @phpstan-type Stats array{funded_txo_count:int, funded_txo_sum:int, spent_txo_count:int, spent_txo_sum:int, tx_count:int}
  */
 class Blockstream_Info_API implements Blockchain_API_Interface, LoggerAwareInterface {
