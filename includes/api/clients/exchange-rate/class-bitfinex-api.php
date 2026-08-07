@@ -95,6 +95,6 @@ class Bitfinex_API implements Exchange_Rate_API_Interface {
 
 		$exchange_rate = $trading_pair_response[7];
 
-		return Money::of( $exchange_rate, $currency );
+		return Money::of( (string) $exchange_rate, $currency );
 	}
 }

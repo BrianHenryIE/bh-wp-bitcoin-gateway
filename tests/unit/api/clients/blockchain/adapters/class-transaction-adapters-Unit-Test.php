@@ -85,12 +85,12 @@ class Transaction_Adapters_Unit_Test extends Unit {
 		$this->assertEquals( '2200204db0a225378ec24fde1ebf5f8f423893448aa9d1fae079b5d741f07795c9a798', $v_in->scriptsig );
 		$this->assertEquals( '3KKUGZk4yU9QfZZA9y9K5MkwBX7Rozaaum', $v_in->address );
 		$this->assertEquals( 'a914c15f1ad5162b35d8ddb3cf46009326d36252237187', $v_in->prevout_scriptpubkey );
-		$this->assertEquals( Money::of( 0.0027, 'BTC' ), $v_in->value );
+		$this->assertEquals( Money::of( '0.0027', 'BTC' ), $v_in->value );
 		$this->assertEquals( 1, $v_in->prev_out_n );
 
 		$this->assertCount( 2, $result->get_v_out() );
 		$v_out = $result->get_v_out()[0];
-		$this->assertEquals( Money::of( 0.00396122, 'BTC' ), $v_out->value );
+		$this->assertEquals( Money::of( '0.00396122', 'BTC' ), $v_out->value );
 		$this->assertEquals( '1H9jHs2V9Qbt1CmohUm2xGn58C3ukRSG9D', $v_out->scriptpubkey_address );
 	}
 }

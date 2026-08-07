@@ -11,7 +11,8 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Blockchain_API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\Generate_Address_API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\JsonMapperInterface;
-use BrianHenryIE\WP_Bitcoin_Gateway\lucatume\DI52\Container as DI52_Container;
+use BrianHenryIE\WP_Bitcoin_Gateway\League\Container\Container;
+use BrianHenryIE\WP_Bitcoin_Gateway\League\Container\ReflectionContainer;
 use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
 use Codeception\Test\Unit;
 use Psr\Container\ContainerInterface;
@@ -33,15 +34,16 @@ class WooCommerce_Integration_Unit_Test extends Unit {
 		parent::tearDown();
 		\WP_Mock::tearDown();
 	}
-	protected function get_container(): ContainerInterface&DI52_Container {
+	protected function get_container(): ContainerInterface {
 
-		$container = new DI52_Container();
+		$container = new Container();
+		$container->delegate( new ReflectionContainer() );
 
-		$container->bind(
+		$container->add(
 			API_Interface::class,
 			fn() => $this->makeEmpty( API_Interface::class )
 		);
-		$container->bind(
+		$container->add(
 			API_WooCommerce_Interface::class,
 			fn() => $this->makeEmpty( API_WooCommerce_Interface::class )
 		);
@@ -51,22 +53,22 @@ class WooCommerce_Integration_Unit_Test extends Unit {
 				'get_plugin_basename' => 'bh-wp-bitcoin-gateway/bh-wp-bitcoin-gateway.php',
 			)
 		);
-		$container->bind( Settings_Interface::class, $settings );
-		$container->bind( LoggerInterface::class, ColorLogger::class );
+		$container->add( Settings_Interface::class, $settings );
+		$container->add( LoggerInterface::class, ColorLogger::class );
 
-		$container->bind(
+		$container->add(
 			Generate_Address_API_Interface::class,
 			fn() => $this->makeEmpty( Generate_Address_API_Interface::class )
 		);
-		$container->bind(
+		$container->add(
 			JsonMapperInterface::class,
 			fn() => $this->makeEmpty( JsonMapperInterface::class )
 		);
-		$container->bind(
+		$container->add(
 			Blockchain_API_Interface::class,
 			fn() => $this->makeEmpty( Blockchain_API_Interface::class )
 		);
-		$container->bind(
+		$container->add(
 			Background_Jobs_Scheduler_Interface::class,
 			fn() => $this->makeEmpty( Background_Jobs_Scheduler_Interface::class )
 		);

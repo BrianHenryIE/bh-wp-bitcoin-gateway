@@ -57,7 +57,7 @@ class Details_Formatter {
 		 */
 		$btc_formatter->setAttribute( NumberFormatter::FRACTION_DIGITS, 8 );
 
-		$formatted = $money->formatWith( $btc_formatter );
+		$formatted = (string) $btc_formatter->format( $money->getAmount()->toFloat() );
 
 		return $btc_symbol . ' ' . wc_trim_zeros( $formatted );
 	}

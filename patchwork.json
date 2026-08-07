@@ -1,4 +1,7 @@
 {
+  "blacklist": [
+    "vendor-prefixed/league/container"
+  ],
   "redefinable-internals": [
     "constant",
     "define",

@@ -52,7 +52,7 @@ class Btc_Rpc_Explorer_Api_Transaction_Adapter {
 	public function get_v_out( TXSummary $transaction ): array {
 		return array_map(
 			fn( VOut $v_out ) => new Transaction_VOut(
-				value: Money::of( $v_out->value / Exchange_Rate_Service::SATOSHI_RATE, 'BTC' ),
+				value: Money::of( (string) $v_out->value, 'BTC' )->dividedBy( Exchange_Rate_Service::SATOSHI_RATE ),
 				scriptpubkey_address: $v_out->scriptPubKey->address,
 			),
 			$transaction->vOut

@@ -53,7 +53,7 @@ class Blockchain_Info_Api_Transaction_Adapter {
 			scriptsig: $transaction_input->getScript(),
 			address: $transaction_input->getPrevOut()->getAddr(),
 			prevout_scriptpubkey: $transaction_input->getPrevOut()->getScript(),
-			value: Money::of( $transaction_input->getPrevOut()->getValue() / Exchange_Rate_Service::SATOSHI_RATE, 'BTC' ),
+			value: Money::of( $transaction_input->getPrevOut()->getValue(), 'BTC' )->dividedBy( Exchange_Rate_Service::SATOSHI_RATE ),
 			prev_out_n: $transaction_input->getPrevOut()->getN(),
 		);
 	}

@@ -13,10 +13,6 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\Woo_Cancel_Abandoned_Order;
 
-use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce;
-use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\lucatume\DI52\Container as DI52_Container;
-use BrianHenryIE\WP_Bitcoin_Gateway\lucatume\DI52\ContainerException;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
@@ -30,20 +26,18 @@ class Woo_Cancel_Abandoned_Order_Integration {
 	/**
 	 * Constructor.
 	 *
-	 * @param ContainerInterface&DI52_Container $container PSR container.
-	 * @throws ContainerException E.g. if the bound class cannot be instantiated.
+	 * @param ContainerInterface $container PSR container.
 	 */
 	public function __construct(
-		protected DI52_Container $container,
+		protected ContainerInterface $container,
 	) {
 	}
 
 	/**
 	 * Add filters to enable support for WooCommerce Cancel Abandoned Order plugin.
 	 *
-	 * @throws NotFoundExceptionInterface If the class cannot be resolved (often when an interface does not have a bound class).
-	 * @throws ContainerException Other problems when instantiating the requested class.
-	 * @throws ContainerExceptionInterface PSR interface for all container exceptions.
+	 * @throws NotFoundExceptionInterface If the id being resolved (or one of its dependencies) is not found in the container.
+	 * @throws ContainerExceptionInterface If the container fails to instantiate a resolved class.
 	 */
 	public function register_hooks(): void {
 

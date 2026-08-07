@@ -15,8 +15,6 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Blocks\Order_Confir
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Blocks\Order_Confirmation\Bitcoin_Order_Payment_Last_Checked_Block;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Blocks\Order_Confirmation\Bitcoin_Order_Payment_Status_Block;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Blocks\Order_Confirmation\Bitcoin_Order_Payment_Total_Block;
-use BrianHenryIE\WP_Bitcoin_Gateway\lucatume\DI52\Container as DI52_Container;
-use BrianHenryIE\WP_Bitcoin_Gateway\lucatume\DI52\ContainerException;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
@@ -29,13 +27,11 @@ class WooCommerce_Integration {
 	/**
 	 * Constructor
 	 *
-	 * @param ContainerInterface&DI52_Container $container PSR container.
-	 * @throws ContainerException E.g. if the bound class cannot be instantiated.
+	 * @param ContainerInterface $container PSR container.
 	 */
 	public function __construct(
-		protected DI52_Container $container,
+		protected ContainerInterface $container,
 	) {
-		$this->container->bind( API_WooCommerce_Interface::class, API_WooCommerce::class );
 	}
 
 	/**
@@ -45,9 +41,8 @@ class WooCommerce_Integration {
 	 * Load the dependencies, define the locale, and set the hooks for the admin area and
 	 * the frontend-facing side of the site.
 	 *
-	 * @throws NotFoundExceptionInterface If the class cannot be resolved (often when an interface does not have a bound class).
-	 * @throws ContainerException Other problems when instantiating the requested class.
-	 * @throws ContainerExceptionInterface PSR interface for all container exceptions.
+	 * @throws NotFoundExceptionInterface If the id being resolved (or one of its dependencies) is not found in the container.
+	 * @throws ContainerExceptionInterface If the container fails to instantiate a resolved class.
 	 */
 	public function register_hooks(): void {
 

@@ -475,7 +475,7 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 			v_in: array(),
 			v_out: array(
 				new Transaction_VOut(
-					value: Money::of( 0.5, 'BTC' ),
+					value: Money::of( '0.5', 'BTC' ),
 					scriptpubkey_address: $raw_address,
 				),
 			),
@@ -579,7 +579,7 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 			v_in: array(),
 			v_out: array(
 				new Transaction_VOut(
-					value: Money::of( 0.5, 'BTC' ),
+					value: Money::of( '0.5', 'BTC' ),
 					scriptpubkey_address: $raw_address,
 				),
 			),
@@ -594,7 +594,7 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 			v_in: array(),
 			v_out: array(
 				new Transaction_VOut(
-					value: Money::of( 0.025, 'BTC' ),
+					value: Money::of( '0.025', 'BTC' ),
 					scriptpubkey_address: $raw_address,
 				),
 			),

@@ -132,7 +132,7 @@ class Exchange_Rate_Service_WPUnit_Test extends WPTestCase {
 		$result = $sut->convert_fiat_to_btc( Money::of( '45000.00', 'USD' ) );
 
 		$this->assertTrue(
-			$result->isEqualTo( Money::of( 0.5, 'BTC' ) ),
+			$result->isEqualTo( Money::of( '0.5', 'BTC' ) ),
 			$result->getAmount()->__toString()
 		);
 	}
@@ -195,7 +195,7 @@ class Exchange_Rate_Service_WPUnit_Test extends WPTestCase {
 		$result = $sut->convert_fiat_to_btc( Money::of( '42500.00', 'EUR' ) );
 
 		$this->assertTrue(
-			$result->isEqualTo( Money::of( 0.5, 'BTC' ) ),
+			$result->isEqualTo( Money::of( '0.5', 'BTC' ) ),
 			$result->getAmount()->__toString()
 		);
 	}

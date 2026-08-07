@@ -41,16 +41,19 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Settings;
 use BrianHenryIE\WP_Bitcoin_Gateway\Art4\Requests\Psr\HttpClient;
 use BrianHenryIE\WP_Bitcoin_Gateway\BlockchainInfo\BlockchainInfoApi;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\Woo_Cancel_Abandoned_Order\Woo_Cancel_Abandoned_Order_Integration;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\WooCommerce_Integration;
 use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\JsonMapperInterface;
-use BrianHenryIE\WP_Bitcoin_Gateway\lucatume\DI52\Container;
+use BrianHenryIE\WP_Bitcoin_Gateway\League\Container\Container;
+use BrianHenryIE\WP_Bitcoin_Gateway\League\Container\ReflectionContainer;
 use BrianHenryIE\WP_Bitcoin_Gateway\WC_Logger\WC_Logger_Settings_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\WC_Logger\WC_PSR_Logger;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Activator;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Deactivator;
-use BrianHenryIE\WP_Bitcoin_Gateway\WP_Logger\Logger;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Logger\Logger_Settings_Interface;
 use Exception;
+use Psr\Container\ContainerInterface;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Log\LoggerInterface;
@@ -88,20 +91,26 @@ register_activation_hook( __FILE__, array( Activator::class, 'activate' ) );
 register_deactivation_hook( __FILE__, array( Deactivator::class, 'deactivate' ) );
 
 $container = new Container();
+// Autowire unbound concrete classes by reflection. `false` (no caching) means a new
+// instance per get() for anything not addShared().
+$container->delegate( new ReflectionContainer( false ) );
 
-$container->bind( Background_Jobs_Scheduler_Interface::class, Background_Jobs_Scheduler::class );
-$container->bind( Background_Jobs_Actions_Interface::class, Background_Jobs_Actions_Handler::class );
+// league/container does not self-bind; this is needed to autowire classes that constructor-inject the container.
+$container->addShared( ContainerInterface::class, static fn(): ContainerInterface => $container );
 
-$container->bind( API_Background_Jobs_Interface::class, API::class );
-$container->bind( API_Interface::class, API::class );
+$container->add( Background_Jobs_Scheduler_Interface::class, Background_Jobs_Scheduler::class );
+$container->add( Background_Jobs_Actions_Interface::class, Background_Jobs_Actions_Handler::class );
 
-$container->bind( Settings_Interface::class, Settings::class );
-$container->bind( LoggerInterface::class, Logger::class );
-$container->bind( Logger_Settings_Interface::class, Settings::class );
+$container->add( API_Background_Jobs_Interface::class, API::class );
+$container->add( API_Interface::class, API::class );
+
+$container->add( Settings_Interface::class, Settings::class );
+$container->add( Logger_Settings_Interface::class, Settings::class );
 // BH WP Logger doesn't add its own hooks unless we use its singleton.
-$container->singleton(
+// NB: league/container definition closures receive no arguments — capture $container with `use` if needed.
+$container->addShared(
 	LoggerInterface::class,
-	static function ( Container $_container ) {
+	static function (): LoggerInterface {
 		return new WC_PSR_Logger(
 			new class() implements WC_Logger_Settings_Interface {
 				/**
@@ -122,22 +131,26 @@ $container->singleton(
 	}
 );
 
-$container->singleton(
+$container->addShared(
 	JsonMapperInterface::class,
-	static function ( Container $container ) {
+	static function () use ( $container ): JsonMapperInterface {
 		/** @var JsonMapper_Helper $json_mapper_helper */
 		$json_mapper_helper = $container->get( JsonMapper_Helper::class );
 		return $json_mapper_helper->build();
 	}
 );
 
-// $container->bind( RequestFactoryInterface::class, HttpClient::class );
-// $container->bind( ClientInterface::class, HttpClient::class );
-// $container->bind( Blockchain_API_Interface::class, Blockchain_Info_Api::class );
-$container->bind( Blockchain_API_Interface::class, Blockstream_Info_API::class );
+// $container->add( RequestFactoryInterface::class, HttpClient::class );
+// $container->add( ClientInterface::class, HttpClient::class );
+// $container->add( Blockchain_API_Interface::class, Blockchain_Info_Api::class );
+$container->add( Blockchain_API_Interface::class, Blockstream_Info_API::class );
 
-$container->bind( Generate_Address_API_Interface::class, Nimq_API::class );
-$container->bind( Exchange_Rate_API_Interface::class, Bitfinex_API::class );
+$container->add( Generate_Address_API_Interface::class, Nimq_API::class );
+$container->add( Exchange_Rate_API_Interface::class, Bitfinex_API::class );
+
+// Registered here rather than in WooCommerce_Integration / BH_WP_Bitcoin_Gateway constructors so
+// consumers only depend on ContainerInterface. Resolution is lazy.
+$container->add( API_WooCommerce_Interface::class, API_WooCommerce::class );
 
 /** @var BH_WP_Bitcoin_Gateway $app */
 $app = $container->get( BH_WP_Bitcoin_Gateway::class );
@@ -158,8 +171,7 @@ $boot_integrations = function () use ( $container ): void {
 		'bh_wp_bitcoin_gateway_integrations',
 		array(
 			WooCommerce_Integration::class,
-			// This relies on the container bindings from the WooCommerce_Integration so is ordered after it, if it
-			// were to fail when being instantiated below, it would fail with a logged warning.
+			// If this were to fail when being instantiated below, it would fail with a logged warning.
 			Woo_Cancel_Abandoned_Order_Integration::class,
 		)
 	);

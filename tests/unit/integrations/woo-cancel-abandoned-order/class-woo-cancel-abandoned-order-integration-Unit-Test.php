@@ -5,9 +5,9 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\Woo_Cancel_Abandoned_Order;
 
-use BrianHenryIE\WP_Bitcoin_Gateway\lucatume\DI52\Container as DI52_Container;
 use Codeception\Stub\Expected;
 use Codeception\Test\Unit;
+use Psr\Container\ContainerInterface;
 
 /**
  * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\Integrations\Woo_Cancel_Abandoned_Order\Woo_Cancel_Abandoned_Order_Integration
@@ -33,8 +33,8 @@ class Woo_Cancel_Abandoned_Order_Integration_Unit_Test extends Unit {
 
 		$woo_cancel_abandoned_order = $this->make( Woo_Cancel_Abandoned_Order::class );
 
-		$container_mock = $this->make(
-			DI52_Container::class,
+		$container_mock = $this->makeEmpty(
+			ContainerInterface::class,
 			array(
 				'get' => Expected::once( $woo_cancel_abandoned_order ),
 			)

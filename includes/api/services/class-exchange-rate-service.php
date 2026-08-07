@@ -148,9 +148,9 @@ class Exchange_Rate_Service implements LoggerAwareInterface {
 		}
 
 		// 1 BTC = xx USD.
-		$exchange_rate = BigDecimal::of( '1' )->dividedBy( $exchange_rate->getAmount(), 24, RoundingMode::HALF_EVEN );
+		$exchange_rate = BigDecimal::of( '1' )->dividedBy( $exchange_rate->getAmount(), 24, RoundingMode::HalfEven );
 
-		return $fiat_amount->convertedTo( Currency::of( 'BTC' ), $exchange_rate, null, RoundingMode::HALF_EVEN );
+		return $fiat_amount->convertedTo( Currency::of( 'BTC' ), $exchange_rate, roundingMode: RoundingMode::HalfEven );
 	}
 
 	/**

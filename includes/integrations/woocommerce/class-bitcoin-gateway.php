@@ -443,7 +443,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 			throw new BH_WP_Bitcoin_Gateway_Exception( __( 'Error creating order.', 'bh-wp-bitcoin-gateway' ) );
 		}
 
-		$fiat_total = Money::of( $order->get_total(), $order->get_currency() );
+		$fiat_total = Money::of( (string) $order->get_total(), $order->get_currency() );
 
 		$btc_total = $this->api->convert_fiat_to_btc( $fiat_total );
 

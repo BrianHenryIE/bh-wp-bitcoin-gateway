@@ -89,11 +89,11 @@ class WC_Order_Meta_Helper_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTe
 
 		$sut = $this->get_sut();
 
-		$sut->set_exchange_rate( $wc_order, Money::of( 0.0987, 'BTC' ) );
+		$sut->set_exchange_rate( $wc_order, Money::of( '0.0987', 'BTC' ) );
 
 		$result = $sut->get_exchange_rate( $wc_order );
 
-		$this->assertTrue( Money::of( 0.0987, 'BTC' )->isEqualTo( $result ) );
+		$this->assertTrue( Money::of( '0.0987', 'BTC' )->isEqualTo( $result ) );
 	}
 
 	/**
@@ -107,10 +107,10 @@ class WC_Order_Meta_Helper_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTe
 
 		$sut = $this->get_sut();
 
-		$sut->set_confirmed_amount_received( $wc_order, Money::of( 0.0024, 'BTC' ) );
+		$sut->set_confirmed_amount_received( $wc_order, Money::of( '0.0024', 'BTC' ) );
 
 		$result = $sut->get_confirmed_amount_received( $wc_order );
 
-		$this->assertTrue( Money::of( 0.0024, 'BTC' )->isEqualTo( $result ) );
+		$this->assertTrue( Money::of( '0.0024', 'BTC' )->isEqualTo( $result ) );
 	}
 }

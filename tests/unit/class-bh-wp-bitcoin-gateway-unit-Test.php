@@ -18,7 +18,8 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Blockchain_API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\Generate_Address_API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\JsonMapperInterface;
-use BrianHenryIE\WP_Bitcoin_Gateway\lucatume\DI52\Container;
+use BrianHenryIE\WP_Bitcoin_Gateway\League\Container\Container;
+use BrianHenryIE\WP_Bitcoin_Gateway\League\Container\ReflectionContainer;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\I18n;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Post_BH_Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Post_BH_Bitcoin_Transaction;
@@ -48,8 +49,9 @@ class BH_WP_Bitcoin_Gateway_Unit_Test extends \Codeception\Test\Unit {
 	protected function get_container(): ContainerInterface {
 
 		$container = new Container();
+		$container->delegate( new ReflectionContainer() );
 
-		$container->bind(
+		$container->add(
 			API_Interface::class,
 			fn() => $this->makeEmpty( API_Interface::class )
 		);
@@ -59,31 +61,31 @@ class BH_WP_Bitcoin_Gateway_Unit_Test extends \Codeception\Test\Unit {
 				'get_plugin_basename' => 'bh-wp-bitcoin-gateway/bh-wp-bitcoin-gateway.php',
 			)
 		);
-		$container->bind( Settings_Interface::class, $settings );
-		$container->bind( LoggerInterface::class, ColorLogger::class );
+		$container->add( Settings_Interface::class, $settings );
+		$container->add( LoggerInterface::class, ColorLogger::class );
 
-		$container->bind(
+		$container->add(
 			API_Background_Jobs_Interface::class,
 			fn() => $this->makeEmpty( API_Background_Jobs_Interface::class )
 		);
 
-		$container->bind( Background_Jobs_Scheduler_Interface::class, Background_Jobs_Scheduler::class );
-		$container->bind( Background_Jobs_Actions_Interface::class, Background_Jobs_Actions_Handler::class );
+		$container->add( Background_Jobs_Scheduler_Interface::class, Background_Jobs_Scheduler::class );
+		$container->add( Background_Jobs_Actions_Interface::class, Background_Jobs_Actions_Handler::class );
 
-		$container->bind(
+		$container->add(
 			Generate_Address_API_Interface::class,
 			fn() => $this->makeEmpty( Generate_Address_API_Interface::class )
 		);
 
-		$container->bind(
+		$container->add(
 			API_WooCommerce_Interface::class,
 			fn() => $this->makeEmpty( API_WooCommerce_Interface::class )
 		);
-		$container->bind(
+		$container->add(
 			JsonMapperInterface::class,
 			fn() => $this->makeEmpty( JsonMapperInterface::class )
 		);
-		$container->bind(
+		$container->add(
 			Blockchain_API_Interface::class,
 			fn() => $this->makeEmpty( Blockchain_API_Interface::class )
 		);

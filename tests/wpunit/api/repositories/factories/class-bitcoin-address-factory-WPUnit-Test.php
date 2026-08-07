@@ -73,7 +73,7 @@ class Bitcoin_Address_Factory_WPUnit_Test extends WPTestCase {
 			address: $new_payment_address,
 			integration_id: __METHOD__,
 			order_id: 123,
-			btc_total: Money::of( 0.00002, 'BTC' )
+			btc_total: Money::of( '0.00002', 'BTC' )
 		);
 
 		$new_payment_address_after = $bitcoin_address_repository->refresh( $new_payment_address );
