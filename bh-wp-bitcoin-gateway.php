@@ -140,9 +140,10 @@ $container->addShared(
 	}
 );
 
-// $container->add( RequestFactoryInterface::class, HttpClient::class );
-// $container->add( ClientInterface::class, HttpClient::class );
-// $container->add( Blockchain_API_Interface::class, Blockchain_Info_Api::class );
+$container->add( RequestFactoryInterface::class, HttpClient::class );
+$container->add( ClientInterface::class, HttpClient::class );
+
+// TODO: Add UI to select / failover to use: `Blockchain_Info_Api`.
 $container->add( Blockchain_API_Interface::class, Blockstream_Info_API::class );
 
 $container->add( Generate_Address_API_Interface::class, Nimq_API::class );
