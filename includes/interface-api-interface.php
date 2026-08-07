@@ -136,7 +136,7 @@ interface API_Interface {
 	 *
 	 * @param Bitcoin_Address $bitcoin_address The payment address to get transactions for.
 	 *
-	 * @return ?array<Bitcoin_Transaction&Transaction_Interface>
+	 * @return ?array<int, Bitcoin_Transaction&Transaction_Interface> WP post_id: transaction object.
 	 */
 	public function get_saved_transactions( Bitcoin_Address $bitcoin_address ): ?array;
 }

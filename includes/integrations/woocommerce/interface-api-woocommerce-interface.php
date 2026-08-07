@@ -14,7 +14,6 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Results\Check_Address_For_Payment_Service_Result;
-use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Math\BigNumber;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
 use WC_Order;
@@ -101,7 +100,7 @@ interface API_WooCommerce_Interface {
 	 *
 	 * @param WC_Order $order The WooCommerce order.
 	 *
-	 * @return array<string, string|null|Money|BigNumber|array<Bitcoin_Transaction>>
+	 * @return array<string, string|null|Money|array<int, Bitcoin_Transaction>|WC_Order|WC_Bitcoin_Order>
 	 * @throws BH_WP_Bitcoin_Gateway_Exception When the order has no Bitcoin address.
 	 */
 	public function get_formatted_order_details( WC_Order $order ): array;

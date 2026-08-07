@@ -8,6 +8,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduler_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Bitcoin_Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Bitcoin_Wallet_Service;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Payment_Service;
@@ -346,6 +347,7 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 		 * We know there must be at least one transaction if we've summed them to the required amount!
 		 *
 		 * @var Transaction_Interface $last_transaction
+		 * @phpstan-ignore function.notFound (WordPress provides a polyfill.)
 		 */
 		$last_transaction = array_last( $check_address_for_payment_service_result->all_transactions );
 		$wc_order->payment_complete( $last_transaction->get_txid() );
@@ -384,7 +386,7 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 	 * @uses API_WooCommerce_Interface::get_order_details()
 	 * @see  Details_Formatter
 	 *
-	 * @return array<string, mixed>
+	 * @return array<string, string|null|Money|array<int, Bitcoin_Transaction>|WC_Order|WC_Bitcoin_Order>
 	 *
 	 * @throws BH_WP_Bitcoin_Gateway_Exception When order details cannot be retrieved or formatted due to missing address or API failures.
 	 */
