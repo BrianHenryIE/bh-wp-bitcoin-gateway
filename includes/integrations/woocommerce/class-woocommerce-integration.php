@@ -221,10 +221,12 @@ class WooCommerce_Integration {
 	 */
 	protected function define_woocommerce_features_hooks(): void {
 
-		/** @var HPOS $hpos */
-		$hpos = $this->container->get( HPOS::class );
+		/** @var Features $hpos */
+		$hpos = $this->container->get( Features::class );
 
-		add_action( 'before_woocommerce_init', array( $hpos, 'declare_compatibility' ) );
+		add_action( 'before_woocommerce_init', array( $hpos, 'declare_custom_order_tables_compatibility' ) );
+
+		add_action( 'before_woocommerce_init', array( $hpos, 'declare_cart_checkout__blocks_compatibility' ) );
 	}
 
 	/**

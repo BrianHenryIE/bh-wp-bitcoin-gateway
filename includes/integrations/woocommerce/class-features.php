@@ -19,7 +19,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
  *
  * @see https://woocommerce.com/document/high-performance-order-storage/
  */
-class HPOS {
+class Features {
 
 	/**
 	 * Constructor
@@ -39,13 +39,31 @@ class HPOS {
 	 * @hooked before_woocommerce_init
 	 * @see WooCommerce::init()
 	 */
-	public function declare_compatibility(): void {
+	public function declare_custom_order_tables_compatibility(): void {
 		if ( ! class_exists( FeaturesUtil::class ) ) {
 			return;
 		}
 
 		FeaturesUtil::declare_compatibility(
 			'custom_order_tables',
+			$this->settings->get_plugin_basename(),
+			true
+		);
+	}
+
+	/**
+	 * Register compatibility with blocks checkout.
+	 *
+	 * @hooked before_woocommerce_init
+	 * @see WooCommerce::init()
+	 */
+	public function declare_cart_checkout__blocks_compatibility(): void {
+		if ( ! class_exists( FeaturesUtil::class ) ) {
+			return;
+		}
+
+		FeaturesUtil::declare_compatibility(
+			'cart_checkout_blocks',
 			$this->settings->get_plugin_basename(),
 			true
 		);

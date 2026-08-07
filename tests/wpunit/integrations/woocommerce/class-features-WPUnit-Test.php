@@ -7,15 +7,37 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
 use Codeception\Stub\Expected;
 
 /**
- * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\HPOS
+ * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Features
  */
-class HPOS_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
+class Features_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 
 	/**
-	 * @covers ::declare_compatibility
-	 * @covers ::__construct
+	 * @return array<string, array{method:string, feature:string}>
 	 */
-	public function test_declare_compatibility(): void {
+	public function declare_compatibility_provider(): array {
+		return array(
+			'custom_order_tables'  => array(
+				'method'  => 'declare_custom_order_tables_compatibility',
+				'feature' => 'custom_order_tables',
+			),
+			'cart_checkout_blocks' => array(
+				'method'  => 'declare_cart_checkout__blocks_compatibility',
+				'feature' => 'cart_checkout_blocks',
+			),
+		);
+	}
+
+	/**
+	 * @covers ::declare_custom_order_tables_compatibility
+	 * @covers ::declare_cart_checkout__blocks_compatibility
+	 * @covers ::__construct
+	 *
+	 * @dataProvider declare_compatibility_provider
+	 *
+	 * @param string $method The Features method under test.
+	 * @param string $feature The WooCommerce feature id the method declares compatibility with.
+	 */
+	public function test_declare_compatibility( string $method, string $feature ): void {
 
 		$settings = $this->makeEmpty(
 			Settings_Interface::class,
@@ -45,12 +67,12 @@ class HPOS_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 		);
 		wp_cache_set( 'plugins', $cache_plugins, 'plugins', 10 );
 
-		$sut = new HPOS( $settings );
+		$sut = new Features( $settings );
 
-		$sut->declare_compatibility();
+		$sut->{$method}();
 
 		/** @var array{compatible:array<string>, incompatible:array<string>} $result */
-		$result = FeaturesUtil::get_compatible_plugins_for_feature( 'custom_order_tables' );
+		$result = FeaturesUtil::get_compatible_plugins_for_feature( $feature );
 
 		$this->assertContains( 'bh-wp-bitcoin-gateway/bh-wp-bitcoin-gateway.php', $result['compatible'], wp_json_encode( $result['compatible'] ) ?: '' );
 	}

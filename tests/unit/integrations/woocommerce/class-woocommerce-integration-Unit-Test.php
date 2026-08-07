@@ -188,7 +188,12 @@ class WooCommerce_Integration_Unit_Test extends Unit {
 
 		\WP_Mock::expectActionAdded(
 			'before_woocommerce_init',
-			array( new AnyInstance( HPOS::class ), 'declare_compatibility' )
+			array( new AnyInstance( Features::class ), 'declare_custom_order_tables_compatibility' )
+		);
+
+		\WP_Mock::expectActionAdded(
+			'before_woocommerce_init',
+			array( new AnyInstance( Features::class ), 'declare_cart_checkout__blocks_compatibility' )
 		);
 
 		$app = new WooCommerce_Integration( $this->get_container() );
