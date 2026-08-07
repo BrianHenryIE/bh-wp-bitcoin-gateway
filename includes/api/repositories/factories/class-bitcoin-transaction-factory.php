@@ -50,8 +50,6 @@ class Bitcoin_Transaction_Factory {
 	/**
 	 * Takes a WP_Post and gets the values (primitives?) to create a Bitcoin_Transaction.
 	 *
-	 * TODO: inject JsonMapper.
-	 *
 	 * @param WP_Post $post The backing WP_Post for this Bitcoin_Transaction.
 	 *
 	 * @throws BuilderException When the JSON mapper fails to deserialize the transaction data from post_content.

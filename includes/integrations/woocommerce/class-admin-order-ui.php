@@ -99,7 +99,7 @@ class Admin_Order_UI {
 
 		add_meta_box(
 			'bh-wp-bitcoin-gateway',
-			'Bitcoin', // TODO: translate.
+			__( 'Bitcoin', 'bh-wp-bitcoin-gateway' ),
 			$this->print_address_transactions_metabox( ... ),
 			$screen,
 			'normal',
