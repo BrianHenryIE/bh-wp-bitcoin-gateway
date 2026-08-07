@@ -67,9 +67,10 @@ abstract class WP_Post_Repository_Abstract {
 			unset( $args['meta_input'] );
 		}
 
-		/** @var int|WP_Error $result */
+		/** @var int<1, max>|WP_Error $result */
 		$result = wp_update_post(
-			$args
+			$args,
+			wp_error: true
 		);
 
 		if ( ! is_wp_error( $result ) ) {
