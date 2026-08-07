@@ -12,8 +12,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_Interface;
 // I think we need every client to implement the ~`bh_wp_bitcoin_blockchain_api_link` descriptive filter to be able to
 // attribute the information we have with where it came from.
 //
-// . E.g. so we can get the
-// url to link to the details of a transaction. SO we can att
+// E.g. so we can get the url to link to the details of a transaction. So we know the source api that was used to mark an order paid.
 
 interface Blockchain_API_Interface {
 
