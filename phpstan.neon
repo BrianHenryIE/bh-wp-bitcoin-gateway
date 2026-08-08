@@ -96,5 +96,7 @@ parameters:
           message: '/Parameter #1 \$callback of function array_map expects/'
           path: includes/api/clients/blockchain/adapters/class-blockchain-info-api-transaction-adapter.php
         - # QR code library should be replaced with something more lightweight, nmaybe JavaScript.
-          message: '/Parameter #1 \$text of function esc_attr expects string, mixed given. /'
+          message: '/Parameter #1 \$text of function esc_attr expects string, mixed given/'
           path: templates/bitcoin-unpaid.php
+        - # WordPress provides a polyfill in compat.php:507.
+          message: '/Function array_first not found/'
