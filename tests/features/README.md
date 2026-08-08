@@ -102,14 +102,14 @@ If you need to test against MySQL specifically (e.g., for MySQL-specific queries
 
 ### 1. Generate New Addresses Command (`generate-new-addresses.feature`)
 
-Tests for `wp bh-bitcoin generate-new-addresses`:
+Tests for `wp bh_bitcoin generate_new_addresses`:
 - Command executes successfully without gateway configuration
 - Debug flag (`--debug=bh-wp-bitcoin-gateway`) works correctly
 - Help text is available and accurate
 
 ### 2. Check Transactions Command (`check-transactions.feature`)
 
-Tests for `wp bh-bitcoin check-transactions <input>`:
+Tests for `wp bh-bitcoin check_transactions <input>`:
 - Command requires an input argument
 - Handles non-existent order IDs appropriately
 - Handles invalid Bitcoin addresses appropriately

@@ -147,24 +147,18 @@ class BH_WP_Bitcoin_Gateway {
 	/**
 	 * Register WP CLI commands.
 	 *
-	 * `wp bh-bitcoin generate-new-addresses`
+	 * `wp help bh_bitcoin`
 	 */
 	protected function define_cli_commands(): void {
 
-		if ( ! class_exists( WP_CLI::class ) ) {
+		/** @phpstan-ignore-next-line notIdentical.alwaysFalse (Defined outside the project.) */
+		if ( ! defined( 'WP_CLI' ) || true !== constant( 'WP_CLI' ) ) {
 			return;
 		}
 
 		/** @var CLI $cli */
 		$cli = $this->container->get( CLI::class );
 
-		try {
-			WP_CLI::add_command( 'bh-bitcoin generate-new-addresses', array( $cli, 'generate_new_addresses' ) );
-			WP_CLI::add_command( 'bh-bitcoin check-transactions', array( $cli, 'check_transactions' ) );
-		} catch ( Exception $e ) {
-			/** @var LoggerInterface $logger */
-			$logger = $this->container->get( LoggerInterface::class );
-			$logger->error( 'Failed to register WP CLI commands: ' . $e->getMessage(), array( 'exception' => $e ) );
-		}
+		add_action( 'cli_init', array( $cli, 'register_commands' ) );
 	}
 }
