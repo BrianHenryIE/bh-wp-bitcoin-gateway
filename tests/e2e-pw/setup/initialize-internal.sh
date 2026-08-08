@@ -101,3 +101,12 @@ wp option set woocommerce_coming_soon no
 # Not doing well with PHP 8.4.
 wp plugin deactivate crypto-payments-woo
 wp plugin deactivate bh-wc-set-gateway-by-url
+
+
+# Install jq to manipulate json (optional output of WP CLI commands)
+if command -v jq &> /dev/null; then
+	echo "jq is already installed."
+else
+	echo "jq not found, installing..."
+	sudo apk add jq
+fi
