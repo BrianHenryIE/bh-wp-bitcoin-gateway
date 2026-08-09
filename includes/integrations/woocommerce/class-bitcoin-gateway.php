@@ -389,6 +389,10 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 
 		// TODO: always keep more than two addresses available.
 
+		if ( is_bool( $this->is_available_cache ) ) {
+			return $this->is_available_cache;
+		}
+
 		$is_available_cache_key = 'bh-wp-bitcoin-gateway-available:' . self::class . $this->id;
 
 		$is_available_cache_string = get_transient( $is_available_cache_key );
@@ -401,10 +405,6 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 			) {
 				return $is_available_cache['is_available'];
 			}
-		}
-
-		if ( is_bool( $this->is_available_cache ) ) {
-			return $this->is_available_cache;
 		}
 
 		if ( ! $this->api_woocommerce->is_unused_address_available_for_gateway( $this ) ) {
