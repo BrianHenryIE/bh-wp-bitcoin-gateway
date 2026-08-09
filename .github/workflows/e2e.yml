@@ -32,7 +32,7 @@ jobs:
       # `wp dist-archive` needs the zip extension. Matches .github/workflows/release.yml, which
       # builds the archive the same way.
       - name: Install PHP
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2.37.2
         with:
           php-version: '8.4'
           tools: composer
@@ -83,11 +83,11 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version-file: '.nvmrc'
           cache: 'npm'
+#          node-version-file: '.nvmrc'
 
       - name: Install PHP
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2.37.2
         with:
           php-version: '8.4'
           tools: composer

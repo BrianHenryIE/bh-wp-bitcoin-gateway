@@ -31,61 +31,9 @@ jobs:
         with:
           ref: master
 
-      - name: Install PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ matrix.php }}
-          tools: composer, cs2pr
-          extensions: zip
-
-      - name: Update environment config for GitHub Actions
-        env:
-          PLUGIN_SLUG: ${{ github.event.repository.name }}
-        run: |
-          find . -depth \( -name '.env.testing' \) -exec sed -i "s/TEST_SITE_DB_HOST=\"127.0.0.1\"/TEST_SITE_DB_HOST=\"127.0.0.1:${{ job.services.mysql.ports['3306'] }}\"/g" {} +
-          find . -depth \( -name '.env.testing' -o -name '*.cest' \) -exec sed -i "s/localhost:8080\/${{ env.PLUGIN_SLUG }}/localhost:8080/g" {} +
-          find . -depth \( -name 'dump.sql' \) -exec sed -i "s/localhost:8080\/${{ env.PLUGIN_SLUG }}/localhost:8080/g" {} +
-
-      - name: Read .env.testing
-        uses: c-py/action-dotenv-to-setenv@v5
-        with:
-          env-file: .env.testing
-
-      - name: Configure MySQL
-        run: |
-          mysql -h 127.0.0.1 --port ${{ job.services.mysql.ports['3306'] }} -u root -ppassword -e "CREATE USER '"$TEST_DB_USER"'@'%' IDENTIFIED WITH mysql_native_password BY '"$TEST_DB_PASSWORD"';";
-          mysql -h 127.0.0.1 --port ${{ job.services.mysql.ports['3306'] }} -u root -ppassword -e "CREATE DATABASE "$TEST_SITE_DB_NAME"; USE "$TEST_SITE_DB_NAME"; GRANT ALL PRIVILEGES ON "$TEST_SITE_DB_NAME".* TO '"$TEST_DB_USER"'@'%';";
-          mysql -h 127.0.0.1 --port ${{ job.services.mysql.ports['3306'] }} -u root -ppassword -e "CREATE DATABASE "$TEST_DB_NAME"; USE "$TEST_DB_NAME"; GRANT ALL PRIVILEGES ON "$TEST_DB_NAME".* TO '"$TEST_DB_USER"'@'%';";
-
-      - name: Run composer install
-        continue-on-error: true
-        run: composer install
-
-      - name: Create wpconfig ... the composer.json creation didn't work
-        run: |
-          export $(grep -v '^#' .env.testing | xargs);
-          sudo vendor/bin/wp config create --dbname=$TEST_SITE_DB_NAME --dbuser=$TEST_SITE_DB_USER --dbpass=$TEST_SITE_DB_PASSWORD --dbhost=127.0.0.1:${{ job.services.mysql.ports['3306'] }} --allow-root --extra-php="define( 'WP_DEBUG', true ); define( 'WP_DEBUG_LOG', true );"
-
-      - name: Read .nvmrc
-        run: echo "NODE_VERSION=$(cat .nvmrc)" >> $GITHUB_OUTPUT;
-        id: nvm
-
-      - name: Use Node.js ${{ steps.nvm.outputs.NODE_VERSION }}
-        uses: actions/setup-node@v6
-        with:
-          node-version: ${{ steps.nvm.outputs.NODE_VERSION }}
-
-      - name: Install JS dependencies from `package.json` – `npm install`
-        run: npm install
-
-      - name: Build for production
-        run: npm run build
-
-      - name: Create plugin archive
-        id: create-plugin-archive
-        run: |
-          composer create-plugin-archive
-          echo "DIST_ARCHIVE_ABSOLUTE_FILEPATH=$(pwd)/$(ls -Art dist-archive/*.zip | tail -n 1)" >> $GITHUB_OUTPUT;
+      # If we are tagging a commit where the E2E tests were run and passed, use the zip file generated then
+      # If we are tagging a commit where the E2E tests were run and failed, fail and notify somehow
+      # If we are tagging another commit, e.g. prerelease on another branch, run the e2e tests here before continuing.
 
       - uses: meeDamian/github-release@2.0
         with:
