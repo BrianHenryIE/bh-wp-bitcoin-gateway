@@ -189,7 +189,7 @@ class Bitcoin_Gateway_WPUnit_Test extends WPTestCase {
 		}
 
 		$this->assertNotNull( $exception );
-		$this->assertEquals( 'Error creating order.', $exception->getMessage() );
+		$this->assertEquals( 'Invalid order.', $exception->getMessage() );
 	}
 
 	/**
