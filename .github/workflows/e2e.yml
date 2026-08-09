@@ -212,13 +212,15 @@ jobs:
           retention-days: 30
 
       # The plugin's fatals land here rather than in the HTTP response, since .wp-env.ci.json
-      # sets WP_DEBUG_DISPLAY false. Anything at all in the file is a failure.
+      # sets WP_DEBUG_DISPLAY false. Anything left after the noise filter is a failure.
       - name: Check WordPress debug.log is empty
         if: ${{ !cancelled() }}
         run: |
           npx wp-env run --config .wp-env.ci.json cli bash -c 'cat /var/www/html/wp-content/debug.log 2>/dev/null' | tee debug-log.txt || true
-          # Add `grep -v` noise filters here as they are identified.
-          if [ -s debug-log.txt ]; then
+          # WordPress core warns reading exif data from the WooCommerce sample-product images
+          # whenever a thumbnail size is regenerated on the fly during the tests.
+          grep -v 'exif_read_data' debug-log.txt > debug-log-filtered.txt || true
+          if [ -s debug-log-filtered.txt ]; then
             echo "::error::WordPress debug.log is not empty"
             exit 1
           fi
