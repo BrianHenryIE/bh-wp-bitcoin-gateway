@@ -440,7 +440,9 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 		/**
 		 * Filter classname so that the class can be overridden if extended.
 		 *
-		 * TODO: Can we cache the class type for the order object here?
+		 * Although we add the class filter here, it doesn't always work, so we will instantiate `WC_Bitcoin_Order`
+		 * directly, but the filter will exist for the remainder of the request and the order_id=>classname will
+		 * hopefully get cached. TODO: Figure out the next action/filter run after an order is assigned an id.
 		 *
 		 * @hooked woocommerce_order_class
 		 *
@@ -456,18 +458,10 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 				? WC_Bitcoin_Order::class
 				: $classname;
 		};
-
 		add_filter( 'woocommerce_order_class', $set_class, 10000, 3 );
 
 		/** @var WC_Bitcoin_Order|false $order */
-		$order = wc_get_order( $order_id );
-
-		remove_filter( 'woocommerce_order_class', $set_class, 10000 );
-
-		if ( ! ( $order instanceof WC_Order ) ) {
-			// This should never happen.
-			throw new BH_WP_Bitcoin_Gateway_Exception( __( 'Error creating order.', 'bh-wp-bitcoin-gateway' ) );
-		}
+		$order = new WC_Bitcoin_Order( $order_id );
 
 		$order->set_json_mapper( new JsonMapper_Helper()->build() );
 

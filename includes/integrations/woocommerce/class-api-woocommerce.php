@@ -347,6 +347,9 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 	/**
 	 * Fetch the WC_Order object as a WC_Bitcoin_Order which has additional functions.
 	 *
+	 * TODO: create factory class & just use `new WC_Bitcoin_Order()` instead of `wc_get_order()`.
+	 * TODO: cache bitcoin order ids and apply `woocommerce_order_class` filter more rigorousely in its own method.
+	 *
 	 * @see \WC_Order_Factory::get_class_names_for_order_ids()
 	 *
 	 * @param int|string|false|null $order_id WooCommerce order id.
@@ -393,6 +396,10 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 
 		if ( ! $this->is_bitcoin_gateway( $order->get_payment_method() ) ) {
 			return null;
+		}
+
+		if ( ! ( $order instanceof WC_Bitcoin_Order ) ) {
+			$order = new WC_Bitcoin_Order( $order_id );
 		}
 
 		$order->set_json_mapper( $this->json_mapper );
