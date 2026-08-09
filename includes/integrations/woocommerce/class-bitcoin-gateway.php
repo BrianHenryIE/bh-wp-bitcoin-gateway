@@ -460,7 +460,11 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 		};
 		add_filter( 'woocommerce_order_class', $set_class, 10000, 3 );
 
-		/** @var WC_Bitcoin_Order|false $order */
+		/**
+		 * Throws `Exception` on failure, "Invalid order".
+		 *
+		 * @see Abstract_WC_Order_Data_Store_CPT::read()
+		 */
 		$order = new WC_Bitcoin_Order( $order_id );
 
 		$order->set_json_mapper( new JsonMapper_Helper()->build() );

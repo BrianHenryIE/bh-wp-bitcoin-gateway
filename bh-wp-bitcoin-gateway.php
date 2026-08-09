@@ -52,11 +52,13 @@ use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Activator;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Deactivator;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Logger\Logger;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Logger\Logger_Settings_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\WP_Logger\Logger_Settings_Trait;
 use Exception;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Log\LoggerInterface;
+use Psr\Log\LogLevel;
 use Throwable;
 
 // If this file is called directly, abort.
@@ -112,6 +114,8 @@ $container->addShared(
 	static function (): LoggerInterface {
 		return Logger::instance(
 			new class() implements Logger_Settings_Interface {
+				use Logger_Settings_Trait;
+
 				/**
 				 * Get the plugin slug for logging.
 				 */
@@ -121,20 +125,49 @@ $container->addShared(
 
 				/**
 				 * Record all logs from this level and above.
+				 *
+				 * @see Logger_Settings_Interface::get_log_level()
 				 */
 				public function get_log_level(): string {
-					return get_option( 'woocommerce_bh_bitcoin_settings', array( 'log_level' => 'info' ) )['log_level'] ?? 'info';
+					/**
+					 * @see \WC_Settings_API formatted option name for `bh_bitcoin`.
+					 */
+					$option_name = 'woocommerce_bh_bitcoin_settings';
+					try {
+						$saved_option = get_option( $option_name );
+						return is_array( $saved_option )
+								&& isset( $saved_option['log_level'] )
+								&& in_array(
+									$saved_option['log_level'],
+									$this->get_log_levels(),
+									true
+								)
+							? $saved_option['log_level']
+							: LogLevel::INFO;
+					} catch ( Exception ) {
+						// An exception could be thrown if another plugin is filtering options.
+						return LogLevel::INFO;
+					}
 				}
 
+				/**
+				 * @see Logger_Settings_Interface::get_plugin_name()
+				 */
 				public function get_plugin_name(): string {
 					return 'Bitcoin Gateway';
 				}
 
+				/**
+				 * @see Logger_Settings_Interface::get_plugin_basename()
+				 */
 				public function get_plugin_basename(): string {
 					return plugin_basename( __FILE__ );
 				}
 
-				public function get_cli_base(): ?string {
+				/**
+				 * @see Logger_Settings_Interface::get_cli_base()
+				 */
+				public function get_cli_base(): string {
 					return 'bh_bitcoin';
 				}
 			}

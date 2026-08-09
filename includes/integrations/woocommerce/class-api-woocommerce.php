@@ -360,6 +360,8 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 			return null;
 		}
 
+		$order_id = absint( $order_id );
+
 		$order_cache = wc_get_container()->get( OrderCache::class );
 		$order       = $order_cache->get( $order_id );
 
@@ -384,7 +386,7 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 
 			add_filter( 'woocommerce_order_class', $set_class, 10000 );
 
-			/** @var WC_Bitcoin_Order|false $order */
+			/** @var WC_Bitcoin_Order|WC_Order|false $order */
 			$order = wc_get_order( $order_id );
 
 			remove_filter( 'woocommerce_order_class', $set_class, 10000 );

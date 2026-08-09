@@ -36,16 +36,30 @@ jobs:
         continue-on-error: true
         run: vendor/bin/phpcbf
 
-      - name: Run PHPCS to add annotations to the code
+      - name: Run PHPCS to add annotations to all the code
         continue-on-error: true
         run: vendor/bin/phpcs -q -n --report=checkstyle | cs2pr
 
       - name: Fail if there are still phpcs errors in the production code
-        run: vendor/bin/phpcs includes
+        id: run-phpcs
+        run: vendor/bin/phpcs includes templates
+        continue-on-error: true # Continue so we can commit the badge.
+
+      - name: Check success
+        if: ${{ github.event_name != 'pull_request' && steps.run-phpcs.outcome == 'success' }}
+        run: curl -o .github/phpcs.svg https://img.shields.io/badge/PHPCS-WordPress%20Coding%20Standards-8892BF.svg
+
+      - name: Check failures
+        if: ${{ github.event_name != 'pull_request' && steps.run-phpcs.outcome != 'success' }}
+        run: curl -o .github/phpcs.svg https://img.shields.io/badge/PHPCS-WordPress%20Coding%20Standards%20❌-lightgrey.svg
 
       - name: Commit PHPCBF changes
         if: ${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' }}
         uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: "🤖 PHPCBF"
+
+      - name: Did we fail?
+        if: ${{ steps.run-phpcs.outcome != 'success' }}
+        run: php -r "throw new Exception('phpcs failed');" # TODO: There must be exit(1) or something.
 

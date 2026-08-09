@@ -45,9 +45,10 @@ class Addresses_List_Table {
 			return $filtered_result;
 		}
 
+		/** @var WC_Payment_Gateway[] $gateways */
 		$gateways = WC_Payment_Gateways::instance()->payment_gateways;
 
-		/** @var ?WC_Payment_Gateway $gateway_instance */
+		/** @var ?Bitcoin_Gateway $gateway_instance */
 		$gateway_instance = array_first(
 			array_filter(
 				$gateways,
