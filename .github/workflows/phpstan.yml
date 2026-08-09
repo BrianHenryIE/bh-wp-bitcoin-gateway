@@ -70,6 +70,7 @@ jobs:
         if: ${{ matrix.php == '8.4' && github.event_name != 'pull_request' }}
         with:
           file_pattern: ".github/phpstan.svg"
+          before_commit_hook: 'git pull'
           commit_message: "🤖 PhpStan"
 
       # This outputs `steps.pr_diff.outputs.diff_filename` and `steps.pr_diff.outputs.diff_contents`.
