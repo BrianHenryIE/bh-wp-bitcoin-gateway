@@ -12,6 +12,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Blocks;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Details_Formatter;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
 use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
 use WC_Order;
 use WP_Block;
@@ -158,21 +159,24 @@ class Bitcoin_Order_Confirmation_Block {
 			return array();
 		}
 
-		$order_details_formatted_array = $this->api->get_formatted_order_details( $order );
-		return Details_Formatter::camel_case_keys( $order_details_formatted_array );
+		try {
+			$order_details_formatted_array = $this->api->get_formatted_order_details( $order );
+			return Details_Formatter::camel_case_keys( $order_details_formatted_array );
+		} catch ( \Exception ) {
+			return array();
+		}
 	}
 
 	/**
 	 * Get the WooCommerce order for the current request.
 	 *
-	 * @return WC_Order|null The WooCommerce order or null if not found.
+	 * @return ?WC_Bitcoin_Order The WooCommerce order or null if not found.
 	 */
-	protected function get_order(): ?WC_Order {
+	protected function get_order(): ?WC_Bitcoin_Order {
 		if ( ! function_exists( 'wc_get_order' ) ) {
 			return null; // TODO: Add breakpoint and make sure this isn't executing unless it is needed.
 		}
-		$wc_order = wc_get_order( $this->detect_order_id() );
-		return $wc_order instanceof WC_Order ? $wc_order : null;
+		return $this->api->get_bitcoin_order( $this->detect_order_id() );
 	}
 
 	/**
@@ -195,6 +199,20 @@ class Bitcoin_Order_Confirmation_Block {
 			$order_id = wc_get_order_id_by_order_key( sanitize_text_field( wp_unslash( $_GET['key'] ) ) );
 			if ( $order_id > 0 ) {
 				return $order_id;
+			}
+		}
+
+		if ( isset( $_SERVER['HTTP_REFERER'] ) && is_string( $_SERVER['HTTP_REFERER'] ) ) {
+			$referrer_query_string = wp_parse_url( sanitize_url( wp_unslash( $_SERVER['HTTP_REFERER'] ) ), PHP_URL_QUERY );
+			if ( is_string( $referrer_query_string ) ) {
+				wp_parse_str( $referrer_query_string, $referrer_query );
+
+				if ( function_exists( 'wc_get_order_id_by_order_key' ) && isset( $referrer_query['key'] ) && is_string( $referrer_query['key'] ) ) {
+					$order_id = wc_get_order_id_by_order_key( $referrer_query['key'] );
+					if ( $order_id > 0 ) {
+						return $order_id;
+					}
+				}
 			}
 		}
 

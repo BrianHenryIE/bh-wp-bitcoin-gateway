@@ -5,6 +5,7 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
+use Automattic\WooCommerce\Caches\OrderCache;
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduler_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
@@ -16,8 +17,8 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Results\Check_Address_For_Payme
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\MoneyMismatchException;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
-use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Helpers\WC_Order_Meta_Helper;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
+use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\JsonMapperInterface;
 use DateInterval;
 use DateMalformedStringException;
 use DateTimeImmutable;
@@ -40,7 +41,7 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 	 * @param API_Interface                       $api Main plugin API.
 	 * @param Bitcoin_Wallet_Service              $wallet_service For creating/fetching wallets and addresses.
 	 * @param Payment_Service                     $payment_service For getting transaction data/checking for payments.
-	 * @param WC_Order_Meta_Helper                $order_meta_helper Meta helper.
+	 * @param JsonMapperInterface                 $json_mapper For reading metadata to objects.
 	 * @param Background_Jobs_Scheduler_Interface $background_jobs_scheduler When an order is placed, schedule a payment check.
 	 * @param LoggerInterface                     $logger PSR logger.
 	 */
@@ -48,7 +49,7 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 		protected API_Interface $api,
 		protected Bitcoin_Wallet_Service $wallet_service,
 		protected Payment_Service $payment_service,
-		protected WC_Order_Meta_Helper $order_meta_helper,
+		protected JsonMapperInterface $json_mapper,
 		protected Background_Jobs_Scheduler_Interface $background_jobs_scheduler,
 		LoggerInterface $logger,
 	) {
@@ -116,21 +117,7 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 			return false;
 		}
 
-		$order = wc_get_order( $order_id );
-
-		if ( ! ( $order instanceof WC_Order ) ) {
-			// Unlikely.
-			return false;
-		}
-
-		$payment_gateway_id = $order->get_payment_method();
-
-		if ( ! $this->is_bitcoin_gateway( $payment_gateway_id ) ) {
-			// Exit, this isn't for us.
-			return false;
-		}
-
-		return true;
+		return (bool) $this->get_bitcoin_order( (int) $order_id );
 	}
 
 	/**
@@ -157,7 +144,18 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 	public function assign_unused_address_to_order( WC_Order $order, Money $btc_total ): Bitcoin_Address {
 		$this->logger->debug( 'Get fresh address for `shop_order:{order_id}`', array( 'order_id' => $order->get_id() ) );
 
-		$bitcoin_gateway = $this->get_bitcoin_gateways()[ $order->get_payment_method() ];
+		$bitcoin_order = $this->get_bitcoin_order( $order->get_id() );
+
+		if ( ! $bitcoin_order ) {
+			throw new BH_WP_Bitcoin_Gateway_Exception();
+		}
+
+		/**
+		 * Technically, this could return `null` but it's being called instantly on order creation, so I doubt it.
+		 *
+		 * @var Bitcoin_Gateway $bitcoin_gateway
+		 */
+		$bitcoin_gateway = $bitcoin_order->get_gateway();
 
 		$btc_address = $this->get_fresh_address_for_gateway( $bitcoin_gateway );
 
@@ -172,7 +170,7 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 			btc_total: $btc_total
 		);
 
-		$this->order_meta_helper->set_raw_address( wc_order: $order, payment_address: $btc_address, save_now: true );
+		$bitcoin_order->set_raw_address( payment_address: $btc_address, save_now: true );
 
 		$this->logger->info(
 			'Assigned `bh-bitcoin-address:{post_id}` {address} to `shop_order:{order_id}`.',
@@ -189,8 +187,13 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 		);
 
 		// Queue a background job to prepare the next unused address, since this order has consumed one.
-		$wallet_for_assigned_address = $this->wallet_service->get_or_save_wallet_for_xpub( (string) $bitcoin_gateway->get_xpub() )->wallet;
-		$this->background_jobs_scheduler->schedule_single_ensure_unused_addresses( $wallet_for_assigned_address );
+		if ( $bitcoin_gateway->get_xpub() ) {
+			$wallet_for_assigned_address = $this->wallet_service->get_or_save_wallet_for_xpub( $bitcoin_gateway->get_xpub() )->wallet;
+			$this->background_jobs_scheduler->schedule_single_ensure_unused_addresses( $wallet_for_assigned_address );
+		} else {
+			// Seems implausible to reach here.
+			$this->logger->warning( 'Gateway has no master public key.' );
+		}
 
 		return $refreshed_address;
 	}
@@ -243,48 +246,6 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 	}
 
 	/**
-	 * Get the current status of the order's payment.
-	 *
-	 * As a really detailed array for printing.
-	 *
-	 * `array{btc_address:string, bitcoin_total:Money, btc_price_at_at_order_time:string, transactions:array<string, TransactionArray>, btc_exchange_rate:string, last_checked_time:DateTimeInterface, btc_amount_received:string, order_status_before:string}`
-	 *
-	 * @param WC_Order $wc_order The WooCommerce order to check.
-	 *
-	 * @return WC_Bitcoin_Order
-	 * @throws BH_WP_Bitcoin_Gateway_Exception When the order has no Bitcoin address or blockchain API queries fail during refresh.
-	 */
-	public function get_order_details( WC_Order $wc_order ): WC_Bitcoin_Order {
-
-		/** @var ?string $assigned_payment_address */
-		$assigned_payment_address = $this->order_meta_helper->get_raw_payment_address( $wc_order );
-
-		if ( is_null( $assigned_payment_address ) ) {
-			// If this were to happen, it should be possible to look up which address is associated with this order id.
-			throw new BH_WP_Bitcoin_Gateway_Exception( 'No Bitcoin payment address found for order.' );
-		}
-		$bitcoin_address = $this->wallet_service->get_saved_address_by_bitcoin_payment_address( $assigned_payment_address );
-
-		$transaction_ids = $bitcoin_address->get_tx_ids();
-
-		$transactions = null;
-		if ( ! is_null( $transaction_ids ) ) {
-			$transactions = $this->payment_service->get_saved_transactions(
-				transaction_post_ids: array_keys( $transaction_ids )
-			);
-		}
-
-		$bitcoin_order = new WC_Bitcoin_Order(
-			wc_order: $wc_order,
-			payment_address: $bitcoin_address,
-			transactions: $transactions,
-			logger: $this->logger
-		);
-
-		return $bitcoin_order;
-	}
-
-	/**
 	 * Perform a remote check for transactions and save new details to the order.
 	 *
 	 * TODO: mempool.
@@ -297,9 +258,20 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 	 */
 	public function check_order_for_payment( WC_Order $order ): void {
 
-		$bitcoin_order = $this->get_order_details( $order );
+		$bitcoin_order = $this->get_bitcoin_order( $order->get_id() );
 
-		$bitcoin_address        = $bitcoin_order->get_address();
+		if ( ! $bitcoin_order ) {
+			$this->logger->error( 'Error fetching order' );
+			return;
+		}
+
+		$bitcoin_address = $bitcoin_order->get_bitcoin_address();
+
+		if ( ! $bitcoin_address ) {
+			// TODO: log.
+			return;
+		}
+
 		$confirmed_value_before = $bitcoin_address->get_amount_received();
 
 		$check_address_for_payment_result = $this->api->check_address_for_payment( $bitcoin_address );
@@ -323,12 +295,12 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 	 *
 	 * @see WC_Order::payment_complete()
 	 *
-	 * @param WC_Order                                 $wc_order The order in question.
+	 * @param WC_Bitcoin_Order                         $wc_order The order in question.
 	 * @param Check_Address_For_Payment_Service_Result $check_address_for_payment_service_result The details of the requirements + transactions.
 	 * @throws BH_WP_Bitcoin_Gateway_Exception If the amount is invalid.
 	 */
 	public function mark_order_paid(
-		WC_Order $wc_order,
+		WC_Bitcoin_Order $wc_order,
 		Check_Address_For_Payment_Service_Result $check_address_for_payment_service_result,
 	): void {
 
@@ -337,8 +309,7 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 			throw new BH_WP_Bitcoin_Gateway_Exception( 'Invalid amount_received: ' . $check_address_for_payment_service_result->confirmed_received->__toString() . ' is negative or zero.' );
 		}
 
-		$this->order_meta_helper->set_confirmed_amount_received(
-			wc_order: $wc_order,
+		$wc_order->set_confirmed_amount_received(
 			updated_confirmed_value: $check_address_for_payment_service_result->confirmed_received,
 			save_now: false
 		);
@@ -374,6 +345,78 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 	}
 
 	/**
+	 * Fetch the WC_Order object as a WC_Bitcoin_Order which has additional functions.
+	 *
+	 * @see \WC_Order_Factory::get_class_names_for_order_ids()
+	 *
+	 * @param int|string|false|null $order_id WooCommerce order id.
+	 */
+	public function get_bitcoin_order( int|string|false|null $order_id ): ?WC_Bitcoin_Order {
+
+		if ( ! is_numeric( $order_id ) || 0 === $order_id ) {
+			return null;
+		}
+
+		$order_cache = wc_get_container()->get( OrderCache::class );
+		$order       = $order_cache->get( $order_id );
+
+		if ( ! ( $order instanceof WC_Bitcoin_Order ) ) {
+
+			if ( ! is_null( $order ) ) {
+				$this->logger->debug(
+					'Order {order_id} was returned as {order_class}.',
+					array(
+						'order_id'    => $order_id,
+						'order_class' => ( function () use ( $order ) {
+							return match ( true ) {
+								is_array( $order ) => 'array: ' . implode( ', ', array_keys( $order ) ),
+								default => get_class( $order ),
+							};
+						} )(),
+					)
+				);
+			}
+
+			$set_class = fn() => WC_Bitcoin_Order::class;
+
+			add_filter( 'woocommerce_order_class', $set_class, 10000 );
+
+			/** @var WC_Bitcoin_Order|false $order */
+			$order = wc_get_order( $order_id );
+
+			remove_filter( 'woocommerce_order_class', $set_class, 10000 );
+		}
+
+		if ( ! $order ) {
+			return null;
+		}
+
+		if ( ! $this->is_bitcoin_gateway( $order->get_payment_method() ) ) {
+			return null;
+		}
+
+		$order->set_json_mapper( $this->json_mapper );
+
+		try {
+			$order->hydrate(
+				$this->wallet_service,
+				$this->payment_service,
+			);
+		} catch ( \Exception $exception ) {
+			$this->logger->warning(
+				'Failed to hydrate order {order_id}: {message}',
+				array(
+					'message'   => $exception->getMessage(),
+					'order_id'  => $order_id,
+					'exception' => $exception,
+				)
+			);
+		}
+
+		return $order;
+	}
+
+	/**
 	 * Get order details for printing in HTML templates.
 	 *
 	 * Returns an array of:
@@ -381,45 +424,49 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 	 * * raw values that are known to be used in the templates
 	 * * objects the values are from
 	 *
-	 * @param WC_Order $order The WooCommerce order object to update.
+	 * @param WC_Bitcoin_Order $bitcoin_order The WooCommerce order object to format.
 	 *
-	 * @uses API_WooCommerce_Interface::get_order_details()
 	 * @see  Details_Formatter
 	 *
-	 * @return array<string, string|null|Money|array<int, Bitcoin_Transaction>|WC_Order|WC_Bitcoin_Order>
+	 * @return array<string, string|array<int, array<string, string>>|array<array{time:string,url:string,txid:string,value:string}>|WC_Bitcoin_Order>
 	 *
 	 * @throws BH_WP_Bitcoin_Gateway_Exception When order details cannot be retrieved or formatted due to missing address or API failures.
 	 */
-	public function get_formatted_order_details( WC_Order $order ): array {
+	public function get_formatted_order_details( WC_Bitcoin_Order $bitcoin_order ): array {
 
-		$order_details = $this->get_order_details( $order );
+		if (
+			! $bitcoin_order->get_btc_total_price()
+			|| ! $bitcoin_order->get_exchange_rate()
+			|| ! $bitcoin_order->get_bitcoin_address()
+			|| ! $bitcoin_order->get_raw_payment_address()
+		) {
+			throw new BH_WP_Bitcoin_Gateway_Exception();
+		}
 
-		$formatted = new Details_Formatter( $order_details, $this->order_meta_helper );
+		$formatted = new Details_Formatter( $bitcoin_order );
 
 		// HTML formatted data.
 		$result = $formatted->to_array();
 
-		// Raw data. TODO: convert `::get_btc_total_price(): Money`, use typed class with all strings.
-		$result['btc_total']         = $this->order_meta_helper->get_btc_total_price( $order );
-		$result['btc_exchange_rate'] = $this->order_meta_helper->get_exchange_rate( $order );
-		$result['btc_address']       = $order_details->get_address()->get_raw_address();
-		$transactions                = $this->api->get_saved_transactions( $order_details->get_address() );
+		$result['btc_total']         = $bitcoin_order->get_btc_total_price()->getAmount()->toScale( 8 )->toString();
+		$result['btc_exchange_rate'] = $bitcoin_order->get_exchange_rate()->getAmount()->toScale( 8 )->toString();
+		$result['btc_address']       = $bitcoin_order->get_raw_payment_address();
+
+		$transactions = $this->api->get_saved_transactions( $bitcoin_order->get_bitcoin_address() );
 
 		$result['formatted_transactions'] = array_map(
 			fn( Bitcoin_Transaction $transaction ) => array(
-				'time'  => $transaction->get_block_time()->format( DATE_ATOM ),
+				'time'  => $transaction->get_block_time()->format( \DateTimeInterface::ATOM ),
 				'url'   => sprintf( 'https://blockchain.com/explorer/transactions/btc/%s', $transaction->get_txid() ),
 				'txid'  => $transaction->get_txid(),
 				'value' => '', // TODO: Get the relevant value to the address in the transaction from `$transaction->get_v_out()`.
 			),
-			$transactions
+			$transactions ?? array()
 		);
 
-		$result['btc_amount_received'] = $order_details->get_address()->get_amount_received() ?? 'unknown';
+		$result['btc_amount_received'] = ( $bitcoin_order->get_bitcoin_address()->get_amount_received()?->getAmount()->toScale( 8 )->toString() ?? 'error' ) . ' BTC';
 
-		// Objects.
-		$result['order']         = $order;
-		$result['bitcoin_order'] = $order_details;
+		$result['bitcoin_order'] = $bitcoin_order;
 
 		return $result;
 	}

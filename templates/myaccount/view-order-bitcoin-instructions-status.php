@@ -6,10 +6,10 @@
  * @package    brianhenryie/bh-wp-bitcoin-gateway
  *
  * @var array<string, mixed> $args The full array of data passed to the template function.
- * @var WC_Order $order The order that Bitcoin is being used to pay.
+ * @var WC_Order $bitcoin_order The order that Bitcoin is being used to pay.
  */
 
-if ( ! $order->is_paid() ) {
+if ( ! $bitcoin_order->is_paid() ) {
 
 	wc_get_template( 'bitcoin-unpaid.php', $args );
 

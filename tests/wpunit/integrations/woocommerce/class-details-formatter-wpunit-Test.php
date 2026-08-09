@@ -3,8 +3,8 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
-use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Helpers\WC_Order_Meta_Helper;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
+use Codeception\Stub\Expected;
 use WC_Order;
 
 /**
@@ -14,11 +14,9 @@ class Details_Formatter_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestC
 
 	protected function get_sut(
 		?WC_Bitcoin_Order $bitcoin_order = null,
-		?WC_Order_Meta_Helper $order_meta_helper = null,
 	): Details_Formatter {
 		return new Details_Formatter(
 			bitcoin_order: $bitcoin_order ?? $this->make( WC_Bitcoin_Order::class ),
-			order_meta_helper: $order_meta_helper ?? $this->make( WC_Order_Meta_Helper::class ),
 		);
 	}
 
@@ -28,16 +26,10 @@ class Details_Formatter_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestC
 	 */
 	public function test_get_wc_order_status_formatted(): void {
 
-		$wc_order      = $this->make(
-			WC_Order::class,
-			array(
-				'get_status' => 'on-hold',
-			)
-		);
 		$bitcoin_order = $this->make(
 			WC_Bitcoin_Order::class,
 			array(
-				'wc_order' => $wc_order,
+				'get_status' => Expected::once( 'on-hold' ),
 			)
 		);
 
@@ -63,7 +55,7 @@ class Details_Formatter_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestC
 		$bitcoin_order = $this->make(
 			WC_Bitcoin_Order::class,
 			array(
-				'get_address' => $address,
+				'get_bitcoin_address' => $address,
 			)
 		);
 

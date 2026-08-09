@@ -50,17 +50,11 @@ class Email {
 			return;
 		}
 
-		if ( ! $this->api->is_bitcoin_gateway( $order->get_payment_method() ) ) {
+		$order = $this->api->get_bitcoin_order( $order->get_id() );
+
+		if ( ! $order ) {
 			return;
 		}
-
-		/**
-		 * There was an error where seemingly the order object being passed to this function is older than the
-		 * one saved in `Bitcoin_Gateway::process_payment()` and the meta was not present, so let's refresh.
-		 *
-		 * @var WC_Order $order
-		 */
-		$order = wc_get_order( $order->get_id() );
 
 		try {
 			$template_args = $this->api->get_formatted_order_details( $order );

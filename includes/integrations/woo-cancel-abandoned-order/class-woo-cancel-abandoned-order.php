@@ -15,7 +15,6 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\Woo_Cancel_Abandoned_Orde
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
 use Exception;
 use RVOLA\WOO\CAO\CAO;
 use WC_Order;
@@ -69,25 +68,27 @@ class Woo_Cancel_Abandoned_Order {
 	 *
 	 * @param bool     $should_cancel The already determined decision to cancel, default true.
 	 * @param int      $order_id The order id.
-	 * @param WC_Order $order The order object itself.
+	 * @param WC_Order $_order The order object itself.
 	 *
 	 * @return bool Should the order be cancelled?
 	 */
-	public function abort_canceling_partially_paid_order( bool $should_cancel, int $order_id, WC_Order $order ): bool {
-
-		if ( ! $this->api_woocommerce->is_order_has_bitcoin_gateway( $order_id ) ) {
-			return $should_cancel;
-		}
+	public function abort_canceling_partially_paid_order( bool $should_cancel, int $order_id, WC_Order $_order ): bool {
 
 		try {
-			/** @var WC_Bitcoin_Order $bitcoin_order */
-			$bitcoin_order = $this->api_woocommerce->get_order_details( $order );
+			$order = $this->api_woocommerce->get_bitcoin_order( $order_id );
 		} catch ( Exception ) {
-			// If something is going wrong, do not automatically cancel the order.
 			return false;
 		}
 
-		$address_transaction = $this->api->get_saved_transactions( $bitcoin_order->get_address() );
+		if ( ! $order ) {
+			return $should_cancel;
+		}
+
+		if ( ! $order->get_bitcoin_address() ) {
+			return false;
+		}
+
+		$address_transaction = $this->api->get_saved_transactions( $order->get_bitcoin_address() );
 
 		return empty( $address_transaction );
 	}

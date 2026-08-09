@@ -3,6 +3,7 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
 use Codeception\Stub\Expected;
 use WC_Order;
 
@@ -17,19 +18,26 @@ class Email_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	public function test_print_instructions(): void {
 
 		$logger = new ColorLogger();
-		$api    = $this->makeEmpty(
+
+		$order    = new WC_Order();
+		$order_id = $order->save();
+
+		$api = $this->makeEmpty(
 			API_WooCommerce_Interface::class,
 			array(
-				'is_bitcoin_gateway' => Expected::once(
-					fn( $gateway_id ) => true
-				),
+				'get_bitcoin_order' => function () use ( $order_id ) {
+					return $this->make(
+						WC_Bitcoin_Order::class,
+						array(
+							'get_id' => $order_id,
+						)
+					);
+				},
 			)
 		);
 
 		$sut = new Email( $api, $logger );
 
-		$order = new WC_Order();
-		$order->save();
 		$sent_to_admin = false;
 		$plain_text    = false;
 
@@ -83,9 +91,7 @@ class Email_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 		$api    = $this->makeEmpty(
 			API_WooCommerce_Interface::class,
 			array(
-				'is_bitcoin_gateway' => Expected::once(
-					fn( $gateway_id ) => false
-				),
+				'get_bitcoin_order' => Expected::once( fn() => null ),
 			)
 		);
 
@@ -119,12 +125,16 @@ class Email_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	public function test_print_instructions_exception_in_api(): void {
 
 		$logger = new ColorLogger();
-		$api    = $this->makeEmpty(
+
+		$order = new WC_Order();
+		$order->save();
+
+		$api = $this->makeEmpty(
 			API_WooCommerce_Interface::class,
 			array(
-				'is_bitcoin_gateway'          => Expected::once(
-					fn( $gateway_id ) => true
-				),
+				'get_bitcoin_order'           => function () {
+					return $this->make( WC_Bitcoin_Order::class );
+				},
 				'get_formatted_order_details' => Expected::once(
 					function ( $order ) {
 						throw new \Exception( 'no address exception' );
@@ -135,8 +145,6 @@ class Email_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 
 		$sut = new Email( $api, $logger );
 
-		$order = new WC_Order();
-		$order->save();
 		$sent_to_admin = false;
 		$plain_text    = false;
 

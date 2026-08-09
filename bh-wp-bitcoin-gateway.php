@@ -8,8 +8,8 @@
  * Plugin Name:            Bitcoin Gateway
  * Plugin URI:             http://github.com/BrianHenryIE/bh-wp-bitcoin-gateway/
  * Description:            Accept Bitcoin payments using self-custodied wallets, and no external account. Calculates wallet addresses locally and uses open APIs to verify payments. For an emphasis on privacy & sovereignty.
- * Version:                2.0.0-beta-8
- * Requires at least:      5.9
+ * Version:                2.0.0-beta-9
+ * Requires at least:      6.9
  * Requires PHP:           8.4
  * Author:                 Nullcorps, BrianHenryIE
  * Author URI:             https://bhwp.ie

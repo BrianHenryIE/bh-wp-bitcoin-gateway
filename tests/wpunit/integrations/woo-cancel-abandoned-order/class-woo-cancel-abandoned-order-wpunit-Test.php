@@ -68,7 +68,7 @@ class Woo_Cancel_Abandoned_Order_Unit_Test extends WPTestCase {
 		$bitcoin_order_mock = $this->makeEmpty(
 			WC_Bitcoin_Order::class,
 			array(
-				'get_address' => Expected::once( $bitcoin_address_mock ),
+				'get_bitcoin_address' => Expected::exactly( 2, $bitcoin_address_mock ),
 			)
 		);
 
@@ -83,8 +83,7 @@ class Woo_Cancel_Abandoned_Order_Unit_Test extends WPTestCase {
 		$api_woocommerce = $this->makeEmpty(
 			API_WooCommerce_Interface::class,
 			array(
-				'is_order_has_bitcoin_gateway' => Expected::once( true ),
-				'get_order_details'            => Expected::once( $bitcoin_order_mock ),
+				'get_bitcoin_order' => Expected::once( $bitcoin_order_mock ),
 			)
 		);
 
@@ -112,15 +111,13 @@ class Woo_Cancel_Abandoned_Order_Unit_Test extends WPTestCase {
 		$api             = $this->makeEmpty(
 			API_Interface::class,
 			array(
-				'is_order_has_bitcoin_gateway' => Expected::once( false ),
-				'get_order_details'            => Expected::never(),
+				'get_order_details' => Expected::never(),
 			)
 		);
 		$api_woocommerce = $this->makeEmpty(
 			API_WooCommerce_Interface::class,
 			array(
-				'is_order_has_bitcoin_gateway' => Expected::once( false ),
-				'get_order_details'            => Expected::never(),
+				'get_order_details' => Expected::never(),
 			)
 		);
 
@@ -150,7 +147,7 @@ class Woo_Cancel_Abandoned_Order_Unit_Test extends WPTestCase {
 		$bitcoin_order_mock = $this->makeEmpty(
 			WC_Bitcoin_Order::class,
 			array(
-				'get_address' => Expected::once( $address_mock ),
+				'get_bitcoin_address' => Expected::exactly( 2, $address_mock ),
 			)
 		);
 
@@ -161,8 +158,7 @@ class Woo_Cancel_Abandoned_Order_Unit_Test extends WPTestCase {
 		$api_woocommerce = $this->makeEmpty(
 			API_WooCommerce_Interface::class,
 			array(
-				'is_order_has_bitcoin_gateway' => Expected::once( true ),
-				'get_order_details'            => Expected::once( $bitcoin_order_mock ),
+				'get_bitcoin_order' => Expected::once( $bitcoin_order_mock ),
 			)
 		);
 
@@ -187,8 +183,7 @@ class Woo_Cancel_Abandoned_Order_Unit_Test extends WPTestCase {
 		$api_woocommerce = $this->makeEmpty(
 			API_WooCommerce_Interface::class,
 			array(
-				'is_order_has_bitcoin_gateway' => Expected::once( true ),
-				'get_order_details'            => Expected::once(
+				'get_bitcoin_order' => Expected::once(
 					function () {
 								throw new Exception();
 					}

@@ -9,7 +9,6 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Bitcoin_Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
@@ -19,6 +18,13 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Or
 use WC_Order;
 
 interface API_WooCommerce_Interface {
+
+	/**
+	 * Get a WC_Order object with convenience functions and hydrated transactions.
+	 *
+	 * @param int|string|false|null $order_id WooCommerce order id.
+	 */
+	public function get_bitcoin_order( int|string|false|null $order_id ): ?WC_Bitcoin_Order;
 
 	/**
 	 * Given an order id, determine is the order's gateway an instance of this Bitcoin gateway.
@@ -57,15 +63,6 @@ interface API_WooCommerce_Interface {
 	public function assign_unused_address_to_order( WC_Order $order, Money $btc_total ): Bitcoin_Address;
 
 	/**
-	 * Return the current Bitcoin details for an order, optionally refresh.
-	 *
-	 * @param WC_Order $wc_order   WooCommerce order object.
-	 *
-	 * @return WC_Bitcoin_Order
-	 */
-	public function get_order_details( WC_Order $wc_order ): WC_Bitcoin_Order;
-
-	/**
 	 * Synchronously remotely query the blockchain for new payments.
 	 *
 	 * This should only be run on user interaction. There will be a cron job checking it regularly anyway. This is
@@ -96,14 +93,14 @@ interface API_WooCommerce_Interface {
 	public function get_fresh_address_for_gateway( Bitcoin_Gateway $gateway ): ?Bitcoin_Address;
 
 	/**
-	 * Returns the array from `get_order_details()` with additional keys for printing in HTML/email.
+	 * Returns array with string values for printing in HTML/email.
 	 *
-	 * @param WC_Order $order The WooCommerce order.
+	 * @param WC_Bitcoin_Order $bitcoin_order The WooCommerce order.
 	 *
-	 * @return array<string, string|null|Money|array<int, Bitcoin_Transaction>|WC_Order|WC_Bitcoin_Order>
+	 * @return array<string, string|array<int, array<string, string>>|array<array{time:string,url:string,txid:string,value:string}>|WC_Bitcoin_Order>
 	 * @throws BH_WP_Bitcoin_Gateway_Exception When the order has no Bitcoin address.
 	 */
-	public function get_formatted_order_details( WC_Order $order ): array;
+	public function get_formatted_order_details( WC_Bitcoin_Order $bitcoin_order ): array;
 
 	/**
 	 * Record (log) newly seen transactions as order notes.
@@ -118,8 +115,8 @@ interface API_WooCommerce_Interface {
 	/**
 	 * Set a WooCommerce order paid with the data from the Payment_Service.
 	 *
-	 * @param WC_Order                                 $wc_order The order to mark paid (wc-completed).
+	 * @param WC_Bitcoin_Order                         $wc_order The order to mark paid (wc-completed).
 	 * @param Check_Address_For_Payment_Service_Result $check_address_for_payment_service_result The payment details.
 	 */
-	public function mark_order_paid( WC_Order $wc_order, Check_Address_For_Payment_Service_Result $check_address_for_payment_service_result, ): void;
+	public function mark_order_paid( WC_Bitcoin_Order $wc_order, Check_Address_For_Payment_Service_Result $check_address_for_payment_service_result, ): void;
 }

@@ -10,7 +10,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Bitcoin_Transaction;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Bitcoin_Wallet_Service;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Payment_Service;
-use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Helpers\WC_Order_Meta_Helper;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
 
 interface Bitcoin_Address_WP_Post_Interface {
 
@@ -28,7 +28,7 @@ interface Bitcoin_Address_WP_Post_Interface {
 	const string TRANSACTIONS_META_KEY = 'address_transactions';
 
 	/**
-	 * @see WC_Order_Meta_Helper::BITCOIN_AMOUNT_CONFIRMED_RECEIVED_META_KEY
+	 * @see WC_Bitcoin_Order::BITCOIN_AMOUNT_CONFIRMED_RECEIVED_META_KEY
 	 */
 	const string CONFIRMED_AMOUNT_RECEIVED_META_KEY = 'confirmed_amount_received';
 	const string INTEGRATION_ID_META_KEY            = 'integration_id';

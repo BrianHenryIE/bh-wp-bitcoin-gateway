@@ -9,7 +9,6 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\UnknownCurrencyException;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
-use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Helpers\WC_Order_Meta_Helper;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
 use DateTimeInterface;
 use NumberFormatter;
@@ -22,12 +21,10 @@ class Details_Formatter {
 	/**
 	 * Constructor
 	 *
-	 * @param WC_Bitcoin_Order     $bitcoin_order The order we are about to print.
-	 * @param WC_Order_Meta_Helper $order_meta_helper Set/get typed metadata.
+	 * @param WC_Bitcoin_Order $bitcoin_order The order we are about to print.
 	 */
 	public function __construct(
 		protected WC_Bitcoin_Order $bitcoin_order,
-		protected WC_Order_Meta_Helper $order_meta_helper,
 	) {
 	}
 
@@ -35,7 +32,7 @@ class Details_Formatter {
 	 * ฿ U+0E3F THAI CURRENCY SYMBOL BAHT, decimal: 3647, HTML: &#3647;, UTF-8: 0xE0 0xB8 0xBF, block: Thai.
 	 */
 	public function get_btc_total_formatted(): string {
-		$btc_price = $this->order_meta_helper->get_btc_total_price( $this->bitcoin_order->get_wc_order() );
+		$btc_price = $this->bitcoin_order->get_btc_total_price();
 		return $btc_price ? $this->format_money_to_bitcoin( $btc_price ) : '';
 	}
 
@@ -67,7 +64,7 @@ class Details_Formatter {
 	 * TODO: This should display the store currency value for one Bitcoin at the time of order. Currently ~"90817.00".
 	 */
 	public function get_btc_exchange_rate_formatted(): string {
-		$exchange_rate = $this->order_meta_helper->get_exchange_rate( $this->bitcoin_order->get_wc_order() );
+		$exchange_rate = $this->bitcoin_order->get_exchange_rate();
 		if ( ! $exchange_rate ) {
 			// TODO: log.
 			return '';
@@ -124,7 +121,7 @@ class Details_Formatter {
 	 * The index of the derived address being used. TODO: no point displaying this to customers.
 	 */
 	public function get_btc_address_derivation_path_sequence_number(): string {
-		$sequence_number = $this->bitcoin_order->get_address()->get_derivation_path_sequence_number();
+		$sequence_number = $this->bitcoin_order->get_bitcoin_address()?->get_derivation_path_sequence_number();
 		return "{$sequence_number}";
 	}
 
@@ -132,7 +129,11 @@ class Details_Formatter {
 	 * Get a clickable HTML element, to copy the payment address to the clipboard when clicked.
 	 */
 	public function get_xpub_js_span(): string {
-		$payment_address                  = $this->bitcoin_order->get_address()->get_raw_address();
+		$payment_address = $this->bitcoin_order->get_bitcoin_address()?->get_raw_address();
+		if ( ! $payment_address ) {
+			// TODO: If an admin is logged in, display something useful.
+			return '';
+		}
 		$payment_address_friendly_display = substr( $payment_address, 0, 7 ) . ' ... ' . substr( $payment_address, - 3, 3 );
 		return "<span style=\"border-bottom: 1px dashed #999; word-wrap: break-word\" onclick=\"this.innerText = this.innerText === '{$payment_address}' ? '{$payment_address_friendly_display}' : '{$payment_address}';\" title=\"{$payment_address}\"'>{$payment_address_friendly_display}</span>";
 	}
@@ -169,7 +170,7 @@ class Details_Formatter {
 		// e.g. there could be dynamic number of confirmations based on order total.
 
 		return $this->format_money_to_bitcoin(
-			$this->bitcoin_order->get_address()->get_amount_received() ?? Money::of( 0, 'BTC' )
+			$this->bitcoin_order->get_bitcoin_address()?->get_amount_received() ?? Money::of( 0, 'BTC' )
 		);
 	}
 
@@ -183,7 +184,7 @@ class Details_Formatter {
 			case $this->bitcoin_order->is_paid():
 				$result = __( 'Paid', 'bh-wp-bitcoin-gateway' );
 				break;
-			case $this->bitcoin_order->get_address()->get_amount_received()?->isGreaterThan( Money::of( 0, 'BTC' ) ):
+			case $this->bitcoin_order->get_bitcoin_address()?->get_amount_received()?->isGreaterThan( Money::of( 0, 'BTC' ) ):
 				$result = __( 'Partly Paid', 'bh-wp-bitcoin-gateway' );
 				break;
 			default:
@@ -203,21 +204,21 @@ class Details_Formatter {
 	 *
 	 * @param bool $as_camel_case Default to snake_case but the array keys can be camelCase too.
 	 *
-	 * @return array<string, string|null>
+	 * @return array<string, string>
 	 */
 	public function to_array( bool $as_camel_case = false ): array {
 
 		$result                                  = array();
 		$result['btc_total_formatted']           = $this->get_btc_total_formatted();
 		$result['btc_exchange_rate_formatted']   = $this->get_btc_exchange_rate_formatted();
-		$result['order_status_formatted']        = $this->get_wc_order_status_formatted();
+		$result['order_status_formatted']        = $this->get_wc_order_status_formatted() ?? 'unknown';
 		$result['btc_amount_received_formatted'] = $this->get_btc_amount_received_formatted();
 		$result['last_checked_time_formatted']   = $this->get_last_checked_time_formatted();
 		$result['btc_address_derivation_path_sequence_number'] = $this->get_btc_address_derivation_path_sequence_number();
 		$result['parent_wallet_xpub_html']                     = $this->get_xpub_js_span();
 		$result['exchange_rate_url']                           = $this->get_exchange_rate_url();
 		$result['payment_status']                              = $this->get_friendly_status();
-		$result['payment_address']                             = $this->bitcoin_order->get_address()->get_raw_address();
+		$result['payment_address']                             = $this->bitcoin_order->get_bitcoin_address()?->get_raw_address() ?? '';
 
 		return $as_camel_case
 			? self::camel_case_keys( $result )

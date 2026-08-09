@@ -50,17 +50,11 @@ class Thank_You {
 	 */
 	public function print_instructions( int $order_id ): void {
 
-		if ( ! $this->api->is_order_has_bitcoin_gateway( $order_id ) ) {
+		$order = $this->api->get_bitcoin_order( $order_id );
+
+		if ( ! $order ) {
 			return;
 		}
-
-		/**
-		 * No need to check again does `wc_get_order()` return a `WC_Order` object because `API::is_order_has_bitcoin_gateway()`
-		 * already has.
-		 *
-		 * @var WC_Order $order
-		 */
-		$order = wc_get_order( $order_id );
 
 		try {
 			$template_args = $this->api->get_formatted_order_details( $order );

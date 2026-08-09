@@ -3,11 +3,13 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
 use Codeception\Stub\Expected;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Update_Address_Transactions_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Results\Check_Address_For_Payment_Service_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
+use Mockery;
 use ReflectionClass;
 use WC_Order;
 
@@ -15,74 +17,6 @@ use WC_Order;
  * @coversDefaultClass \BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Order
  */
 class Order_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
-
-	/**
-	 * @covers ::__construct
-	 * @covers ::get_wc_order
-	 */
-	public function test_get_wc_order_returns_null_when_integration_id_does_not_match(): void {
-
-		$api_woocommerce_mock = $this->makeEmpty( API_WooCommerce_Interface::class );
-		$logger               = new ColorLogger();
-		$sut                  = new Order( $api_woocommerce_mock, $logger );
-
-		$result = $this->invokeMethod(
-			$sut,
-			'get_wc_order',
-			array(
-				'SomeOtherIntegration',
-				123,
-			)
-		);
-
-		$this->assertNull( $result );
-	}
-
-	/**
-	 * @covers ::get_wc_order
-	 */
-	public function test_get_wc_order_returns_null_when_order_does_not_exist(): void {
-
-		$api_woocommerce_mock = $this->makeEmpty( API_WooCommerce_Interface::class );
-		$logger               = new ColorLogger();
-		$sut                  = new Order( $api_woocommerce_mock, $logger );
-
-		$result = $this->invokeMethod(
-			$sut,
-			'get_wc_order',
-			array(
-				WooCommerce_Integration::class,
-				99999,
-			)
-		);
-
-		$this->assertNull( $result );
-	}
-
-	/**
-	 * @covers ::get_wc_order
-	 */
-	public function test_get_wc_order_returns_order_when_valid(): void {
-
-		$order = wc_create_order();
-		$this->assertInstanceOf( WC_Order::class, $order );
-
-		$api_woocommerce_mock = $this->makeEmpty( API_WooCommerce_Interface::class );
-		$logger               = new ColorLogger();
-		$sut                  = new Order( $api_woocommerce_mock, $logger );
-
-		$result = $this->invokeMethod(
-			$sut,
-			'get_wc_order',
-			array(
-				WooCommerce_Integration::class,
-				$order->get_id(),
-			)
-		);
-
-		$this->assertInstanceOf( WC_Order::class, $result );
-		$this->assertEquals( $order->get_id(), $result->get_id() );
-	}
 
 	/**
 	 * @covers ::new_transactions_seen
@@ -158,7 +92,6 @@ class Order_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	public function test_new_transactions_seen_adds_order_note_for_new_transactions(): void {
 
 		$order = wc_create_order();
-		$this->assertInstanceOf( WC_Order::class, $order );
 
 		$new_transactions = array();
 
@@ -171,6 +104,14 @@ class Order_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 						$this->assertEquals( $new_transactions, $transactions );
 					}
 				),
+				'get_bitcoin_order'               => function () use ( $order ) {
+					return $this->make(
+						WC_Bitcoin_Order::class,
+						array(
+							'get_id' => $order->get_id(),
+						)
+					);
+				},
 			)
 		);
 		$logger               = new ColorLogger();
@@ -273,7 +214,6 @@ class Order_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	public function test_payment_received_marks_order_paid_when_valid(): void {
 
 		$order = wc_create_order();
-		$this->assertInstanceOf( WC_Order::class, $order );
 
 		$bitcoin_address_mock = $this->makeEmpty( Bitcoin_Address::class );
 
@@ -293,7 +233,7 @@ class Order_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 		$api_woocommerce_mock = $this->makeEmpty(
 			API_WooCommerce_Interface::class,
 			array(
-				'mark_order_paid' => Expected::once(
+				'mark_order_paid'   => Expected::once(
 					function ( WC_Order $wc_order, Check_Address_For_Payment_Service_Result $result ) use ( $order, $check_address_for_payment_service_result ) {
 						$this->assertEquals( $order->get_id(), $wc_order->get_id() );
 						$this->assertEquals( $check_address_for_payment_service_result->blockchain_height, $result->blockchain_height );
@@ -301,7 +241,15 @@ class Order_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 						$this->assertTrue( $check_address_for_payment_service_result->confirmed_received->isEqualTo( $result->confirmed_received ) );
 					}
 				),
-			)
+				'get_bitcoin_order' => function () use ( $order ) {
+					return $this->make(
+						WC_Bitcoin_Order::class,
+						array(
+							'get_id' => $order->get_id(),
+						)
+					);
+				},
+			),
 		);
 		$logger               = new ColorLogger();
 		$sut                  = new Order( $api_woocommerce_mock, $logger );

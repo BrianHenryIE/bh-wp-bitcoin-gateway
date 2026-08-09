@@ -44,16 +44,11 @@ class My_Account_View_Order {
 	 */
 	public function print_status_instructions( int $order_id ): void {
 
-		if ( ! $this->api->is_order_has_bitcoin_gateway( $order_id ) ) {
+		$order = $this->api->get_bitcoin_order( $order_id );
+
+		if ( ! $order ) {
 			return;
 		}
-
-		/**
-		 * This is definitely an order object. For it to be a Bitcoin order, it first must be an order.
-		 *
-		 * @var WC_Order $order
-		 */
-		$order = wc_get_order( $order_id );
 
 		try {
 			$template_args = $this->api->get_formatted_order_details( $order );

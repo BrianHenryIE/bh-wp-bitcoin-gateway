@@ -11,6 +11,7 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 use WC_Order;
@@ -54,7 +55,7 @@ class AJAX {
 
 		$order_id = intval( wp_unslash( $_POST['order_id'] ) );
 
-		$order = wc_get_order( $order_id );
+		$order = $this->api->get_bitcoin_order( $order_id );
 
 		if ( ! ( $order instanceof WC_Order ) ) {
 			wp_send_json_error( array( 'message' => 'Invalid order id: ' . $order_id ), 400 );
@@ -63,6 +64,14 @@ class AJAX {
 		$this->is_user_authorized( $order );
 
 		$this->api->check_order_for_payment( $order );
+
+		// Refresh.
+		$order = $this->api->get_bitcoin_order( $order->get_id() );
+
+		if ( ! ( $order instanceof WC_Bitcoin_Order ) ) {
+			wp_send_json_error( array( 'message' => 'Unexpected order error.' ), 500 );
+		}
+
 		$result = $this->api->get_formatted_order_details( $order );
 
 		// These are the only keys used by the JavaScript.

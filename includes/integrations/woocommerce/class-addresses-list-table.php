@@ -45,14 +45,21 @@ class Addresses_List_Table {
 			return $filtered_result;
 		}
 
-		if ( ! isset( WC_Payment_Gateways::instance()->get_available_payment_gateways()[ $gateway_id ] ) ) {
+		$gateways = WC_Payment_Gateways::instance()->payment_gateways;
+
+		/** @var ?WC_Payment_Gateway $gateway_instance */
+		$gateway_instance = array_first(
+			array_filter(
+				$gateways,
+				fn ( WC_Payment_Gateway $gateway ) => $gateway->id === $gateway_id && $gateway instanceof Bitcoin_Gateway
+			)
+		);
+
+		if ( ! $gateway_instance ) {
 			return array(
 				'text' => sprintf( 'WooCommerce: %s (unavailable)', $gateway_id ),
 			);
 		}
-
-		/** @var WC_Payment_Gateway $gateway_instance */
-		$gateway_instance = WC_Payment_Gateways::instance()->get_available_payment_gateways()[ $gateway_id ];
 
 		return array(
 			'href' => admin_url( sprintf( 'admin.php?page=wc-settings&tab=checkout&section=%s', $gateway_instance->id ) ),

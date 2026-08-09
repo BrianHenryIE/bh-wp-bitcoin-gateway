@@ -87,16 +87,11 @@ class Frontend_Assets {
 
 		$order_id = $this->get_order_id_from_globals();
 
-		if ( empty( $order_id ) || ! $this->api->is_order_has_bitcoin_gateway( $order_id ) ) {
+		$order = $this->api->get_bitcoin_order( $order_id );
+
+		if ( ! $order ) {
 			return;
 		}
-
-		/**
-		 * We confirmed this is a shop_order in the previous line.
-		 *
-		 * @var WC_Order $order
-		 */
-		$order = wc_get_order( $order_id );
 
 		try {
 			$order_details = $this->api->get_formatted_order_details( $order );
@@ -128,7 +123,7 @@ class Frontend_Assets {
 		// Filter array to explicit allow-list containing only the required keys for frontend TypeScript.
 		$filtered_order_details = array(
 			'btc_address'                 => $order_details['btc_address'] ?? '',
-			'btc_total'                   => isset( $order_details['btc_total'] ) && ( $order_details['btc_total'] instanceof Money ) ? $order_details['btc_total']->getAmount()->toScale( 8 ) : '',
+			'btc_total'                   => $order_details['btc_total'] ?? '',
 			'order_id'                    => (string) $order->get_id(),
 			'btc_amount_received'         => isset( $order_details['btc_amount_received'] ) && is_string( $order_details['btc_amount_received'] ) ? $order_details['btc_amount_received'] : '',
 			'status'                      => isset( $order_details['payment_status'] ) && is_string( $order_details['payment_status'] ) ? $order_details['payment_status'] : '',

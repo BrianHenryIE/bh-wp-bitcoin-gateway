@@ -3,6 +3,7 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
+use Codeception\Stub\Expected;
 use Exception;
 
 /**
@@ -98,7 +99,12 @@ class AJAX_Unit_Test extends \Codeception\Test\Unit {
 	public function test_get_order_details_no_order_object(): void {
 
 		$logger = new ColorLogger();
-		$api    = $this->makeEmpty( API_WooCommerce_Interface::class );
+		$api    = $this->makeEmpty(
+			API_WooCommerce_Interface::class,
+			array(
+				'get_bitcoin_order' => Expected::once( fn() => null ),
+			)
+		);
 
 		$_POST['order_id'] = 123;
 
@@ -113,15 +119,6 @@ class AJAX_Unit_Test extends \Codeception\Test\Unit {
 		);
 
 		\WP_Mock::passthruFunction( 'wp_unslash' );
-
-		\WP_Mock::userFunction(
-			'wc_get_order',
-			array(
-				'args'   => 123,
-				'times'  => 1,
-				'return' => false,
-			)
-		);
 
 		\WP_Mock::userFunction(
 			'wp_send_json_error',

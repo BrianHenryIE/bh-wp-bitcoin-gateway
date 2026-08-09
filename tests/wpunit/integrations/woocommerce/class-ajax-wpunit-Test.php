@@ -3,6 +3,7 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
 use Codeception\Stub\Expected;
 use Exception;
 use lucatume\WPBrowser\TestCase\WPTestCase;
@@ -45,6 +46,14 @@ class AJAX_WPUnit_Test extends WPTestCase {
 		$api = $this->makeEmpty(
 			API_WooCommerce_Interface::class,
 			array(
+				'get_bitcoin_order'           => function () use ( $order_id ) {
+					return $this->make(
+						WC_Bitcoin_Order::class,
+						array(
+							'get_id' => $order_id,
+						)
+					);
+				},
 				'get_formatted_order_details' => Expected::once( $data_from_api_class ),
 			)
 		);

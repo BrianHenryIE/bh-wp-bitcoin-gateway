@@ -4,6 +4,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Scheduler_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\JsonMapper\JsonMapper_Helper;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Ensure_Unused_Addresses_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Update_Address_Transactions_Result;
@@ -15,7 +16,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet;
-use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Helpers\WC_Order_Meta_Helper;
+use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\JsonMapperInterface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
 use Codeception\Stub\Expected;
 use lucatume\WPBrowser\TestCase\WPTestCase;
@@ -33,15 +34,15 @@ class API_WooCommerce_WPUnit_Test extends WPTestCase {
 		?API_Interface $api = null,
 		?Bitcoin_Wallet_Service $wallet_service = null,
 		?Payment_Service $payment_service = null,
-		?WC_Order_Meta_Helper $order_meta_helper = null,
 		?Background_Jobs_Scheduler_Interface $background_jobs_scheduler = null,
+		?JsonMapperInterface $json_mapper = null,
 		?LoggerInterface $logger = null,
 	): API_WooCommerce {
 		return new API_WooCommerce(
 			api: $api ?? $this->makeEmpty( API_Interface::class ),
 			wallet_service: $wallet_service ?? $this->makeEmpty( Bitcoin_Wallet_Service::class ),
 			payment_service: $payment_service ?? $this->makeEmpty( Payment_Service::class ),
-			order_meta_helper: $order_meta_helper ?? $this->make( WC_Order_Meta_Helper::class ),
+			json_mapper: $json_mapper ?? new JsonMapper_Helper()->build(),
 			background_jobs_scheduler: $background_jobs_scheduler ?? $this->makeEmpty( Background_Jobs_Scheduler_Interface::class ),
 			logger: $logger ?? new ColorLogger(),
 		);
@@ -373,58 +374,5 @@ class API_WooCommerce_WPUnit_Test extends WPTestCase {
 		$result = $sut->assign_unused_address_to_order( $order, $btc_amount );
 
 		$this->assertEquals( 'success', $result->get_raw_address() );
-	}
-
-	/**
-	 * @see API_WooCommerce::get_order_details
-	 * @see API_WooCommerce::check_order_for_payment()
-	 * @see API_WooCommerce_Interface::check_order_for_payment()
-	 */
-	public function test_get_order_details_no_transactions(): void {
-
-		$address = $this->make(
-			Bitcoin_Address::class,
-			array(
-				'get_tx_ids' => Expected::atLeastOnce( array() ),
-			)
-		);
-
-		$bitcoin_wallet_service = $this->makeEmpty(
-			Bitcoin_Wallet_Service::class,
-			array(
-				'get_saved_address_by_bitcoin_payment_address' => Expected::once( $address ), // param: `xpub1234`.
-			)
-		);
-
-		$payment_service_mock = $this->make( Payment_Service::class );
-
-		$sut = $this->get_sut(
-			wallet_service: $bitcoin_wallet_service,
-			payment_service: $payment_service_mock
-		);
-
-		$order = new WC_Order();
-		$order->add_meta_data( WC_Order_Meta_Helper::BITCOIN_ADDRESS_META_KEY, 'xpub1234', true );
-		$order->add_meta_data(
-			WC_Order_Meta_Helper::ORDER_TOTAL_BITCOIN_AT_TIME_OF_PURCHASE_META_KEY,
-			array(
-				'amount'   => '0.1',
-				'currency' => 'BTC',
-			),
-			true
-		);
-		$order->add_meta_data(
-			WC_Order_Meta_Helper::EXCHANGE_RATE_AT_TIME_OF_PURCHASE_META_KEY,
-			array(
-				'amount'   => '90000',
-				'currency' => 'USD',
-			),
-			true
-		);
-		$order->save();
-
-		$result = $sut->get_order_details( $order );
-
-		$this->assertEmpty( $result->get_address()->get_tx_ids() );
 	}
 }

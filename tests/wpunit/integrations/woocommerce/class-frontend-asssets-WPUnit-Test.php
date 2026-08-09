@@ -5,6 +5,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 use BrianHenryIE\ColorLogger\ColorLogger;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
 use Codeception\Stub\Expected;
 use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
 use lucatume\WPBrowser\TestCase\WPTestCase;
@@ -34,10 +35,10 @@ class Frontend_Asssets_WPUnit_Test extends WPTestCase {
 		$api      = $this->makeEmpty(
 			API_WooCommerce_Interface::class,
 			array(
-				'is_order_has_bitcoin_gateway' => Expected::once(
-					fn( $order_id ) => true
-				),
-				'get_formatted_order_details'  => Expected::once( array() ),
+				'get_bitcoin_order'           => function () {
+					return $this->make( WC_Bitcoin_Order::class );
+				},
+				'get_formatted_order_details' => Expected::once( array() ),
 			)
 		);
 

@@ -8,6 +8,7 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
 use Automattic\WooCommerce\Utilities\OrderUtil;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 use WC_Order;
@@ -115,22 +116,24 @@ class Admin_Order_UI {
 	 *
 	 * @see Admin_Order_UI::register_address_transactions_meta_box();
 	 *
-	 * @param WP_Post|WC_Order $post The post this edit page is running for.
+	 * @param WP_Post|WC_Order|mixed $post The post this edit page is running for.
 	 */
 	public function print_address_transactions_metabox( $post ): void {
 
 		/**
 		 * This is almost sure to be a valid order object, since this only runs on the order page.
-		 *
-		 * @var WC_Order $order
 		 */
-		$order = $post instanceof WP_Post ? wc_get_order( $post->ID ) : $post;
+		$order = match ( true ) {
+			$post instanceof WP_Post => $this->api->get_bitcoin_order( $post->ID ),
+			$post instanceof WC_Order => $this->api->get_bitcoin_order( $post->get_id() ),
+			default => null,
+		};
 
-		$order_id = $order->get_id();
-
-		if ( ! $this->api->is_order_has_bitcoin_gateway( $order_id ) ) {
+		if ( ! $order instanceof WC_Bitcoin_Order ) {
 			return;
 		}
+
+		$order_id = $order->get_id();
 
 		// Once the order has been paid, no longer poll for new transactions, unless manually pressing refresh.
 		$refresh = ! $order->is_paid();

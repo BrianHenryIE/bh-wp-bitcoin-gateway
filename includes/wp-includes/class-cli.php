@@ -11,7 +11,6 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\JsonMapper\JsonMapper_Helper;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Payments\Transaction_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Addresses_Generation_Result;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories\Bitcoin_Address_Factory;
@@ -20,10 +19,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address_WP_Post_Int
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Bitcoin_Gateway;
-use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Helpers\WC_Order_Meta_Helper;
-use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
 use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\WP_CLI_Logger\WP_CLI_Logger;
 use DateTimeInterface;
 use Exception;
 use InvalidArgumentException;
@@ -336,11 +332,12 @@ class CLI {
 		$bitcoin_gateways = array();
 
 		if ( function_exists( 'WC' ) ) {
+			/** @var WC_Payment_Gateway[] $all_woocommerce_gateways */
 			$all_woocommerce_gateways = WC()->payment_gateways()->payment_gateways();
 
 			$woocommerce_bitcoin_gateways = array_filter(
 				$all_woocommerce_gateways,
-				fn( WC_Payment_Gateway $gateway ) => $gateway instanceof Bitcoin_Gateway
+				fn( WC_Payment_Gateway $gateway ): bool => $gateway instanceof Bitcoin_Gateway
 			);
 
 			$woocommerce_bitcoin_gateways_info = array_map(
@@ -381,14 +378,9 @@ class CLI {
 	 * ## OPTIONS
 	 *
 	 *  [--status=<status>]
-	 *  : Filter by order status.
+	 *  : Filter by order status. pending, on-hold, processing etc.
 	 *  ---
 	 *  default: all
-	 *  options:
-	 *  - pending
-	 *  - on-hold
-	 *  - processing
-	 *  - etc.
 	 *  ---
 	 *
 	 *  [--format=<format>]
@@ -420,14 +412,14 @@ class CLI {
 		$all_orders_info = array();
 
 		if ( function_exists( 'WC' ) ) {
+			/** @var WC_Payment_Gateway[] $all_woocommerce_gateways */
 			$all_woocommerce_gateways = WC()->payment_gateways()->payment_gateways();
 
 			$woocommerce_bitcoin_gateways = array_filter(
 				$all_woocommerce_gateways,
-				fn( WC_Payment_Gateway $gateway ) => $gateway instanceof Bitcoin_Gateway
+				fn( WC_Payment_Gateway $gateway ): bool => $gateway instanceof Bitcoin_Gateway
 			);
 
-			$order_meta_helper = new WC_Order_Meta_Helper( new JsonMapper_Helper()->build() );
 			foreach ( $woocommerce_bitcoin_gateways as $bitcoin_gateway ) {
 				$args = array(
 					'payment_method' => $bitcoin_gateway->id,
@@ -440,28 +432,35 @@ class CLI {
 				$gateway_orders = wc_get_orders( $args );
 
 				$gateway_orders_info = array_map(
-					function ( WC_Order $order ) use ( $order_meta_helper ): array {
+					function ( WC_Order $order ): array {
 
 						$order_info = array(
 							'order_id'                  => $order->get_order_number(),
 							'status'                    => $order->get_status(),
 							'total'                     => $order->get_currency() . ' ' . $order->get_total(),
-							'total_btc'                 => (string) ( $order_meta_helper->get_btc_total_price( $order ) ?? 'error' ),
-							'btc_exchange_rate'         => (string) ( $order_meta_helper->get_exchange_rate( $order ) ?? 'error' ),
-							'payment_address'           => $order_meta_helper->get_raw_payment_address( $order ) ?? 'error',
-							'confirmed_amount_received' => (string) ( $order_meta_helper->get_confirmed_amount_received( $order ) ?? 'error' ),
+							'total_btc'                 => '',
+							'btc_exchange_rate'         => '',
+							'payment_address'           => '',
+							'confirmed_amount_received' => '',
+							'payment_address_post_id'   => '',
+							'last_checked_time'         => '',
 						);
 
 						try {
-							$bitcoin_order = $this->api_woocommerce->get_order_details( $order );
+							$bitcoin_order = $this->api_woocommerce->get_bitcoin_order( $order->get_id() );
+							if ( ! $bitcoin_order ) {
+								$this->logger->error( 'Failed to get Bitcoin order for id ' . $order->get_id() );
+								return $order_info;
+							}
 
-							$order_info['payment_address_post_id'] = (string) $bitcoin_order->get_address()->get_post_id();
-							$order_info['last_checked_time']       = $bitcoin_order->get_last_checked_time()?->format( DateTimeInterface::ATOM ) ?? 'never';
+							$order_info['total_btc']                 = (string) ( $bitcoin_order->get_btc_total_price() ?? 'error' );
+							$order_info['btc_exchange_rate']         = (string) ( $bitcoin_order->get_exchange_rate() ?? 'error' );
+							$order_info['payment_address']           = $bitcoin_order->get_raw_payment_address() ?? 'error';
+							$order_info['confirmed_amount_received'] = (string) ( $bitcoin_order->get_confirmed_amount_received() ?? 'error' );
+							$order_info['payment_address_post_id']   = (string) ( $bitcoin_order->get_bitcoin_address()?->get_post_id() ?? 'error' );
+							$order_info['last_checked_time']         = $bitcoin_order->get_last_checked_time()?->format( DateTimeInterface::ATOM ) ?? 'never';
 						} catch ( Exception $exception ) {
 							$this->logger->error( $exception->getMessage(), array( 'exception' => $exception ) );
-
-							$order_info['payment_address_post_id'] = '';
-							$order_info['last_checked_time']       = '';
 						}
 
 						return $order_info;

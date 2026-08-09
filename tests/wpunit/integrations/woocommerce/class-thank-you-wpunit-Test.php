@@ -3,6 +3,7 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
 use Codeception\Stub\Expected;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
@@ -22,10 +23,10 @@ class Thank_You_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 		$api    = $this->makeEmpty(
 			API_WooCommerce_Interface::class,
 			array(
-				'is_order_has_bitcoin_gateway' => Expected::once(
-					fn( int $order_id ) => true
-				),
-				'get_formatted_order_details'  => Expected::once(
+				'get_bitcoin_order'           => function () {
+					return $this->make( WC_Bitcoin_Order::class );
+				},
+				'get_formatted_order_details' => Expected::once(
 					fn( $order ) => array()
 				),
 			)
@@ -65,10 +66,8 @@ class Thank_You_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 		$api    = $this->makeEmpty(
 			API_WooCommerce_Interface::class,
 			array(
-				'is_order_has_bitcoin_gateway' => Expected::once(
-					fn( int $order_id ) => false
-				),
-				'get_order_details'            => Expected::never(),
+				'get_bitcoin_order' => Expected::once( fn() => null ),
+				'get_order_details' => Expected::never(),
 			)
 		);
 

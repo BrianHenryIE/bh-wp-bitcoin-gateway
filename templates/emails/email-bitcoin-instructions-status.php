@@ -13,14 +13,14 @@
  * @var string $btc_exchange_rate_formatted The Bitcoin exchange rate with friendly thousand separators.
  * @var string $btc_amount_received Amount received at the destination address so far.
  * @var string $btc_amount_received_formatted Amount received prefixed with "฿".
- * @var WC_Order $order The order that Bitcoin is being used to pay.
+ * @var WC_Order $bitcoin_order The order that Bitcoin is being used to pay.
  *
  * @var string $exchange_rate_url
  *
  * @package    brianhenryie/bh-wp-bitcoin-gateway
  */
 
-if ( ! $order->is_paid() ) :
+if ( ! $bitcoin_order->is_paid() ) :
 
 	$bitcoin_href_address = 'bitcoin:' . $btc_address . '?amount=' . $btc_total;
 

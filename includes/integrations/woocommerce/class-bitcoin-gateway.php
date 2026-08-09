@@ -7,6 +7,7 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
+use Automattic\WooCommerce\Internal\DataStores\Orders\OrdersTableDataStore;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\API;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\JsonMapper\JsonMapper_Helper;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
@@ -14,7 +15,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Currency;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\UnknownCurrencyException;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
-use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Helpers\WC_Order_Meta_Helper;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
 use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
 use Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
@@ -247,8 +248,8 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 			array(
 				'gateway_id'   => $this->id,
 				'gateway_name' => $this->get_method_title(),
-				'xpub_before'  => $xpub_before,
-				'xpub_after'   => $xpub_after,
+				'xpub_before'  => $xpub_before ? substr( $xpub_before, 0, 7 ) . '...' . substr( $xpub_before, -3 ) : '',
+				'xpub_after'   => substr( $xpub_after, 0, 7 ) . '...' . substr( $xpub_after, -3 ),
 			)
 		);
 
@@ -436,12 +437,39 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 	 */
 	public function process_payment( $order_id ) {
 
+		/**
+		 * Filter classname so that the class can be overridden if extended.
+		 *
+		 * TODO: Can we cache the class type for the order object here?
+		 *
+		 * @hooked woocommerce_order_class
+		 *
+		 * @see \WC_Order_Factory::get_class_names_for_order_ids()
+		 * @see OrdersTableDataStore::get_order_data_for_ids()
+		 *
+		 * @param string $classname  Order classname.
+		 * @param string $order_type Order type.
+		 * @param int    $filter_order_id   Order ID.
+		 */
+		$set_class = function ( string $classname, string $order_type, int $filter_order_id ) use ( $order_id ): string {
+			return $filter_order_id === $order_id
+				? WC_Bitcoin_Order::class
+				: $classname;
+		};
+
+		add_filter( 'woocommerce_order_class', $set_class, 10000, 3 );
+
+		/** @var WC_Bitcoin_Order|false $order */
 		$order = wc_get_order( $order_id );
+
+		remove_filter( 'woocommerce_order_class', $set_class, 10000 );
 
 		if ( ! ( $order instanceof WC_Order ) ) {
 			// This should never happen.
 			throw new BH_WP_Bitcoin_Gateway_Exception( __( 'Error creating order.', 'bh-wp-bitcoin-gateway' ) );
 		}
+
+		$order->set_json_mapper( new JsonMapper_Helper()->build() );
 
 		$fiat_total = Money::of( (string) $order->get_total(), $order->get_currency() );
 
@@ -456,7 +484,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 		try {
 			/**
 			 *
-			 * @see WC_Order_Meta_Helper::BITCOIN_ADDRESS_META_KEY
+			 * @see WC_Bitcoin_Order::BITCOIN_ADDRESS_META_KEY
 			 * @see Bitcoin_Address::get_raw_address()
 			 */
 			$btc_address = $this->api_woocommerce->assign_unused_address_to_order( $order, $btc_total );
@@ -464,8 +492,6 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 			$this->logger->error( $e->getMessage(), array( 'exception' => $e ) );
 			throw new BH_WP_Bitcoin_Gateway_Exception( 'Unable to find Bitcoin address to send to. Please choose another payment method.' );
 		}
-
-		$order_meta_helper = new WC_Order_Meta_Helper( new JsonMapper_Helper()->build() );
 
 		/**
 		 * Record the exchange rate at the time the order was placed.
@@ -475,11 +501,12 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 		 */
 		$exchange_rate = $this->api->get_exchange_rate( Currency::of( $order->get_currency() ) );
 		if ( $exchange_rate ) {
-			$order_meta_helper->set_exchange_rate( wc_order: $order, exchange_rate:$exchange_rate, save_now: false );
+			$order->set_exchange_rate( $exchange_rate );
 		}
 
-		// TODO: the `save_now` here might better be `false` depending on how `update_status` works.
-		$order_meta_helper->set_btc_total_price( wc_order: $order, btc_total:$btc_total, save_now: true );
+		$order->set_btc_total_price( $btc_total );
+
+		// TODO: confirmations.
 
 		$btc_total_display = $btc_total->getAmount()->toFloat();
 
@@ -519,10 +546,6 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 
 	/**
 	 * Price margin is the allowable difference between the amount received and the amount expected.
-	 *
-	 * @used-by API::get_order_details()
-	 *
-	 * @return float
 	 */
 	public function get_price_margin_percent(): float {
 		$price_margin = $this->settings['price_margin'];
