@@ -234,7 +234,12 @@ class API implements API_Interface, API_Background_Jobs_Interface {
 
 		// Sort by last updated (checked) and get two per wallet.
 		// TODO: check the modified time and assume any that were checked in the past ten minutes are still valid (since no new block has been completed since).
-		$unused_addresses = $this->wallet_service->get_unused_bitcoin_addresses();
+		if ( count( $wallets ) === 1 ) {
+			/** @phpstan-ignore-next-line argument.type (The type is correct; the WordPress function definition is not templated.) */
+			$unused_addresses = $this->wallet_service->get_unused_bitcoin_addresses( array_first( $wallets ) );
+		} else {
+			$unused_addresses = $this->wallet_service->get_unused_bitcoin_addresses();
+		}
 
 		/**
 		 * @param array<int, array<Bitcoin_Address>> $unused_addresses_by_wallet
@@ -254,6 +259,18 @@ class API implements API_Interface, API_Background_Jobs_Interface {
 
 		foreach ( $unused_addresses as $address ) {
 			$address_wallet_id = $address->get_wallet_parent_post_id();
+			if ( ! isset( $actual_unused_addresses_by_wallet[ $address_wallet_id ] ) ) {
+				$this->logger->debug(
+					'array actual_unused_addresses_by_wallet missing {address_wallet_id}, contains keys {actual_unused_addresses_by_wallet_keys_string}',
+					array(
+						'address_wallet_id' => $address_wallet_id,
+						'actual_unused_addresses_by_wallet_keys_array' => array_keys( $actual_unused_addresses_by_wallet ),
+						'actual_unused_addresses_by_wallet_keys_string' => implode( ', ', array_keys( $actual_unused_addresses_by_wallet ) ),
+					)
+				);
+				continue;
+			}
+
 			if ( count( $actual_unused_addresses_by_wallet[ $address_wallet_id ] ) >= $required_count ) {
 				continue;
 			}
