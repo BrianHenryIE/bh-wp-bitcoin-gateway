@@ -25,6 +25,7 @@
   },
   "mysqlPort": 33066,
   "phpVersion": "8.4",
+  "phpmyadminPort": 9001,
   "plugins": [
     "."
   ],
