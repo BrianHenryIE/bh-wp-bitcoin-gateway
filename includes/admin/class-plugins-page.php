@@ -110,8 +110,8 @@ class Plugins_Page {
 		$updated_plugin_meta = array();
 		foreach ( $plugin_meta as $key => $entry ) {
 
-			if ( str_contains( $entry, 'Nullcorps, BrianHenryIE' ) ) {
-				$entry = 'By <a href="https://github.com/Nullcorps/">Nullcorps</a>, <a href="https://brianhenry.ie/">BrianHenryIE</a>';
+			if ( str_contains( $entry, 'BrianHenryIE, Nullcorps' ) ) {
+				$entry = 'By <a href="https://brianhenry.ie/">BrianHenryIE</a>, forked from <a href="https://github.com/Nullcorps/">Nullcorps</a>';
 			}
 
 			$updated_plugin_meta[ $key ] = $entry;

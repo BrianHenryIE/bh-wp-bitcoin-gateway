@@ -112,14 +112,14 @@ class Plugins_Page_Unit_Test extends \Codeception\Test\Unit {
 
 		$plugin_meta     = array(
 			0 => 'Version 1.3.3',
-			1 => 'By <a href="https://github.com/Nullcorps/">Nullcorps, BrianHenryIE</a>',
+			1 => 'By <a href="https://github.com/Nullcorps/">BrianHenryIE, Nullcorps</a>',
 			2 => '<a href="http://github.com/BrianHenryIE/bh-wp-bitcoin-gateway/" aria-label="Visit plugin site for BH WP Bitcoin Gateway">Visit plugin site</a>',
 		);
 		$plugin_filename = 'bh-wp-bitcoin-gateway/bh-wp-bitcoin-gateway.php';
 
 		$result = $sut->split_author_link_into_two_links( $plugin_meta, $plugin_filename );
 
-		$updated = 'By <a href="https://github.com/Nullcorps/">Nullcorps</a>, <a href="https://brianhenry.ie/">BrianHenryIE</a>';
+		$updated = 'By <a href="https://brianhenry.ie/">BrianHenryIE</a>, forked from <a href="https://github.com/Nullcorps/">Nullcorps</a>';
 
 		$this->assertEquals( $updated, $result[1] );
 	}
