@@ -103,7 +103,6 @@ class Plugin_Unit_Test extends \Codeception\Test\Unit {
 				'times'  => 1,
 				'args'   => array(
 					'woocommerce_bh_bitcoin_settings',
-					\WP_Mock\Functions::type( 'array' ),
 				),
 				'return' => array( 'log_level' => 'info' ),
 			)
