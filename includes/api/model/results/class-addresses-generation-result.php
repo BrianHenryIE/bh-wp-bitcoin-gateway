@@ -26,7 +26,7 @@ readonly class Addresses_Generation_Result {
 	 * @param Bitcoin_Wallet                   $wallet The wallet that the new addresses were generated for, refreshed.
 	 * @param non-empty-array<Bitcoin_Address> $new_addresses The newly generated addresses.
 	 * @param array<Bitcoin_Address>           $orphaned_addresses Existing saved addresses with incorrect wallet post id.
-	 * @param ?int                             $prior_address_index The new highest wallet address index.
+	 * @param ?int                             $prior_address_index The highest wallet address index before this generation (null when no addresses generated for this wallet before).
 	 */
 	public function __construct(
 		public Bitcoin_Wallet $wallet,
