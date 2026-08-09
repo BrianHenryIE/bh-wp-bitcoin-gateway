@@ -5,9 +5,11 @@
 /*.rej*
 /*.xml
 /*.yml
+/bin
 /development-plugin
 /dist-archive
 /patches
+/phpstan-stubs
 /playwright-report
 /resources
 /scratch
@@ -18,7 +20,6 @@
 /wordpress
 /wp-content
 DOCKER_ENV
-README.md
 codeception.dist.yml
 composer.lock
 docker_tag
@@ -41,4 +42,27 @@ xdebug.sh
 /specstodo.md
 /CONTRIBUTING.md
 /src
+/CODE_COVERAGE.md
+/INTEGRATIONS_API.md
+/rector.php
 
+# From dependencies
+contributing.md
+phpunit.xml
+phpunit.xml.dist
+phpbench.json
+Makefile
+psalm.xml
+psalm-autoload.php
+build-phar.sh
+other/build_phar.php
+bin/php-parse
+infection.json.dist
+appveyor.yml
+phpstan.neon.dist
+phpcs.xml.dist
+compose.yaml
+run-tests.sh
+elazar/flystream/container
+codecov.yml
+rector.php
