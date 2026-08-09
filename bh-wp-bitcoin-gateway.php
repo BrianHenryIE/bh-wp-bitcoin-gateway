@@ -47,17 +47,15 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\WooCommerce_Integra
 use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\JsonMapperInterface;
 use BrianHenryIE\WP_Bitcoin_Gateway\League\Container\Container;
 use BrianHenryIE\WP_Bitcoin_Gateway\League\Container\ReflectionContainer;
-use BrianHenryIE\WP_Bitcoin_Gateway\WC_Logger\WC_Logger_Settings_Interface;
-use BrianHenryIE\WP_Bitcoin_Gateway\WC_Logger\WC_PSR_Logger;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Activator;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Deactivator;
+use BrianHenryIE\WP_Bitcoin_Gateway\WP_Logger\Logger;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Logger\Logger_Settings_Interface;
 use Exception;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Log\LoggerInterface;
-use Psr\Log\LogLevel;
 use Throwable;
 
 // If this file is called directly, abort.
@@ -111,8 +109,8 @@ $container->add( Logger_Settings_Interface::class, Settings::class );
 $container->addShared(
 	LoggerInterface::class,
 	static function (): LoggerInterface {
-		return new WC_PSR_Logger(
-			new class() implements WC_Logger_Settings_Interface {
+		return Logger::instance(
+			new class() implements Logger_Settings_Interface {
 				/**
 				 * Get the plugin slug for logging.
 				 */
@@ -124,7 +122,19 @@ $container->addShared(
 				 * Record all logs from this level and above.
 				 */
 				public function get_log_level(): string {
-					return LogLevel::DEBUG;
+					return get_option( 'woocommerce_bh_bitcoin_settings', array( 'log_level' => 'info' ) )['log_level'] ?? 'info';
+				}
+
+				public function get_plugin_name(): string {
+					return 'Bitcoin Gateway';
+				}
+
+				public function get_plugin_basename(): string {
+					return plugin_basename( __FILE__ );
+				}
+
+				public function get_cli_base(): ?string {
+					return 'bh_bitcoin';
 				}
 			}
 		);
