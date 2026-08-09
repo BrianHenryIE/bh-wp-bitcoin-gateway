@@ -75,6 +75,12 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
 
+    env:
+      # The action starts its own wp-env, which defaults to PHP 8.3 — below the plugin's
+      # `Requires PHP: 8.4` — so activation fails before any checks run. wp-env reads this
+      # environment variable, which composite-action steps inherit from the job.
+      WP_ENV_PHP_VERSION: '8.4'
+
     steps:
 
       - name: Git checkout
