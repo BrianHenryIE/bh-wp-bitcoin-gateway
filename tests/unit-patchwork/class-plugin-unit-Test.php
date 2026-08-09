@@ -10,6 +10,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\WC_Logger\WC_PSR_Logger;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Logger\Logger;
+use BrianHenryIE\WP_Bitcoin_Gateway\WP_Logger\Logger_Settings_Interface;
 
 /**
  * Class Plugin_WP_Mock_Test
@@ -93,12 +94,18 @@ class Plugin_Unit_Test extends \Codeception\Test\Unit {
 		);
 
 		/**
-		 * Just for {@see WC_PSR_Logger}. Once we go back to BH_WP_Logger we can remove this.
+		 * @used-bh \BrianHenryIE\WP_Bitcoin_Gateway\WP_Logger\Logger
+		 * @see Logger_Settings_Interface::get_log_level()
 		 */
 		\WP_Mock::userFunction(
-			'did_action',
+			'get_option',
 			array(
-				'return' => false,
+				'times'  => 1,
+				'args'   => array(
+					'woocommerce_bh_bitcoin_settings',
+					\WP_Mock\Functions::type( 'array' ),
+				),
+				'return' => array( 'log_level' => 'info' ),
 			)
 		);
 
