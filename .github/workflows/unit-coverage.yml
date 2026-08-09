@@ -7,6 +7,12 @@ on:
     branches:
       - master
 
+# A new push to the same branch supersedes any run still in progress. Master pushes queue instead
+# of cancelling so a run is never killed while committing the coverage badge back to the repository.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 env:
   COVERAGE_PHP_VERSION: '8.4'
 
