@@ -33,7 +33,7 @@ class Bitcoin_Wallet_Factory {
 		if ( ! ( $post instanceof WP_Post ) || Bitcoin_Wallet_WP_Post_Interface::POST_TYPE !== $post->post_type ) {
 			throw new InvalidArgumentException(
 				sprintf(
-					'post_id %d  is not a %s post object',
+					'post_id %d is not a %s post object',
 					(int) $post_id,
 					esc_html( Bitcoin_Wallet_WP_Post_Interface::POST_TYPE ),
 				)
