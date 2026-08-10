@@ -10,7 +10,7 @@
  * Description:            Accept Bitcoin payments using self-custodied wallets, and no external account. Calculates wallet addresses locally and uses open APIs to verify payments. For an emphasis on privacy & sovereignty.
  * Version:                2.0.0
  * Requires at least:      6.9
- * Tested up to:           7.0.3
+ * Tested up to:           7.0
  * Requires PHP:           8.4
  * Author:                 BrianHenryIE, Nullcorps
  * Author URI:             https://bhwp.ie
