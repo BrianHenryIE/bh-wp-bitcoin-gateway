@@ -52,6 +52,19 @@
       "url": "https://wpackagist.org"
     },
     {
+      "type": "package",
+        "package": {
+          "name": "brianhenryie/strauss",
+          "version": "0.29.0",
+          "dist": {
+            "url": "https://github.com/BrianHenryIE/strauss/releases/download/0.29.0/strauss.phar",
+            "type": "phar"
+          },
+          "installation-source": "dist",
+          "bin": "bin/strauss"
+        }
+    },
+    {
       "name": "brianhenryie/bh-php-blockchain-info",
       "url": "https://github.com/BrianHenryIE/bh-php-blockchain-info.git",
       "type": "git"
@@ -133,7 +146,7 @@
     "antecedent/patchwork": "^2.2.3",
     "behat/behat": "^v3.15.0",
     "brianhenryie/color-logger": "*",
-    "brianhenryie/strauss": "dev-master",
+    "brianhenryie/strauss": "0.29.0",
     "dealerdirect/phpcodesniffer-composer-installer": "^1.2",
     "dvdoug/behat-code-coverage": "^5",
     "johnpbloch/wordpress": "*",
