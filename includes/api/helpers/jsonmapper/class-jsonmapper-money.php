@@ -59,6 +59,7 @@ class JsonMapper_Money {
 			throw new BH_WP_Bitcoin_Gateway_Exception(
 				message: 'Invalid json encoded money object.',
 				previous: is_string( $json_object->amount )
+					// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 					? NumberFormatException::invalidFormat( $json_object->amount )
 					: NumberFormatException::emptyNumber()
 			);
