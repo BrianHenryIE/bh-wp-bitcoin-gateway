@@ -64,9 +64,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 				echo esc_html__( 'No transactions yet', 'bh-wp-bitcoin-gateway' );
 			} else {
 				echo '<ul>';
-				foreach ( $formatted_transactions as $transaction ) {
-					echo '<li>' . esc_html( $transaction['time'] ) . ' – <a href="' . esc_url( $transaction['url'] ) . '" target="_blank">' . esc_html( $transaction['txid'] ) . '</a>'; // TODO: Print value.
-				}
+				array_map(
+					fn ( array $transaction ) => printf(
+						'<li>%s – <a href="%s" target="_blank">%s</a>', // TODO: Include transaction value.
+						esc_html( $transaction['time'] ),
+						esc_url( $transaction['url'] ),
+						esc_html( $transaction['txid'] ),
+					),
+					$formatted_transactions
+				);
 				echo '</ul>';
 			}
 			?>
