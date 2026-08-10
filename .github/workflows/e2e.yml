@@ -107,7 +107,7 @@ jobs:
         run: npx playwright install --with-deps
 
       - name: Download plugin archive
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: plugin-archive
           path: dist-archive
