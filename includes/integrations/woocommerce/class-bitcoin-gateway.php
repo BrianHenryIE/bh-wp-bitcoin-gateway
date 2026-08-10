@@ -22,7 +22,6 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
-use WC_Order;
 use WC_Payment_Gateway;
 use WC_Product;
 
@@ -128,6 +127,8 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 		 *
 		 * @param mixed|non-falsy-string $method_description Method description.
 		 * @param Bitcoin_Gateway $gateway Payment gateway instance.
+		 *
+		 * phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 		 */
 		$filtered = apply_filters( 'woocommerce_gateway_method_description', $method_description, $gateway );
 
