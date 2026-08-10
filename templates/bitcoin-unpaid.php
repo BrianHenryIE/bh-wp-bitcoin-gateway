@@ -11,6 +11,7 @@
  * @var string $btc_logo_url
  * @var string $payment_status 'Awaiting Payment'|'Partially Paid'|'Paid'.
  * @var string $btc_address Destination payment address.
+ * @var string $btc_address_href Hyperlink:`bitcoin:xpub?amount=0.0321`.
  * @var string $btc_total Order total in BTC.
  * @var string $btc_total_formatted Order total prefixed with "฿".
  * @var string $btc_exchange_rate_formatted The Bitcoin exchange rate with friendly thousand separators.
@@ -23,8 +24,6 @@
 
 use BrianHenryIE\WP_Bitcoin_Gateway\chillerlan\QRCode\QRCode;
 
-$bitcoin_href_address = 'bitcoin:' . $btc_address . '?amount=' . $btc_total;
-
 ?>
 
 <div class="bh-wp-bitcoin-gateway-details">
@@ -35,8 +34,8 @@ $bitcoin_href_address = 'bitcoin:' . $btc_address . '?amount=' . $btc_total;
 	<div class="bh_wp_bitcoin_gateway_logo_qr">
 	<img alt="Bitcoin logo" class="bh_wp_bitcoin_gateway_logo" src="<?php echo esc_attr( $btc_logo_url ); ?>">
 
-	<a href="<?php echo esc_url( $bitcoin_href_address, array( 'bitcoin' ) ); ?>">
-		<img src="<?php echo esc_attr( new QRCode()->render( $bitcoin_href_address ) ); ?>" alt="<?php esc_attr_e( 'Payment QR Code', 'bh-wp-bitcoin-gateway' ); ?>" />
+	<a href="<?php echo esc_url( $btc_address_href, array( 'bitcoin' ) ); ?>">
+		<img src="<?php echo esc_attr( new QRCode()->render( $btc_address_href ) ); ?>" alt="<?php esc_attr_e( 'Payment QR Code', 'bh-wp-bitcoin-gateway' ); ?>" />
 	</a>
 	</div>
 
