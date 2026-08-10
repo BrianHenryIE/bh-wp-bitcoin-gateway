@@ -24,6 +24,10 @@
 
 use BrianHenryIE\WP_Bitcoin_Gateway\chillerlan\QRCode\QRCode;
 
+if ( ! defined( 'ABSPATH' ) ) {
+	return;
+}
+
 ?>
 
 <div class="bh-wp-bitcoin-gateway-details">

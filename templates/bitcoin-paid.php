@@ -19,4 +19,8 @@
  * @package    brianhenryie/bh-wp-bitcoin-gateway
  */
 
+if ( ! defined( 'ABSPATH' ) ) {
+	return;
+}
+
 // TODO.

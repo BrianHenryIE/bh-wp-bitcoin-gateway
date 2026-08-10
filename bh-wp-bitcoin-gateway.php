@@ -61,9 +61,8 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 use Throwable;
 
-// If this file is called directly, abort.
-if ( ! defined( 'WPINC' ) ) {
-	throw new Exception( 'WPINC not defined' );
+if ( ! defined( 'ABSPATH' ) ) {
+	return;
 }
 
 // If the GitHub repo was installed without running `composer install` to add the dependencies, the autoload will fail.
