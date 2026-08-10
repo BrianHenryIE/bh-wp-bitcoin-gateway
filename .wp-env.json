@@ -2,7 +2,7 @@
   "config": {
     "WP_DEBUG_LOG": "/var/www/html/wp-content/debug.log"
   },
-  "core": "WordPress/WordPress#7.0.2",
+  "core": "WordPress/WordPress#7.0.3",
   "lifecycleScripts": {
     "afterStart": "./tests/e2e-pw/setup/initialize-external.sh"
   },
