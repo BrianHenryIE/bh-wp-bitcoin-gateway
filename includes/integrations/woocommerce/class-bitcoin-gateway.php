@@ -119,15 +119,17 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 			$method_description .= $this->get_formatted_link_to_order_confirmation_edit();
 		}
 
+		$gateway = $this;
+
 		/**
 		 * Filter that is typically called in the parent method.
 		 *
 		 * @see WC_Payment_Gateway::get_method_description()
 		 *
-		 * @param string $description Method description.
-		 * @param WC_Payment_Gateway $this Payment gateway instance.
+		 * @param mixed|non-falsy-string $method_description Method description.
+		 * @param Bitcoin_Gateway $gateway Payment gateway instance.
 		 */
-		$filtered = apply_filters( 'woocommerce_gateway_method_description', $method_description, $this );
+		$filtered = apply_filters( 'woocommerce_gateway_method_description', $method_description, $gateway );
 
 		return is_string( $filtered ) ? $filtered : $method_description;
 	}
