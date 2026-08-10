@@ -44,9 +44,9 @@ if [ "$MODE" = "ci" ]; then
   cp "$ZIP" "$SETUP_DIR/$(basename "$ZIP")"
 fi
 
-if [ "$MODE" != "ci" ]; then
-  echo "run npx wp-env run cli ../setup/initialize-internal-dev.sh;"
-  npx wp-env run cli ../setup/initialize-internal-dev.sh;
+if [ "$MODE" = "ci" ]; then
+  echo "run npx wp-env run cli ../setup/initialize-internal-ci.sh $PLUGIN_SLUG $MODE"
+  npx wp-env run "${WP_ENV_CONFIG_ARGS[@]}" cli ../setup/initialize-internal-ci.sh $PLUGIN_SLUG $MODE;
 fi
 
 # Run the internal script which configures the environment inside Docker.
