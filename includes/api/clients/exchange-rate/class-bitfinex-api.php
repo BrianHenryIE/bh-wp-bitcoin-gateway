@@ -64,7 +64,7 @@ class Bitfinex_API implements Exchange_Rate_API_Interface {
 		$request_response = wp_remote_get( $url );
 
 		if ( is_wp_error( $request_response ) ) {
-			throw new BH_WP_Bitcoin_Gateway_Exception( $request_response->get_error_message() );
+			throw new BH_WP_Bitcoin_Gateway_Exception( esc_html( $request_response->get_error_message() ) );
 		}
 
 		if ( 200 !== $request_response['response']['code'] ) {

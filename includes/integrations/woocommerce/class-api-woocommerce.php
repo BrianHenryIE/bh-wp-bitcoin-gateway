@@ -306,7 +306,12 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 
 		if ( $check_address_for_payment_service_result->confirmed_received->isNegativeOrZero() ) {
 			// This should never happen.
-			throw new BH_WP_Bitcoin_Gateway_Exception( 'Invalid amount_received: ' . $check_address_for_payment_service_result->confirmed_received->__toString() . ' is negative or zero.' );
+			throw new BH_WP_Bitcoin_Gateway_Exception(
+				sprintf(
+					'Invalid amount_received: %s is negative or zero.',
+					esc_html( $check_address_for_payment_service_result->confirmed_received->__toString() )
+				)
+			);
 		}
 
 		$wc_order->set_confirmed_amount_received(

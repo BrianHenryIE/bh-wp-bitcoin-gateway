@@ -96,7 +96,7 @@ abstract readonly class WP_Post_Query_Abstract {
 
 		foreach ( array_keys( $wp_post_fields ) as $field_name ) {
 			if ( ! in_array( $field_name, $this->get_valid_keys(), true ) ) {
-				throw new InvalidArgumentException( 'Invalid key: ' . $field_name );
+				throw new InvalidArgumentException( sprintf( 'Invalid key: %s' . esc_html( $field_name ) ) );
 			}
 		}
 

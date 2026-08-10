@@ -94,7 +94,13 @@ class Bitcoin_Wallet_Repository extends WP_Post_Repository_Abstract {
 				wp_cache_set( $master_public_key, $post_id, Bitcoin_Wallet_WP_Post_Interface::POST_TYPE );
 				return $post_id;
 			default:
-				throw new BH_WP_Bitcoin_Gateway_Exception( count( $post_ids ) . ' Bitcoin_Wallets found, only one expected, for ' . $master_public_key );
+				throw new BH_WP_Bitcoin_Gateway_Exception(
+					sprintf(
+						'%d Bitcoin_Wallets found, only one expected, for %s',
+						count( $post_ids ),
+						esc_html( $master_public_key ) // TODO: abbreviate the xpub.
+					)
+				);
 		}
 	}
 

@@ -53,7 +53,13 @@ class Bitcoin_Address_Factory implements LoggerAwareInterface {
 	public function get_by_wp_post_id( int $post_id ): Bitcoin_Address {
 		$post = get_post( $post_id );
 		if ( ! ( $post instanceof WP_Post ) || Bitcoin_Address_WP_Post_Interface::POST_TYPE !== $post->post_type ) {
-			throw new InvalidArgumentException( 'post_id ' . $post_id . ' is not a ' . Bitcoin_Address_WP_Post_Interface::POST_TYPE . ' post object' );
+			throw new InvalidArgumentException(
+				sprintf(
+					'post_id %d is not a %s post object',
+					$post_id,
+					esc_html( Bitcoin_Address_WP_Post_Interface::POST_TYPE )
+				)
+			);
 		}
 
 		return $this->get_by_wp_post( $post );

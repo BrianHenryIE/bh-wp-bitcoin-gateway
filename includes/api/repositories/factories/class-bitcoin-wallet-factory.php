@@ -26,12 +26,18 @@ class Bitcoin_Wallet_Factory {
 	 * @param int $post_id The WordPress post id this wallet is stored under.
 	 *
 	 * @throws InvalidArgumentException When the supplied post_id is not a post of this type.
-	 * @throws UnknownCurrencyException If BTC is not correctly added to brick/money.
+	 * @throws UnknownCurrencyException If BTC is not correctly added to `brick/money`.
 	 */
 	public function get_by_wp_post_id( int $post_id ): Bitcoin_Wallet {
 		$post = get_post( $post_id );
 		if ( ! ( $post instanceof WP_Post ) || Bitcoin_Wallet_WP_Post_Interface::POST_TYPE !== $post->post_type ) {
-			throw new InvalidArgumentException( 'post_id ' . $post_id . ' is not a ' . Bitcoin_Wallet_WP_Post_Interface::POST_TYPE . ' post object' );
+			throw new InvalidArgumentException(
+				sprintf(
+					'post_id %d  is not a %s post object',
+					$post_id,
+					esc_html( Bitcoin_Wallet_WP_Post_Interface::POST_TYPE ),
+				)
+			);
 		}
 
 		return $this->get_by_wp_post( $post );
