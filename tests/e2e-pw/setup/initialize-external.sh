@@ -33,7 +33,7 @@ if [ "$MODE" = "ci" ]; then
   ZIP=$(ls -Art "$PROJECT_DIR"/dist-archive/*.zip 2>/dev/null | tail -n 1)
   if [ -z "$ZIP" ]; then
       echo "wp dist-archive . $SETUP_DIR --plugin-dirname=$PLUGIN_SLUG --force"
-      vendor/bin/wp dist-archive . "$SETUP_DIR" --plugin-dirname=$PLUGIN_SLUG --force
+      vendor/bin/wp dist-archive $PROJECT_DIR "$PROJECT_DIR"/dist-archive --plugin-dirname=$PLUGIN_SLUG --force --create-target-dir
       ZIP=$(ls -Art "$PROJECT_DIR"/dist-archive/*.zip 2>/dev/null | tail -n 1)
   fi
 
