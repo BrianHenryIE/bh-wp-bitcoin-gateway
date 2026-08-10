@@ -55,16 +55,17 @@ class JsonMapper_Money {
 			return;
 		}
 
-		$previous_exception = null;
 		if ( property_exists( $json_object, 'amount' ) && ! is_numeric( $json_object->amount ) ) {
-			$previous_exception = new NumberFormatException(
-				message: is_string( $json_object->amount ) ? $json_object->amount : ''
+			throw new BH_WP_Bitcoin_Gateway_Exception(
+				message: 'Invalid json encoded money object.',
+				previous: is_string( $json_object->amount )
+					? NumberFormatException::invalidFormat( $json_object->amount )
+					: NumberFormatException::emptyNumber()
 			);
 		}
 
 		throw new BH_WP_Bitcoin_Gateway_Exception(
 			message: 'Invalid json encoded money object.',
-			previous: $previous_exception
 		);
 	}
 }
