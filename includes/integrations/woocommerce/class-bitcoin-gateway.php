@@ -26,8 +26,6 @@ use WC_Order;
 use WC_Payment_Gateway;
 use WC_Product;
 
-// TODO: The image is huge at the shortcode checkout, limit it to ~25px.
-
 /**
  * Simple instance of WC_Payment Gateway. Defines the admin settings and processes the payment.
  *
@@ -121,6 +119,14 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 			$method_description .= $this->get_formatted_link_to_order_confirmation_edit();
 		}
 
+		/**
+		 * Filter that is typically called in the parent method.
+		 *
+		 * @see WC_Payment_Gateway::get_method_description()
+		 *
+		 * @param string $description Method description.
+		 * @param WC_Payment_Gateway $this Payment gateway instance.
+		 */
 		$filtered = apply_filters( 'woocommerce_gateway_method_description', $method_description, $this );
 
 		return is_string( $filtered ) ? $filtered : $method_description;
@@ -366,9 +372,8 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 			'default'     => 'info',
 		);
 
-		$this->form_fields = (array) apply_filters( 'wc_gateway_bitcoin_form_fields', $settings_fields, $this->id );
+		$this->form_fields = (array) apply_filters( 'bh_wp_bitcoin_gateway_form_fields', $settings_fields, $this->id );
 	}
-
 
 	/**
 	 * Returns false when the gateway is not configured / has no addresses to use / has no exchange rate available.

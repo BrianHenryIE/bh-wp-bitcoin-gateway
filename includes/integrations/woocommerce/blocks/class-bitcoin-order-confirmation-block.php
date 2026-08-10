@@ -4,6 +4,8 @@
  *
  * A container block that provides order context to inner blocks on WooCommerce Thank You pages.
  *
+ * TODO: The image is huge at the shortcode checkout, limit it to ~25px.
+ *
  * @package brianhenryie/bh-wp-bitcoin-gateway
  */
 
