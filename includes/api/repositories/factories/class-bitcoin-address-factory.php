@@ -56,7 +56,7 @@ class Bitcoin_Address_Factory implements LoggerAwareInterface {
 			throw new InvalidArgumentException(
 				sprintf(
 					'post_id %d is not a %s post object',
-					$post_id,
+					(int) $post_id,
 					esc_html( Bitcoin_Address_WP_Post_Interface::POST_TYPE )
 				)
 			);
