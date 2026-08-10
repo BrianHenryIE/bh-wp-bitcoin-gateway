@@ -70,10 +70,12 @@ if ( ! defined( 'WPINC' ) ) {
 try {
 	require_once plugin_dir_path( __FILE__ ) . 'autoload.php';
 } catch ( Throwable $error ) {
-	$display_download_from_releases_error_notice = function () {
-		echo '<div class="notice notice-error"><p><b>Bitcoin Gateway missing dependencies.</b> Please <a href="https://github.com/BrianHenryIE/bh-wp-bitcoin-gateway/releases">install the distribution archive from the GitHub Releases page</a>. It appears you downloaded the GitHub repo and installed that as the plugin.</p></div>';
-	};
-	add_action( 'admin_notices', $display_download_from_releases_error_notice );
+	add_action(
+		'admin_notices',
+		function (): void {
+			echo '<div class="notice notice-error"><p><b>Bitcoin Gateway missing dependencies.</b> Please <a href="https://github.com/BrianHenryIE/bh-wp-bitcoin-gateway/releases">install the distribution archive from the GitHub Releases page</a>. It appears you downloaded the GitHub repo and installed that as the plugin.</p></div>';
+		}
+	);
 	return;
 }
 

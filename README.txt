@@ -1,15 +1,15 @@
-=== Bitcoin Gateway for WooCommerce ===
+=== Bitcoin Gateway ===
 Contributors: BrianHenryIE, Nullcorps
 Donate link: http://bhwp.ie/
 Tags: comments, spam
 Requires at least: 6.9
-Tested up to: 7.0.3
+Tested up to: 7.0
 Stable tag: 2.0.0
 Requires PHP: 8.4
 License: GPLv3 or later
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
-Accept Bitcoin payments using self-custodied wallets, and no external account. Calculates wallet addresses locally and uses open APIs to verify payments. For an emphasis on privacy & sovereignty.
+Accept Bitcoin payments using self-custodied wallets and no external account, for an emphasis on privacy & sovereignty.
 
 == Description ==
 

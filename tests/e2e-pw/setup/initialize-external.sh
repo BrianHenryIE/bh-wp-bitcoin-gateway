@@ -23,13 +23,18 @@ PROJECT_DIR="$(cd "$SETUP_DIR/../../.." && pwd)"
 # command would target a different (non-running) environment than the one that invoked this script.
 WP_ENV_CONFIG_ARGS=()
 
+# Build the plugin's translation template.
+echo "wp i18n make-pot includes languages/$PLUGIN_SLUG.pot --domain=$PLUGIN_SLUG"
+vendor/bin/wp i18n make-pot includes languages/$PLUGIN_SLUG.pot --domain=$PLUGIN_SLUG
+
 if [ "$MODE" = "ci" ]; then
   WP_ENV_CONFIG_ARGS=(--config "$PROJECT_DIR/.wp-env.ci.json")
 
   ZIP=$(ls -Art "$PROJECT_DIR"/dist-archive/*.zip 2>/dev/null | tail -n 1)
   if [ -z "$ZIP" ]; then
-    echo "No zip found in dist-archive. Run \`composer create-plugin-archive\` first." >&2
-    exit 1
+      echo "wp dist-archive . $SETUP_DIR --plugin-dirname=$PLUGIN_SLUG --force"
+      vendor/bin/wp dist-archive . "$SETUP_DIR" --plugin-dirname=$PLUGIN_SLUG --force
+      ZIP=$(ls -Art "$PROJECT_DIR"/dist-archive/*.zip 2>/dev/null | tail -n 1)
   fi
 
   # Keep the versioned filename so the CI logs name the exact build being tested, and clear out
@@ -37,25 +42,15 @@ if [ "$MODE" = "ci" ]; then
   rm -f "$SETUP_DIR/$PLUGIN_SLUG".*.zip
   echo "Copying $ZIP to $SETUP_DIR/$(basename "$ZIP")"
   cp "$ZIP" "$SETUP_DIR/$(basename "$ZIP")"
-else
-  # Locally the plugin is mounted from the working directory; the .latest zip is only built so it
-  # is available for manual install tests.
-  # TODO: delete the existing plugin – it seems to add to the .zip file rather than totally recreating it.
-  echo "wp dist-archive . $SETUP_DIR --plugin-dirname=$PLUGIN_SLUG --filename-format=\"{name}.latest\" --force"
-  vendor/bin/wp dist-archive . "$SETUP_DIR" --plugin-dirname=$PLUGIN_SLUG --filename-format="{name}.latest" --force
 fi
 
-# Build the plugin's translation template.
-echo "wp i18n make-pot includes languages/$PLUGIN_SLUG.pot --domain=$PLUGIN_SLUG"
-vendor/bin/wp i18n make-pot includes languages/$PLUGIN_SLUG.pot --domain=$PLUGIN_SLUG
+if [ "$MODE" != "ci" ]; then
+  echo "run npx wp-env run cli ../setup/initialize-internal-dev.sh;"
+  npx wp-env run cli ../setup/initialize-internal-dev.sh;
+fi
 
 # Run the internal script which configures the environment inside Docker.
 # `--config` must precede the container name: `run <container> [command...]` absorbs every
 # trailing argument into the command run inside the container.
 echo "run npx wp-env run ${WP_ENV_CONFIG_ARGS[*]} cli ../setup/initialize-internal.sh $PLUGIN_SLUG $MODE;"
 npx wp-env run "${WP_ENV_CONFIG_ARGS[@]}" cli ../setup/initialize-internal.sh $PLUGIN_SLUG $MODE;
-
-if [ "$MODE" != "ci" ]; then
-  echo "run npx wp-env run cli ../setup/initialize-internal-dev.sh;"
-  npx wp-env run cli ../setup/initialize-internal-dev.sh;
-fi

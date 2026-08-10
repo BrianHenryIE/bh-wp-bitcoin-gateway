@@ -157,6 +157,7 @@
     "wpackagist-plugin/crypto-payments-woo": ">=1.2",
     "wpackagist-plugin/decentralized-bitcoin-cryptodec-payment-gateway-for-woocommerce": ">=2.0",
     "wpackagist-plugin/log-http-requests": "^1.5",
+    "wpackagist-plugin/plugin-check": "^2.0",
     "wpackagist-plugin/query-monitor": "*",
     "wpackagist-plugin/woo-cancel-abandoned-order": ">=2.0",
     "wpackagist-plugin/woo-nimiq-gateway": ">=3.4",
@@ -217,13 +218,13 @@
   },
   "scripts": {
     "post-install-cmd": [
-      "strauss --info",
       "@sync-composer-wpenv",
+      "strauss --info",
       "@add-btc-to-brick-money"
     ],
     "post-update-cmd": [
-      "strauss --info",
       "@sync-composer-wpenv",
+      "strauss --info",
       "@add-btc-to-brick-money"
     ],
     "test-coverage": [

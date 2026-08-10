@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "0822f90aa6e21ce10723114651b64006",
+    "content-hash": "8c9511d4e0403f52849253c280e69a11",
     "packages": [
         {
             "name": "alleyinteractive/wordpress-autoloader",
@@ -15500,6 +15500,24 @@
             },
             "type": "wordpress-plugin",
             "homepage": "https://wordpress.org/plugins/log-http-requests/"
+        },
+        {
+            "name": "wpackagist-plugin/plugin-check",
+            "version": "2.0.0",
+            "source": {
+                "type": "svn",
+                "url": "https://plugins.svn.wordpress.org/plugin-check/",
+                "reference": "tags/2.0.0"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://downloads.wordpress.org/plugin/plugin-check.2.0.0.zip"
+            },
+            "require": {
+                "composer/installers": "^1.0 || ^2.0"
+            },
+            "type": "wordpress-plugin",
+            "homepage": "https://wordpress.org/plugins/plugin-check/"
         },
         {
             "name": "wpackagist-plugin/query-monitor",

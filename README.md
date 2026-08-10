@@ -130,8 +130,8 @@ Pre-select Bitcoin at checkout when sending emails to customers.
 * [x] ~~Fix hard-coded log level (respect settings)~~
 * [x] ~~WooCommerce Blocks checkout~~
 * [x] ~~Verify instructions are added to emails~~
-* [ ] 100% WPCS
-* [ ] 100% PHPStan
+* [x] ~~100% WPCS~~ (done for all code in release)
+* [x] ~~100% PHPStan~~ (done for all code in release)
 * [ ] JS linting
 * [ ] CSS linting
 * [ ] more linting
@@ -145,11 +145,11 @@ Pre-select Bitcoin at checkout when sending emails to customers.
 
 * [x] ~~Show transactions in meta box on order page~~
 * [ ] Zero-conf payments for virtual products (mempool). To avoid the threat of fraud where the fee is low-balled, only accept zero-conf transactions whose fees are above recent expected range
-* [ ] GitHub Actions for E2E tests
+* [x] GitHub Actions for E2E tests
 * [ ] Run contract tests to find what currencies are supported by the Exchange_Rate APIs
-* [ ] Remove 'required' setting on checkout billing fields
+* [ ] Remove 'required' setting on checkout billing fields. See: [wc-remove-billing-address-on-free-checkout](https://github.com/helgatheviking/wc-remove-billing-address-on-free-checkout/pull/3)
 * [ ] API round-robin and failover
-* [ ] CLI commands
+* [x] CLI commands
 * [ ] Template for paid orders
 * [ ] Partial payment email
 * [ ] Delay order-received/on-hold email for an hour; check for payment in mempool
