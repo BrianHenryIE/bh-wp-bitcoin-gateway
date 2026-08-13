@@ -104,8 +104,8 @@ jobs:
         with:
           build-dir: ./plugin-check-build/bh-wp-bitcoin-gateway
           exclude-checks: |
-            trademarked_term,
-            missing_direct_file_access_protection,
+            trademarked_term
+            missing_direct_file_access_protection
             PluginCheck.CodeAnalysis.Heredoc.NotAllowed
 
   e2e:
