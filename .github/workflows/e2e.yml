@@ -103,10 +103,6 @@ jobs:
         uses: wordpress/plugin-check-action@v1
         with:
           build-dir: ./plugin-check-build/bh-wp-bitcoin-gateway
-          exclude-checks: |
-            trademarked_term
-            missing_direct_file_access_protection
-            PluginCheck.CodeAnalysis.Heredoc.NotAllowed
 
   e2e:
     name: E2E ${{ matrix.group }} PHP ${{ matrix.php }}
