@@ -103,6 +103,13 @@ jobs:
         uses: wordpress/plugin-check-action@v1
         with:
           build-dir: ./plugin-check-build/bh-wp-bitcoin-gateway
+          # These checks cannot be excluded per-file. `direct_file_access` seem inaccurate anyway.
+          # `direct_file_access`: `bh-wp-bitcoin-gateway.php`.
+          # `direct_file_access`: `includes/integrations/woocommerce/class-api-woocommerce.php`.
+          # `trademarks`: "bh-wp-bitcoin-gateway" - contains the restricted term "wp".
+          exclude-checks: |
+            trademarks
+          # direct_file_access # TODO: enable this if it doesn't resolve itself. @see https://github.com/WordPress/plugin-check/issues/1361
 
   e2e:
     name: E2E ${{ matrix.group }} PHP ${{ matrix.php }}

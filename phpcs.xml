@@ -170,16 +170,12 @@
 	</rule>
 
 	<!-- WordPress plugin-check -->
+	<!-- The PluginCheck standard is not published on Packagist so we load it through `wp-content/plugins/plugin-check` -->
+	<autoload>./bin/phpcs-plugin-check-autoload.php</autoload>
+	<rule ref="./wp-content/plugins/plugin-check/vendor/plugin-check/phpcs-sniffs/PluginCheck"/>
 	<rule ref="PluginCheck.CodeAnalysis.Heredoc.NotAllowed">
         <exclude-pattern>*/includes/integrations/woocommerce/class-frontend-assets.php</exclude-pattern>
-	</rule>
-	<rule ref="missing_direct_file_access_protection">
-        <exclude-pattern>includes/integrations/woocommerce/class-api-woocommerce.php</exclude-pattern>
-        <exclude-pattern>includes/integrations/woocommerce/class-bitcoin-gateway.php</exclude-pattern>
-        <exclude-pattern>bh-wp-bitcoin-gateway.php</exclude-pattern>
-	</rule>
-	<rule ref="trademarked_term">
-		<exclude-pattern>*/bh-wp-bitcoin-gateway.php</exclude-pattern>
+        <exclude-pattern>*/development-plugin/*</exclude-pattern>
 	</rule>
 	<rule ref="PluginCheck.CodeAnalysis.DiscouragedFunctions.load_plugin_textdomainFound">
 		<exclude-pattern>*/includes/wp-includes/class-i18n.php</exclude-pattern>
