@@ -80,6 +80,7 @@ class JsonMapper_DateTimeInterface {
 
 		throw new BH_WP_Bitcoin_Gateway_Exception(
 			message: 'Invalid json encoded DateTime object.',
+			// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 			previous: $previous_exception,
 		);
 	}

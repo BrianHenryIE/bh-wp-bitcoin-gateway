@@ -22,12 +22,41 @@ export default defineConfig( {
 	/* Fail the build on CI if you accidentally left test.only in the source code. */
 	forbidOnly: !! process.env.CI,
 	/* Retry on CI only */
-	// retries: process.env.CI ? 2 : 0,
-	// /* Opt out of parallel tests on CI. */
-	// workers: process.env.CI ? 1 : undefined,
+	retries: process.env.CI ? 2 : 0,
+	/* TODO: re-enable `failOnFlakyTests: !! process.env.CI` once the suite passes without
+	 * retries on a cold environment. Currently ~6 tests across generate-addresses,
+	 * schedule-payment-check and refresh-details need a retry on CI runners, where the first
+	 * render of checkout with the Bitcoin gateway can exceed the test timeout. Retries are
+	 * recorded in the HTML report artifact. */
+	/* The specs share one WordPress install and switch its theme and checkout page content at
+	 * runtime, so they cannot safely run in parallel. */
 	workers: 1,
 	/* Reporter to use. See https://playwright.dev/docs/test-reporters */
-	reporter: 'html',
+	// `github` for inline PR annotations. Defined here rather than as a `--reporter` CLI flag
+	// because the CLI flag ignores the reporter options in this file and the html report would
+	// land in ./playwright-report/ instead of the fixed folder CI uploads as an artifact.
+	reporter: process.env.CI
+		? [
+				[ 'github' ],
+				[
+					'html',
+					{
+						outputFolder: 'tests/_output/playwright-report',
+						open: 'never',
+					},
+				],
+		  ]
+		: [
+				[
+					'html',
+					{
+						outputFolder: 'tests/_output/playwright-report',
+						open: 'never',
+					},
+				],
+		  ],
+	// Folder for test artifacts such as screenshots, videos, traces, etc.
+	outputDir: './tests/_output/playwright-results',
 	// https://playwright.dev/docs/test-timeouts
 	// timeout is 30 seconds by default
 	// expect.timeout is 5 seconds by default
@@ -44,43 +73,30 @@ export default defineConfig( {
 		trace: 'on-first-retry',
 	},
 
-	/* Configure projects for major browsers */
-	projects: [
+	/* Configure projects: each major browser split into the blocks-checkout spec vs everything
+	 * else (the shortcode checkout plus the theme-agnostic admin specs), so CI can run the two
+	 * groups as separate jobs, e.g. `npx playwright test --project=blocks-chromium`. */
+	projects: Object.entries( {
+		chromium: devices[ 'Desktop Chrome' ],
+		firefox: devices[ 'Desktop Firefox' ],
+		webkit: devices[ 'Desktop Safari' ],
+	} ).flatMap( ( [ browserName, device ] ) => [
 		{
-			name: 'chromium',
-			use: { ...devices[ 'Desktop Chrome' ] },
+			name: `shortcode-${ browserName }`,
+			use: { ...device },
+			// A project-level testIgnore replaces the top-level one, so the helpers-tests
+			// (jest, not Playwright) must be repeated here.
+			testIgnore: [
+				'**/helpers-tests/**',
+				'**/place-order-block-checkout.spec.ts',
+			],
 		},
-
 		{
-			name: 'firefox',
-			use: { ...devices[ 'Desktop Firefox' ] },
+			name: `blocks-${ browserName }`,
+			use: { ...device },
+			testMatch: '**/place-order-block-checkout.spec.ts',
 		},
-
-		{
-			name: 'webkit',
-			use: { ...devices[ 'Desktop Safari' ] },
-		},
-
-		/* Test against mobile viewports. */
-		// {
-		//   name: 'Mobile Chrome',
-		//   use: { ...devices['Pixel 5'] },
-		// },
-		// {
-		//   name: 'Mobile Safari',
-		//   use: { ...devices['iPhone 12'] },
-		// },
-
-		/* Test against branded browsers. */
-		// {
-		//   name: 'Microsoft Edge',
-		//   use: { ...devices['Desktop Edge'], channel: 'msedge' },
-		// },
-		// {
-		//   name: 'Google Chrome',
-		//   use: { ...devices['Desktop Chrome'], channel: 'chrome' },
-		// },
-	],
+	] ),
 
 	/* Run your local dev server before starting the tests */
 	// webServer: {

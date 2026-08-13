@@ -10,6 +10,10 @@
  * @package    brianhenryie/bh-wp-bitcoin-gateway
  */
 
+if ( ! defined( 'ABSPATH' ) ) {
+	return;
+}
+
 if ( ! $bitcoin_order->is_paid() ) {
 
 	wc_get_template( 'bitcoin-unpaid.php', $args );

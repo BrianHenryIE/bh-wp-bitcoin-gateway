@@ -10,7 +10,7 @@
  * Description:            Accept Bitcoin payments using self-custodied wallets, and no external account. Calculates wallet addresses locally and uses open APIs to verify payments. For an emphasis on privacy & sovereignty.
  * Version:                2.0.0
  * Requires at least:      6.9
- * Tested up to:           7.0.3
+ * Tested up to:           7.0
  * Requires PHP:           8.4
  * Author:                 BrianHenryIE, Nullcorps
  * Author URI:             https://bhwp.ie
@@ -61,19 +61,20 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 use Throwable;
 
-// If this file is called directly, abort.
-if ( ! defined( 'WPINC' ) ) {
-	throw new Exception( 'WPINC not defined' );
+if ( ! defined( 'ABSPATH' ) ) {
+	return;
 }
 
 // If the GitHub repo was installed without running `composer install` to add the dependencies, the autoload will fail.
 try {
 	require_once plugin_dir_path( __FILE__ ) . 'autoload.php';
 } catch ( Throwable $error ) {
-	$display_download_from_releases_error_notice = function () {
-		echo '<div class="notice notice-error"><p><b>Bitcoin Gateway missing dependencies.</b> Please <a href="https://github.com/BrianHenryIE/bh-wp-bitcoin-gateway/releases">install the distribution archive from the GitHub Releases page</a>. It appears you downloaded the GitHub repo and installed that as the plugin.</p></div>';
-	};
-	add_action( 'admin_notices', $display_download_from_releases_error_notice );
+	add_action(
+		'admin_notices',
+		function (): void {
+			echo '<div class="notice notice-error"><p><b>Bitcoin Gateway missing dependencies.</b> Please <a href="https://github.com/BrianHenryIE/bh-wp-bitcoin-gateway/releases">install the distribution archive from the GitHub Releases page</a>. It appears you downloaded the GitHub repo and installed that as the plugin.</p></div>';
+		}
+	);
 	return;
 }
 
@@ -91,25 +92,25 @@ define( 'BH_WP_BITCOIN_GATEWAY_URL', trailingslashit( plugins_url( plugin_basena
 register_activation_hook( __FILE__, array( Activator::class, 'activate' ) );
 register_deactivation_hook( __FILE__, array( Deactivator::class, 'deactivate' ) );
 
-$container = new Container();
+$bh_wp_bitcoin_gateway_container = new Container();
 // Autowire unbound concrete classes by reflection. `false` (no caching) means a new
 // instance per get() for anything not addShared().
-$container->delegate( new ReflectionContainer( false ) );
+$bh_wp_bitcoin_gateway_container->delegate( new ReflectionContainer( false ) );
 
 // league/container does not self-bind; this is needed to autowire classes that constructor-inject the container.
-$container->addShared( ContainerInterface::class, static fn(): ContainerInterface => $container );
+$bh_wp_bitcoin_gateway_container->addShared( ContainerInterface::class, static fn(): ContainerInterface => $bh_wp_bitcoin_gateway_container );
 
-$container->add( Background_Jobs_Scheduler_Interface::class, Background_Jobs_Scheduler::class );
-$container->add( Background_Jobs_Actions_Interface::class, Background_Jobs_Actions_Handler::class );
+$bh_wp_bitcoin_gateway_container->add( Background_Jobs_Scheduler_Interface::class, Background_Jobs_Scheduler::class );
+$bh_wp_bitcoin_gateway_container->add( Background_Jobs_Actions_Interface::class, Background_Jobs_Actions_Handler::class );
 
-$container->add( API_Background_Jobs_Interface::class, API::class );
-$container->add( API_Interface::class, API::class );
+$bh_wp_bitcoin_gateway_container->add( API_Background_Jobs_Interface::class, API::class );
+$bh_wp_bitcoin_gateway_container->add( API_Interface::class, API::class );
 
-$container->add( Settings_Interface::class, Settings::class );
-$container->add( Logger_Settings_Interface::class, Settings::class );
+$bh_wp_bitcoin_gateway_container->add( Settings_Interface::class, Settings::class );
+$bh_wp_bitcoin_gateway_container->add( Logger_Settings_Interface::class, Settings::class );
 // BH WP Logger doesn't add its own hooks unless we use its singleton.
 // NB: league/container definition closures receive no arguments — capture $container with `use` if needed.
-$container->addShared(
+$bh_wp_bitcoin_gateway_container->addShared(
 	LoggerInterface::class,
 	static function (): LoggerInterface {
 		return Logger::instance(
@@ -175,40 +176,40 @@ $container->addShared(
 	}
 );
 
-$container->addShared(
+$bh_wp_bitcoin_gateway_container->addShared(
 	JsonMapperInterface::class,
-	static function () use ( $container ): JsonMapperInterface {
+	static function () use ( $bh_wp_bitcoin_gateway_container ): JsonMapperInterface {
 		/** @var JsonMapper_Helper $json_mapper_helper */
-		$json_mapper_helper = $container->get( JsonMapper_Helper::class );
+		$json_mapper_helper = $bh_wp_bitcoin_gateway_container->get( JsonMapper_Helper::class );
 		return $json_mapper_helper->build();
 	}
 );
 
-$container->add( RequestFactoryInterface::class, HttpClient::class );
-$container->add( ClientInterface::class, HttpClient::class );
+$bh_wp_bitcoin_gateway_container->add( RequestFactoryInterface::class, HttpClient::class );
+$bh_wp_bitcoin_gateway_container->add( ClientInterface::class, HttpClient::class );
 
 // TODO: Add UI to select / failover to use: `Blockchain_Info_Api`.
-$container->add( Blockchain_API_Interface::class, Blockstream_Info_API::class );
+$bh_wp_bitcoin_gateway_container->add( Blockchain_API_Interface::class, Blockstream_Info_API::class );
 
-$container->add( Generate_Address_API_Interface::class, Nimq_API::class );
-$container->add( Exchange_Rate_API_Interface::class, Bitfinex_API::class );
+$bh_wp_bitcoin_gateway_container->add( Generate_Address_API_Interface::class, Nimq_API::class );
+$bh_wp_bitcoin_gateway_container->add( Exchange_Rate_API_Interface::class, Bitfinex_API::class );
 
 // Registered here rather than in WooCommerce_Integration / BH_WP_Bitcoin_Gateway constructors so
 // consumers only depend on ContainerInterface. Resolution is lazy.
-$container->add( API_WooCommerce_Interface::class, API_WooCommerce::class );
+$bh_wp_bitcoin_gateway_container->add( API_WooCommerce_Interface::class, API_WooCommerce::class );
 
-/** @var BH_WP_Bitcoin_Gateway $app */
-$app = $container->get( BH_WP_Bitcoin_Gateway::class );
-$app->register_hooks();
+/** @var BH_WP_Bitcoin_Gateway $bh_wp_bitcoin_gateway_app */
+$bh_wp_bitcoin_gateway_app = $bh_wp_bitcoin_gateway_container->get( BH_WP_Bitcoin_Gateway::class );
+$bh_wp_bitcoin_gateway_app->register_hooks();
 
-$GLOBALS['bh_wp_bitcoin_gateway'] = $container->get( API_Interface::class );
+$GLOBALS['bh_wp_bitcoin_gateway'] = $bh_wp_bitcoin_gateway_container->get( API_Interface::class );
 
 /**
  * @hooked plugins_loaded
  */
-$boot_integrations = function () use ( $container ): void {
+$bh_wp_bitcoin_gateway_boot_integrations = function () use ( $bh_wp_bitcoin_gateway_container ): void {
 	/** @var LoggerInterface $logger */
-	$logger = $container->get( LoggerInterface::class );
+	$logger = $bh_wp_bitcoin_gateway_container->get( LoggerInterface::class );
 
 	/** @var class-string[] $integrations */
 	$integrations = apply_filters(
@@ -224,7 +225,7 @@ $boot_integrations = function () use ( $container ): void {
 	foreach ( $integrations as $integration ) {
 		try {
 			/** @var object $instance */
-			$instance = $container->get( $integration );
+			$instance = $bh_wp_bitcoin_gateway_container->get( $integration );
 			if ( method_exists( $instance, 'register_hooks' ) ) {
 				$instance->register_hooks();
 			}
@@ -240,4 +241,4 @@ $boot_integrations = function () use ( $container ): void {
 		}
 	}
 };
-add_action( 'plugins_loaded', $boot_integrations, 0 );
+add_action( 'plugins_loaded', $bh_wp_bitcoin_gateway_boot_integrations, 0 );

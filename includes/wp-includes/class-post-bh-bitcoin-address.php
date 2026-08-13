@@ -109,12 +109,12 @@ class Post_BH_Bitcoin_Address {
 			Bitcoin_Address_Status::UNKNOWN->value,
 			array(
 				'post_type'                 => array( Bitcoin_Address_WP_Post_Interface::POST_TYPE ),
-				'label'                     => _x( 'Unknown', 'post' ),
+				'label'                     => _x( 'Unknown', 'post', 'bh-wp-bitcoin-gateway' ),
 				'public'                    => true,
 				'show_in_admin_all_list'    => true,
 				'show_in_admin_status_list' => true,
 				/* translators: %s is the number of Bitcoin addresses whose status is unknown. */
-				'label_count'               => _n_noop( 'Unknown <span class="count">(%s)</span>', 'Unknown <span class="count">(%s)</span>' ),
+				'label_count'               => _n_noop( 'Unknown <span class="count">(%s)</span>', 'Unknown <span class="count">(%s)</span>', 'bh-wp-bitcoin-gateway' ),
 			)
 		);
 
@@ -122,12 +122,12 @@ class Post_BH_Bitcoin_Address {
 			Bitcoin_Address_Status::UNUSED->value,
 			array(
 				'post_type'                 => array( Bitcoin_Address_WP_Post_Interface::POST_TYPE ),
-				'label'                     => _x( 'Unused', 'post' ),
+				'label'                     => _x( 'Unused', 'post', 'bh-wp-bitcoin-gateway' ),
 				'public'                    => true,
 				'show_in_admin_all_list'    => true,
 				'show_in_admin_status_list' => true,
 				/* translators: %s is the number of Bitcoin addresses that have yet to be used. */
-				'label_count'               => _n_noop( 'Unused <span class="count">(%s)</span>', 'Unused <span class="count">(%s)</span>' ),
+				'label_count'               => _n_noop( 'Unused <span class="count">(%s)</span>', 'Unused <span class="count">(%s)</span>', 'bh-wp-bitcoin-gateway' ),
 			)
 		);
 
@@ -135,12 +135,12 @@ class Post_BH_Bitcoin_Address {
 			Bitcoin_Address_Status::ASSIGNED->value,
 			array(
 				'post_type'                 => array( Bitcoin_Address_WP_Post_Interface::POST_TYPE ),
-				'label'                     => _x( 'Assigned', 'post' ),
+				'label'                     => _x( 'Assigned', 'post', 'bh-wp-bitcoin-gateway' ),
 				'public'                    => true,
 				'show_in_admin_all_list'    => true,
 				'show_in_admin_status_list' => true,
 				/* translators: %s is the number of Bitcoin addresses that have been assigned. */
-				'label_count'               => _n_noop( 'Assigned <span class="count">(%s)</span>', 'Assigned <span class="count">(%s)</span>' ),
+				'label_count'               => _n_noop( 'Assigned <span class="count">(%s)</span>', 'Assigned <span class="count">(%s)</span>', 'bh-wp-bitcoin-gateway' ),
 			)
 		);
 
@@ -148,12 +148,12 @@ class Post_BH_Bitcoin_Address {
 			Bitcoin_Address_Status::USED->value,
 			array(
 				'post_type'                 => array( Bitcoin_Address_WP_Post_Interface::POST_TYPE ),
-				'label'                     => _x( 'Used', 'post' ),
+				'label'                     => _x( 'Used', 'post', 'bh-wp-bitcoin-gateway' ),
 				'public'                    => true,
 				'show_in_admin_all_list'    => true,
 				'show_in_admin_status_list' => true,
 				/* translators: %s is the number of Bitcoin addresses that have been used. */
-				'label_count'               => _n_noop( 'Used <span class="count">(%s)</span>', 'Used <span class="count">(%s)</span>' ),
+				'label_count'               => _n_noop( 'Used <span class="count">(%s)</span>', 'Used <span class="count">(%s)</span>', 'bh-wp-bitcoin-gateway' ),
 			)
 		);
 	}

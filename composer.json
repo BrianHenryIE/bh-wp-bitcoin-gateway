@@ -52,6 +52,19 @@
       "url": "https://wpackagist.org"
     },
     {
+      "type": "package",
+        "package": {
+          "name": "brianhenryie/strauss",
+          "version": "0.29.0",
+          "dist": {
+            "url": "https://github.com/BrianHenryIE/strauss/releases/download/0.29.0/strauss.phar",
+            "type": "phar"
+          },
+          "installation-source": "dist",
+          "bin": "bin/strauss"
+        }
+    },
+    {
       "name": "brianhenryie/bh-php-blockchain-info",
       "url": "https://github.com/BrianHenryIE/bh-php-blockchain-info.git",
       "type": "git"
@@ -133,7 +146,7 @@
     "antecedent/patchwork": "^2.2.3",
     "behat/behat": "^v3.15.0",
     "brianhenryie/color-logger": "*",
-    "brianhenryie/strauss": "dev-master",
+    "brianhenryie/strauss": "0.29.0",
     "dealerdirect/phpcodesniffer-composer-installer": "^1.2",
     "dvdoug/behat-code-coverage": "^5",
     "johnpbloch/wordpress": "*",
@@ -157,6 +170,7 @@
     "wpackagist-plugin/crypto-payments-woo": ">=1.2",
     "wpackagist-plugin/decentralized-bitcoin-cryptodec-payment-gateway-for-woocommerce": ">=2.0",
     "wpackagist-plugin/log-http-requests": "^1.5",
+    "wpackagist-plugin/plugin-check": "^2.0",
     "wpackagist-plugin/query-monitor": "*",
     "wpackagist-plugin/woo-cancel-abandoned-order": ">=2.0",
     "wpackagist-plugin/woo-nimiq-gateway": ">=3.4",
@@ -217,13 +231,13 @@
   },
   "scripts": {
     "post-install-cmd": [
-      "strauss --info",
       "@sync-composer-wpenv",
+      "strauss --info",
       "@add-btc-to-brick-money"
     ],
     "post-update-cmd": [
-      "strauss --info",
       "@sync-composer-wpenv",
+      "strauss --info",
       "@add-btc-to-brick-money"
     ],
     "test-coverage": [
@@ -274,8 +288,8 @@
       "phpcs -p includes templates vendor-prefixed --standard=PHPCompatibilityWP --runtime-set testVersion 8.4-"
     ],
     "create-plugin-archive": [
-      "wp i18n make-pot includes languages/$(basename \"$PWD\").pot --domain=$(basename \"$PWD\")",
-      "wp dist-archive . ./dist-archive --plugin-dirname=$(basename \"$PWD\") --create-target-dir",
+      "vendor/bin/wp i18n make-pot includes languages/$(basename \"$PWD\").pot --domain=$(basename \"$PWD\")",
+      "vendor/bin/wp dist-archive . ./dist-archive --plugin-dirname=$(basename \"$PWD\") --create-target-dir",
       "@sync-composer-wpenv"
     ],
     "github-actions": [

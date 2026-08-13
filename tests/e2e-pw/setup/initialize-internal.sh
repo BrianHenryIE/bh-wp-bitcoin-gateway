@@ -1,7 +1,13 @@
 #!/bin/bash
 
+PLUGIN_SLUG=$1;
+MODE=$2;
+
 # Print the script name.
-echo $(basename "$0")
+echo "Running " $(basename "$0") " for " $PLUGIN_SLUG;
+
+# The scripts are mapped one level above the webroot so they are not web-servable.
+SCRIPT_DIR="$(dirname "$0")"
 
 # Avoid the "update database required" page.
 wp core update-db

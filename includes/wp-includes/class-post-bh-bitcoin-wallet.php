@@ -97,7 +97,7 @@ class Post_BH_Bitcoin_Wallet {
 				'show_in_admin_all_list'    => true,
 				'show_in_admin_status_list' => true,
 				/* translators: %s is the number of Bitcoin wallets that are in use. */
-				'label_count'               => _n_noop( 'Active <span class="count">(%s)</span>', 'Active <span class="count">(%s)</span>' ),
+				'label_count'               => _n_noop( 'Active <span class="count">(%s)</span>', 'Active <span class="count">(%s)</span>', 'bh-wp-bitcoin-gateway' ),
 			)
 		);
 
@@ -109,7 +109,7 @@ class Post_BH_Bitcoin_Wallet {
 				'show_in_admin_all_list'    => true,
 				'show_in_admin_status_list' => true,
 				/* translators: %s is the number of Bitcoin wallets that have been created but are not currently in use. */
-				'label_count'               => _n_noop( 'Inactive <span class="count">(%s)</span>', 'Inactive <span class="count">(%s)</span>' ),
+				'label_count'               => _n_noop( 'Inactive <span class="count">(%s)</span>', 'Inactive <span class="count">(%s)</span>', 'bh-wp-bitcoin-gateway' ),
 			)
 		);
 	}

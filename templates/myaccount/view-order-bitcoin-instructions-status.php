@@ -9,6 +9,10 @@
  * @var WC_Order $bitcoin_order The order that Bitcoin is being used to pay.
  */
 
+if ( ! defined( 'ABSPATH' ) ) {
+	return;
+}
+
 if ( ! $bitcoin_order->is_paid() ) {
 
 	wc_get_template( 'bitcoin-unpaid.php', $args );

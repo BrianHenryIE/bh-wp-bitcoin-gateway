@@ -7,12 +7,12 @@
  * 1. Remove mappings whose values point to files/directories that no longer exist.
  * 2. Add directories found in wp-content/plugins to mappings (preserving existing custom values).
  * 3. Update the WordPress core version from the johnpbloch/wordpress-core entry in composer.lock.
- * 4. For .wp-env.ci.json only: point the plugins key at the newest zip in dist-archive.
+ * 4. For .wp-env.ci.json only: force the plugins key to empty — CI installs the built zip inside
+ *    the container via the tests/e2e-pw/setup scripts; wp-env never mounts it.
  */
 
 $wpEnvPaths       = array( '.wp-env.json', '.wp-env.ci.json' );
 $composerLockPath = 'composer.lock';
-$distArchiveDir   = 'dist-archive';
 
 // Read the WordPress core version from composer.lock once, it is the same for every target file.
 $composerLockFileContents = file_get_contents( $composerLockPath );
@@ -31,21 +31,6 @@ foreach ( $composerLock['packages-dev'] ?? array() as $package ) {
 		$version = preg_replace( '/\.0$/', '', $package['version'] );
 		$core    = 'WordPress/WordPress#' . $version;
 		break;
-	}
-}
-
-// The newest zip in dist-archive, used for the CI environment's plugins key.
-//
-// The `./` prefix is required: wp-env treats a plugins entry that is neither a URL nor an
-// explicitly relative/absolute path as a GitHub `owner/repo` reference, and tries to
-// `git clone https://github.com/dist-archive/<file>.zip.git`.
-$newestZip     = null;
-$newestZipTime = -1;
-foreach ( glob( $distArchiveDir . '/*.zip' ) ?: array() as $zip ) {
-	$time = filemtime( $zip );
-	if ( $time > $newestZipTime ) {
-		$newestZip     = './' . ltrim( $zip, './' );
-		$newestZipTime = $time;
 	}
 }
 
@@ -98,8 +83,8 @@ foreach ( $wpEnvPaths as $wpEnvPath ) {
 	// 4. CI runs against the built zip rather than the working directory, but wp-env cannot
 	// install it from here: a local path in `plugins` is bind-mounted into wp-content/plugins
 	// as-is, so a zip arrives as a *file* named `<plugin>.<version>.zip` and the activation step
-	// then fails with "plugin could not be found". tests/_wp-env/initialize-external.sh copies
-	// the zip into the container instead and initialize-internal.sh runs `wp plugin install`.
+	// then fails with "plugin could not be found". tests/e2e-pw/setup/initialize-external.sh
+	// copies the zip into the container instead and initialize-internal.sh runs `wp plugin install`.
 	if ( $wpEnvPath === '.wp-env.ci.json' ) {
 		$wpEnv['plugins'] = array();
 	}

@@ -246,7 +246,12 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 		// Unlikely, but was an issue for Wallets.
 		$existing_post_id = $this->get_post_id_for_address( $address );
 		if ( $existing_post_id ) {
-			throw new BH_WP_Bitcoin_Gateway_Exception( 'Attempted to save a payment address that already exists: ' . $address );
+			throw new BH_WP_Bitcoin_Gateway_Exception(
+				sprintf(
+					'Attempted to save a payment address that already exists: %s',
+					esc_html( $address )
+				)
+			);
 		}
 
 		$query = new Bitcoin_Address_Query(

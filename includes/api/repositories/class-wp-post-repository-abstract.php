@@ -77,6 +77,6 @@ abstract class WP_Post_Repository_Abstract {
 			return; // TODO: Should we return the refreshed object, `$this->get_by_wp_post_id( $result )`.
 		}
 
-		throw new RuntimeException( $result->get_error_message() );
+		throw new RuntimeException( esc_html( $result->get_error_message() ) );
 	}
 }

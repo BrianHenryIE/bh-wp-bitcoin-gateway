@@ -51,6 +51,9 @@ wp-content/mu-plugins/*
 *.zip
 *.phar
 
+# Copied from dist-archive by tests/e2e-pw/setup/initialize-external.sh for the CI environment.
+/tests/e2e-pw/setup/*.zip
+
 # Generated from GitHub Secrets in the workflows.
 .env.secret
 auth.json

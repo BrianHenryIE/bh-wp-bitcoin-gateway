@@ -626,7 +626,12 @@ class API implements API_Interface, API_Background_Jobs_Interface {
 
 		$target_amount = $payment_address->get_target_amount();
 		if ( is_null( $target_amount ) ) {
-			throw new BH_WP_Bitcoin_Gateway_Exception( 'No target payment amount on address "' . $payment_address->get_raw_address() . '"' );
+			throw new BH_WP_Bitcoin_Gateway_Exception(
+				sprintf(
+					'No target payment amount on address "%s"',
+					esc_html( $payment_address->get_raw_address() )
+				)
+			);
 		}
 
 		$status_before = $payment_address->get_status();

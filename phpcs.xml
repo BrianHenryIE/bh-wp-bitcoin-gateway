@@ -54,10 +54,6 @@
         <exclude-pattern>*</exclude-pattern>
     </rule>
 
-    <!-- I'm not really sure how this is a security problem. -->
-    <rule ref="WordPress.Security.EscapeOutput.ExceptionNotEscaped">
-        <exclude-pattern>*</exclude-pattern>
-    </rule>
     <!-- No need for comment when the purpose is to type annotate. -->
     <rule ref="Generic.Commenting.DocComment.MissingShort">
         <exclude-pattern>*</exclude-pattern>
@@ -159,6 +155,9 @@
     <rule ref="Squiz.Commenting.FunctionCommentThrowTag.Missing">
         <exclude-pattern>*/tests/*</exclude-pattern>
     </rule>
+    <rule ref="WordPress.Security.EscapeOutput.ExceptionNotEscaped">
+        <exclude-pattern>*/tests/*</exclude-pattern>
+    </rule>
     <!-- Allow development functions in the development plugin -->
     <rule ref="WordPress.PHP.DevelopmentFunctions.error_log_print_r">
         <exclude-pattern>*/development-plugin/*</exclude-pattern>
@@ -166,5 +165,20 @@
     <rule ref="WordPress.Security.NonceVerification.Recommended">
         <exclude-pattern>*/development-plugin/*</exclude-pattern>
     </rule>
+	<rule ref="WordPress.Security.EscapeOutput.ExceptionNotEscaped">
+        <exclude-pattern>*/development-plugin/*</exclude-pattern>
+	</rule>
+
+	<!-- WordPress plugin-check -->
+	<!-- The PluginCheck standard is not published on Packagist so we load it through `wp-content/plugins/plugin-check` -->
+	<autoload>./bin/phpcs-plugin-check-autoload.php</autoload>
+	<rule ref="./wp-content/plugins/plugin-check/vendor/plugin-check/phpcs-sniffs/PluginCheck"/>
+	<rule ref="PluginCheck.CodeAnalysis.Heredoc.NotAllowed">
+        <exclude-pattern>*/includes/integrations/woocommerce/class-frontend-assets.php</exclude-pattern>
+        <exclude-pattern>*/development-plugin/*</exclude-pattern>
+	</rule>
+	<rule ref="PluginCheck.CodeAnalysis.DiscouragedFunctions.load_plugin_textdomainFound">
+		<exclude-pattern>*/includes/wp-includes/class-i18n.php</exclude-pattern>
+	</rule>
 
 </ruleset>

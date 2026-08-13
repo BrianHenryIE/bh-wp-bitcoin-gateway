@@ -10,6 +10,12 @@ on:
   pull_request:
     types: [opened, synchronize]
 
+# A new push to the same branch supersedes any run still in progress. Master pushes queue instead
+# of cancelling so a run is never killed while committing fixes back to the repository.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   php-codesniffer:
     runs-on: ubuntu-latest
@@ -57,6 +63,7 @@ jobs:
         if: ${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' }}
         uses: stefanzweifel/git-auto-commit-action@v7
         with:
+          before_commit_hook: 'git pull'
           commit_message: "🤖 PHPCBF"
 
       - name: Did we fail?

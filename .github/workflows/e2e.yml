@@ -2,11 +2,14 @@ name: E2E Tests
 
 # Builds the distributable plugin zip once, then runs the Playwright end-to-end tests against that
 # zip via .wp-env.ci.json — so the tests exercise the artifact users install, not the working
-# directory — across a matrix of WordPress container PHP versions.
+# directory — across a matrix of WordPress container PHP versions and checkout types.
 #
 # composer create-plugin-archive
 # WP_ENV_PHP_VERSION=8.4 npx wp-env start --config .wp-env.ci.json
 # npx playwright test
+#
+# Also callable from release.yml (workflow_call) to test a tag that was never pushed through CI,
+# and manually (workflow_dispatch) to regenerate an expired plugin-archive artifact.
 #
 # @author BrianHenryIE
 
@@ -16,6 +19,13 @@ on:
   push:
     branches:
       - master
+  workflow_dispatch:
+  workflow_call:
+
+# A new push to the same branch supersedes any run still in progress; master pushes queue instead.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
 
@@ -55,20 +65,64 @@ jobs:
         with:
           name: plugin-archive
           path: dist-archive/*.zip
-          retention-days: 1
+          # Kept long enough on master for release.yml to attach the tested zip to a release.
+          retention-days: ${{ github.ref == 'refs/heads/master' && 30 || 3 }}
           if-no-files-found: error
 
+  # Validates the distributed bytes, in parallel with the e2e matrix.
+  # TODO: remove continue-on-error once the existing findings are fixed (escaping in exception
+  # messages, ABSPATH guards, i18n text domains, readme headers). Until then the job reports
+  # without failing the run.
+  plugin-check:
+    name: WordPress plugin check
+    runs-on: ubuntu-latest
+    needs: build
+    continue-on-error: true
+
+    env:
+      # The action starts its own wp-env, which defaults to PHP 8.3 — below the plugin's
+      # `Requires PHP: 8.4` — so activation fails before any checks run. wp-env reads this
+      # environment variable, which composite-action steps inherit from the job.
+      WP_ENV_PHP_VERSION: '8.4'
+
+    steps:
+
+      - name: Git checkout
+        uses: actions/checkout@v6
+
+      - name: Download plugin archive
+        uses: actions/download-artifact@v7
+        with:
+          name: plugin-archive
+          path: dist-archive
+
+      - name: Unzip plugin archive
+        run: unzip -q dist-archive/*.zip -d plugin-check-build
+
+      - name: Run plugin check
+        uses: wordpress/plugin-check-action@v1
+        with:
+          build-dir: ./plugin-check-build/bh-wp-bitcoin-gateway
+          # These checks cannot be excluded per-file. `direct_file_access` seem inaccurate anyway.
+          # `direct_file_access`: `bh-wp-bitcoin-gateway.php`.
+          # `direct_file_access`: `includes/integrations/woocommerce/class-api-woocommerce.php`.
+          # `trademarks`: "bh-wp-bitcoin-gateway" - contains the restricted term "wp".
+          exclude-checks: |
+            trademarks
+          # direct_file_access # TODO: enable this if it doesn't resolve itself. @see https://github.com/WordPress/plugin-check/issues/1361
+
   e2e:
-    name: E2E PHP ${{ matrix.php }}
+    name: E2E ${{ matrix.group }} PHP ${{ matrix.php }}
     runs-on: ubuntu-latest
     needs: build
 
     strategy:
-      # One PHP version failing should not hide the results of the others.
+      # One matrix leg failing should not hide the results of the others.
       fail-fast: false
       matrix:
         # 8.6 is omitted until the `wordpress:php8.6` / `wordpress:cli-php8.6` images exist.
         php: [ '8.4', '8.5' ]
+        group: [ shortcode, blocks ]
 
     env:
       # Overrides the `phpVersion` in .wp-env.ci.json, i.e. the PHP the plugin runs on inside
@@ -94,9 +148,8 @@ jobs:
           extensions: zip
 
       # Still needed although the zip is prebuilt: wp-env's mappings point at the WordPress
-      # plugins composer installs into wp-content/plugins, initialize-external.sh runs
-      # vendor/bin/wp, and the post-autoload-dump scripts write the downloaded zip's path into
-      # .wp-env.ci.json.
+      # plugins composer installs into wp-content/plugins, and initialize-external.sh runs
+      # vendor/bin/wp.
       - name: Install PHP dependencies
         run: composer install --verbose
 
@@ -112,11 +165,9 @@ jobs:
           name: plugin-archive
           path: dist-archive
 
-      # bin/sync-composer-wpenv.php points .wp-env.ci.json's `plugins` key at the newest zip in
-      # dist-archive, which is the one downloaded above.
-      - name: Point wp-env at the downloaded archive
-        run: composer dump-autoload
-
+      # The afterStart lifecycle script, tests/e2e-pw/setup/initialize-external.sh, runs with the
+      # "ci" argument: it copies the newest dist-archive zip into the container and
+      # initialize-internal.sh installs it with `wp plugin install`, then configures WooCommerce.
       - name: Start wp-env
         run: npx wp-env start --config .wp-env.ci.json
 
@@ -124,7 +175,7 @@ jobs:
         run: |
           echo "Waiting for WordPress to be ready..."
           for i in {1..30}; do
-            if curl -s http://localhost:8870 > /dev/null; then
+            if curl -s http://localhost:8888 > /dev/null; then
               echo "WordPress is ready!"
               break
             fi
@@ -136,8 +187,22 @@ jobs:
       - name: List plugins
         run: npx wp-env run --config .wp-env.ci.json cli wp plugin list
 
+      # Environment setup leaves known noise in debug.log (WooCommerce textdomain notice from
+      # wp-cli, exif warnings from the sample-product image import) which does not recur during
+      # normal requests. Start the tests from an empty file so the check below only sees messages
+      # logged while the tests ran.
+      - name: Reset debug.log after environment setup
+        run: npx wp-env run --config .wp-env.ci.json cli bash -c 'truncate -s 0 /var/www/html/wp-content/debug.log'
+
+      # The reporters (github for PR annotations, html into tests/_output/playwright-report/) are
+      # set in playwright.config.ts based on the CI environment variable. A `--reporter` CLI flag
+      # would ignore the config's outputFolder and break the report upload below.
       - name: Run Playwright tests
-        run: npx playwright test --reporter=github
+        run: >
+          npx playwright test
+          --project=${{ matrix.group }}-chromium
+          --project=${{ matrix.group }}-firefox
+          --project=${{ matrix.group }}-webkit
         env:
           CI: true
 
@@ -145,7 +210,7 @@ jobs:
         uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}
         with:
-          name: playwright-report-php-${{ matrix.php }}
+          name: playwright-report-${{ matrix.group }}-php-${{ matrix.php }}
           path: tests/_output/playwright-report/
           retention-days: 30
 
@@ -153,13 +218,30 @@ jobs:
         uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}
         with:
-          name: test-results-php-${{ matrix.php }}
+          name: test-results-${{ matrix.group }}-php-${{ matrix.php }}
           path: tests/_output/playwright-results/
           retention-days: 30
 
-      # The plugin's own fatals land here rather than in the HTTP response, since
-      # .wp-env.ci.json sets WP_DEBUG_DISPLAY false.
-      - name: Print WordPress debug log
+      # The plugin's fatals land here rather than in the HTTP response, since .wp-env.ci.json
+      # sets WP_DEBUG_DISPLAY false. Anything left after the noise filter is a failure.
+      - name: Check WordPress debug.log is empty
         if: ${{ !cancelled() }}
-        continue-on-error: true
-        run: npx wp-env run --config .wp-env.ci.json cli cat /var/www/html/wp-content/debug.log
+        run: |
+          npx wp-env run --config .wp-env.ci.json cli bash -c 'cat /var/www/html/wp-content/debug.log 2>/dev/null' | tee debug-log.txt || true
+          # WordPress core warns reading exif data from the WooCommerce sample-product images
+          # whenever a thumbnail size is regenerated on the fly during the tests.
+          grep -v 'exif_read_data' debug-log.txt > debug-log-filtered.txt || true
+          if [ -s debug-log-filtered.txt ]; then
+            echo "::error::WordPress debug.log is not empty"
+            exit 1
+          fi
+
+      # bh-wp-logger writes per-day log files under wp-content/uploads/logs/.
+      - name: Check plugin logs for errors
+        if: ${{ !cancelled() }}
+        run: |
+          npx wp-env run --config .wp-env.ci.json cli bash -c 'cat /var/www/html/wp-content/uploads/logs/bh-wp-bitcoin-gateway-*.log 2>/dev/null' | tee plugin-log.txt || true
+          if grep -qE '\b(ERROR|CRITICAL|ALERT|EMERGENCY)\b' plugin-log.txt; then
+            echo "::error::Plugin log contains errors"
+            exit 1
+          fi

@@ -9,6 +9,11 @@ on:
   pull_request:
     types: [opened, synchronize]
 
+# A new push to the same branch supersedes any run still in progress; master pushes queue instead.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   phpstan:
     runs-on: ubuntu-latest
@@ -70,6 +75,7 @@ jobs:
         if: ${{ matrix.php == '8.4' && github.event_name != 'pull_request' }}
         with:
           file_pattern: ".github/phpstan.svg"
+          before_commit_hook: 'git pull'
           commit_message: "🤖 PhpStan"
 
       # This outputs `steps.pr_diff.outputs.diff_filename` and `steps.pr_diff.outputs.diff_contents`.

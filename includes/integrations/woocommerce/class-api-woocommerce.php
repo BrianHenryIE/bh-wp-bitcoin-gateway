@@ -306,7 +306,12 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 
 		if ( $check_address_for_payment_service_result->confirmed_received->isNegativeOrZero() ) {
 			// This should never happen.
-			throw new BH_WP_Bitcoin_Gateway_Exception( 'Invalid amount_received: ' . $check_address_for_payment_service_result->confirmed_received->__toString() . ' is negative or zero.' );
+			throw new BH_WP_Bitcoin_Gateway_Exception(
+				sprintf(
+					'Invalid amount_received: %s is negative or zero.',
+					esc_html( $check_address_for_payment_service_result->confirmed_received->__toString() )
+				)
+			);
 		}
 
 		$wc_order->set_confirmed_amount_received(
@@ -457,9 +462,13 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 		// HTML formatted data.
 		$result = $formatted->to_array();
 
-		$result['btc_total']         = $bitcoin_order->get_btc_total_price()->getAmount()->toScale( 8 )->toString();
+		$bitcoin_payment_address_string = $bitcoin_order->get_raw_payment_address();
+		$bitcoin_total_string           = $bitcoin_order->get_btc_total_price()->getAmount()->toScale( 8 )->toString();
+
+		$result['btc_address']       = $bitcoin_payment_address_string;
+		$result['btc_total']         = $bitcoin_total_string;
 		$result['btc_exchange_rate'] = $bitcoin_order->get_exchange_rate()->getAmount()->toScale( 8 )->toString();
-		$result['btc_address']       = $bitcoin_order->get_raw_payment_address();
+		$result['btc_address_href']  = 'bitcoin:' . $bitcoin_payment_address_string . '?amount=' . $bitcoin_total_string;
 
 		$transactions = $this->api->get_saved_transactions( $bitcoin_order->get_bitcoin_address() );
 

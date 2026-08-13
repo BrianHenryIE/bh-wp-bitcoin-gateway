@@ -15,6 +15,10 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\Alley_Interactive\Autoloader\Autoloader;
 
+if ( ! defined( 'ABSPATH' ) ) {
+	return;
+}
+
 // Error is caught in root plugin file.
 // phpcs:disable WordPress.PHP.NoSilencedErrors.Discouraged
 @require_once __DIR__ . '/vendor-prefixed/autoload.php';

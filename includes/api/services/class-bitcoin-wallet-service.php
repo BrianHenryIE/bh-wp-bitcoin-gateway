@@ -343,7 +343,12 @@ class Bitcoin_Wallet_Service implements LoggerAwareInterface {
 	public function get_saved_address_by_bitcoin_payment_address( string $assigned_payment_address ): Bitcoin_Address {
 		$post_id = $this->bitcoin_address_repository->get_post_id_for_address( $assigned_payment_address );
 		if ( is_null( $post_id ) ) {
-			throw new BH_WP_Bitcoin_Gateway_Exception( 'No saved payment address found for: ' . $assigned_payment_address );
+			throw new BH_WP_Bitcoin_Gateway_Exception(
+				sprintf(
+					'No saved payment address found for: %s',
+					esc_html( $assigned_payment_address )
+				)
+			);
 		}
 		return $this->bitcoin_address_repository->get_by_post_id( $post_id );
 	}

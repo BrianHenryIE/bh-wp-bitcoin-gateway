@@ -68,14 +68,14 @@ class Blockstream_Info_API implements Blockchain_API_Interface, LoggerAwareInter
 		$request_response = wp_remote_get( $address_info_url_bs );
 
 		if ( is_wp_error( $request_response ) ) {
-			throw new BH_WP_Bitcoin_Gateway_Exception( $request_response->get_error_message() );
+			throw new BH_WP_Bitcoin_Gateway_Exception( message: esc_html( $request_response->get_error_message() ) );
 		}
 		if ( 429 === $request_response['response']['code'] ) {
 			/** @var array{error:string, message:string} $blockstream_rate_limit_response */
 			$blockstream_rate_limit_response = json_decode( (string) $request_response['body'], true, 512, JSON_THROW_ON_ERROR );
 			throw new Rate_Limit_Exception(
 				reset_time: null,
-				message: $blockstream_rate_limit_response['message']
+				message: esc_html( $blockstream_rate_limit_response['message'] )
 			);
 		}
 

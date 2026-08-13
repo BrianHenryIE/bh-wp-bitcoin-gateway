@@ -5,18 +5,22 @@
     "WP_MEMORY_LIMIT": "512M",
     "WP_MAX_MEMORY_LIMIT": "512M"
   },
-  "core": "WordPress/WordPress#7.0.2",
+  "core": "WordPress/WordPress#7.0.3",
   "lifecycleScripts": {
     "afterStart": "bash 'tests/e2e-pw/setup/initialize-external.sh' ci"
   },
   "mappings": {
+    "../setup": "./tests/e2e-pw/setup",
     "wp-cli.yml": "./wp-cli.wp-env.yml",
     "wp-content/plugins/basic-auth": "./wp-content/plugins/basic-auth",
     "wp-content/plugins/bh-wc-set-gateway-by-url": "./wp-content/plugins/bh-wc-set-gateway-by-url",
     "wp-content/plugins/checkout-fees-for-woocommerce": "./wp-content/plugins/checkout-fees-for-woocommerce",
+    "wp-content/plugins/coinsnap-for-givewp": "./wp-content/plugins/coinsnap-for-givewp",
     "wp-content/plugins/crypto-payments-woo": "./wp-content/plugins/crypto-payments-woo",
     "wp-content/plugins/decentralized-bitcoin-cryptodec-payment-gateway-for-woocommerce": "./wp-content/plugins/decentralized-bitcoin-cryptodec-payment-gateway-for-woocommerce",
+    "wp-content/plugins/development-plugin": "./development-plugin",
     "wp-content/plugins/log-http-requests": "./wp-content/plugins/log-http-requests",
+    "wp-content/plugins/plugin-check": "./wp-content/plugins/plugin-check",
     "wp-content/plugins/query-monitor": "./wp-content/plugins/query-monitor",
     "wp-content/plugins/woo-cancel-abandoned-order": "./wp-content/plugins/woo-cancel-abandoned-order",
     "wp-content/plugins/woo-nimiq-gateway": "./wp-content/plugins/woo-nimiq-gateway",

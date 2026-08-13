@@ -22,11 +22,8 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
-use WC_Order;
 use WC_Payment_Gateway;
 use WC_Product;
-
-// TODO: The image is huge at the shortcode checkout, limit it to ~25px.
 
 /**
  * Simple instance of WC_Payment Gateway. Defines the admin settings and processes the payment.
@@ -121,7 +118,19 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 			$method_description .= $this->get_formatted_link_to_order_confirmation_edit();
 		}
 
-		$filtered = apply_filters( 'woocommerce_gateway_method_description', $method_description, $this );
+		$gateway = $this;
+
+		/**
+		 * Filter that is typically called in the parent method.
+		 *
+		 * @see WC_Payment_Gateway::get_method_description()
+		 *
+		 * @param mixed|non-falsy-string $method_description Method description.
+		 * @param Bitcoin_Gateway $gateway Payment gateway instance.
+		 *
+		 * phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
+		 */
+		$filtered = apply_filters( 'woocommerce_gateway_method_description', $method_description, $gateway );
 
 		return is_string( $filtered ) ? $filtered : $method_description;
 	}
@@ -357,8 +366,8 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 		}
 
 		$settings_fields['log_level'] = array(
-			'title'       => __( 'Log Level', 'text-domain' ),
-			'label'       => __( 'Enable Logging', 'text-domain' ),
+			'title'       => __( 'Log Level', 'bh-wp-bitcoin-gateway' ),
+			'label'       => __( 'Enable Logging', 'bh-wp-bitcoin-gateway' ),
 			'type'        => 'select',
 			'options'     => $log_levels_option,
 			'description' => __( 'Increasingly detailed levels of logs. ', 'bh-wp-bitcoin-gateway' ) . '<a href="' . admin_url( 'admin.php?page=bh-wp-bitcoin-gateway-logs' ) . '">View Logs</a>',
@@ -366,9 +375,8 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 			'default'     => 'info',
 		);
 
-		$this->form_fields = (array) apply_filters( 'wc_gateway_bitcoin_form_fields', $settings_fields, $this->id );
+		$this->form_fields = (array) apply_filters( 'bh_wp_bitcoin_gateway_form_fields', $settings_fields, $this->id );
 	}
-
 
 	/**
 	 * Returns false when the gateway is not configured / has no addresses to use / has no exchange rate available.
