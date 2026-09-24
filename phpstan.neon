@@ -1,5 +1,9 @@
 parameters:
     level: 8
+    # Minimum supported WordPress version, for johnbillion/wp-compat. The extension should read this from the
+    # "Requires at least" plugin header, but its file lookup fails, so it is set explicitly here. Keep in sync.
+    WPCompat:
+        requiresAtLeast: '6.9'
     paths:
         - includes
         - bh-wp-bitcoin-gateway.php
