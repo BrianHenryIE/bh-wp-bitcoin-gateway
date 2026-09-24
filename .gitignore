@@ -78,7 +78,7 @@ tests/e2e/test-results.json
 /tests/e2e/config/default-woocommerce.e2e-core-tests.json
 /tests/e2e/docker/woocommerce.e2e-core-tests.sh
 
-/assets/js/**/block.json
+/assets/js
 *.min.*
 
 *.pot

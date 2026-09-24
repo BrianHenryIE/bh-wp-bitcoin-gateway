@@ -25,11 +25,10 @@
     "wp-content/plugins/wp-crontrol": "./wp-content/plugins/wp-crontrol",
     "wp-content/plugins/wp-mail-logging": "./wp-content/plugins/wp-mail-logging"
   },
-  "mysqlPort": 33066,
+  "mysqlPort": 33065,
   "phpVersion": "8.4",
   "phpmyadminPort": 9001,
-  "plugins": [
-    "."
-  ],
+  "plugins": ["."],
+  "port": 8885,
   "testsEnvironment": false
 }

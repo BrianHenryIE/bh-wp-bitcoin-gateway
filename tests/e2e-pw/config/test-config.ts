@@ -1,5 +1,5 @@
 export const testConfig = {
-	url: 'http://localhost:8888/',
+	url: 'http://localhost:8885/',
 	users: {
 		admin: {
 			username: 'admin',
