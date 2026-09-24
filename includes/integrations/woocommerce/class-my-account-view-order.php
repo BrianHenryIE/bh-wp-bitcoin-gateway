@@ -12,7 +12,6 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 use Throwable;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
-use WC_Order;
 
 /**
  * Get the order details and pass them to the my-account order ui template.

@@ -93,7 +93,7 @@ class Blockstream_Info_API implements Blockchain_API_Interface, LoggerAwareInter
 		/**
 		 * `block_time` is in unix-time.
 		 *
-		 * @param array{txid:string, version:int, locktime:int, vin:array, vout:array, size:int, weight:int, fee:int, status:array{confirmed:bool, block_height:int, block_hash:string, block_time:int}} $blockstream_transaction
+		 * @param array{txid:string, version:int, locktime:int, vin:array, vout:array, size:int, weight:int, fee:int, status:array{confirmed:bool, block_height:int, block_hash:string, block_time:null|int}} $blockstream_transaction
 		 *
 		 * @var Transaction[] $transactions
 		 */
