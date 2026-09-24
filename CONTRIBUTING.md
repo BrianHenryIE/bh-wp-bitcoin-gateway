@@ -6,7 +6,7 @@ npm install;
 npm run build;
 npx playwright install;
 npx wp-env start --xdebug;
-BASEURL=http://localhost:8888 npx playwright test --ui &;
+BASEURL=http://localhost:8885 npx playwright test --ui &;
 ```
 
 * PHP code is in `includes`
@@ -49,9 +49,9 @@ npx playwright test --config ./playwright.config.ts
 npx playwright test --ui &;
 
 # // TODO: deprecated / need a second .wp-env.json for this.
-We do this because 8889 is the port used for the tests instance which has the plugin zip installed, and 8888 is the 
-port used for development work, so if the intent is to edit code as we re-run tests, we need to use the 8888 port.
-BASEURL=http://localhost:8888 npx playwright test --ui &;
+We do this because 8889 is the port used for the tests instance which has the plugin zip installed, and 8885 is the 
+port used for development work, so if the intent is to edit code as we re-run tests, we need to use the 8885 port.
+BASEURL=http://localhost:8885 npx playwright test --ui &;
 
 # Start browser and record Playwright steps
 npx playwright codegen -o tests/e2e-pw/example.spec.js

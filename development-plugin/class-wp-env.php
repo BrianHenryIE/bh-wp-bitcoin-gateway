@@ -3,7 +3,7 @@
  * Fix for cron jobs not working in wp-env.
  *
  * Without this, `wp cron test` returns:
- * `Error: WP-Cron spawn failed with error: cURL error 7: Failed to connect to localhost port 8888 after 0 ms: Could not connect to server`.
+ * `Error: WP-Cron spawn failed with error: cURL error 7: Failed to connect to localhost port 8885 after 0 ms: Could not connect to server`.
  *
  * NB: This potentially has side effects, e.g. an email sent on a cron job might contain links to the modified URL.
  *

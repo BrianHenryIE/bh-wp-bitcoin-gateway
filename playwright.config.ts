@@ -67,7 +67,7 @@ export default defineConfig( {
 		baseURL:
 			process.env.BASEURL ||
 			process.env.WP_BASE_URL ||
-			'http://localhost:8888',
+			'http://localhost:8885',
 
 		/* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
 		trace: 'on-first-retry',
