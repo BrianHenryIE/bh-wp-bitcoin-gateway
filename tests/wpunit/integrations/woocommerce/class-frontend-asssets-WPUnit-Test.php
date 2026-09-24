@@ -102,4 +102,36 @@ class Frontend_Asssets_WPUnit_Test extends WPTestCase {
 
 		$sut->enqueue_scripts();
 	}
+
+	/**
+	 * @covers ::enqueue_scripts
+	 */
+	public function test_enqueue_scripts_logs_and_does_not_throw_when_order_load_errors(): void {
+
+		$logger   = new ColorLogger();
+		$settings = $this->makeEmpty(
+			Settings_Interface::class,
+			array(
+				'get_plugin_version' => Expected::never(),
+			)
+		);
+		$api      = $this->makeEmpty(
+			API_WooCommerce_Interface::class,
+			array(
+				'get_bitcoin_order' => Expected::once(
+					function () {
+						throw new \TypeError( 'Call to a member function getTimestamp() on null' );
+					}
+				),
+			)
+		);
+
+		$GLOBALS['order-received'] = 123;
+
+		$sut = new Frontend_Assets( $api, $settings, $logger );
+
+		$sut->enqueue_scripts();
+
+		$this->assertTrue( $logger->hasErrorThatContains( 'getTimestamp() on null' ) );
+	}
 }

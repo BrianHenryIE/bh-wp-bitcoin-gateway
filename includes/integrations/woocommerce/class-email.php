@@ -11,6 +11,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
+use Throwable;
 use WC_Order;
 
 /**
@@ -50,28 +51,31 @@ class Email {
 			return;
 		}
 
-		$order = $this->api->get_bitcoin_order( $order->get_id() );
-
-		if ( ! $order ) {
-			return;
-		}
+		$order_id = $order->get_id();
 
 		try {
-			$template_args = $this->api->get_formatted_order_details( $order );
-		} catch ( \Exception $exception ) {
+			$bitcoin_order = $this->api->get_bitcoin_order( $order_id );
+
+			if ( ! $bitcoin_order ) {
+				return;
+			}
+
+			$template_args = $this->api->get_formatted_order_details( $bitcoin_order );
+
+			$template_args['template'] = self::TEMPLATE_NAME;
+
+			// TODO: Create a plain text template.
+			wc_get_template( self::TEMPLATE_NAME, $template_args );
+		} catch ( Throwable $throwable ) {
+			// This runs inside WooCommerce's email sending, which itself runs inside `payment_complete()`; a failure
+			// here must not stop the email, or the payment processing that triggered it.
 			$this->logger->warning(
-				"Failed to get `shop_order:{$order->get_id()}` details for Email template: {$exception->getMessage()}",
+				"Failed to print `shop_order:{$order_id}` details for Email template: {$throwable->getMessage()}",
 				array(
-					'order_id'  => $order->get_id(),
-					'exception' => $exception,
+					'order_id'  => $order_id,
+					'exception' => $throwable,
 				)
 			);
-			return;
 		}
-
-		$template_args['template'] = self::TEMPLATE_NAME;
-
-		// TODO: Create a plain text template.
-		wc_get_template( self::TEMPLATE_NAME, $template_args );
 	}
 }
