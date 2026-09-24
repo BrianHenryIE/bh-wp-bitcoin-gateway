@@ -229,6 +229,26 @@ class Bitcoin_Wallet_Repository_WPUnit_Test extends WPTestCase {
 	}
 
 	/**
+	 * A wallet an admin has moved to the trash must not be returned to the background jobs, and loading it
+	 * directly must not throw a ValueError from the status enum.
+	 *
+	 * @covers ::get_all
+	 * @covers ::get_by_wp_post_id
+	 */
+	public function test_get_all_excludes_trashed_wallets(): void {
+		$trashed_xpub = 'xpub6CUGRUonZSQ4TWtTMmzXdrXDtypWKiKrhko4egpiMZbpiaQL2jkwSB1icqYh2cfDfVxdx4df189oLKnC5fSwqPfgyP3hooxujYzAu3fDVmz';
+		$wallet       = $this->sut->save_new( $trashed_xpub );
+
+		wp_trash_post( $wallet->get_post_id() );
+
+		$all_xpubs = array_map( fn( $wallet ) => $wallet->get_xpub(), $this->sut->get_all( Bitcoin_Wallet_Status::ALL ) );
+		$this->assertNotContains( $trashed_xpub, $all_xpubs );
+
+		$trashed_wallet = $this->sut->get_by_wp_post_id( $wallet->get_post_id() );
+		$this->assertEquals( Bitcoin_Wallet_Status::TRASH, $trashed_wallet->get_status() );
+	}
+
+	/**
 	 * Test set_highest_address_index updates the address index.
 	 *
 	 * @covers ::set_highest_address_index

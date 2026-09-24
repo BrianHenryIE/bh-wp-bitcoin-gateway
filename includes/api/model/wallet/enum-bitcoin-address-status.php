@@ -27,9 +27,19 @@ enum Bitcoin_Address_Status: string {
 	 */
 	case USED = 'used';
 
-	// Inherent WordPress status.
-	case TRASH   = 'trash';
-	case DRAFT   = 'draft';
-	case PUBLISH = 'publish';
-	case ALL     = 'all';
+	// Inherent WordPress statuses an admin can put a post into.
+	case TRASH      = 'trash';
+	case DRAFT      = 'draft';
+	case PUBLISH    = 'publish';
+	case AUTO_DRAFT = 'auto-draft';
+	case PENDING    = 'pending';
+	case PRIVATE    = 'private';
+	case FUTURE     = 'future';
+
+	/**
+	 * Query value for every live status.
+	 *
+	 * @see Bitcoin_Wallet_Status::ALL
+	 */
+	case ALL = 'any';
 }
