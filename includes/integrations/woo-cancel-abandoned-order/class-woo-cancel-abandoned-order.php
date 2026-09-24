@@ -15,8 +15,10 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\Woo_Cancel_Abandoned_Orde
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Interface;
-use Exception;
+use Psr\Log\LoggerAwareTrait;
+use Psr\Log\LoggerInterface;
 use RVOLA\WOO\CAO\CAO;
+use Throwable;
 use WC_Order;
 
 /**
@@ -24,17 +26,21 @@ use WC_Order;
  * `wp-admin/admin.php?page=wc-settings&tab=checkout&section=bitcoin_gateway`.
  */
 class Woo_Cancel_Abandoned_Order {
+	use LoggerAwareTrait;
 
 	/**
 	 * Constructor.
 	 *
 	 * @param API_Interface             $api The main plugin functions.
 	 * @param API_WooCommerce_Interface $api_woocommerce The WooCommerce related functions.
+	 * @param LoggerInterface           $logger A PSR logger.
 	 */
 	public function __construct(
 		protected API_Interface $api,
 		protected API_WooCommerce_Interface $api_woocommerce,
+		LoggerInterface $logger,
 	) {
+		$this->setLogger( $logger );
 	}
 
 	/**
@@ -51,8 +57,15 @@ class Woo_Cancel_Abandoned_Order {
 	 */
 	public function enable_cao_for_bitcoin( array $gateway_ids ): array {
 
-		foreach ( $this->api_woocommerce->get_bitcoin_gateways() as $bitcoin_gateway ) {
-			$gateway_ids[] = $bitcoin_gateway->id;
+		try {
+			foreach ( $this->api_woocommerce->get_bitcoin_gateways() as $bitcoin_gateway ) {
+				$gateway_ids[] = $bitcoin_gateway->id;
+			}
+		} catch ( Throwable $throwable ) {
+			$this->logger->error(
+				'Failed to list Bitcoin gateways for Cancel Abandoned Order settings: ' . $throwable->getMessage(),
+				array( 'exception' => $throwable )
+			);
 		}
 
 		return $gateway_ids;
@@ -76,20 +89,35 @@ class Woo_Cancel_Abandoned_Order {
 
 		try {
 			$order = $this->api_woocommerce->get_bitcoin_order( $order_id );
-		} catch ( Exception ) {
+
+			if ( ! $order ) {
+				return $should_cancel;
+			}
+
+			$bitcoin_address = $order->get_bitcoin_address();
+
+			if ( ! $bitcoin_address ) {
+				// Without an address we cannot know whether it was paid; err on the side of keeping the order.
+				$this->logger->warning(
+					'Not cancelling `shop_order:' . $order_id . '`: it has no Bitcoin address to check for payment.',
+					array( 'order_id' => $order_id )
+				);
+				return false;
+			}
+
+			$address_transaction = $this->api->get_saved_transactions( $bitcoin_address );
+
+			return empty( $address_transaction );
+		} catch ( Throwable $throwable ) {
+			// When in doubt, do not cancel an order that may have been paid.
+			$this->logger->error(
+				'Not cancelling `shop_order:' . $order_id . '` because checking it for payment failed: ' . $throwable->getMessage(),
+				array(
+					'order_id'  => $order_id,
+					'exception' => $throwable,
+				)
+			);
 			return false;
 		}
-
-		if ( ! $order ) {
-			return $should_cancel;
-		}
-
-		if ( ! $order->get_bitcoin_address() ) {
-			return false;
-		}
-
-		$address_transaction = $this->api->get_saved_transactions( $order->get_bitcoin_address() );
-
-		return empty( $address_transaction );
 	}
 }

@@ -53,6 +53,7 @@ use Exception;
 use JsonException;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
+use Throwable;
 
 /**
  * Main API implementation for the Bitcoin Gateway plugin.
@@ -283,9 +284,24 @@ class API implements API_Interface, API_Background_Jobs_Interface {
 				continue;
 			}
 
-			// TODO: handle rate limits.
-			$address_transactions_result = $this->payment_service->update_address_transactions( $address );
-			$this->wallet_service->update_address_transactions_posts( $address, $address_transactions_result->all_transactions );
+			try {
+				// TODO: handle rate limits.
+				$address_transactions_result = $this->payment_service->update_address_transactions( $address );
+				$this->wallet_service->update_address_transactions_posts( $address, $address_transactions_result->all_transactions );
+			} catch ( Rate_Limit_Exception $rate_limit_exception ) {
+				throw $rate_limit_exception;
+			} catch ( Throwable $throwable ) {
+				// Skip this address; it stays "assumed unused" and will be re-checked next run.
+				$this->logger->error(
+					'Failed to check `bh-bitcoin-address:' . $address->get_post_id() . '` ' . $address->get_raw_address() . ' while ensuring unused addresses: ' . $throwable->getMessage(),
+					array(
+						'address_post_id' => $address->get_post_id(),
+						'address'         => $address->get_raw_address(),
+						'exception'       => $throwable,
+					)
+				);
+				continue;
+			}
 
 			if ( $address_transactions_result->is_unused() ) {
 				$actual_unused_addresses_by_wallet[ $address_wallet_id ][] = $address;
@@ -304,13 +320,29 @@ class API implements API_Interface, API_Background_Jobs_Interface {
 		// This could loop hundreds of time, e.g. you add a wallet that has been in use elsewhere and it has
 		// to check each used address until it finds an unused one.
 		while ( ! $all_wallets_have_enough_addresses_fn( $actual_unused_addresses_by_wallet, $required_count ) ) {
-			foreach ( $wallets as $wallet ) {
+			foreach ( $wallets as $wallet_key => $wallet ) {
 				if ( count( $actual_unused_addresses_by_wallet[ $wallet->get_post_id() ] ) < $required_count ) {
-					$address_generation_result = $this->generate_new_addresses_for_wallet( $wallet, 1 );
-					$new_address               = $address_generation_result->new_addresses[ array_key_first( $address_generation_result->new_addresses ) ];
+					try {
+						$address_generation_result = $this->generate_new_addresses_for_wallet( $wallet, 1 );
 
-					$address_transactions_result = $this->payment_service->update_address_transactions( $new_address );
-					$this->wallet_service->update_address_transactions_posts( $new_address, $address_transactions_result->all_transactions );
+						$new_address = $address_generation_result->new_addresses[ array_key_first( $address_generation_result->new_addresses ) ];
+
+						$address_transactions_result = $this->payment_service->update_address_transactions( $new_address );
+						$this->wallet_service->update_address_transactions_posts( $new_address, $address_transactions_result->all_transactions );
+					} catch ( Rate_Limit_Exception $rate_limit_exception ) {
+						throw $rate_limit_exception;
+					} catch ( Throwable $throwable ) {
+						// Give up on this wallet for this run, otherwise this loop would never end. The other wallets continue.
+						$this->logger->error(
+							'Failed to generate and check a new address for `bh-bitcoin-wallet:' . $wallet->get_post_id() . '`: ' . $throwable->getMessage(),
+							array(
+								'wallet_post_id' => $wallet->get_post_id(),
+								'exception'      => $throwable,
+							)
+						);
+						unset( $wallets[ $wallet_key ], $actual_unused_addresses_by_wallet[ $wallet->get_post_id() ] );
+						continue;
+					}
 
 					$is_used_status = $address_transactions_result->is_unused() ? Bitcoin_Address_Status::UNUSED : Bitcoin_Address_Status::USED;
 
@@ -416,8 +448,11 @@ class API implements API_Interface, API_Background_Jobs_Interface {
 		$follow_up_job_time          = null;
 		$incomplete_reason           = null;
 
-		try {
-			foreach ( $addresses as $bitcoin_address ) {
+		/** @var ?Throwable $last_address_failure The most recent failure for a single address, if any. */
+		$last_address_failure = null;
+
+		foreach ( $addresses as $bitcoin_address ) {
+			try {
 				$update_result = $this->payment_service->update_address_transactions( $bitcoin_address );
 				$this->wallet_service->update_address_transactions_posts( $bitcoin_address, $update_result->all_transactions );
 
@@ -429,20 +464,33 @@ class API implements API_Interface, API_Background_Jobs_Interface {
 				}
 
 				$update_address_transactions_results[ $bitcoin_address->get_raw_address() ] = $update_result;
+			} catch ( Rate_Limit_Exception $exception ) {
+				// Reschedule if we hit 429 (there will always be at least one address to check if it 429s.).
+				$follow_up_job_time = $exception->get_reset_time();
+
+				$this->background_jobs_scheduler->schedule_check_newly_generated_bitcoin_addresses_for_transactions(
+					datetime: $follow_up_job_time
+				);
+
+				$was_follow_up_job_scheduled = true;
+				$incomplete_reason           = '' !== $exception->getMessage() ? $exception->getMessage() : 'Rate limited by blockchain API.';
+				break;
+			} catch ( Throwable $throwable ) {
+				// One bad address must not stop the rest of the batch being checked (on this run and every run after).
+				$this->logger->error(
+					'Failed to check `bh-bitcoin-address:' . $bitcoin_address->get_post_id() . '` ' . $bitcoin_address->get_raw_address() . ' for transactions: ' . $throwable->getMessage(),
+					array(
+						'address_post_id' => $bitcoin_address->get_post_id(),
+						'address'         => $bitcoin_address->get_raw_address(),
+						'exception'       => $throwable,
+					)
+				);
+				$last_address_failure = $throwable;
 			}
-		} catch ( Rate_Limit_Exception $exception ) {
-			// Reschedule if we hit 429 (there will always be at least one address to check if it 429s.).
-			$follow_up_job_time = $exception->get_reset_time();
+		}
 
-			$this->background_jobs_scheduler->schedule_check_newly_generated_bitcoin_addresses_for_transactions(
-				datetime: $follow_up_job_time
-			);
-
-			$was_follow_up_job_scheduled = true;
-			$incomplete_reason           = '' !== $exception->getMessage() ? $exception->getMessage() : 'Rate limited by blockchain API.';
-		} catch ( Exception $exception ) {
-			$this->logger->error( $exception->getMessage() );
-
+		if ( ! $was_follow_up_job_scheduled && ! is_null( $last_address_failure ) ) {
+			// Some addresses could not be checked (e.g. a transient network error); try them again shortly.
 			$follow_up_job_time = new DateTimeImmutable()->add( new DateInterval( 'PT15M' ) );
 
 			$this->background_jobs_scheduler->schedule_check_newly_generated_bitcoin_addresses_for_transactions(
@@ -450,7 +498,7 @@ class API implements API_Interface, API_Background_Jobs_Interface {
 			);
 
 			$was_follow_up_job_scheduled = true;
-			$incomplete_reason           = $exception->getMessage();
+			$incomplete_reason           = $last_address_failure->getMessage();
 		}
 
 		// TODO: After this is complete, there could be 0 fresh addresses (e.g. if we start at index 0 but 200 addresses
@@ -493,22 +541,38 @@ class API implements API_Interface, API_Background_Jobs_Interface {
 		$follow_up_job_time          = null;
 		$incomplete_reason           = null;
 
-		try {
-			foreach ( $assigned_addresses as $bitcoin_address ) {
+		/** @var ?Throwable $last_address_failure The most recent failure for a single address, if any. */
+		$last_address_failure = null;
+
+		foreach ( $assigned_addresses as $bitcoin_address ) {
+			try {
 				$check_address_for_payment_results[ $bitcoin_address->get_raw_address() ] = $this->check_address_for_payment( $bitcoin_address );
+			} catch ( Rate_Limit_Exception $exception ) {
+				$follow_up_job_time = $exception->get_reset_time();
+
+				$this->background_jobs_scheduler->schedule_single_check_assigned_addresses_for_transactions(
+					date_time: $follow_up_job_time
+				);
+
+				$was_follow_up_job_scheduled = true;
+				$incomplete_reason           = '' !== $exception->getMessage() ? $exception->getMessage() : 'Rate limited by blockchain API.';
+				break;
+			} catch ( Throwable $throwable ) {
+				// One bad address (or a failing order hook) must not stop later orders being checked for payment.
+				$this->logger->error(
+					'Failed to check `bh-bitcoin-address:' . $bitcoin_address->get_post_id() . '` ' . $bitcoin_address->get_raw_address() . ' for payment: ' . $throwable->getMessage(),
+					array(
+						'address_post_id' => $bitcoin_address->get_post_id(),
+						'address'         => $bitcoin_address->get_raw_address(),
+						'order_id'        => $bitcoin_address->get_order_id(),
+						'exception'       => $throwable,
+					)
+				);
+				$last_address_failure = $throwable;
 			}
-		} catch ( Rate_Limit_Exception $exception ) {
-			$follow_up_job_time = $exception->get_reset_time();
+		}
 
-			$this->background_jobs_scheduler->schedule_single_check_assigned_addresses_for_transactions(
-				date_time: $follow_up_job_time
-			);
-
-			$was_follow_up_job_scheduled = true;
-			$incomplete_reason           = '' !== $exception->getMessage() ? $exception->getMessage() : 'Rate limited by blockchain API.';
-		} catch ( Exception $exception ) {
-			$this->logger->error( $exception->getMessage() );
-
+		if ( ! $was_follow_up_job_scheduled && ! is_null( $last_address_failure ) ) {
 			$follow_up_job_time = new DateTimeImmutable()->add( new DateInterval( 'PT15M' ) );
 
 			$this->background_jobs_scheduler->schedule_single_check_assigned_addresses_for_transactions(
@@ -516,7 +580,7 @@ class API implements API_Interface, API_Background_Jobs_Interface {
 			);
 
 			$was_follow_up_job_scheduled = true;
-			$incomplete_reason           = $exception->getMessage();
+			$incomplete_reason           = $last_address_failure->getMessage();
 		}
 
 		$unchecked_addresses = array_values(
