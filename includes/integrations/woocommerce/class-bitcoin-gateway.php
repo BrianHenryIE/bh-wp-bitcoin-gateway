@@ -542,6 +542,7 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 		$order = new WC_Bitcoin_Order( $order_id );
 
 		$order->set_json_mapper( new JsonMapper_Helper()->build() );
+		$order->setLogger( $this->logger );
 
 		try {
 			$fiat_total = Money::of( (string) $order->get_total(), $order->get_currency() );

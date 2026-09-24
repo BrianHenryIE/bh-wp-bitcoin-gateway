@@ -229,8 +229,8 @@ $bh_wp_bitcoin_gateway_boot_integrations = function () use ( $bh_wp_bitcoin_gate
 			if ( method_exists( $instance, 'register_hooks' ) ) {
 				$instance->register_hooks();
 			}
-		} catch ( Exception $e ) {
-			$logger->warning(
+		} catch ( Throwable $e ) {
+			$logger->error(
 				'Error booting {integration} – {error_message}.',
 				array(
 					'integration'   => $integration,

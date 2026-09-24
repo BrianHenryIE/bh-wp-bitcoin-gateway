@@ -161,4 +161,30 @@ class Bitcoin_Order_WPUnit_Test extends WPTestCase {
 
 		$this->assertTrue( Money::of( '0.0024', 'BTC' )->isEqualTo( $result ) );
 	}
+
+	/**
+	 * Corrupt meta previously returned null silently, which then surfaced downstream as an exception with no
+	 * message.
+	 *
+	 * @covers ::get_btc_total_price
+	 * @covers ::get_exchange_rate
+	 * @covers ::get_confirmed_amount_received
+	 */
+	public function test_unreadable_meta_returns_null_and_logs(): void {
+
+		$order = new WC_Bitcoin_Order();
+		$order->add_meta_data( WC_Bitcoin_Order::ORDER_TOTAL_BITCOIN_AT_TIME_OF_PURCHASE_META_KEY, 'not json', true );
+		$order->add_meta_data( WC_Bitcoin_Order::EXCHANGE_RATE_AT_TIME_OF_PURCHASE_META_KEY, '{"amount":"x"}', true );
+		$order->add_meta_data( WC_Bitcoin_Order::BITCOIN_AMOUNT_CONFIRMED_RECEIVED_META_KEY, '[]', true );
+		$order->save();
+
+		$logger = new ColorLogger();
+		$order->set_json_mapper( new JsonMapper_Helper()->build() );
+		$order->setLogger( $logger );
+
+		$this->assertNull( $order->get_btc_total_price() );
+		$this->assertNull( $order->get_exchange_rate() );
+		$this->assertNull( $order->get_confirmed_amount_received() );
+		$this->assertTrue( $logger->hasWarningThatContains( WC_Bitcoin_Order::ORDER_TOTAL_BITCOIN_AT_TIME_OF_PURCHASE_META_KEY ) );
+	}
 }

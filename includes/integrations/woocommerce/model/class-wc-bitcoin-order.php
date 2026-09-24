@@ -17,7 +17,9 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Bitcoin_Gateway;
 use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\JsonMapperInterface;
 use DateTimeInterface;
-use Exception;
+use Psr\Log\LoggerAwareTrait;
+use Psr\Log\NullLogger;
+use Throwable;
 use WC_Order;
 use WC_Payment_Gateway;
 use WC_Payment_Gateways;
@@ -26,6 +28,7 @@ use WC_Payment_Gateways;
  * WC_Order with Bitcoin order functions.
  */
 class WC_Bitcoin_Order extends WC_Order {
+	use LoggerAwareTrait;
 
 	const string BITCOIN_ADDRESS_META_KEY = 'bh_wp_bitcoin_gateway_payment_address';
 
@@ -147,7 +150,14 @@ class WC_Bitcoin_Order extends WC_Order {
 				$btc_total_meta_string,
 				Money::class
 			);
-		} catch ( Exception ) {
+		} catch ( Throwable $throwable ) {
+			( $this->logger ?? new NullLogger() )->warning(
+				'Unreadable ' . self::ORDER_TOTAL_BITCOIN_AT_TIME_OF_PURCHASE_META_KEY . ' meta on `shop_order:' . $this->get_id() . '`: ' . $throwable->getMessage(),
+				array(
+					'order_id'  => $this->get_id(),
+					'exception' => $throwable,
+				)
+			);
 			return null;
 		}
 	}
@@ -186,7 +196,14 @@ class WC_Bitcoin_Order extends WC_Order {
 				$exchange_rate_meta_json_string,
 				Money::class
 			);
-		} catch ( Exception ) {
+		} catch ( Throwable $throwable ) {
+			( $this->logger ?? new NullLogger() )->warning(
+				'Unreadable ' . self::EXCHANGE_RATE_AT_TIME_OF_PURCHASE_META_KEY . ' meta on `shop_order:' . $this->get_id() . '`: ' . $throwable->getMessage(),
+				array(
+					'order_id'  => $this->get_id(),
+					'exception' => $throwable,
+				)
+			);
 			return null;
 		}
 	}
@@ -225,7 +242,14 @@ class WC_Bitcoin_Order extends WC_Order {
 				$confirmed_amount_meta_string,
 				Money::class
 			);
-		} catch ( Exception ) {
+		} catch ( Throwable $throwable ) {
+			( $this->logger ?? new NullLogger() )->warning(
+				'Unreadable ' . self::BITCOIN_AMOUNT_CONFIRMED_RECEIVED_META_KEY . ' meta on `shop_order:' . $this->get_id() . '`: ' . $throwable->getMessage(),
+				array(
+					'order_id'  => $this->get_id(),
+					'exception' => $throwable,
+				)
+			);
 			return null;
 		}
 	}
