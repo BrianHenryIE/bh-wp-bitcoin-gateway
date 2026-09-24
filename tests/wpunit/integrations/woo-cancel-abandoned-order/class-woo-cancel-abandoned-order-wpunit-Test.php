@@ -44,7 +44,7 @@ class Woo_Cancel_Abandoned_Order_Unit_Test extends WPTestCase {
 			)
 		);
 
-		$sut = new Woo_Cancel_Abandoned_Order( $api, $api_woocommerce );
+		$sut = new Woo_Cancel_Abandoned_Order( $api, $api_woocommerce, new \BrianHenryIE\ColorLogger\ColorLogger() );
 
 		$gateway_ids = array();
 
@@ -68,7 +68,7 @@ class Woo_Cancel_Abandoned_Order_Unit_Test extends WPTestCase {
 		$bitcoin_order_mock = $this->makeEmpty(
 			WC_Bitcoin_Order::class,
 			array(
-				'get_bitcoin_address' => Expected::exactly( 2, $bitcoin_address_mock ),
+				'get_bitcoin_address' => Expected::once( $bitcoin_address_mock ),
 			)
 		);
 
@@ -87,7 +87,7 @@ class Woo_Cancel_Abandoned_Order_Unit_Test extends WPTestCase {
 			)
 		);
 
-		$sut = new Woo_Cancel_Abandoned_Order( $api, $api_woocommerce );
+		$sut = new Woo_Cancel_Abandoned_Order( $api, $api_woocommerce, new \BrianHenryIE\ColorLogger\ColorLogger() );
 
 		$should_cancel = true;
 
@@ -121,7 +121,7 @@ class Woo_Cancel_Abandoned_Order_Unit_Test extends WPTestCase {
 			)
 		);
 
-		$sut = new Woo_Cancel_Abandoned_Order( $api, $api_woocommerce );
+		$sut = new Woo_Cancel_Abandoned_Order( $api, $api_woocommerce, new \BrianHenryIE\ColorLogger\ColorLogger() );
 
 		$should_cancel = true;
 
@@ -147,7 +147,7 @@ class Woo_Cancel_Abandoned_Order_Unit_Test extends WPTestCase {
 		$bitcoin_order_mock = $this->makeEmpty(
 			WC_Bitcoin_Order::class,
 			array(
-				'get_bitcoin_address' => Expected::exactly( 2, $address_mock ),
+				'get_bitcoin_address' => Expected::once( $address_mock ),
 			)
 		);
 
@@ -162,7 +162,7 @@ class Woo_Cancel_Abandoned_Order_Unit_Test extends WPTestCase {
 			)
 		);
 
-		$sut = new Woo_Cancel_Abandoned_Order( $api, $api_woocommerce );
+		$sut = new Woo_Cancel_Abandoned_Order( $api, $api_woocommerce, new \BrianHenryIE\ColorLogger\ColorLogger() );
 
 		$should_cancel = true;
 
@@ -191,7 +191,7 @@ class Woo_Cancel_Abandoned_Order_Unit_Test extends WPTestCase {
 			)
 		);
 
-		$sut = new Woo_Cancel_Abandoned_Order( $api, $api_woocommerce );
+		$sut = new Woo_Cancel_Abandoned_Order( $api, $api_woocommerce, new \BrianHenryIE\ColorLogger\ColorLogger() );
 
 		$should_cancel = true;
 

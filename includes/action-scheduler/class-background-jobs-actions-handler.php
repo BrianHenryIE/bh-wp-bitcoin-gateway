@@ -23,6 +23,7 @@ use DateInterval;
 use DateTimeImmutable;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
+use Throwable;
 
 /**
  * Functions to handle `do_action` initiated from Action Scheduler.
@@ -75,7 +76,15 @@ class Background_Jobs_Actions_Handler implements Background_Jobs_Actions_Interfa
 	public function update_exchange_rate(): void {
 		$this->logger->debug( 'Starting update_exchange_rate() background job.' );
 
-		$result = $this->api->update_exchange_rate();
+		try {
+			$result = $this->api->update_exchange_rate();
+		} catch ( Throwable $throwable ) {
+			$this->logger->error(
+				'update_exchange_rate() background job failed: ' . $throwable->getMessage(),
+				array( 'exception' => $throwable )
+			);
+			return;
+		}
 
 		$this->logger->info(
 			'Finished update_exchange_rate() background job. Rate for {currency} changed to {new_value} from {old_value}.',
@@ -94,8 +103,18 @@ class Background_Jobs_Actions_Handler implements Background_Jobs_Actions_Interfa
 
 		$this->logger->debug( 'Starting ensure_unused_addresses() background job.' );
 
-		// TODO: return a meaningful result and log it.
-		$result = $this->api->ensure_unused_addresses();
+		try {
+			// TODO: return a meaningful result and log it.
+			$result = $this->api->ensure_unused_addresses();
+		} catch ( Throwable $throwable ) {
+			$this->logger->error(
+				'ensure_unused_addresses() background job failed: ' . $throwable->getMessage(),
+				array( 'exception' => $throwable )
+			);
+			return;
+		}
+
+		$this->logger->debug( 'Finished ensure_unused_addresses() background job.', array( 'result' => $result ) );
 	}
 
 	/**
@@ -111,9 +130,21 @@ class Background_Jobs_Actions_Handler implements Background_Jobs_Actions_Interfa
 	public function single_ensure_unused_addresses( int $wallet_post_id ): void {
 		$this->logger->debug( 'Starting `single_ensure_unused_addresses()` background job for `wallet_post_id:{wallet_post_id}`.', array( 'wallet_post_id' => $wallet_post_id ) );
 
-		$wallet = $this->wallet_service->get_wallet_by_wp_post_id( $wallet_post_id );
+		try {
+			$wallet = $this->wallet_service->get_wallet_by_wp_post_id( $wallet_post_id );
 
-		$result = $this->api->ensure_unused_addresses_for_wallet_synchronously( $wallet );
+			$result = $this->api->ensure_unused_addresses_for_wallet_synchronously( $wallet );
+		} catch ( Throwable $throwable ) {
+			// E.g. the wallet was deleted or trashed after the job was scheduled.
+			$this->logger->error(
+				'single_ensure_unused_addresses() background job failed for `wallet_post_id:' . $wallet_post_id . '`: ' . $throwable->getMessage(),
+				array(
+					'wallet_post_id' => $wallet_post_id,
+					'exception'      => $throwable,
+				)
+			);
+			return;
+		}
 
 		$this->logger->info(
 			'Finished `single_ensure_unused_addresses()` background job for `wallet_post_id:{wallet_post_id}`.',
@@ -131,8 +162,18 @@ class Background_Jobs_Actions_Handler implements Background_Jobs_Actions_Interfa
 
 		$this->logger->debug( 'Starting generate_new_addresses() background job.' );
 
-		// TODO: return a meaningful result and log it.
-		$result = $this->api->generate_new_addresses();
+		try {
+			// TODO: return a meaningful result and log it.
+			$result = $this->api->generate_new_addresses();
+		} catch ( Throwable $throwable ) {
+			$this->logger->error(
+				'generate_new_addresses() background job failed: ' . $throwable->getMessage(),
+				array( 'exception' => $throwable )
+			);
+			return;
+		}
+
+		$this->logger->debug( 'Finished generate_new_addresses() background job.', array( 'result' => $result ) );
 	}
 
 	/**
@@ -152,6 +193,12 @@ class Background_Jobs_Actions_Handler implements Background_Jobs_Actions_Interfa
 			// Safety net: {@see API::check_addresses_for_transactions()} handles rate limits internally.
 			$this->background_jobs_scheduler->schedule_check_newly_generated_bitcoin_addresses_for_transactions(
 				$exception->get_reset_time()
+			);
+			return;
+		} catch ( Throwable $throwable ) {
+			$this->logger->error(
+				'check_new_addresses_for_transactions() background job failed: ' . $throwable->getMessage(),
+				array( 'exception' => $throwable )
 			);
 			return;
 		}
@@ -200,6 +247,14 @@ class Background_Jobs_Actions_Handler implements Background_Jobs_Actions_Interfa
 			// Safety net: {@see API::check_assigned_addresses_for_payment()} handles rate limits internally.
 			$this->background_jobs_scheduler->schedule_single_check_assigned_addresses_for_transactions(
 				$rate_limit_exception->get_reset_time()
+			);
+			return;
+		} catch ( Throwable $throwable ) {
+			$this->logger->error(
+				'Error at Background_Jobs_Action_Handler::check_assigned_addresses_for_payment(): ' . $throwable->getMessage(),
+				array(
+					'exception' => $throwable,
+				)
 			);
 			return;
 		}

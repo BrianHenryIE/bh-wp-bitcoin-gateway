@@ -32,11 +32,13 @@ class Bitcoin_Wallet_Service_Unit_Test extends \Codeception\Test\Unit {
 		?Generate_Address_API_Interface $generate_address_api = null,
 		?Bitcoin_Wallet_Repository $bitcoin_wallet_repository = null,
 		?Bitcoin_Address_Repository $bitcoin_address_repository = null,
+		?\BrianHenryIE\ColorLogger\ColorLogger $logger = null,
 	): Bitcoin_Wallet_Service {
 		return new Bitcoin_Wallet_Service(
 			generate_address_api: $generate_address_api ?? $this->makeEmpty( Generate_Address_API_Interface::class ),
 			bitcoin_wallet_repository: $bitcoin_wallet_repository ?? $this->makeEmpty( Bitcoin_Wallet_Repository::class ),
 			bitcoin_address_repository: $bitcoin_address_repository ?? $this->makeEmpty( Bitcoin_Address_Repository::class ),
+			logger: $logger ?? new \BrianHenryIE\ColorLogger\ColorLogger(),
 		);
 	}
 
@@ -787,5 +789,75 @@ class Bitcoin_Wallet_Service_Unit_Test extends \Codeception\Test\Unit {
 		$sut = $this->get_sut( bitcoin_address_repository: $bitcoin_address_repository );
 
 		$sut->update_address_transactions_posts( $address, $all_transactions );
+	}
+
+	/**
+	 * A wallet whose addresses cannot be derived must be logged and skipped, not abort generation for the wallets
+	 * after it (which would otherwise recur on every scheduled run).
+	 *
+	 * @covers ::generate_new_addresses
+	 */
+	public function test_generate_new_addresses_skips_and_logs_failing_wallet(): void {
+
+		$bad_wallet  = $this->make(
+			Bitcoin_Wallet::class,
+			array(
+				'get_post_id'       => 1,
+				'get_xpub'          => 'xpub-bad',
+				'get_address_index' => null,
+			)
+		);
+		$good_wallet = $this->make(
+			Bitcoin_Wallet::class,
+			array(
+				'get_post_id'       => 2,
+				'get_xpub'          => 'xpub-good',
+				'get_address_index' => null,
+			)
+		);
+
+		$generate_address_api = $this->makeEmpty(
+			Generate_Address_API_Interface::class,
+			array(
+				'generate_address' => function ( string $xpub, int $index ): string {
+					if ( 'xpub-bad' === $xpub ) {
+						throw new \RuntimeException( 'Invalid extended public key' );
+					}
+					return 'bc1qgood' . $index;
+				},
+			)
+		);
+
+		$bitcoin_wallet_repository = $this->makeEmpty(
+			Bitcoin_Wallet_Repository::class,
+			array(
+				'get_all'                   => array( $bad_wallet, $good_wallet ),
+				'set_highest_address_index' => null,
+				'refresh'                   => fn( Bitcoin_Wallet $wallet ) => $wallet,
+			)
+		);
+
+		$bitcoin_address_repository = $this->makeEmpty(
+			Bitcoin_Address_Repository::class,
+			array(
+				'get_post_id_for_address' => null,
+				'save_new_address'        => fn() => $this->make( Bitcoin_Address::class ),
+			)
+		);
+
+		$logger = new \BrianHenryIE\ColorLogger\ColorLogger();
+
+		$sut = $this->get_sut(
+			generate_address_api: $generate_address_api,
+			bitcoin_wallet_repository: $bitcoin_wallet_repository,
+			bitcoin_address_repository: $bitcoin_address_repository,
+			logger: $logger,
+		);
+
+		$results = $sut->generate_new_addresses();
+
+		$this->assertCount( 1, $results );
+		$this->assertSame( 'xpub-good', $results[0]->wallet->get_xpub() );
+		$this->assertTrue( $logger->hasErrorThatContains( 'Invalid extended public key' ) );
 	}
 }

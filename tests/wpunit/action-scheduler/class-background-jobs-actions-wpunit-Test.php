@@ -125,4 +125,78 @@ class Background_Jobs_Actions_WPUnit_Test extends WPTestCase {
 		/** @see Background_Jobs_Actions_Handler::check_assigned_addresses_for_transactions() */
 		$sut->check_assigned_addresses_for_transactions();
 	}
+
+	/**
+	 * Background job failures previously surfaced only in Action Scheduler's own log.
+	 *
+	 * @covers ::update_exchange_rate
+	 * @covers ::ensure_unused_addresses
+	 * @covers ::generate_new_addresses
+	 * @covers ::check_new_addresses_for_transactions
+	 */
+	public function test_jobs_log_and_do_not_throw_on_failure(): void {
+
+		$api = $this->makeEmpty(
+			API_Background_Jobs_Interface::class,
+			array(
+				'update_exchange_rate'                 => Expected::once(
+					function () {
+						throw new \RuntimeException( 'exchange rate failure' );
+					}
+				),
+				'ensure_unused_addresses'              => Expected::once(
+					function () {
+						throw new \RuntimeException( 'ensure failure' );
+					}
+				),
+				'generate_new_addresses'               => Expected::once(
+					function () {
+						throw new \TypeError( 'generate failure' );
+					}
+				),
+				'check_new_addresses_for_transactions' => Expected::once(
+					function () {
+						throw new \RuntimeException( 'check failure' );
+					}
+				),
+			)
+		);
+
+		$logger = new ColorLogger();
+		$sut    = $this->get_sut( api: $api, logger: $logger );
+
+		$sut->update_exchange_rate();
+		$sut->ensure_unused_addresses();
+		$sut->generate_new_addresses();
+		$sut->check_new_addresses_for_transactions();
+
+		$this->assertTrue( $logger->hasErrorThatContains( 'exchange rate failure' ) );
+		$this->assertTrue( $logger->hasErrorThatContains( 'ensure failure' ) );
+		$this->assertTrue( $logger->hasErrorThatContains( 'generate failure' ) );
+		$this->assertTrue( $logger->hasErrorThatContains( 'check failure' ) );
+	}
+
+	/**
+	 * @covers ::single_ensure_unused_addresses
+	 */
+	public function test_single_ensure_unused_addresses_logs_when_wallet_is_gone(): void {
+
+		$wallet_service = $this->make(
+			Bitcoin_Wallet_Service::class,
+			array(
+				'get_wallet_by_wp_post_id' => Expected::once(
+					function () {
+						throw new \InvalidArgumentException( 'No wallet post 999' );
+					}
+				),
+			)
+		);
+
+		$logger = new ColorLogger();
+		$sut    = $this->get_sut( wallet_service: $wallet_service, logger: $logger );
+
+		$sut->single_ensure_unused_addresses( 999 );
+
+		$this->assertTrue( $logger->hasErrorThatContains( 'No wallet post 999' ) );
+	}
 }
