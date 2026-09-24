@@ -63,6 +63,5 @@ phpstan.neon.dist
 phpcs.xml.dist
 compose.yaml
 run-tests.sh
-elazar/flystream/container
 codecov.yml
 rector.php
