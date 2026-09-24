@@ -13,6 +13,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
+use Throwable;
 
 /**
  * When the purchase button is clicked, make one or more query-transaction requests to find an unused address.
@@ -49,35 +50,45 @@ class Checkout implements LoggerAwareInterface {
 	 */
 	public function ensure_one_address_for_payment(): void {
 
-		// TODO: Guard with `is_checkout()`.
+		try {
+			// TODO: Guard with `is_checkout()`.
 
-		// Why is woocommerce_checkout_init called on the post edit screen?
+			// Why is woocommerce_checkout_init called on the post edit screen?
 
-		$bitcoin_gateways = $this->api_woocommerce->get_bitcoin_gateways();
+			$bitcoin_gateways = $this->api_woocommerce->get_bitcoin_gateways();
 
-		foreach ( $bitcoin_gateways as $bitcoin_gateway ) {
-			/**
-			 * Distinct from {@see Bitcoin_Gateway::is_available()} which checks the number of unused addresses.
-			 */
-			if ( 'yes' !== $bitcoin_gateway->enabled ) {
-				continue;
+			foreach ( $bitcoin_gateways as $bitcoin_gateway ) {
+				/**
+				 * Distinct from {@see Bitcoin_Gateway::is_available()} which checks the number of unused addresses.
+				 */
+				if ( 'yes' !== $bitcoin_gateway->enabled ) {
+					continue;
+				}
+
+				$master_public_key = $bitcoin_gateway->get_xpub();
+
+				// Probably a new gateway that is not configured.
+				if ( ! $master_public_key ) {
+					// TODO: log.
+					continue;
+				}
+
+				// Although it's safe to assume here that there was a Wallet created when the xpub was saved in the UI,
+				// this would create it anyway.
+				$wallet_result = $this->api->get_or_save_wallet_for_master_public_key( $master_public_key );
+
+				if ( ! $wallet_result->did_schedule_ensure_addresses ) {
+					$this->api->ensure_unused_addresses_for_wallet_synchronously( $wallet_result->wallet, 1 );
+				}
 			}
-
-			$master_public_key = $bitcoin_gateway->get_xpub();
-
-			// Probably a new gateway that is not configured.
-			if ( ! $master_public_key ) {
-				// TODO: log.
-				continue;
-			}
-
-			// Although it's safe to assume here that there was a Wallet created when the xpub was saved in the UI,
-			// this would create it anyway.
-			$wallet_result = $this->api->get_or_save_wallet_for_master_public_key( $master_public_key );
-
-			if ( ! $wallet_result->did_schedule_ensure_addresses ) {
-				$this->api->ensure_unused_addresses_for_wallet_synchronously( $wallet_result->wallet, 1 );
-			}
+		} catch ( Throwable $throwable ) {
+			// Never crash the checkout!
+			$this->logger->error(
+				'Checkout::ensure_one_address_for_payment() crash: ' . $throwable->getMessage(),
+				array(
+					'exception' => $throwable,
+				)
+			);
 		}
 	}
 }
