@@ -18,8 +18,8 @@
  * License URI:            http://www.gnu.org/licenses/gpl-3.0.html
  * Text Domain:            bh-wp-bitcoin-gateway
  * Domain Path:            /languages
- * WC requires at least:   10.1.2
- * WC tested up to:        11.0.0
+ * WC requires at least:   10.1
+ * WC tested up to:        11.1
  */
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway;
