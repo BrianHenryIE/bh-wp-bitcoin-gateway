@@ -31,6 +31,29 @@ class Bitcoin_Order_Confirmation_Block {
 	use LoggerAwareTrait;
 
 	/**
+	 * The context names this block provides to its inner blocks, i.e. the `usesContext` entries of the
+	 * order-confirmation child blocks' block.json files.
+	 *
+	 * The values are only declared here. They are computed from the order in the render callback and passed
+	 * to the (JavaScript rendered) child blocks as `data-context-*` attributes on the wrapper.
+	 *
+	 * @see self::render_block()
+	 * @see Details_Formatter::camel_case_keys()
+	 *
+	 * @var array<string, string> Context name : attribute name.
+	 */
+	protected const PROVIDES_CONTEXT = array(
+		'bh-wp-bitcoin-gateway/orderId'                    => 'orderId',
+		'bh-wp-bitcoin-gateway/paymentAddress'             => 'paymentAddress',
+		'bh-wp-bitcoin-gateway/paymentStatus'              => 'paymentStatus',
+		'bh-wp-bitcoin-gateway/btcTotalFormatted'          => 'btcTotalFormatted',
+		'bh-wp-bitcoin-gateway/btcAmountReceivedFormatted' => 'btcAmountReceivedFormatted',
+		'bh-wp-bitcoin-gateway/btcExchangeRateFormatted'   => 'btcExchangeRateFormatted',
+		'bh-wp-bitcoin-gateway/exchangeRateUrl'            => 'exchangeRateUrl',
+		'bh-wp-bitcoin-gateway/lastCheckedTimeFormatted'   => 'lastCheckedTimeFormatted',
+	);
+
+	/**
 	 * Constructor.
 	 *
 	 * @param Settings_Interface        $settings Plugin settings, plugin url required for serving script.
@@ -64,17 +87,6 @@ class Bitcoin_Order_Confirmation_Block {
 			array( 'in_footer' => true )
 		);
 
-		$provides_context = array(
-			'bh-wp-bitcoin-gateway/orderId' => 'orderId',
-		);
-		// TODO: This runs on `init` for every request carrying an order key in the URL or referer; it should move
-		// into the render callback.
-		foreach ( $this->get_order_details_formatted_array() as $key => $value ) {
-			if ( is_string( $value ) ) {
-				$provides_context[ "bh-wp-bitcoin-gateway/$key" ] = $value;
-			}
-		}
-
 		register_block_type(
 			// TODO: rename to be explicitly a block for WooCommerce.
 			'bh-wp-bitcoin-gateway/bitcoin-order',
@@ -87,7 +99,7 @@ class Bitcoin_Order_Confirmation_Block {
 						'default' => 0,
 					),
 				),
-				'provides_context' => $provides_context,
+				'provides_context' => self::PROVIDES_CONTEXT,
 				'render_callback'  => $this->render_block( ... ),
 			)
 		);

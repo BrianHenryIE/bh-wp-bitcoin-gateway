@@ -50,4 +50,41 @@ class Bitcoin_Order_Confirmation_Block_WPUnit_Test extends WPTestCase {
 
 		unset( $GLOBALS['order-received'] );
 	}
+
+	/**
+	 * Registering the block runs on `init` for every request. It previously loaded and formatted the order for
+	 * any request carrying an order key, which belongs in the render callback.
+	 *
+	 * @covers ::register_block
+	 */
+	public function test_register_block_does_not_load_the_order(): void {
+
+		$api      = $this->makeEmpty(
+			API_WooCommerce_Interface::class,
+			array(
+				'get_bitcoin_order'           => Expected::never(),
+				'get_formatted_order_details' => Expected::never(),
+			)
+		);
+		$settings = $this->makeEmpty(
+			Settings_Interface::class,
+			array(
+				'get_plugin_dir' => dirname( __DIR__, 5 ) . '/',
+				'get_plugin_url' => 'https://example.org/wp-content/plugins/bh-wp-bitcoin-gateway/',
+			)
+		);
+
+		$sut = new Bitcoin_Order_Confirmation_Block( $settings, $api, new ColorLogger() );
+
+		$GLOBALS['order-received'] = 123;
+
+		$sut->register_block();
+
+		$registered = \WP_Block_Type_Registry::get_instance()->get_registered( 'bh-wp-bitcoin-gateway/bitcoin-order' );
+		$this->assertNotNull( $registered );
+		$this->assertArrayHasKey( 'bh-wp-bitcoin-gateway/paymentAddress', $registered->provides_context );
+
+		unset( $GLOBALS['order-received'] );
+		\WP_Block_Type_Registry::get_instance()->unregister( 'bh-wp-bitcoin-gateway/bitcoin-order' );
+	}
 }
