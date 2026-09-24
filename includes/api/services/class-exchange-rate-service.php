@@ -23,6 +23,7 @@ use JsonException;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
+use Throwable;
 
 /**
  * Uses a `Exchange_Rate_API_Interface` implementation and saves the result, JSON encoded, in a transient.
@@ -60,31 +61,43 @@ class Exchange_Rate_Service implements LoggerAwareInterface {
 	 *
 	 * TODO: Add rate limiting.
 	 *
-	 * @param Currency $currency The fiat currency to get the BTC exchange rate for (e.g., USD, EUR, GBP).
+	 * This is called from customer-facing and admin-facing request paths (gateway availability, checkout,
+	 * settings pages), so it never throws: a failure is logged and `null` is returned.
 	 *
-	 * @throws BH_WP_Bitcoin_Gateway_Exception When the exchange rate API returns invalid data or the currency is not supported.
+	 * @param Currency $currency The fiat currency to get the BTC exchange rate for (e.g., USD, EUR, GBP).
 	 */
 	public function get_exchange_rate( Currency $currency ): ?Money {
 
-		$exchange_rate_stored_transient = $this->get_cached_exchange_rate( $currency );
+		try {
+			$exchange_rate_stored_transient = $this->get_cached_exchange_rate( $currency );
 
-		if ( ! is_null( $exchange_rate_stored_transient ) ) {
-			return $exchange_rate_stored_transient->rate;
+			if ( ! is_null( $exchange_rate_stored_transient ) ) {
+				return $exchange_rate_stored_transient->rate;
+			}
+		} catch ( Throwable $throwable ) {
+			// A corrupt or outdated transient; discard it and fetch a fresh rate below.
+			$this->logger->warning(
+				sprintf( 'Discarding unreadable cached %s exchange rate: %s', $currency->getCurrencyCode(), $throwable->getMessage() ),
+				array( 'exception' => $throwable )
+			);
+			delete_transient( $this->get_transient_name( $currency ) );
 		}
 
 		try {
 			$exchange_rate_service_result = $this->fetch_exchange_rate( $currency );
-		} catch ( Rate_Limit_Exception ) {
+		} catch ( Rate_Limit_Exception $rate_limit_exception ) {
 			// TODO: set up background job.
+			$this->logger->info(
+				sprintf( 'Exchange rate API rate limited while fetching %s rate.', $currency->getCurrencyCode() ),
+				array( 'exception' => $rate_limit_exception )
+			);
 			return null;
-		} catch ( UnknownCurrencyException ) {
-			// Ignore this error.
-			// It could only happen if the currency of the Money object passed to the function was not
-			// recognised by brick/money which doesn't make sense. I.e. the exception would have happened
-			// before this function was called.
-			return null;
-		} catch ( JsonException ) {
-			// TODO: decide if this should be logged inside the API class.
+		} catch ( Throwable $throwable ) {
+			// Network failure, non-200 response, unparseable body, or unsupported currency.
+			$this->logger->error(
+				sprintf( 'Failed to fetch %s exchange rate: %s', $currency->getCurrencyCode(), $throwable->getMessage() ),
+				array( 'exception' => $throwable )
+			);
 			return null;
 		}
 
