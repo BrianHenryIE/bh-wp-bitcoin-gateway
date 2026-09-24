@@ -182,7 +182,7 @@ class API implements API_Interface, API_Background_Jobs_Interface {
 	}
 
 	/**
-	 * If a wallet has fewer than 20 fresh addresses available, generate some more.
+	 * If a wallet has fewer than 5 fresh addresses available, generate some more.
 	 *
 	 * @return Addresses_Generation_Result[]
 	 * @see API_Interface::generate_new_addresses()

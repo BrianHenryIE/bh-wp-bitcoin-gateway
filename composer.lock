@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "847f3c080db1cce9e3f5f70fef789f27",
+    "content-hash": "08e1b95411b005ee3111f18c61c3c145",
     "packages": [
         {
             "name": "alleyinteractive/wordpress-autoloader",
@@ -1610,6 +1610,78 @@
                 }
             ],
             "time": "2025-01-14T11:49:03+00:00"
+        },
+        {
+            "name": "nanasess/bcmath-polyfill",
+            "version": "1.2.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/nanasess/bcmath-polyfill.git",
+                "reference": "fa21e79b3ddbb69dca8ec6b60febbfa93c68ac2a"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/nanasess/bcmath-polyfill/zipball/fa21e79b3ddbb69dca8ec6b60febbfa93c68ac2a",
+                "reference": "fa21e79b3ddbb69dca8ec6b60febbfa93c68ac2a",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.1",
+                "phpseclib/phpseclib": "^3.0 || ^4.0"
+            },
+            "provide": {
+                "ext-bcmath": "8.1.0"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "^3.86",
+                "phpstan/phpstan": "^2.1",
+                "phpunit/phpunit": "^10.5",
+                "rector/rector": "^2.1"
+            },
+            "suggest": {
+                "ext-gmp": "Will enable faster math operations"
+            },
+            "type": "library",
+            "autoload": {
+                "files": [
+                    "lib/BigInteger.php",
+                    "lib/bcmath.php",
+                    "lib/RoundingMode.php"
+                ],
+                "psr-4": {
+                    "bcmath_compat\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Jim Wigginton",
+                    "email": "terrafrost@php.net",
+                    "homepage": "http://phpseclib.sourceforge.net"
+                },
+                {
+                    "name": "Kentaro Ohkouchi",
+                    "email": "nanasess@fsm.ne.jp",
+                    "homepage": "https://github.com/nanasess"
+                }
+            ],
+            "description": "PHP 8.4 bcmath functions polyfill with fallback compatibility for environments without bcmath extension. Based on phpseclib/bcmath_compat with additional support for new PHP 8.4 bcmath functions.",
+            "keywords": [
+                "BigInteger",
+                "bcmath",
+                "bigdecimal",
+                "math",
+                "polyfill"
+            ],
+            "support": {
+                "email": "nanasess@fsm.ne.jp",
+                "issues": "https://github.com/nanasess/bcmath-polyfill/issues",
+                "source": "https://github.com/nanasess/bcmath-polyfill"
+            },
+            "time": "2026-09-15T01:51:46+00:00"
         },
         {
             "name": "nikic/php-parser",

@@ -131,15 +131,16 @@
     "brianhenryie/bh-wp-logger": ">=0.3.4",
     "brick/money": "^0.14",
     "chillerlan/php-qrcode": "^5.0.3",
+    "elazar/flystream": "^1.4.0",
     "json-mapper/json-mapper": "^2.18",
     "league/container": "^5.0",
+    "nanasess/bcmath-polyfill": "^1.2",
     "nimiq/xpub": "^1.4.3",
     "phpseclib/bcmath_compat": "^2.0",
     "phpseclib/mcrypt_compat": "^2.0",
     "psr/container": "^2.0.2",
     "psr/http-client": "^1.0.0",
-    "psr/http-factory": "^1.0.0",
-    "elazar/flystream": "^1.4.0"
+    "psr/http-factory": "^1.0.0"
   },
   "require-dev": {
     "10up/wp_mock": "^1.1.0",
