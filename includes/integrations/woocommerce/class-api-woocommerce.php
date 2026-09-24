@@ -66,7 +66,7 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 	 * @param string|non-empty-string $gateway_id The id of the gateway to check.
 	 */
 	public function is_bitcoin_gateway( string $gateway_id ): bool {
-		if ( ! is_plugin_active( 'woocommerce/woocommerce.php' ) || ! class_exists( WC_Payment_Gateway::class ) ) {
+		if ( ! $this->is_woocommerce_active() || ! class_exists( WC_Payment_Gateway::class ) ) {
 			return false;
 		}
 		if ( empty( $gateway_id ) ) {
@@ -91,7 +91,7 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 	 */
 	public function get_bitcoin_gateways(): array {
 		// The second check here is because on the first page load after deleting a plugin, it is still in the active plugins list.
-		if ( ! is_plugin_active( 'woocommerce/woocommerce.php' ) || ! class_exists( WC_Payment_Gateways::class ) ) {
+		if ( ! $this->is_woocommerce_active() || ! class_exists( WC_Payment_Gateways::class ) ) {
 			return array();
 		}
 
@@ -114,11 +114,22 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 	 * @param int|string $order_id The id of the (presumed) WooCommerce order to check.
 	 */
 	public function is_order_has_bitcoin_gateway( int|string $order_id ): bool {
-		if ( ! is_plugin_active( 'woocommerce/woocommerce.php' ) || ! function_exists( 'wc_get_order' ) ) {
+		if ( ! $this->is_woocommerce_active() || ! function_exists( 'wc_get_order' ) ) {
 			return false;
 		}
 
 		return (bool) $this->get_bitcoin_order( (int) $order_id );
+	}
+
+	/**
+	 * `is_plugin_active()` lives in wp-admin/includes/plugin.php, which WordPress does not load on front-end
+	 * requests; this class is used on the thank-you and my-account pages, so load it rather than fatal.
+	 */
+	protected function is_woocommerce_active(): bool {
+		if ( ! function_exists( 'is_plugin_active' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		}
+		return is_plugin_active( 'woocommerce/woocommerce.php' );
 	}
 
 	/**
@@ -279,7 +290,10 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 		$bitcoin_address = $bitcoin_order->get_bitcoin_address();
 
 		if ( ! $bitcoin_address ) {
-			// TODO: log.
+			$this->logger->warning(
+				'Cannot check `shop_order:' . $order->get_id() . '` for payment: it has no Bitcoin address.',
+				array( 'order_id' => $order->get_id() )
+			);
 			return;
 		}
 
@@ -421,19 +435,20 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 		}
 
 		$order->set_json_mapper( $this->json_mapper );
+		$order->setLogger( $this->logger );
 
 		try {
 			$order->hydrate(
 				$this->wallet_service,
 				$this->payment_service,
 			);
-		} catch ( \Exception $exception ) {
+		} catch ( Throwable $throwable ) {
 			$this->logger->warning(
 				'Failed to hydrate order {order_id}: {message}',
 				array(
-					'message'   => $exception->getMessage(),
+					'message'   => $throwable->getMessage(),
 					'order_id'  => $order_id,
-					'exception' => $exception,
+					'exception' => $throwable,
 				)
 			);
 		}
@@ -465,7 +480,19 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 			|| ! $bitcoin_order->get_bitcoin_address()
 			|| ! $bitcoin_order->get_raw_payment_address()
 		) {
-			throw new BH_WP_Bitcoin_Gateway_Exception();
+			$missing = array_keys(
+				array_filter(
+					array(
+						'BTC total'       => ! $bitcoin_order->get_btc_total_price(),
+						'exchange rate'   => ! $bitcoin_order->get_exchange_rate(),
+						'address object'  => ! $bitcoin_order->get_bitcoin_address(),
+						'payment address' => ! $bitcoin_order->get_raw_payment_address(),
+					)
+				)
+			);
+			throw new BH_WP_Bitcoin_Gateway_Exception(
+				esc_html( sprintf( '`shop_order:%d` is missing Bitcoin details: %s.', $bitcoin_order->get_id(), implode( ', ', $missing ) ) )
+			);
 		}
 
 		$formatted = new Details_Formatter( $bitcoin_order );
