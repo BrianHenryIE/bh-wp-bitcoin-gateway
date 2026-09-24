@@ -11,6 +11,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
+use Throwable;
 use WC_Order;
 
 /**
@@ -65,8 +66,19 @@ class Frontend_Assets {
 			return;
 		}
 
-		if ( ! $this->api->is_order_has_bitcoin_gateway( $order_id ) ) {
-			// Although we're on the thank-you page, this isn't a Bitcoin order.
+		try {
+			if ( ! $this->api->is_order_has_bitcoin_gateway( $order_id ) ) {
+				// Although we're on the thank-you page, this isn't a Bitcoin order.
+				return;
+			}
+		} catch ( Throwable $throwable ) {
+			$this->logger->error(
+				"Failed to check `shop_order:{$order_id}` gateway when enqueuing styles: {$throwable->getMessage()}",
+				array(
+					'order_id'  => $order_id,
+					'exception' => $throwable,
+				)
+			);
 			return;
 		}
 
@@ -87,16 +99,22 @@ class Frontend_Assets {
 
 		$order_id = $this->get_order_id_from_globals();
 
-		$order = $this->api->get_bitcoin_order( $order_id );
-
-		if ( ! $order ) {
-			return;
-		}
-
 		try {
+			$order = $this->api->get_bitcoin_order( $order_id );
+
+			if ( ! $order ) {
+				return;
+			}
+
 			$order_details = $this->api->get_formatted_order_details( $order );
-		} catch ( \Exception $exception ) {
-			$this->logger->error( 'Failed to get order details when enqueuing scripts: ' . $exception->getMessage(), array( 'exception' => $exception ) );
+		} catch ( Throwable $throwable ) {
+			$this->logger->error(
+				'Failed to get order details when enqueuing scripts: ' . $throwable->getMessage(),
+				array(
+					'order_id'  => $order_id,
+					'exception' => $throwable,
+				)
+			);
 			return;
 		}
 

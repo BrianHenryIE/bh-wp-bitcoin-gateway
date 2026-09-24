@@ -9,7 +9,7 @@
 
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
-use Exception;
+use Throwable;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 use WC_Order;
@@ -44,29 +44,28 @@ class My_Account_View_Order {
 	 */
 	public function print_status_instructions( int $order_id ): void {
 
-		$order = $this->api->get_bitcoin_order( $order_id );
-
-		if ( ! $order ) {
-			return;
-		}
-
 		try {
+			$order = $this->api->get_bitcoin_order( $order_id );
+
+			if ( ! $order ) {
+				return;
+			}
+
 			$template_args = $this->api->get_formatted_order_details( $order );
-		} catch ( Exception $exception ) {
-			// Exception occurs when an order has no Bitcoin address, e.g. if there was a problem fetching one as the
-			// order was created.
+
+			$template_args['template'] = self::TEMPLATE_NAME;
+
+			wc_get_template( self::TEMPLATE_NAME, $template_args );
+		} catch ( Throwable $throwable ) {
+			// Typically an order with no Bitcoin address, e.g. if there was a problem fetching one as the order was
+			// created; whatever the cause, never break the my-account page.
 			$this->logger->warning(
-				"Failed to get `shop_order:{$order_id}` details for my-account template: {$exception->getMessage()}",
+				"Failed to print `shop_order:{$order_id}` details for my-account template: {$throwable->getMessage()}",
 				array(
 					'order_id'  => $order_id,
-					'exception' => $exception,
+					'exception' => $throwable,
 				)
 			);
-			return;
 		}
-
-		$template_args['template'] = self::TEMPLATE_NAME;
-
-		wc_get_template( self::TEMPLATE_NAME, $template_args );
 	}
 }

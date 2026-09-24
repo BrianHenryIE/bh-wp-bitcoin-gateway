@@ -34,22 +34,19 @@ class My_Account_View_Order_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPT
 
 		$sut = new My_Account_View_Order( $api, $logger );
 
+		// Record that the template was requested, then abort rendering it (the exception is caught and logged by the sut).
+		$template_requested = false;
 		add_filter(
 			'wc_get_template',
-			function (): string {
-				throw new \Exception();
+			function () use ( &$template_requested ): string {
+				$template_requested = true;
+				throw new \Exception( 'template requested' );
 			}
 		);
 
-		$e = null;
-		try {
-			$sut->print_status_instructions( 123 );
-		} catch ( \Exception $exception ) {
-			$e = $exception;
-		}
+		$sut->print_status_instructions( 123 );
 
-		// Is there a better way to say wc_get_template was called?
-		$this->assertNotNull( $e );
+		$this->assertTrue( $template_requested );
 	}
 
 
@@ -72,5 +69,34 @@ class My_Account_View_Order_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPT
 		$order_id = 123;
 
 		$sut->print_status_instructions( $order_id );
+	}
+
+	/**
+	 * Loading the order was previously outside the try/catch, and the catch only caught `Exception`, so an
+	 * `Error` (e.g. from the details formatter) was a fatal on a customer-facing page.
+	 *
+	 * @covers ::print_status_instructions
+	 */
+	public function test_print_status_instructions_logs_and_does_not_throw_on_error(): void {
+
+		$logger = new ColorLogger();
+		$api    = $this->makeEmpty(
+			API_WooCommerce_Interface::class,
+			array(
+				'get_bitcoin_order' => Expected::once(
+					function () {
+						throw new \TypeError( 'Call to a member function getTimestamp() on null' );
+					}
+				),
+			)
+		);
+
+		$sut = new My_Account_View_Order( $api, $logger );
+
+		$order_id = 123;
+
+		$sut->print_status_instructions( $order_id );
+
+		$this->assertTrue( $logger->hasWarningThatContains( 'getTimestamp() on null' ) );
 	}
 }
