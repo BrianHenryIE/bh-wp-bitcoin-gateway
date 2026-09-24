@@ -25,6 +25,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Address_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Wallet_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use WP_Query;
+use Psr\Log\LoggerInterface;
 
 /**
  * Register the custom post types with WordPress.
@@ -62,16 +63,19 @@ class Post_BH_Bitcoin_Address {
 	 * @param API_Interface              $api The main plugin API for address operations (transactions, etc.).
 	 * @param Bitcoin_Address_Repository $bitcoin_address_repository To get the address details for the admin list table.
 	 * @param Bitcoin_Wallet_Repository  $bitcoin_wallet_repository To get the wallet integration details in the list table view.
+	 * @param LoggerInterface            $logger So the list table can log rather than fatal on bad rows.
 	 */
 	public function __construct(
 		API_Interface $api,
 		Bitcoin_Address_Repository $bitcoin_address_repository,
 		Bitcoin_Wallet_Repository $bitcoin_wallet_repository,
+		LoggerInterface $logger,
 	) {
 		$this->dependencies = array(
 			'api'                        => $api,
 			'bitcoin_address_repository' => $bitcoin_address_repository,
 			'bitcoin_wallet_repository'  => $bitcoin_wallet_repository,
+			'logger'                     => $logger,
 		);
 	}
 
