@@ -13,11 +13,11 @@ interface Bitcoin_Transaction_WP_Post_Interface {
 
 	/**
 	 * Post type names must be between 1 and 20 characters in length
-	 * 'bh-bitcoin-transaction' is 22 characters
+	 * 'bh_bitcoin_transaction' is 22 characters
 	 *
 	 * @see https://github.com/WordPress/WordPress/blob/ec24ee6087dad52052c7d8a11d50c24c9ba89a3b/wp-includes/post.php#L1825-L1828
 	 */
-	const string POST_TYPE = 'bh-bitcoin-tx';
+	const string POST_TYPE = 'bh_bitcoin_tx';
 
 	const string BLOCK_HEIGHT_META_KEY = 'bitcoin_transaction_block_height';
 

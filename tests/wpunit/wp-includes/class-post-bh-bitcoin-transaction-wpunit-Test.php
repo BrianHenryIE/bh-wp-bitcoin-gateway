@@ -14,7 +14,7 @@ class Post_BH_Bitcoin_Transaction_WPUnit_Test extends \lucatume\WPBrowser\TestCa
 
 		/** @var array<string, WP_Post_Type> $wp_post_types */
 		global $wp_post_types;
-		unset( $wp_post_types['bh-bitcoin-tx'] );
+		unset( $wp_post_types['bh_bitcoin_tx'] );
 	}
 
 	/**
@@ -27,10 +27,10 @@ class Post_BH_Bitcoin_Transaction_WPUnit_Test extends \lucatume\WPBrowser\TestCa
 
 		$sut = new Post_BH_Bitcoin_Transaction( $api );
 
-		assert( ! post_type_exists( 'bh-bitcoin-tx' ) );
+		assert( ! post_type_exists( 'bh_bitcoin_tx' ) );
 
 		$sut->register_transaction_post_type();
 
-		$this->assertTrue( post_type_exists( 'bh-bitcoin-tx' ) );
+		$this->assertTrue( post_type_exists( 'bh_bitcoin_tx' ) );
 	}
 }
