@@ -14,6 +14,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
+use Throwable;
 use WC_Order;
 
 /**
@@ -55,7 +56,12 @@ class AJAX {
 
 		$order_id = intval( wp_unslash( $_POST['order_id'] ) );
 
-		$order = $this->api->get_bitcoin_order( $order_id );
+		try {
+			$order = $this->api->get_bitcoin_order( $order_id );
+		} catch ( Throwable $throwable ) {
+			$this->log_and_send_error( $order_id, 'Error loading order', $throwable );
+			return;
+		}
 
 		if ( ! ( $order instanceof WC_Order ) ) {
 			wp_send_json_error( array( 'message' => 'Invalid order id: ' . $order_id ), 400 );
@@ -63,16 +69,34 @@ class AJAX {
 
 		$this->is_user_authorized( $order );
 
-		$this->api->check_order_for_payment( $order );
-
-		// Refresh.
-		$order = $this->api->get_bitcoin_order( $order->get_id() );
-
-		if ( ! ( $order instanceof WC_Bitcoin_Order ) ) {
-			wp_send_json_error( array( 'message' => 'Unexpected order error.' ), 500 );
+		try {
+			$this->api->check_order_for_payment( $order );
+		} catch ( Throwable $throwable ) {
+			// A blockchain API outage or rate limit should not stop the customer seeing the last known details.
+			$this->logger->warning(
+				'Could not check `shop_order:' . $order_id . '` for payment, returning last known details: ' . $throwable->getMessage(),
+				array(
+					'order_id'  => $order_id,
+					'exception' => $throwable,
+				)
+			);
 		}
 
-		$result = $this->api->get_formatted_order_details( $order );
+		try {
+			// Refresh.
+			$order = $this->api->get_bitcoin_order( $order->get_id() );
+
+			$result = $order instanceof WC_Bitcoin_Order
+				? $this->api->get_formatted_order_details( $order )
+				: null;
+		} catch ( Throwable $throwable ) {
+			$this->log_and_send_error( $order_id, 'Error building order details', $throwable );
+			return;
+		}
+
+		if ( is_null( $result ) ) {
+			wp_send_json_error( array( 'message' => 'Unexpected order error.' ), 500 );
+		}
 
 		// These are the only keys used by the JavaScript.
 		$allowed_keys = array(
@@ -93,6 +117,24 @@ class AJAX {
 		}
 
 		wp_send_json_success( $result );
+	}
+
+	/**
+	 * Log the failure with the exception and tell the polling JavaScript to stop, without a fatal.
+	 *
+	 * @param int       $order_id The order being refreshed.
+	 * @param string    $context Short description of what failed.
+	 * @param Throwable $throwable The failure.
+	 */
+	protected function log_and_send_error( int $order_id, string $context, Throwable $throwable ): void {
+		$this->logger->error(
+			$context . ' for `shop_order:' . $order_id . '`: ' . $throwable->getMessage(),
+			array(
+				'order_id'  => $order_id,
+				'exception' => $throwable,
+			)
+		);
+		wp_send_json_error( array( 'message' => 'Unable to refresh order details.' ), 500 );
 	}
 
 	/**

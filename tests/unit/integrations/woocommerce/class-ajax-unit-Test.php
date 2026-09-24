@@ -135,4 +135,52 @@ class AJAX_Unit_Test extends \Codeception\Test\Unit {
 
 		$sut->get_order_details();
 	}
+
+	/**
+	 * A repository failure while loading the order must become a JSON error (so the polling stops) and a log
+	 * entry, not a PHP fatal / HTTP 500 with no log.
+	 *
+	 * @covers ::get_order_details
+	 * @covers ::log_and_send_error
+	 */
+	public function test_get_order_details_sends_error_when_loading_order_throws(): void {
+
+		$logger = new ColorLogger();
+		$api    = $this->makeEmpty(
+			API_WooCommerce_Interface::class,
+			array(
+				'get_bitcoin_order' => Expected::once(
+					function () {
+						throw new \RuntimeException( 'Corrupt order meta' );
+					}
+				),
+			)
+		);
+
+		$_POST['order_id'] = 123;
+
+		$sut = new AJAX( $api, $logger );
+
+		\WP_Mock::userFunction(
+			'check_ajax_referer',
+			array(
+				'return' => true,
+				'times'  => 1,
+			)
+		);
+
+		\WP_Mock::passthruFunction( 'wp_unslash' );
+
+		\WP_Mock::userFunction(
+			'wp_send_json_error',
+			array(
+				'args'  => array( \WP_Mock\Functions::type( 'array' ), 500 ),
+				'times' => 1,
+			)
+		);
+
+		$sut->get_order_details();
+
+		$this->assertTrue( $logger->hasErrorThatContains( 'Corrupt order meta' ) );
+	}
 }
