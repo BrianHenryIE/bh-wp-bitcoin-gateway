@@ -23,5 +23,4 @@ modules:
 #      theme: 'twentytwentyfive'
       WP_CONTENT_DIR: wp-content
 #      WP_PLUGIN_DIR: wp-content/plugins
-#      WP_PLUGIN_DIR: mem:///Users/brianhenry/Sites/bh-wp-bitcoin-gateway/wp-content/plugins
 bootstrap: _bootstrap.php
