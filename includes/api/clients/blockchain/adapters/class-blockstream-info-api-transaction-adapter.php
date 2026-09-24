@@ -35,7 +35,7 @@ class BlockStream_Info_API_Transaction_Adapter {
 	public function adapt( array $blockstream_transaction ): Transaction {
 		return new Transaction(
 			tx_id: (string) $blockstream_transaction['txid'], // TODO: what is `$blockstream_transaction['status']['block_hash']`?
-			block_time: new DateTimeImmutable( '@' . $blockstream_transaction['status']['block_time'], new DateTimeZone( 'UTC' ) ),
+			block_time: isset( $blockstream_transaction['status']['block_time'] ) ? new DateTimeImmutable( '@' . $blockstream_transaction['status']['block_time'], new DateTimeZone( 'UTC' ) ) : null,
 			version: $blockstream_transaction['version'],
 			v_in:  array_map( $this->map_v_in( ... ), $blockstream_transaction['vin'] ),
 			v_out: array_map( $this->map_v_out( ... ), $blockstream_transaction['vout'] ),

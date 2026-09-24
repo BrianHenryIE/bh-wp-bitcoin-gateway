@@ -20,7 +20,7 @@ readonly class Transaction implements Transaction_Interface {
 	 * Constructor.
 	 *
 	 * @param string             $tx_id The transaction ID (txid) uniquely identifying this transaction on the Bitcoin blockchain.
-	 * @param DateTimeInterface  $block_time The timestamp when the block containing this transaction was mined.
+	 * @param ?DateTimeInterface  $block_time The timestamp when the block containing this transaction was mined. Null for mempool.
 	 * @param int                $version The Bitcoin transaction version number indicating which validation rules apply.
 	 * @param Transaction_VIn[]  $v_in Array of transaction inputs (vector-in) showing which previous outputs are being spent.
 	 * @param Transaction_VOut[] $v_out Array of transaction outputs (vector-out) showing which addresses received funds and how much.
@@ -28,7 +28,7 @@ readonly class Transaction implements Transaction_Interface {
 	 */
 	public function __construct(
 		public string $tx_id,
-		public DateTimeInterface $block_time,
+		public ?DateTimeInterface $block_time,
 		public int $version,
 		public array $v_in,
 		public array $v_out,
@@ -82,7 +82,7 @@ readonly class Transaction implements Transaction_Interface {
 	 *
 	 * TODO: Can this be null since `::get_block_time()` can be null?
 	 */
-	public function get_block_time(): DateTimeInterface {
+	public function get_block_time(): ?DateTimeInterface {
 		return $this->block_time;
 	}
 }

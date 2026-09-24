@@ -52,7 +52,7 @@ readonly class Bitcoin_Transaction implements Transaction_Interface {
 	/**
 	 * Get the block time for this transaction.
 	 */
-	public function get_block_time(): DateTimeInterface {
+	public function get_block_time(): ?DateTimeInterface {
 		return $this->transaction->get_block_time();
 	}
 
