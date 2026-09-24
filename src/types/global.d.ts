@@ -8,7 +8,9 @@ declare global {
       order_id: string;
       btc_amount_received: string;
       status: string;
+      payment_status_key: string;
       amount_received: string;
+      amount_unconfirmed: string;
       order_status_formatted: string;
       last_checked_time_formatted: string;
       [key: string]: any;
@@ -16,6 +18,7 @@ declare global {
     bh_wp_bitcoin_gateway_ajax_data: {
       ajax_url: string;
       nonce: string;
+      poll_interval_ms: number;
     };
     jQuery: JQueryStatic;
   }
@@ -57,10 +60,13 @@ interface PaymentMethodProps {
 }
 
 interface AjaxResponse {
+  success: boolean;
   data: {
     btc_amount_received: string;
     status: string;
+    payment_status_key: string;
     amount_received: string;
+    amount_unconfirmed: string;
     order_status_formatted: string;
     last_checked_time_formatted: string;
     [key: string]: any;

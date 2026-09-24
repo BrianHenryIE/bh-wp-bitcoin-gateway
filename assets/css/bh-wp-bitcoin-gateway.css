@@ -36,3 +36,9 @@
     font-family: Dashicons;
     content: "\f463";
 }
+
+.bh_wp_bitcoin_gateway_payment_seen {
+    font-weight: bold;
+    margin: 1em auto;
+    max-width: 30em;
+}

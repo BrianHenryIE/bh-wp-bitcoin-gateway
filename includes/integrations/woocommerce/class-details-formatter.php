@@ -174,24 +174,60 @@ class Details_Formatter {
 		);
 	}
 
-	/**
-	 * @return string 'Awaiting Payment'|'Partly Paid'|'Paid'
-	 */
-	public function get_friendly_status(): string {
+	public const STATUS_PAID                  = 'paid';
+	public const STATUS_AWAITING_CONFIRMATION = 'awaiting_confirmation';
+	public const STATUS_PARTLY_PAID           = 'partly_paid';
+	public const STATUS_AWAITING_PAYMENT      = 'awaiting_payment';
 
-		// If the order is not marked paid, but has transactions, it is partly-paid.
-		switch ( true ) {
-			case $this->bitcoin_order->is_paid():
-				$result = __( 'Paid', 'bh-wp-bitcoin-gateway' );
-				break;
-			case $this->bitcoin_order->get_bitcoin_address()?->get_amount_received()?->isGreaterThan( Money::of( 0, 'BTC' ) ):
-				$result = __( 'Partly Paid', 'bh-wp-bitcoin-gateway' );
-				break;
-			default:
-				$result = __( 'Awaiting Payment', 'bh-wp-bitcoin-gateway' );
+	/**
+	 * A machine-readable payment status, for templates and JavaScript to branch on.
+	 *
+	 * "awaiting_confirmation" means the full amount has been seen (on the blockchain or in the mempool) but does
+	 * not yet have the required confirmations: the customer has paid and can be told so.
+	 *
+	 * @return self::STATUS_* One of the STATUS_ constants.
+	 */
+	public function get_payment_status_key(): string {
+		if ( $this->bitcoin_order->is_paid() ) {
+			return self::STATUS_PAID;
 		}
 
-		return $result;
+		$address = $this->bitcoin_order->get_bitcoin_address();
+		$seen    = ( $address?->get_amount_received() ?? Money::of( 0, 'BTC' ) )
+			->plus( $address?->get_unconfirmed_amount_received() ?? Money::of( 0, 'BTC' ) );
+
+		if ( $seen->isNegativeOrZero() ) {
+			return self::STATUS_AWAITING_PAYMENT;
+		}
+
+		$target = $address?->get_target_amount() ?? $this->bitcoin_order->get_btc_total_price();
+
+		if ( ! is_null( $target ) && $target->isLessThanOrEqualTo( $seen ) ) {
+			return self::STATUS_AWAITING_CONFIRMATION;
+		}
+
+		return self::STATUS_PARTLY_PAID;
+	}
+
+	/**
+	 * @return string 'Awaiting Payment'|'Partly Paid'|'Payment seen, awaiting confirmation'|'Paid'
+	 */
+	public function get_friendly_status(): string {
+		return match ( $this->get_payment_status_key() ) {
+			self::STATUS_PAID                  => __( 'Paid', 'bh-wp-bitcoin-gateway' ),
+			self::STATUS_AWAITING_CONFIRMATION => __( 'Payment seen, awaiting confirmation', 'bh-wp-bitcoin-gateway' ),
+			self::STATUS_PARTLY_PAID           => __( 'Partly Paid', 'bh-wp-bitcoin-gateway' ),
+			default                            => __( 'Awaiting Payment', 'bh-wp-bitcoin-gateway' ),
+		};
+	}
+
+	/**
+	 * String as ฿0.00123: the amount seen but not yet confirmed (mempool or too few confirmations).
+	 */
+	public function get_btc_amount_unconfirmed_formatted(): string {
+		return $this->format_money_to_bitcoin(
+			$this->bitcoin_order->get_bitcoin_address()?->get_unconfirmed_amount_received() ?? Money::of( 0, 'BTC' )
+		);
 	}
 
 	/**
@@ -218,6 +254,8 @@ class Details_Formatter {
 		$result['parent_wallet_xpub_html']                     = $this->get_xpub_js_span();
 		$result['exchange_rate_url']                           = $this->get_exchange_rate_url();
 		$result['payment_status']                              = $this->get_friendly_status();
+		$result['payment_status_key']                          = $this->get_payment_status_key();
+		$result['btc_amount_unconfirmed_formatted']            = $this->get_btc_amount_unconfirmed_formatted();
 		$result['payment_address']                             = $this->bitcoin_order->get_bitcoin_address()?->get_raw_address() ?? '';
 
 		return $as_camel_case

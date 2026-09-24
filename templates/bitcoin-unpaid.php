@@ -9,7 +9,8 @@
  * @var array<string, mixed> $args Associative array containing the result of `API_Interface::get_order_details()`, extracted into these variables:
  *
  * @var string $btc_logo_url
- * @var string $payment_status 'Awaiting Payment'|'Partially Paid'|'Paid'.
+ * @var string $payment_status 'Awaiting Payment'|'Partly Paid'|'Payment seen, awaiting confirmation'|'Paid'.
+ * @var string $payment_status_key 'awaiting_payment'|'partly_paid'|'awaiting_confirmation'|'paid'.
  * @var string $btc_address Destination payment address.
  * @var string $btc_address_href Hyperlink:`bitcoin:xpub?amount=0.0321`.
  * @var string $btc_total Order total in BTC.
@@ -17,6 +18,7 @@
  * @var string $btc_exchange_rate_formatted The Bitcoin exchange rate with friendly thousand separators.
  * @var string $btc_amount_received Amount received at the destination address so far.
  * @var string $btc_amount_received_formatted Amount received prefixed with "฿".
+ * @var string $btc_amount_unconfirmed_formatted Amount seen but not yet confirmed, prefixed with "฿".
  * @var string $last_checked_time_formatted The last time a blockchain service was queried for updates to the payment address.
  *
  * @package    brianhenryie/bh-wp-bitcoin-gateway
@@ -35,12 +37,21 @@ if ( ! defined( 'ABSPATH' ) ) {
 	<?php // For scrolling to? ?>
 	<a id="bh_wp_bitcoin_gateway"></a>
 
-	<div class="bh_wp_bitcoin_gateway_logo_qr">
+	<?php
+	// Once the full payment has been seen (even unconfirmed) there is nothing more to pay, so the QR code goes.
+	$bh_wp_bitcoin_gateway_payment_seen = in_array( $payment_status_key, array( 'awaiting_confirmation', 'paid' ), true );
+	?>
+
+	<div class="bh_wp_bitcoin_gateway_logo_qr" data-payment-status-key="<?php echo esc_attr( $payment_status_key ); ?>">
 	<img alt="Bitcoin logo" class="bh_wp_bitcoin_gateway_logo" src="<?php echo esc_attr( $btc_logo_url ); ?>">
 
-	<a href="<?php echo esc_url( $btc_address_href, array( 'bitcoin' ) ); ?>">
+	<a class="bh_wp_bitcoin_gateway_qr" href="<?php echo esc_url( $btc_address_href, array( 'bitcoin' ) ); ?>" <?php echo $bh_wp_bitcoin_gateway_payment_seen ? 'style="display:none"' : ''; ?>>
 		<img src="<?php echo esc_attr( new QRCode()->render( $btc_address_href ) ); ?>" alt="<?php esc_attr_e( 'Payment QR Code', 'bh-wp-bitcoin-gateway' ); ?>" />
 	</a>
+
+	<p class="bh_wp_bitcoin_gateway_payment_seen" <?php echo $bh_wp_bitcoin_gateway_payment_seen ? '' : 'style="display:none"'; ?>>
+		<?php esc_html_e( 'Thank you, your payment has been seen on the Bitcoin network. Your order will be processed once the payment has been confirmed.', 'bh-wp-bitcoin-gateway' ); ?>
+	</p>
 	</div>
 
 	<table>
@@ -55,6 +66,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 		<tr>
 			<td><span class=""><?php esc_html_e( 'Amount Received:', 'bh-wp-bitcoin-gateway' ); ?></span></td>
 			<td><span class="bh_wp_bitcoin_gateway_amount_received bh_wp_bitcoin_gateway_updatable"><?php echo esc_html( $btc_amount_received_formatted ); ?></span></td>
+		</tr>
+		<tr>
+			<td><span class=""><?php esc_html_e( 'Awaiting Confirmation:', 'bh-wp-bitcoin-gateway' ); ?></span></td>
+			<td><span class="bh_wp_bitcoin_gateway_amount_unconfirmed bh_wp_bitcoin_gateway_updatable"><?php echo esc_html( $btc_amount_unconfirmed_formatted ); ?></span></td>
 		</tr>
 		<tr>
 			<td><span class=""><?php esc_html_e( 'Status:', 'bh-wp-bitcoin-gateway' ); ?></span></td>
