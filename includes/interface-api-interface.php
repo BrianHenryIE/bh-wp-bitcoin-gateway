@@ -83,7 +83,7 @@ interface API_Interface {
 	 * @param Bitcoin_Wallet $wallet The wallet to generate addresses for.
 	 * @param int            $generate_count The number of sub-addresses to derive.
 	 */
-	public function generate_new_addresses_for_wallet( Bitcoin_Wallet $wallet, int $generate_count = 20 ): Addresses_Generation_Result;
+	public function generate_new_addresses_for_wallet( Bitcoin_Wallet $wallet, int $generate_count = 5 ): Addresses_Generation_Result;
 
 	/**
 	 * Like {@see self::generate_new_addresses_for_wallet()} but stops when the number specified is reached, distinct

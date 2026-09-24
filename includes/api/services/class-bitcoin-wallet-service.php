@@ -142,6 +142,7 @@ class Bitcoin_Wallet_Service implements LoggerAwareInterface {
 		$wallets = $this->bitcoin_wallet_repository->get_all( Bitcoin_Wallet_Status::ALL );
 
 		foreach ( $wallets as $wallet ) {
+			// TODO: Check how many are free before generating more.
 			$results[] = $this->generate_new_addresses_for_wallet( $wallet );
 		}
 
