@@ -68,11 +68,15 @@ class Bitfinex_API implements Exchange_Rate_API_Interface {
 		}
 
 		if ( 200 !== $request_response['response']['code'] ) {
-			throw new BH_WP_Bitcoin_Gateway_Exception();
+			throw new BH_WP_Bitcoin_Gateway_Exception(
+				sprintf( 'Bitfinex returned HTTP %d for %s.', (int) $request_response['response']['code'], esc_html( $trading_pair ) )
+			);
 		}
 
 		/**
-		 * @var array{0:array{0:string,1:int,2:float,3:int,4:float,5:int,6:float,7:int,8:float,9:int,10:int}} $response_body
+		 * One entry per requested symbol, or an empty array for an unknown symbol.
+		 *
+		 * @var array<int, array<int, mixed>> $response_body
 		 */
 		$response_body = json_decode( (string) $request_response['body'], true, 512, JSON_THROW_ON_ERROR );
 
@@ -91,9 +95,15 @@ class Bitfinex_API implements Exchange_Rate_API_Interface {
 		 * HIGH                  float  Daily high,
 		 * LOW                   float  Daily low
 		 */
-		$trading_pair_response = $response_body[0];
+		// Bitfinex returns `[]` for a trading pair it does not list, e.g. tBTCCAD.
+		if ( ! isset( $response_body[0][7] ) || ! is_numeric( $response_body[0][7] ) ) {
+			throw new BH_WP_Bitcoin_Gateway_Exception(
+				sprintf( 'Bitfinex returned no ticker for %s; the store currency may not be supported.', esc_html( $trading_pair ) )
+			);
+		}
 
-		$exchange_rate = $trading_pair_response[7];
+		/** @var int|float|numeric-string $exchange_rate */
+		$exchange_rate = $response_body[0][7];
 
 		return Money::of( (string) $exchange_rate, $currency );
 	}
