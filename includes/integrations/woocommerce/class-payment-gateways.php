@@ -76,7 +76,8 @@ class Payment_Gateways {
 			$support = new Bitcoin_Gateway_Blocks_Checkout_Support(
 				$gateway,
 				$this->api,
-				$this->settings
+				$this->settings,
+				$this->logger
 			);
 			$payment_method_registry->register( $support );
 		}

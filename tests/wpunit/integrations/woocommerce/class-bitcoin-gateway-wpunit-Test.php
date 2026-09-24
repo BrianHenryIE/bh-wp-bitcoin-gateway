@@ -11,6 +11,7 @@ use Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\Action_Scheduler\Background_Jobs_Actions_Handler;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Results\Wallet_Generation_Result;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use lucatume\WPBrowser\TestCase\WPTestCase;
 use WC_Order;
@@ -24,12 +25,13 @@ class Bitcoin_Gateway_WPUnit_Test extends WPTestCase {
 		?API_Interface $api = null,
 		?API_WooCommerce_Interface $api_woocommerce = null,
 		?Settings_Interface $plugin_settings = null,
+		?ColorLogger $logger = null,
 	): Bitcoin_Gateway {
 		return new Bitcoin_Gateway(
 			api: $api ?? $this->makeEmpty( API_Interface::class ),
 			api_woocommerce: $api_woocommerce ?? $this->makeEmpty( API_WooCommerce_Interface::class ),
 			plugin_settings: $plugin_settings ?? $this->makeEmpty( Settings_Interface::class ),
-			logger: new ColorLogger(),
+			logger: $logger ?? new ColorLogger(),
 		);
 	}
 
@@ -112,6 +114,142 @@ class Bitcoin_Gateway_WPUnit_Test extends WPTestCase {
 	}
 
 	/**
+	 * `is_available()` runs on every cart and checkout page load; a repository or API failure must hide the
+	 * gateway and log, never crash the page.
+	 *
+	 * @covers ::is_available
+	 */
+	public function test_is_available_returns_false_and_logs_when_check_throws(): void {
+
+		$api_woocommerce = $this->makeEmpty(
+			API_WooCommerce_Interface::class,
+			array(
+				'is_unused_address_available_for_gateway' => Expected::once(
+					function () {
+						throw new \RuntimeException( 'Database gone away' );
+					}
+				),
+			)
+		);
+		$logger          = new ColorLogger();
+
+		$sut          = $this->get_sut( api_woocommerce: $api_woocommerce, logger: $logger );
+		$sut->enabled = 'yes';
+
+		$this->assertFalse( $sut->is_available() );
+		$this->assertTrue( $logger->hasErrorThatContains( 'Database gone away' ) );
+	}
+
+	/**
+	 * Saving the gateway settings must not fatal when the wallet cannot be created; the settings are already
+	 * saved by the parent, so show the problem as a settings error instead.
+	 *
+	 * @covers ::process_admin_options
+	 */
+	public function test_process_admin_options_does_not_throw_when_wallet_save_fails(): void {
+
+		$api    = $this->makeEmpty(
+			API_Interface::class,
+			array(
+				'get_or_save_wallet_for_master_public_key' => Expected::once(
+					function () {
+						throw new \RuntimeException( 'Duplicate wallet posts found' );
+					}
+				),
+			)
+		);
+		$logger = new ColorLogger();
+
+		$sut                   = $this->get_sut( api: $api, logger: $logger );
+		$sut->settings['xpub'] = 'xpub-value';
+
+		$_POST[ 'woocommerce_' . $sut->id . '_xpub' ] = 'xpub-value';
+
+		$sut->process_admin_options();
+
+		$this->assertTrue( $logger->hasErrorThatContains( 'Duplicate wallet posts found' ) );
+		$this->assertNotEmpty( $sut->get_errors() );
+	}
+
+	/**
+	 * @covers ::process_payment
+	 * @covers ::prepare_bitcoin_payment
+	 */
+	public function test_process_payment_shows_friendly_message_when_exchange_rate_unavailable(): void {
+
+		$api    = $this->makeEmpty(
+			API_Interface::class,
+			array(
+				'convert_fiat_to_btc' => Expected::once(
+					function () {
+						throw new BH_WP_Bitcoin_Gateway_Exception( 'No exchange rate available' );
+					}
+				),
+			)
+		);
+		$logger = new ColorLogger();
+
+		$sut = $this->get_sut( api: $api, logger: $logger );
+
+		$order    = new WC_Order();
+		$order_id = $order->save();
+
+		$exception = null;
+		try {
+			$sut->process_payment( $order_id );
+		} catch ( Exception $e ) {
+			$exception = $e;
+		}
+
+		$this->assertInstanceOf( BH_WP_Bitcoin_Gateway_Exception::class, $exception );
+		$this->assertStringContainsString( 'Unable to determine the Bitcoin exchange rate', $exception->getMessage() );
+		$this->assertTrue( $logger->hasErrorThatContains( 'No exchange rate available' ) );
+	}
+
+	/**
+	 * An `Error` (not `Exception`) escapes WooCommerce's own catch and would be a fatal at the checkout.
+	 *
+	 * @covers ::process_payment
+	 */
+	public function test_process_payment_converts_errors_to_friendly_exception(): void {
+
+		$api             = $this->makeEmpty(
+			API_Interface::class,
+			array(
+				'convert_fiat_to_btc' => Expected::once(
+					fn( Money $money ) => $money
+				),
+			)
+		);
+		$api_woocommerce = $this->makeEmpty(
+			API_WooCommerce_Interface::class,
+			array(
+				'assign_unused_address_to_order' => Expected::once(
+					function () {
+						throw new \TypeError( 'Argument #1 must be of type Bitcoin_Gateway, null given' );
+					}
+				),
+			)
+		);
+		$logger          = new ColorLogger();
+
+		$sut = $this->get_sut( api: $api, api_woocommerce: $api_woocommerce, logger: $logger );
+
+		$order    = new WC_Order();
+		$order_id = $order->save();
+
+		$exception = null;
+		try {
+			$sut->process_payment( $order_id );
+		} catch ( \Throwable $e ) {
+			$exception = $e;
+		}
+
+		$this->assertInstanceOf( BH_WP_Bitcoin_Gateway_Exception::class, $exception );
+		$this->assertTrue( $logger->hasErrorThatContains( 'null given' ) );
+	}
+
+	/**
 	 * @covers ::is_available
 	 */
 	public function test_checks_for_available_address_for_availability_false(): void {
@@ -179,7 +317,8 @@ class Bitcoin_Gateway_WPUnit_Test extends WPTestCase {
 	 */
 	public function test_process_payment_returns_exception_on_bad_order_id(): void {
 
-		$sut = $this->get_sut();
+		$logger = new ColorLogger();
+		$sut    = $this->get_sut( logger: $logger );
 
 		$exception = null;
 		try {
@@ -188,8 +327,11 @@ class Bitcoin_Gateway_WPUnit_Test extends WPTestCase {
 			$exception = $e;
 		}
 
-		$this->assertNotNull( $exception );
-		$this->assertEquals( 'Invalid order.', $exception->getMessage() );
+		$this->assertInstanceOf( BH_WP_Bitcoin_Gateway_Exception::class, $exception );
+		$this->assertStringContainsString( 'There was a problem preparing your Bitcoin payment', $exception->getMessage() );
+		// WooCommerce's underlying "Invalid order." is kept for the log and as the previous exception.
+		$this->assertTrue( $logger->hasErrorThatContains( 'Invalid order.' ) );
+		$this->assertEquals( 'Invalid order.', $exception->getPrevious()?->getMessage() );
 	}
 
 	/**

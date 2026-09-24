@@ -25,6 +25,7 @@ use DateTimeImmutable;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
+use Throwable;
 use WC_Order;
 use WC_Payment_Gateway;
 use WC_Payment_Gateways;
@@ -147,15 +148,14 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 		$bitcoin_order = $this->get_bitcoin_order( $order->get_id() );
 
 		if ( ! $bitcoin_order ) {
-			throw new BH_WP_Bitcoin_Gateway_Exception();
+			throw new BH_WP_Bitcoin_Gateway_Exception( esc_html( sprintf( '`shop_order:%d` is not a Bitcoin order.', $order->get_id() ) ) );
 		}
 
-		/**
-		 * Technically, this could return `null` but it's being called instantly on order creation, so I doubt it.
-		 *
-		 * @var Bitcoin_Gateway $bitcoin_gateway
-		 */
 		$bitcoin_gateway = $bitcoin_order->get_gateway();
+
+		if ( is_null( $bitcoin_gateway ) ) {
+			throw new BH_WP_Bitcoin_Gateway_Exception( esc_html( sprintf( 'No Bitcoin gateway found for `shop_order:%d`.', $order->get_id() ) ) );
+		}
 
 		$btc_address = $this->get_fresh_address_for_gateway( $bitcoin_gateway );
 
@@ -181,18 +181,29 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 			)
 		);
 
-		// Now that the address is assigned, schedule a job to check it for payment transactions.
-		$this->background_jobs_scheduler->schedule_single_check_assigned_addresses_for_transactions(
-			date_time: new DateTimeImmutable( 'now' )->add( new DateInterval( 'PT15M' ) )
-		);
+		// The address is assigned and saved; the scheduling below is housekeeping and must not fail the checkout.
+		try {
+			// Now that the address is assigned, schedule a job to check it for payment transactions.
+			$this->background_jobs_scheduler->schedule_single_check_assigned_addresses_for_transactions(
+				date_time: new DateTimeImmutable( 'now' )->add( new DateInterval( 'PT15M' ) )
+			);
 
-		// Queue a background job to prepare the next unused address, since this order has consumed one.
-		if ( $bitcoin_gateway->get_xpub() ) {
-			$wallet_for_assigned_address = $this->wallet_service->get_or_save_wallet_for_xpub( $bitcoin_gateway->get_xpub() )->wallet;
-			$this->background_jobs_scheduler->schedule_single_ensure_unused_addresses( $wallet_for_assigned_address );
-		} else {
-			// Seems implausible to reach here.
-			$this->logger->warning( 'Gateway has no master public key.' );
+			// Queue a background job to prepare the next unused address, since this order has consumed one.
+			if ( $bitcoin_gateway->get_xpub() ) {
+				$wallet_for_assigned_address = $this->wallet_service->get_or_save_wallet_for_xpub( $bitcoin_gateway->get_xpub() )->wallet;
+				$this->background_jobs_scheduler->schedule_single_ensure_unused_addresses( $wallet_for_assigned_address );
+			} else {
+				// Seems implausible to reach here.
+				$this->logger->warning( 'Gateway has no master public key.' );
+			}
+		} catch ( Throwable $throwable ) {
+			$this->logger->error(
+				'Address assigned to `shop_order:' . $order->get_id() . '` but scheduling follow-up jobs failed: ' . $throwable->getMessage(),
+				array(
+					'order_id'  => $order->get_id(),
+					'exception' => $throwable,
+				)
+			);
 		}
 
 		return $refreshed_address;

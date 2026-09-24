@@ -15,8 +15,10 @@ use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodTyp
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Currency;
-use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\UnknownCurrencyException;
 use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
+use Psr\Log\LoggerAwareTrait;
+use Psr\Log\LoggerInterface;
+use Throwable;
 use WC_Payment_Gateway;
 
 /**
@@ -26,6 +28,7 @@ use WC_Payment_Gateway;
  * @see IntegrationRegistry::initialize()
  */
 class Bitcoin_Gateway_Blocks_Checkout_Support extends AbstractPaymentMethodType {
+	use LoggerAwareTrait;
 
 	/**
 	 * The gateway instance.
@@ -40,12 +43,15 @@ class Bitcoin_Gateway_Blocks_Checkout_Support extends AbstractPaymentMethodType 
 	 * @param Bitcoin_Gateway    $gateway The gateway instance.
 	 * @param API_Interface      $api      The API instance. Used to get exchange rate.
 	 * @param Settings_Interface $plugin_settings The plugin settings. Used to get the plugin URL.
+	 * @param LoggerInterface    $logger A PSR logger.
 	 */
 	public function __construct(
 		Bitcoin_Gateway $gateway,
 		protected API_Interface $api,
-		protected Settings_Interface $plugin_settings
+		protected Settings_Interface $plugin_settings,
+		LoggerInterface $logger,
 	) {
+		$this->setLogger( $logger );
 		$this->gateway = $gateway;
 		$this->name    = $gateway->id;
 	}
@@ -65,7 +71,15 @@ class Bitcoin_Gateway_Blocks_Checkout_Support extends AbstractPaymentMethodType 
 	 * @used-by PaymentMethodRegistry::get_all_active_registered()
 	 */
 	public function is_active(): bool {
-		return $this->gateway->is_available();
+		try {
+			return $this->gateway->is_available();
+		} catch ( Throwable $throwable ) {
+			$this->logger->error(
+				'Error determining blocks checkout availability, gateway will be hidden: ' . $throwable->getMessage(),
+				array( 'exception' => $throwable )
+			);
+			return false;
+		}
 	}
 
 	/**
@@ -97,8 +111,7 @@ class Bitcoin_Gateway_Blocks_Checkout_Support extends AbstractPaymentMethodType 
 	 *
 	 * @see \WC_Payment_Gateway::supports()
 	 *
-	 * @return array{title:string, description:string, supports:array<string>}
-	 * @throws UnknownCurrencyException It'll almost definitely never happen.
+	 * @return array{title:string, description:string, supports:array<string>, exchange_rate_information:string, bitcoin_image_src:string}
 	 */
 	public function get_payment_method_data(): array {
 		/** @var string $title */
@@ -108,28 +121,38 @@ class Bitcoin_Gateway_Blocks_Checkout_Support extends AbstractPaymentMethodType 
 		/** @var array<int|string, string> $supports */
 		$supports = $this->gateway->supports;
 
-		$currency = Currency::of(
-			get_woocommerce_currency()
-		);
-
 		return array(
 			'title'                     => $title,
 			'description'               => $description,
 			'supports'                  => $supports,
-			'exchange_rate_information' => sprintf(
-				'1 BTC = %s %s',
-				get_woocommerce_currency(),
-				wp_kses_decode_entities(
-					wp_strip_all_tags(
-						wc_price(
-							$this->api->get_exchange_rate(
-								$currency
-							)?->getAmount()->toFloat() ?? 0.0 // TODO: add an immediately invoked function that alerts admins of a problem but doesn't break ux.
-						)
-					)
-				)
-			),
+			'exchange_rate_information' => $this->get_exchange_rate_information(),
 			'bitcoin_image_src'         => $this->gateway->icon,
 		);
+	}
+
+	/**
+	 * E.g. "1 BTC = USD $100,000". Empty string when no rate is available; never throws, this is built on every
+	 * blocks cart and checkout page load.
+	 */
+	protected function get_exchange_rate_information(): string {
+		try {
+			$exchange_rate = $this->api->get_exchange_rate( Currency::of( get_woocommerce_currency() ) );
+
+			if ( is_null( $exchange_rate ) ) {
+				return '';
+			}
+
+			return sprintf(
+				'1 BTC = %s %s',
+				get_woocommerce_currency(),
+				wp_kses_decode_entities( wp_strip_all_tags( wc_price( $exchange_rate->getAmount()->toFloat() ) ) )
+			);
+		} catch ( Throwable $throwable ) {
+			$this->logger->error(
+				'Error building exchange rate information for blocks checkout: ' . $throwable->getMessage(),
+				array( 'exception' => $throwable )
+			);
+			return '';
+		}
 	}
 }
