@@ -618,6 +618,13 @@ class API implements API_Interface, API_Background_Jobs_Interface {
 		// Always "update" transactions here to record the time it was last checked.
 		$this->wallet_service->update_address_transactions_posts( $payment_address, $check_address_for_payment_service_result->all_transactions );
 
+		// Record what has been received so far, so the customer can be told a payment has been seen before it confirms.
+		$this->wallet_service->set_payment_address_amounts_received(
+			address: $payment_address,
+			confirmed_amount_received: $check_address_for_payment_service_result->confirmed_received,
+			unconfirmed_amount_received: $check_address_for_payment_service_result->get_unconfirmed_received(),
+		);
+
 		// If there are new transactions, fire an action to let integrations know.
 		$this->maybe_fire_new_transactions_seen_action( $payment_address, $check_address_for_payment_service_result );
 

@@ -88,6 +88,7 @@ class Bitcoin_Address_Factory implements LoggerAwareInterface {
 			order_id: $this->get_order_id_from_post( $post ),
 			tx_ids: $this->get_tx_ids_from_post( $post ),
 			received: $this->get_received_from_post( $post ),
+			unconfirmed_received: $this->get_unconfirmed_received_from_post( $post ),
 		);
 	}
 
@@ -169,6 +170,16 @@ class Bitcoin_Address_Factory implements LoggerAwareInterface {
 		return $this->get_json_mapped_money_from_post(
 			post_id: $post->ID,
 			meta_key: Bitcoin_Address_WP_Post_Interface::CONFIRMED_AMOUNT_RECEIVED_META_KEY
+		);
+	}
+
+	/**
+	 * @param WP_Post $post The backing WP_Post for this Bitcoin_Address.
+	 */
+	protected function get_unconfirmed_received_from_post( WP_Post $post ): ?Money {
+		return $this->get_json_mapped_money_from_post(
+			post_id: $post->ID,
+			meta_key: Bitcoin_Address_WP_Post_Interface::UNCONFIRMED_AMOUNT_RECEIVED_META_KEY
 		);
 	}
 

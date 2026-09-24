@@ -315,6 +315,25 @@ class Bitcoin_Wallet_Service implements LoggerAwareInterface {
 	}
 
 	/**
+	 * Save the confirmed and unconfirmed (mempool / too few confirmations) amounts received at an address.
+	 *
+	 * @param Bitcoin_Address $address The address that was just checked.
+	 * @param Money           $confirmed_amount_received The sum received with the required number of confirmations.
+	 * @param Money           $unconfirmed_amount_received The sum received without the required confirmations.
+	 */
+	public function set_payment_address_amounts_received(
+		Bitcoin_Address $address,
+		Money $confirmed_amount_received,
+		Money $unconfirmed_amount_received,
+	): void {
+		$this->bitcoin_address_repository->set_amounts_received(
+			address: $address,
+			confirmed_amount_received: $confirmed_amount_received,
+			unconfirmed_amount_received: $unconfirmed_amount_received,
+		);
+	}
+
+	/**
 	 * Associate the Bitcoin Address with an order's post_id, set the expected amount to be paid, change the status
 	 * to "assigned".
 	 *

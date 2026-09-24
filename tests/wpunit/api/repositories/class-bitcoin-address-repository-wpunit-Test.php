@@ -450,4 +450,25 @@ class Bitcoin_Address_Repository_WPUnit_Test extends WPTestCase {
 		$this->assertEquals( $wallet1->get_post_id(), $unused_w1_retrieved->get_wallet_parent_post_id() );
 		$this->assertEquals( Bitcoin_Address_Status::UNUSED, $unused_w1_retrieved->get_status() );
 	}
+
+	/**
+	 * @covers ::set_amounts_received
+	 */
+	public function test_set_amounts_received(): void {
+		$wallet  = $this->wallet_repository->save_new( 'xpub_amounts_test' );
+		$address = $this->sut->save_new_address( wallet: $wallet, derivation_path_sequence_index: 1, address: 'bc1qamounts' );
+		$this->sut->set_status( $address, Bitcoin_Address_Status::ASSIGNED );
+
+		$this->sut->set_amounts_received(
+			address: $address,
+			confirmed_amount_received: Money::of( '0.1', 'BTC' ),
+			unconfirmed_amount_received: Money::of( '0.4', 'BTC' ),
+		);
+
+		$refreshed = $this->sut->refresh( $address );
+
+		$this->assertTrue( Money::of( '0.1', 'BTC' )->isEqualTo( $refreshed->get_amount_received() ) );
+		$this->assertTrue( Money::of( '0.4', 'BTC' )->isEqualTo( $refreshed->get_unconfirmed_amount_received() ) );
+		$this->assertTrue( $refreshed->has_payment_been_seen() );
+	}
 }
