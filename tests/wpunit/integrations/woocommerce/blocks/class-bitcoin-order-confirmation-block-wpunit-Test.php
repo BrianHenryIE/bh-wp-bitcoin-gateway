@@ -45,7 +45,7 @@ class Bitcoin_Order_Confirmation_Block_WPUnit_Test extends WPTestCase {
 
 		$result = $sut->render_block( array( 'orderId' => 123 ), '<p>inner</p>', $block );
 
-		$this->assertIsString( $result );
+		$this->assertStringContainsString( 'bh-wp-bitcoin-gateway-bitcoin-order-container', $result );
 		$this->assertTrue( $logger->hasWarningThatContains( 'getTimestamp() on null' ) );
 
 		unset( $GLOBALS['order-received'] );

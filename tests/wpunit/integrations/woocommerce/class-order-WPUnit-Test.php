@@ -271,6 +271,7 @@ class Order_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	public function test_payment_received_logs_and_does_not_throw_when_marking_paid_fails(): void {
 
 		$order = wc_create_order();
+		$this->assertInstanceOf( WC_Order::class, $order );
 
 		$bitcoin_address_mock = $this->makeEmpty( Bitcoin_Address::class, array( 'get_raw_address' => 'bc1qtest' ) );
 
