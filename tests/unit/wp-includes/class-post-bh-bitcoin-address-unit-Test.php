@@ -40,6 +40,7 @@ class Post_BH_Bitcoin_Address_Unit_Test extends Unit {
 			api: $api ?? $this->makeEmpty( API_Interface::class ),
 			bitcoin_address_repository: $bitcoin_address_repository ?? $this->make( Bitcoin_Address_Repository::class ),
 			bitcoin_wallet_repository: $bitcoin_wallet_repository ?? $this->make( Bitcoin_Wallet_Repository::class ),
+			logger: new \BrianHenryIE\ColorLogger\ColorLogger(),
 		);
 	}
 

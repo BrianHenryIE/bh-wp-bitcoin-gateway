@@ -51,7 +51,7 @@ class Wallets_List_Table_WPUnit_Test extends WPTestCase {
 		$bitcoin_wallet_factory          = new Bitcoin_Wallet_Factory();
 		$this->bitcoin_wallet_repository = new Bitcoin_Wallet_Repository( $bitcoin_wallet_factory );
 
-		$plugin_post_wallet_type = new Post_BH_Bitcoin_Wallet( $this->api, $this->bitcoin_wallet_repository );
+		$plugin_post_wallet_type = new Post_BH_Bitcoin_Wallet( $this->api, $this->bitcoin_wallet_repository, new \BrianHenryIE\ColorLogger\ColorLogger() );
 		$plugin_post_wallet_type->register_wallet_post_type();
 
 		$wallet = $this->bitcoin_wallet_repository->save_new( 'xpub1a2s3d4f5gabcdef' );
@@ -119,5 +119,24 @@ class Wallets_List_Table_WPUnit_Test extends WPTestCase {
 		$output = ob_get_clean();
 
 		$this->assertStringContainsString( 'inactive', $output );
+	}
+
+	/**
+	 * The Trash view of the wallets list previously fataled with a ValueError from the status enum.
+	 *
+	 * @covers ::column_status
+	 */
+	public function test_column_status_for_trashed_wallet(): void {
+
+		$sut = new Wallets_List_Table( $this->args );
+
+		wp_trash_post( $this->post->ID );
+		$trashed_post = get_post( $this->post->ID );
+
+		ob_start();
+		$sut->column_status( $trashed_post );
+		$output = ob_get_clean();
+
+		$this->assertStringContainsString( 'trash', $output );
 	}
 }

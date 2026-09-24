@@ -77,9 +77,9 @@ class Addresses_List_Table_WPUnit_Test extends WPTestCase {
 		$bitcoin_wallet_factory    = new Bitcoin_Wallet_Factory();
 		$bitcoin_wallet_repository = new Bitcoin_Wallet_Repository( $bitcoin_wallet_factory );
 
-		$plugin_post_address_type = new Post_BH_Bitcoin_Address( $api, $bitcoin_address_repository, $bitcoin_wallet_repository );
+		$plugin_post_address_type = new Post_BH_Bitcoin_Address( $api, $bitcoin_address_repository, $bitcoin_wallet_repository, $logger );
 		$plugin_post_address_type->register_address_post_type();
-		$plugin_post_wallet_type = new Post_BH_Bitcoin_Wallet( $api, $bitcoin_wallet_repository );
+		$plugin_post_wallet_type = new Post_BH_Bitcoin_Wallet( $api, $bitcoin_wallet_repository, $logger );
 		$plugin_post_wallet_type->register_wallet_post_type();
 
 		$address       = 'bc1qnlz39q0r40xnv200s9wjutj0fdxex6x8abcdef';
@@ -203,5 +203,47 @@ class Addresses_List_Table_WPUnit_Test extends WPTestCase {
 		$result = ob_get_clean();
 
 		$this->assertStringContainsString( '0/22', $result );
+	}
+
+	/**
+	 * A row whose data cannot be loaded (here: the post is not an address at all) must not fatal the whole list.
+	 *
+	 * @covers ::column_status
+	 * @covers ::render_column_safely
+	 */
+	public function test_column_status_logs_and_prints_placeholder_for_bad_row(): void {
+
+		$sut = new Addresses_List_Table( $this->args );
+
+		$not_an_address = get_post(
+			wp_insert_post(
+				array(
+					'post_title' => 'Hello',
+					'post_type'  => 'post',
+				)
+			)
+		);
+
+		ob_start();
+		$sut->column_status( $not_an_address );
+		$result = ob_get_clean();
+
+		$this->assertStringContainsString( 'dashicons-warning', $result );
+	}
+
+	/**
+	 * @covers ::column_gateways
+	 */
+	public function test_column_gateways_does_not_throw_when_wallet_is_trashed(): void {
+
+		$sut = new Addresses_List_Table( $this->args );
+
+		wp_trash_post( $this->post->post_parent );
+
+		ob_start();
+		$sut->column_gateways( $this->post );
+		$result = ob_get_clean();
+
+		$this->assertIsString( $result );
 	}
 }

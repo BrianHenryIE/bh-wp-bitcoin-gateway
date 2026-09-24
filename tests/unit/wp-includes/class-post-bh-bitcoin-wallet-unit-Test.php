@@ -37,6 +37,7 @@ class Post_BH_Bitcoin_Wallet_Unit_Test extends Unit {
 		return new Post_BH_Bitcoin_Wallet(
 			api: $api ?? $this->makeEmpty( API_Interface::class ),
 			bitcoin_wallet_repository: $bitcoin_wallet_repository ?? $this->make( Bitcoin_Wallet_Repository::class ),
+			logger: new \BrianHenryIE\ColorLogger\ColorLogger(),
 		);
 	}
 
