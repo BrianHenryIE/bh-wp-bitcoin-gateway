@@ -82,7 +82,7 @@ jobs:
 
       - name: Download archive built by this run
         if: ${{ needs.find-tested-build.outputs.run-id == '' }}
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: plugin-archive
           path: dist-archive
