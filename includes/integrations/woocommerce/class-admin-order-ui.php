@@ -11,6 +11,7 @@ use Automattic\WooCommerce\Utilities\OrderUtil;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
+use Throwable;
 use WC_Order;
 use WP_Post;
 
@@ -81,7 +82,19 @@ class Admin_Order_UI {
 			return;
 		}
 
-		if ( ! $this->api->is_order_has_bitcoin_gateway( $order_id ) ) {
+		try {
+			if ( ! $this->api->is_order_has_bitcoin_gateway( $order_id ) ) {
+				return;
+			}
+		} catch ( Throwable $throwable ) {
+			// `add_meta_boxes` fires on every edit screen; never let this break the order (or any other) edit page.
+			$this->logger->error(
+				"Failed to check whether `shop_order:{$order_id}` is a Bitcoin order: {$throwable->getMessage()}",
+				array(
+					'order_id'  => $order_id,
+					'exception' => $throwable,
+				)
+			);
 			return;
 		}
 
@@ -120,42 +133,55 @@ class Admin_Order_UI {
 	 */
 	public function print_address_transactions_metabox( $post ): void {
 
-		/**
-		 * This is almost sure to be a valid order object, since this only runs on the order page.
-		 */
-		$order = match ( true ) {
-			$post instanceof WP_Post => $this->api->get_bitcoin_order( $post->ID ),
-			$post instanceof WC_Order => $this->api->get_bitcoin_order( $post->get_id() ),
+		$order_id = match ( true ) {
+			$post instanceof WP_Post => $post->ID,
+			$post instanceof WC_Order => $post->get_id(),
 			default => null,
 		};
 
-		if ( ! $order instanceof WC_Bitcoin_Order ) {
+		if ( is_null( $order_id ) ) {
 			return;
 		}
-
-		$order_id = $order->get_id();
-
-		// Once the order has been paid, no longer poll for new transactions, unless manually pressing refresh.
-		$refresh = ! $order->is_paid();
 
 		try {
-			if ( $refresh ) {
-				$this->api->check_order_for_payment( $order );
+			/**
+			 * This is almost sure to be a valid order object, since this only runs on the order page.
+			 */
+			$order = $this->api->get_bitcoin_order( $order_id );
+
+			if ( ! $order instanceof WC_Bitcoin_Order ) {
+				return;
 			}
+
+			// Once the order has been paid, no longer poll for new transactions, unless manually pressing refresh.
+			if ( ! $order->is_paid() ) {
+				try {
+					$this->api->check_order_for_payment( $order );
+				} catch ( Throwable $throwable ) {
+					// A blockchain API outage or rate limit should not hide the last known details from the admin.
+					$this->logger->warning(
+						"Could not check `shop_order:{$order_id}` for payment from the admin metabox: {$throwable->getMessage()}",
+						array(
+							'order_id'  => $order_id,
+							'exception' => $throwable,
+						)
+					);
+				}
+			}
+
 			$template_args = $this->api->get_formatted_order_details( $order );
-		} catch ( \Exception $exception ) {
+
+			$template_args['template'] = self::TEMPLATE_NAME;
+
+			wc_get_template( self::TEMPLATE_NAME, $template_args );
+		} catch ( Throwable $throwable ) {
 			$this->logger->warning(
-				"Failed to get `shop_order:{$order_id}` details for admin order ui metabox template: {$exception->getMessage()}",
+				"Failed to get `shop_order:{$order_id}` details for admin order ui metabox template: {$throwable->getMessage()}",
 				array(
 					'order_id'  => $order_id,
-					'exception' => $exception,
+					'exception' => $throwable,
 				)
 			);
-			return;
 		}
-
-		$template_args['template'] = self::TEMPLATE_NAME;
-
-		wc_get_template( self::TEMPLATE_NAME, $template_args );
 	}
 }
