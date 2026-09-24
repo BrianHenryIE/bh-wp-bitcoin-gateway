@@ -156,7 +156,7 @@
     "phpstan/extension-installer": "*",
     "phpstan/phpstan": "^2",
     "phpunit/phpcov": "*",
-    "rector/rector": "^2.3",
+    "rector/rector": "^2.6",
     "szepeviktor/phpstan-wordpress": "^2",
     "woocommerce/woocommerce": "dev-trunk",
     "woocommerce/woocommerce-gateway-dummy": "*",
