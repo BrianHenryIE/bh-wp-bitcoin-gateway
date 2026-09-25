@@ -232,12 +232,14 @@
     "post-install-cmd": [
       "@sync-composer-wpenv",
       "strauss --info",
-      "@add-btc-to-brick-money"
+      "@add-btc-to-brick-money",
+      "@patch-bigint-wrapper"
     ],
     "post-update-cmd": [
       "@sync-composer-wpenv",
       "strauss --info",
-      "@add-btc-to-brick-money"
+      "@add-btc-to-brick-money",
+      "@patch-bigint-wrapper"
     ],
     "test-coverage": [
       "rm tests/_output/*.cov || true; rm tests/_output/clover.xml || true",
@@ -300,6 +302,9 @@
     ],
     "sync-composer-wpenv": [
       "@php bin/sync-composer-wpenv.php"
+    ],
+    "patch-bigint-wrapper": [
+      "@php bin/patch-bigint-wrapper.php"
     ]
   },
   "provide": {
