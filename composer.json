@@ -144,7 +144,7 @@
   "require-dev": {
     "10up/wp_mock": "^1.1.0",
     "antecedent/patchwork": "^2.2.3",
-    "behat/behat": "^v3.15.0",
+    "behat/behat": "^v3.33.0",
     "brianhenryie/color-logger": "*",
     "brianhenryie/strauss": "0.29.0",
     "dealerdirect/phpcodesniffer-composer-installer": "^1.2",
