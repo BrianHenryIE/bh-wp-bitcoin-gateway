@@ -21,14 +21,17 @@ async function selectBitcoinPaymentMethod( page: Page ) {
 	).toBeVisible();
 }
 
-export async function placeBitcoinOrder( page: Page ): Promise< number > {
+export async function placeBitcoinOrder(
+	page: Page,
+	product: { name: string } = testConfig.products.simple
+): Promise< number > {
 	await logout( page );
 
 	// Go to shop
 	await page.goto( '/shop/' );
 
 	// Add simple product to cart
-	await page.click( `text="${ testConfig.products.simple.name }"` );
+	await page.click( `text="${ product.name }"` );
 	await page.click( '.single_add_to_cart_button' );
 
 	// Set the billing+shipping details via API.

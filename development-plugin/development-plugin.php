@@ -17,6 +17,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Development_Plugin\Rest\Bitcoin;
 use BrianHenryIE\WP_Bitcoin_Gateway\Development_Plugin\Rest\Themes;
 use BrianHenryIE\WP_Bitcoin_Gateway\Development_Plugin\Ajax\WooCommerce_Customer;
 use BrianHenryIE\WP_Bitcoin_Gateway\Development_Plugin\Rest\WooCommerce_Settings;
+use BrianHenryIE\WP_Bitcoin_Gateway\Development_Plugin\Rest\WooCommerce_Order as Rest_WooCommerce_Order;
 
 /**
  * TODO check for stray requests: exchange rate query seems to be happening too frequently.
@@ -52,3 +53,4 @@ new Bitcoin()->register_hooks();
 new Themes()->register_hooks();
 new WooCommerce_Customer()->register_hooks();
 new WooCommerce_Settings()->register_hooks();
+new Rest_WooCommerce_Order()->register_hooks();
