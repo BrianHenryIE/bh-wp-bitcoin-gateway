@@ -4,11 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-<<<<<<< HEAD
-    "content-hash": "08e1b95411b005ee3111f18c61c3c145",
-=======
-    "content-hash": "95db3acb88a08e8b0b53448ecd0319c7",
->>>>>>> 2c54ec842 (Remove unused elazar/flystream dependency)
+    "content-hash": "21cf1784b3fb8f0f848003f64c284e22",
     "packages": [
         {
             "name": "alleyinteractive/wordpress-autoloader",
