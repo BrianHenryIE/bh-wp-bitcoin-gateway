@@ -56,6 +56,15 @@ class Order implements LoggerAwareInterface {
 	): void {
 
 		if ( WooCommerce_Integration::class !== $integration_id ) {
+			// Normal when another integration owns the address; a near-miss means the stored id is corrupt.
+			$this->logger->debug(
+				'Ignoring payment address event for integration {integration_id}.',
+				array(
+					'integration_id' => $integration_id,
+					'order_id'       => $order_post_id,
+					'address'        => $payment_address->get_raw_address(),
+				)
+			);
 			return;
 		}
 
@@ -63,6 +72,13 @@ class Order implements LoggerAwareInterface {
 			$wc_order = $this->api_woocommerce->get_bitcoin_order( $order_post_id );
 
 			if ( ! $wc_order ) {
+				$this->logger->warning(
+					'Payment address event for `shop_order:' . $order_post_id . '` but no Bitcoin order was found.',
+					array(
+						'order_id' => $order_post_id,
+						'address'  => $payment_address->get_raw_address(),
+					)
+				);
 				return;
 			}
 
@@ -103,6 +119,15 @@ class Order implements LoggerAwareInterface {
 	): void {
 
 		if ( WooCommerce_Integration::class !== $integration_id ) {
+			// Normal when another integration owns the address; a near-miss means the stored id is corrupt.
+			$this->logger->debug(
+				'Ignoring payment address event for integration {integration_id}.',
+				array(
+					'integration_id' => $integration_id,
+					'order_id'       => $order_post_id,
+					'address'        => $payment_address->get_raw_address(),
+				)
+			);
 			return;
 		}
 
@@ -110,6 +135,13 @@ class Order implements LoggerAwareInterface {
 			$wc_order = $this->api_woocommerce->get_bitcoin_order( $order_post_id );
 
 			if ( ! $wc_order ) {
+				$this->logger->warning(
+					'Payment address event for `shop_order:' . $order_post_id . '` but no Bitcoin order was found.',
+					array(
+						'order_id' => $order_post_id,
+						'address'  => $payment_address->get_raw_address(),
+					)
+				);
 				return;
 			}
 

@@ -66,6 +66,42 @@ class Bitcoin_Wallet_Repository_WPUnit_Test extends WPTestCase {
 		$saved_wallet = $this->sut->save_new( $xpub, $gateway );
 
 		$this->assertEquals( Bitcoin_Wallet_Status::ACTIVE, $saved_wallet->get_status() );
+
+		// Regression: the gateway details are JSON in post meta; unslashing on insert broke the escaped backslashes
+		// in the class name and the JSON decoded to nothing.
+		$details = $saved_wallet->get_associated_gateways_details();
+		$this->assertCount( 1, $details );
+		$this->assertSame( WooCommerce_Integration::class, $details[0]['integration'] );
+		$this->assertSame( $gateway_id, $details[0]['gateway_id'] );
+	}
+
+	/**
+	 * @covers ::append_gateway_details
+	 */
+	public function test_append_gateway_details_keeps_class_names_intact(): void {
+		$wallet = $this->sut->save_new( 'xpub_test_append_gateway' );
+
+		$this->sut->append_gateway_details(
+			$wallet,
+			array(
+				'integration' => WooCommerce_Integration::class,
+				'gateway_id'  => 'bh_bitcoin',
+			)
+		);
+		$this->sut->append_gateway_details(
+			$this->sut->refresh( $wallet ),
+			array(
+				'integration' => WooCommerce_Integration::class,
+				'gateway_id'  => 'bh_bitcoin_2',
+			)
+		);
+
+		$details = $this->sut->refresh( $wallet )->get_associated_gateways_details();
+
+		$this->assertCount( 2, $details );
+		$this->assertSame( WooCommerce_Integration::class, $details[0]['integration'] );
+		$this->assertSame( WooCommerce_Integration::class, $details[1]['integration'] );
+		$this->assertSame( 'bh_bitcoin_2', $details[1]['gateway_id'] );
 	}
 
 	/**
