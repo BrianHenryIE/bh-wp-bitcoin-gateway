@@ -41,6 +41,9 @@ readonly class Bitcoin_Transaction_Query extends WP_Post_Query_Abstract {
 		if ( $this->transaction_object ) {
 			$fields['post_content'] = wp_json_encode( $this->transaction_object );
 		}
+		if ( $this->post_status ) {
+			$fields['post_status'] = $this->post_status;
+		}
 
 		return $fields;
 	}
@@ -66,6 +69,7 @@ readonly class Bitcoin_Transaction_Query extends WP_Post_Query_Abstract {
 	 * @param ?int               $block_height The blockchain height to query transactions by, stored in post meta for confirmation tracking.
 	 * @param ?DateTimeInterface $block_datetime The timestamp when the transaction block was mined, stored as serialized DateTimeInterface in post meta.
 	 * @param ?array<int,string> $updated_transaction_meta_bitcoin_address_post_ids Mapping of address post IDs to transaction IDs for tracking which addresses received funds.
+	 * @param ?string            $post_status The WordPress post status; `publish` for a saved transaction (unset, `wp_insert_post()` would save a `draft`).
 	 */
 	public function __construct(
 		public ?Transaction $transaction_object = null,
@@ -73,6 +77,7 @@ readonly class Bitcoin_Transaction_Query extends WP_Post_Query_Abstract {
 		public ?int $block_height = null,
 		public ?DateTimeInterface $block_datetime = null,  // TODO: don't use serialized DateTimeInterface in meta, use something legible.
 		public ?array $updated_transaction_meta_bitcoin_address_post_ids = null,
+		public ?string $post_status = null,
 	) {
 		parent::__construct();
 	}

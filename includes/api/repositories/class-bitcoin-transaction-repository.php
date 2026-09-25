@@ -63,12 +63,21 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 	 */
 	protected function get_post_by_transaction_id( string $tx_id ): ?WP_Post {
 
-		$query = new Bitcoin_Transaction_Query(
-			tx_id: $tx_id,
+		/**
+		 * The txid is stored as the post slug. `WP_Query` matches the slug via `name` (not `post_name`), and
+		 * `get_posts()` defaults to published posts only, so both are set explicitly here. `numberposts` is 2 so a
+		 * duplicate is still detected below.
+		 *
+		 * @var WP_Post[] $wp_posts
+		 */
+		$wp_posts = get_posts(
+			array(
+				'post_type'   => Bitcoin_Transaction_WP_Post_Interface::POST_TYPE,
+				'name'        => $tx_id,
+				'post_status' => 'any',
+				'numberposts' => 2,
+			)
 		);
-
-		/** @var WP_Post[] $wp_posts */
-		$wp_posts = get_posts( $query->to_query_array() );
 
 		if ( empty( $wp_posts ) ) {
 			return null;
@@ -82,7 +91,11 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 	}
 
 	/**
-	 * Save a transaction to WordPress posts table or return existing post.
+	 * Save a transaction to the WordPress posts table, or update the existing post for that txid.
+	 *
+	 * A transaction is fetched every time its address is checked, so the same txid arrives repeatedly, and a
+	 * transaction first seen in the mempool arrives again once it is mined. The post is keyed by txid (slug) and
+	 * refreshed in place, so there is only ever one post per transaction and its block height is current.
 	 *
 	 * TODO: How to indicate if this was newly saved or already existed.
 	 *
@@ -97,15 +110,15 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 		array $bitcoin_addresses_indexed_by_post_ids,
 	): WP_Post {
 		$transaction_post = $this->get_post_by_transaction_id( $transaction->get_txid() );
-		// What if the transaction already exists? Potentially it is from a chain that has been discarded. When else might it be updated?
-		// (we will in a moment update a transaction's wp_post's meta to connect post ids for the relevant address).
 
 		if ( ! $transaction_post ) {
 			$insert_query = new Bitcoin_Transaction_Query(
 				transaction_object: $transaction,
+				tx_id: $transaction->get_txid(),
 				block_height: $transaction->get_block_height(),
 				block_datetime: $transaction->get_block_time(),
 				updated_transaction_meta_bitcoin_address_post_ids: $bitcoin_addresses_indexed_by_post_ids,
+				post_status: 'publish',
 			);
 
 			/** @var WpUpdatePostArray $args */
@@ -121,7 +134,51 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 			return get_post( $new_post_id ); // @phpstan-ignore return.type
 		}
 
-		return $transaction_post;
+		// Refresh the saved transaction (e.g. now mined, or more confirmations) and add any newly relevant address.
+		$this->update(
+			model: $this->bitcoin_transaction_factory->get_by_wp_post( $transaction_post ),
+			query: new Bitcoin_Transaction_Query(
+				transaction_object: $transaction,
+				tx_id: $transaction->get_txid(),
+				block_height: $transaction->get_block_height(),
+				block_datetime: $transaction->get_block_time(),
+				updated_transaction_meta_bitcoin_address_post_ids: $this->get_bitcoin_addresses_meta( $transaction_post->ID ) + $bitcoin_addresses_indexed_by_post_ids,
+				post_status: 'publish',
+			)
+		);
+
+		return get_post( $transaction_post->ID ); // @phpstan-ignore return.type
+	}
+
+	/**
+	 * Read the address post ids saved on a transaction post as `post_id:address` pairs.
+	 *
+	 * The query object JSON-encodes arrays into meta, so older/newer rows may hold either a JSON string or an array.
+	 *
+	 * @param int $transaction_post_id The transaction wp_post id.
+	 *
+	 * @return array<int,string>
+	 */
+	protected function get_bitcoin_addresses_meta( int $transaction_post_id ): array {
+		/** @var mixed $meta */
+		$meta = get_post_meta( $transaction_post_id, Bitcoin_Transaction_WP_Post_Interface::BITCOIN_ADDRESSES_POST_IDS_META_KEY, true );
+
+		if ( is_string( $meta ) ) {
+			$meta = json_decode( $meta, true );
+		}
+
+		if ( ! is_array( $meta ) ) {
+			return array();
+		}
+
+		/** @var array<int,string> $addresses */
+		$addresses = array();
+		foreach ( $meta as $post_id => $address ) {
+			if ( is_numeric( $post_id ) && is_string( $address ) ) {
+				$addresses[ (int) $post_id ] = $address;
+			}
+		}
+		return $addresses;
 	}
 
 	/**

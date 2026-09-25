@@ -165,7 +165,7 @@ class Payment_Service implements LoggerAwareInterface {
 
 		foreach ( $updated_transactions as $transaction ) {
 
-			// TODO: Don't overwrite an existing one. associate_bitcoin_address_post_ids_to_transaction().
+			// Creates the post the first time a txid is seen, and refreshes it (block height etc.) on later fetches.
 			$saved_transaction                                       = $this->bitcoin_transaction_repository->save_new(
 				$transaction,
 				$address
