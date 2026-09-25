@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "3d5795bf56eb4d298cfdcf00416f0896",
+    "content-hash": "dfa34918f8e3ec2adcdea1231709600b",
     "packages": [
         {
             "name": "alleyinteractive/wordpress-autoloader",
@@ -14336,15 +14336,15 @@
         },
         {
             "name": "wpackagist-plugin/wp-mail-logging",
-            "version": "1.16.0",
+            "version": "1.17.0",
             "source": {
                 "type": "svn",
                 "url": "https://plugins.svn.wordpress.org/wp-mail-logging/",
-                "reference": "tags/1.16.0"
+                "reference": "tags/1.17.0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://downloads.wordpress.org/plugin/wp-mail-logging.1.16.0.zip"
+                "url": "https://downloads.wordpress.org/plugin/wp-mail-logging.1.17.0.zip"
             },
             "require": {
                 "composer/installers": "^1.0 || ^2.0"
