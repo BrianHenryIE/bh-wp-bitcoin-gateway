@@ -340,12 +340,10 @@ class CLI {
 	 * - yaml
 	 * ---
 	 *
-	 * [--debug=<bh-wp-bitcoin-gateway>]
-	 * : Show detailed progress.
-	 *
 	 * ## EXAMPLES
 	 *
 	 *   $ wp bh_bitcoin gateway list
+	 *   $ wp bh_bitcoin gateway list --debug=<bh-wp-bitcoin-gateway
 	 *
 	 * @param string[]             $_args No positional arguments.
 	 * @param array<string,string> $assoc_args List of named arguments.
@@ -419,12 +417,10 @@ class CLI {
 	 *  - yaml
 	 *  ---
 	 *
-	 *  [--debug=<bh-wp-bitcoin-gateway>]
-	 *  : Show detailed progress.
-	 *
 	 * ## EXAMPLES
 	 *
 	 *   $ wp bh_bitcoin order list
+	 *   $ wp bh_bitcoin order list --debug=<bh-wp-bitcoin-gateway>
 	 *
 	 * @param string[]             $_args No positional arguments.
 	 * @param array<string,string> $assoc_args List of named arguments.
