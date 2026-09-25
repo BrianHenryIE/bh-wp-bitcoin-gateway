@@ -5,7 +5,7 @@
     "WP_MEMORY_LIMIT": "512M",
     "WP_MAX_MEMORY_LIMIT": "512M"
   },
-  "core": "WordPress/WordPress#7.0.3",
+  "core": "WordPress/WordPress#7.1.2",
   "lifecycleScripts": {
     "afterStart": "bash 'tests/e2e-pw/setup/initialize-external.sh' ci"
   },
@@ -14,6 +14,7 @@
     "wp-content/plugins/basic-auth": "./wp-content/plugins/basic-auth",
     "wp-content/plugins/bh-wc-set-gateway-by-url": "./wp-content/plugins/bh-wc-set-gateway-by-url",
     "wp-content/plugins/checkout-fees-for-woocommerce": "./wp-content/plugins/checkout-fees-for-woocommerce",
+    "wp-content/plugins/coinsnap-for-givewp": "./wp-content/plugins/coinsnap-for-givewp",
     "wp-content/plugins/crypto-payments-woo": "./wp-content/plugins/crypto-payments-woo",
     "wp-content/plugins/decentralized-bitcoin-cryptodec-payment-gateway-for-woocommerce": "./wp-content/plugins/decentralized-bitcoin-cryptodec-payment-gateway-for-woocommerce",
     "wp-content/plugins/development-plugin": "./development-plugin",
@@ -29,5 +30,6 @@
   },
   "phpVersion": "8.4",
   "plugins": [],
+  "port": 8885,
   "testsEnvironment": false
 }

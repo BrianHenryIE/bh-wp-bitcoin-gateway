@@ -8,6 +8,7 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Exchange_Rate;
 
 use BrianHenryIE\ColorLogger\ColorLogger;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Currency;
 
 /**
@@ -42,5 +43,32 @@ class Bitfinex_API_Integration_Test extends \lucatume\WPBrowser\TestCase\WPTestC
 		$result = $sut->get_exchange_rate( Currency::of( 'USD' ) );
 
 		$this->assertEquals( '40990', $result->getAmount() );
+	}
+
+	/**
+	 * Bitfinex returns an empty array for a trading pair it does not list. Previously this became
+	 * `Money::of( '' )` and a NumberFormatException with no useful message.
+	 *
+	 * @covers ::get_exchange_rate
+	 */
+	public function test_unsupported_currency_throws_descriptive_exception(): void {
+
+		$sut = new Bitfinex_API( new ColorLogger() );
+
+		add_filter(
+			'pre_http_request',
+			fn() => array(
+				'body'     => '[]',
+				'response' => array(
+					'code'    => 200,
+					'message' => 'OK',
+				),
+			)
+		);
+
+		$this->expectException( BH_WP_Bitcoin_Gateway_Exception::class );
+		$this->expectExceptionMessage( 'no ticker for tBTCCAD' );
+
+		$sut->get_exchange_rate( Currency::of( 'CAD' ) );
 	}
 }

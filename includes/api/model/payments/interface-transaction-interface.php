@@ -54,5 +54,5 @@ interface Transaction_Interface {
 	/**
 	 * Used to filter transactions to only those between the time the order was placed, and paid.
 	 */
-	public function get_block_time(): DateTimeInterface;
+	public function get_block_time(): ?DateTimeInterface;
 }

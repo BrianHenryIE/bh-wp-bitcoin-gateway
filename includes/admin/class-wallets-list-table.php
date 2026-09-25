@@ -12,6 +12,9 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Bitcoin_Wallet_Repository;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet_WP_Post_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Wallet;
+use Psr\Log\LoggerAwareTrait;
+use Psr\Log\LoggerInterface;
+use Throwable;
 use WP_Post;
 use WP_Post_Type;
 use WP_Posts_List_Table;
@@ -23,9 +26,10 @@ use WP_Screen;
  * @see wp-admin/edit.php?post_type=bh-bitcoin-wallet
  * @see WP_Posts_List_Table
  *
- * @phpstan-type Wallet_List_Table_Dependencies_Array array{api:API_Interface,bitcoin_wallet_repository:Bitcoin_Wallet_Repository}
+ * @phpstan-type Wallet_List_Table_Dependencies_Array array{api:API_Interface,bitcoin_wallet_repository:Bitcoin_Wallet_Repository,logger:LoggerInterface}
  */
 class Wallets_List_Table extends WP_Posts_List_Table {
+	use LoggerAwareTrait;
 
 	/**
 	 * The main plugin functions.
@@ -76,6 +80,7 @@ class Wallets_List_Table extends WP_Posts_List_Table {
 
 		$this->api                       = $post_type_object->dependencies['api'];
 		$this->bitcoin_wallet_repository = $post_type_object->dependencies['bitcoin_wallet_repository'];
+		$this->setLogger( $post_type_object->dependencies['logger'] );
 
 		add_filter( 'post_row_actions', array( $this, 'edit_row_actions' ), 10, 2 );
 	}
@@ -132,9 +137,20 @@ class Wallets_List_Table extends WP_Posts_List_Table {
 	 * @param WP_Post $post The post this row is being rendered for.
 	 */
 	public function column_status( WP_Post $post ): void {
-		$bitcoin_wallet = $this->get_bitcoin_wallet_object( $post );
+		try {
+			$bitcoin_wallet = $this->get_bitcoin_wallet_object( $post );
 
-		echo esc_html( $bitcoin_wallet->get_status()->value );
+			echo esc_html( $bitcoin_wallet->get_status()->value );
+		} catch ( Throwable $throwable ) {
+			$this->logger->error(
+				"Failed to render status column for `bh-bitcoin-wallet:{$post->ID}`: {$throwable->getMessage()}",
+				array(
+					'post_id'   => $post->ID,
+					'exception' => $throwable,
+				)
+			);
+			echo '<span class="dashicons dashicons-warning" title="' . esc_attr( $throwable->getMessage() ) . '"></span>';
+		}
 	}
 
 	/**

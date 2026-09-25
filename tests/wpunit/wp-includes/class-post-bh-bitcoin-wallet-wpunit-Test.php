@@ -31,6 +31,7 @@ class Post_BH_Bitcoin_Wallet_WPUnit_Test extends WPTestCase {
 		return new Post_BH_Bitcoin_Wallet(
 			api: $api ?? $this->makeEmpty( API_Interface::class ),
 			bitcoin_wallet_repository: $bitcoin_wallet_repository ?? new Bitcoin_Wallet_Repository( new Bitcoin_Wallet_Factory() ),
+			logger: new \BrianHenryIE\ColorLogger\ColorLogger(),
 		);
 	}
 

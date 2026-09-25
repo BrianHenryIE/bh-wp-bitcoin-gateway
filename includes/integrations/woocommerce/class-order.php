@@ -11,10 +11,10 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Services\Results\Check_Address_For_Payment_Service_Result;
-use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
+use Throwable;
 use WC_Order;
 
 /**
@@ -59,18 +59,30 @@ class Order implements LoggerAwareInterface {
 			return;
 		}
 
-		$wc_order = $this->api_woocommerce->get_bitcoin_order( $order_post_id );
+		try {
+			$wc_order = $this->api_woocommerce->get_bitcoin_order( $order_post_id );
 
-		if ( ! $wc_order ) {
-			return;
+			if ( ! $wc_order ) {
+				return;
+			}
+
+			// TODO: Should also update the confirmed_received amount on the order meta.
+
+			$this->api_woocommerce->add_order_note_for_transactions(
+				$wc_order,
+				$check_address_for_payment_service_result->get_new_transactions()
+			);
+		} catch ( Throwable $throwable ) {
+			// This runs inside the payment-check loop, the thank-you AJAX and the admin metabox; never abort those.
+			$this->logger->error(
+				'Error recording new transactions on `shop_order:' . $order_post_id . '`: ' . $throwable->getMessage(),
+				array(
+					'order_id'  => $order_post_id,
+					'address'   => $payment_address->get_raw_address(),
+					'exception' => $throwable,
+				)
+			);
 		}
-
-		// TODO: Should also update the confirmed_received amount on the order meta.
-
-		$this->api_woocommerce->add_order_note_for_transactions(
-			$wc_order,
-			$check_address_for_payment_service_result->get_new_transactions()
-		);
 	}
 
 	/**
@@ -94,15 +106,27 @@ class Order implements LoggerAwareInterface {
 			return;
 		}
 
-		$wc_order = $this->api_woocommerce->get_bitcoin_order( $order_post_id );
+		try {
+			$wc_order = $this->api_woocommerce->get_bitcoin_order( $order_post_id );
 
-		if ( ! $wc_order ) {
-			return;
+			if ( ! $wc_order ) {
+				return;
+			}
+
+			$this->api_woocommerce->mark_order_paid(
+				$wc_order,
+				$check_address_for_payment_service_result
+			);
+		} catch ( Throwable $throwable ) {
+			// Marking paid sends emails and fires many third-party hooks; a failure there is logged, not fatal.
+			$this->logger->error(
+				'Error marking `shop_order:' . $order_post_id . '` paid: ' . $throwable->getMessage(),
+				array(
+					'order_id'  => $order_post_id,
+					'address'   => $payment_address->get_raw_address(),
+					'exception' => $throwable,
+				)
+			);
 		}
-
-		$this->api_woocommerce->mark_order_paid(
-			$wc_order,
-			$check_address_for_payment_service_result
-		);
 	}
 }

@@ -25,6 +25,8 @@ use DateTimeImmutable;
 use InvalidArgumentException;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
+use Psr\Log\LoggerInterface;
+use Throwable;
 
 /**
  * Local functions to create addresses; query addresses; update addresses.
@@ -38,12 +40,15 @@ class Bitcoin_Wallet_Service implements LoggerAwareInterface {
 	 * @param Generate_Address_API_Interface $generate_address_api Local class to derive payment addresses from a wallet's master public key.
 	 * @param Bitcoin_Wallet_Repository      $bitcoin_wallet_repository Used to save, retrieve and update wallets saved as WP_Posts.
 	 * @param Bitcoin_Address_Repository     $bitcoin_address_repository Used to save, retrieve and update payment addresses saved as WP_Posts.
+	 * @param LoggerInterface                $logger A PSR logger.
 	 */
 	public function __construct(
 		protected Generate_Address_API_Interface $generate_address_api,
 		protected Bitcoin_Wallet_Repository $bitcoin_wallet_repository,
 		protected Bitcoin_Address_Repository $bitcoin_address_repository,
+		LoggerInterface $logger,
 	) {
+		$this->setLogger( $logger );
 	}
 
 	/**
@@ -130,7 +135,9 @@ class Bitcoin_Wallet_Service implements LoggerAwareInterface {
 	 * @see API_Interface::generate_new_addresses()
 	 * @used-by CLI::generate_new_addresses()
 	 * @used-by Background_Jobs_Actions_Handler::generate_new_addresses()
-	 * @throws BH_WP_Bitcoin_Gateway_Exception When address derivation fails or addresses cannot be saved to the database.
+	 *
+	 * A wallet whose addresses cannot be derived or saved is logged and skipped (skips and logs), so it cannot
+	 * block the wallets after it on every run.
 	 */
 	public function generate_new_addresses(): array {
 
@@ -142,7 +149,18 @@ class Bitcoin_Wallet_Service implements LoggerAwareInterface {
 		$wallets = $this->bitcoin_wallet_repository->get_all( Bitcoin_Wallet_Status::ALL );
 
 		foreach ( $wallets as $wallet ) {
-			$results[] = $this->generate_new_addresses_for_wallet( $wallet );
+			// TODO: Check how many are free before generating more.
+			try {
+				$results[] = $this->generate_new_addresses_for_wallet( $wallet );
+			} catch ( Throwable $throwable ) {
+				$this->logger->error(
+					'Failed to generate new addresses for `bh-bitcoin-wallet:' . $wallet->get_post_id() . '`: ' . $throwable->getMessage(),
+					array(
+						'wallet_post_id' => $wallet->get_post_id(),
+						'exception'      => $throwable,
+					)
+				);
+			}
 		}
 
 		return $results;

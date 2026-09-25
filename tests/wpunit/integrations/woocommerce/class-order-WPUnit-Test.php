@@ -263,6 +263,54 @@ class Order_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 	}
 
 	/**
+	 * `payment_received` runs inside the background payment-check loop and the thank-you page AJAX call; a failure
+	 * while marking the order paid (emails, third-party hooks) must be logged, not abort the caller.
+	 *
+	 * @covers ::payment_received
+	 */
+	public function test_payment_received_logs_and_does_not_throw_when_marking_paid_fails(): void {
+
+		$order = wc_create_order();
+		$this->assertInstanceOf( WC_Order::class, $order );
+
+		$bitcoin_address_mock = $this->makeEmpty( Bitcoin_Address::class, array( 'get_raw_address' => 'bc1qtest' ) );
+
+		$check_address_for_payment_service_result = new Check_Address_For_Payment_Service_Result(
+			update_address_transactions_result: new Update_Address_Transactions_Result(
+				queried_address:     $bitcoin_address_mock,
+				known_tx_ids_before: array(),
+				all_transactions:    array()
+			),
+			blockchain_height:                   800000,
+			required_confirmations:              3,
+			confirmed_received:                  Money::of( '0.001', 'BTC' )
+		);
+
+		$api_woocommerce_mock = $this->makeEmpty(
+			API_WooCommerce_Interface::class,
+			array(
+				'mark_order_paid'   => Expected::once(
+					function () {
+						throw new \RuntimeException( 'Email template exploded' );
+					}
+				),
+				'get_bitcoin_order' => fn() => $this->make( WC_Bitcoin_Order::class, array( 'get_id' => $order->get_id() ) ),
+			),
+		);
+		$logger               = new ColorLogger();
+		$sut                  = new Order( $api_woocommerce_mock, $logger );
+
+		$sut->payment_received(
+			WooCommerce_Integration::class,
+			$order->get_id(),
+			$bitcoin_address_mock,
+			$check_address_for_payment_service_result
+		);
+
+		$this->assertTrue( $logger->hasErrorThatContains( 'Email template exploded' ) );
+	}
+
+	/**
 	 * Helper method to invoke protected/private methods. (Claude wrote this).
 	 *
 	 * @param object       $object_instance The object instance.

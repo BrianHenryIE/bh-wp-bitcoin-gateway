@@ -25,6 +25,7 @@ use Exception;
 use InvalidArgumentException;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
+use Throwable;
 use Psr\Log\NullLogger;
 use WC_Order;
 use WC_Payment_Gateway;
@@ -95,9 +96,17 @@ class CLI {
 	 */
 	public function generate_new_addresses( array $args ): void {
 
-		$new_addresses = $this->api->generate_new_addresses();
+		try {
+			$new_addresses = $this->api->generate_new_addresses();
 
-		$transactions = $this->api->check_new_addresses_for_transactions();
+			$transactions = $this->api->check_new_addresses_for_transactions();
+		} catch ( Throwable $throwable ) {
+			$this->logger->error(
+				'CLI generate_new_addresses failed: ' . $throwable->getMessage(),
+				array( 'exception' => $throwable )
+			);
+			WP_CLI::error( $throwable->getMessage() );
+		}
 
 		/**
 		 * Wallets indexed by post_id.
@@ -132,10 +141,19 @@ class CLI {
 		foreach ( $new_addresses as $result ) {
 			foreach ( $result->new_addresses as $address ) {
 
-				// Refresh after running `::check_new_addresses_for_transactions()`.
-				$address = $this->bitcoin_address_repository->refresh( $address );
+				try {
+					// Refresh after running `::check_new_addresses_for_transactions()`.
+					$address = $this->bitcoin_address_repository->refresh( $address );
+				} catch ( Throwable $throwable ) {
+					$this->logger->warning(
+						'Could not refresh `bh-bitcoin-address:' . $address->get_post_id() . '` for display: ' . $throwable->getMessage(),
+						array( 'exception' => $throwable )
+					);
+				}
 
-				$wallet_master_public_key = $wallets[ $address->get_wallet_parent_post_id() ]->get_xpub();
+				$wallet_master_public_key = isset( $wallets[ $address->get_wallet_parent_post_id() ] )
+					? $wallets[ $address->get_wallet_parent_post_id() ]->get_xpub()
+					: '';
 
 				$addresses_display[] = array(
 					'post_id'    => (string) $address->get_post_id(),
@@ -289,8 +307,15 @@ class CLI {
 
 			WP_CLI::log( 'Finished update-address.' );
 
-		} catch ( Exception $exception ) {
-			WP_CLI::error( $exception->getMessage() );
+		} catch ( Throwable $throwable ) {
+			$this->logger->error(
+				'CLI check_transactions failed for input {input}: ' . $throwable->getMessage(),
+				array(
+					'input'     => $input,
+					'exception' => $throwable,
+				)
+			);
+			WP_CLI::error( $throwable->getMessage() );
 		}
 	}
 
@@ -459,8 +484,14 @@ class CLI {
 							$order_info['confirmed_amount_received'] = (string) ( $bitcoin_order->get_confirmed_amount_received() ?? 'error' );
 							$order_info['payment_address_post_id']   = (string) ( $bitcoin_order->get_bitcoin_address()?->get_post_id() ?? 'error' );
 							$order_info['last_checked_time']         = $bitcoin_order->get_last_checked_time()?->format( DateTimeInterface::ATOM ) ?? 'never';
-						} catch ( Exception $exception ) {
-							$this->logger->error( $exception->getMessage(), array( 'exception' => $exception ) );
+						} catch ( Throwable $throwable ) {
+							$this->logger->error(
+								'Failed to get Bitcoin details for `shop_order:' . $order->get_id() . '`: ' . $throwable->getMessage(),
+								array(
+									'order_id'  => $order->get_id(),
+									'exception' => $throwable,
+								)
+							);
 						}
 
 						return $order_info;

@@ -37,7 +37,7 @@ class Menu_Unit_Test extends \Codeception\Test\Unit {
 			)
 		);
 
-		$sut = new Menu( $api_mock );
+		$sut = new Menu( $api_mock, new \BrianHenryIE\ColorLogger\ColorLogger() );
 
 		\WP_Mock::userFunction(
 			'add_submenu_page',
@@ -75,7 +75,7 @@ class Menu_Unit_Test extends \Codeception\Test\Unit {
 			)
 		);
 
-		$sut = new Menu( $api_mock );
+		$sut = new Menu( $api_mock, new \BrianHenryIE\ColorLogger\ColorLogger() );
 
 		\WP_Mock::userFunction(
 			'add_submenu_page',
@@ -92,5 +92,33 @@ class Menu_Unit_Test extends \Codeception\Test\Unit {
 		);
 
 		$sut->add_woocommerce_payments_submenu();
+	}
+
+	/**
+	 * `admin_menu` runs on every wp-admin page load.
+	 *
+	 * @covers ::add_woocommerce_payments_submenu
+	 */
+	public function test_logs_and_does_not_throw_when_gateways_unavailable(): void {
+
+		$api_mock = $this->makeEmpty(
+			API_WooCommerce_Interface::class,
+			array(
+				'get_bitcoin_gateways' => Expected::once(
+					function () {
+						throw new \RuntimeException( 'WC_Payment_Gateways exploded' );
+					}
+				),
+			)
+		);
+		$logger   = new \BrianHenryIE\ColorLogger\ColorLogger();
+
+		$sut = new Menu( $api_mock, $logger );
+
+		\WP_Mock::userFunction( 'add_submenu_page', array( 'times' => 0 ) );
+
+		$sut->add_woocommerce_payments_submenu();
+
+		$this->assertTrue( $logger->hasErrorThatContains( 'WC_Payment_Gateways exploded' ) );
 	}
 }

@@ -5,6 +5,7 @@ namespace BrianHenryIE\WP_Bitcoin_Gateway\API\Services;
 use BrianHenryIE\ColorLogger\ColorLogger;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Clients\Exchange_Rate_API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Helpers\JsonMapper\JsonMapper_Helper;
+use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Exceptions\BH_WP_Bitcoin_Gateway_Exception;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Currency;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\JsonMapper\JsonMapperInterface;
@@ -60,6 +61,57 @@ class Exchange_Rate_Service_WPUnit_Test extends WPTestCase {
 
 		$this->assertEquals( 'USD', $result2?->getCurrency()->getCurrencyCode() );
 		$this->assertEquals( '89000.00', $result2?->getAmount()->__toString() );
+	}
+
+	/**
+	 * A failing exchange rate API must never break the pages that ask for the rate: log and return null.
+	 *
+	 * @covers ::get_exchange_rate
+	 */
+	public function test_get_exchange_rate_returns_null_and_logs_when_api_throws(): void {
+
+		$exchange_rate_api_mock = $this->makeEmpty(
+			Exchange_Rate_API_Interface::class,
+			array(
+				'get_exchange_rate' => Expected::once(
+					function () {
+						throw new BH_WP_Bitcoin_Gateway_Exception( 'Bitfinex returned HTTP 503 for tBTCUSD.' );
+					}
+				),
+			)
+		);
+		$logger                 = new ColorLogger();
+		$sut                    = $this->get_sut( $exchange_rate_api_mock, logger: $logger );
+
+		$result = $sut->get_exchange_rate( Currency::of( 'USD' ) );
+
+		$this->assertNull( $result );
+		$this->assertTrue( $logger->hasErrorThatContains( 'Bitfinex returned HTTP 503' ) );
+	}
+
+	/**
+	 * A transient that can no longer be mapped (e.g. after a class change) is discarded and a fresh rate fetched.
+	 *
+	 * @covers ::get_exchange_rate
+	 * @covers ::get_cached_exchange_rate
+	 */
+	public function test_get_exchange_rate_discards_corrupt_cache(): void {
+
+		set_transient( 'bh_wp_bitcoin_gateway_exchange_rate_USD', '{"rate":"not an object"}', 3600 );
+
+		$exchange_rate_api_mock = $this->makeEmpty(
+			Exchange_Rate_API_Interface::class,
+			array(
+				'get_exchange_rate' => Expected::once( Money::of( '89000', 'USD' ) ),
+			)
+		);
+		$logger                 = new ColorLogger();
+		$sut                    = $this->get_sut( $exchange_rate_api_mock, logger: $logger );
+
+		$result = $sut->get_exchange_rate( Currency::of( 'USD' ) );
+
+		$this->assertEquals( '89000.00', $result?->getAmount()->__toString() );
+		$this->assertTrue( $logger->hasWarningThatContains( 'Discarding unreadable cached USD exchange rate' ) );
 	}
 
 	/**

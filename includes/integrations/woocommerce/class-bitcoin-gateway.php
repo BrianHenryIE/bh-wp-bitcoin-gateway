@@ -18,6 +18,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
 use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
 use Exception;
+use Throwable;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
@@ -106,16 +107,24 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 	public function get_method_description() {
 		$method_description = $this->method_description . PHP_EOL;
 
-		$method_description .= PHP_EOL;
-		$method_description .= PHP_EOL;
-		$method_description .= $this->get_formatted_exchange_rate_string();
-		$method_description .= ' • ';
-		$method_description .= $this->get_view_scheduled_actions_link();
+		try {
+			$method_description .= PHP_EOL;
+			$method_description .= PHP_EOL;
+			$method_description .= $this->get_formatted_exchange_rate_string();
+			$method_description .= ' • ';
+			$method_description .= $this->get_view_scheduled_actions_link();
 
-		if ( $this->is_site_using_full_site_editing() ) {
-			$method_description .= PHP_EOL;
-			$method_description .= PHP_EOL;
-			$method_description .= $this->get_formatted_link_to_order_confirmation_edit();
+			if ( $this->is_site_using_full_site_editing() ) {
+				$method_description .= PHP_EOL;
+				$method_description .= PHP_EOL;
+				$method_description .= $this->get_formatted_link_to_order_confirmation_edit();
+			}
+		} catch ( Throwable $throwable ) {
+			// The extra details are informational; never break the WooCommerce payments settings page for them.
+			$this->logger->error(
+				'Error building gateway description: ' . $throwable->getMessage(),
+				array( 'exception' => $throwable )
+			);
 		}
 
 		$gateway = $this;
@@ -158,13 +167,15 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 
 	/**
 	 * Returns the exchange rate in a string, e.g. 'Current exchange rate: 1 BTC = $100,000'.
-	 *
-	 * @throws UnknownCurrencyException If the store currency is not an ISO 4217 brick/money supported currency code.
 	 */
 	protected function get_formatted_exchange_rate_string(): string {
 		try {
 			$currency = Currency::of( get_woocommerce_currency() );
-		} catch ( UnknownCurrencyException ) {
+		} catch ( UnknownCurrencyException $unknown_currency_exception ) {
+			$this->logger->warning(
+				sprintf( 'Store currency "%s" is not recognised; showing the USD exchange rate instead.', get_woocommerce_currency() ),
+				array( 'exception' => $unknown_currency_exception )
+			);
 			$currency = Currency::of( 'USD' );
 		}
 		$exchange_rate = $this->api->get_exchange_rate( $currency );
@@ -226,13 +237,28 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 		$xpub_after = $this->get_xpub();
 
 		if ( ! is_null( $xpub_after ) ) {
-			$this->api->get_or_save_wallet_for_master_public_key(
-				$xpub_after,
-				array(
-					'integration' => WooCommerce_Integration::class,
-					'gateway_id'  => $this->id,
-				)
-			);
+			try {
+				$this->api->get_or_save_wallet_for_master_public_key(
+					$xpub_after,
+					array(
+						'integration' => WooCommerce_Integration::class,
+						'gateway_id'  => $this->id,
+					)
+				);
+			} catch ( Throwable $throwable ) {
+				// The settings have already been saved by the parent; show the problem rather than a critical error.
+				$this->logger->error(
+					'Failed to save wallet for gateway ' . $this->id . ': ' . $throwable->getMessage(),
+					array( 'exception' => $throwable )
+				);
+				$this->add_error(
+					sprintf(
+						/* translators: %s: the error message */
+						__( 'The settings were saved but the Bitcoin wallet could not be prepared: %s', 'bh-wp-bitcoin-gateway' ),
+						$throwable->getMessage()
+					)
+				);
+			}
 		}
 
 		// If nothing changed, we can return early.
@@ -416,12 +442,21 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 			}
 		}
 
-		if ( ! $this->api_woocommerce->is_unused_address_available_for_gateway( $this ) ) {
+		try {
+			if ( ! $this->api_woocommerce->is_unused_address_available_for_gateway( $this ) ) {
+				$this->is_available_cache = false;
+			} elseif ( is_null( $this->api->get_exchange_rate( Currency::of( get_woocommerce_currency() ) ) ) ) {
+				$this->is_available_cache = false;
+			} else {
+				$this->is_available_cache = parent::is_available();
+			}
+		} catch ( Throwable $throwable ) {
+			// This runs on every cart and checkout page load; a failure must hide the gateway, not crash the page.
+			$this->logger->error(
+				'Error determining gateway availability, gateway will be hidden: ' . $throwable->getMessage(),
+				array( 'exception' => $throwable )
+			);
 			$this->is_available_cache = false;
-		} elseif ( is_null( $this->api->get_exchange_rate( Currency::of( get_woocommerce_currency() ) ) ) ) {
-			$this->is_available_cache = false;
-		} else {
-			$this->is_available_cache = parent::is_available();
 		}
 
 		set_transient(
@@ -441,9 +476,40 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 	 * @see WC_Payment_Gateway::process_payment()
 	 *
 	 * @return array{result:string, redirect:string}
-	 * @throws BH_WP_Bitcoin_Gateway_Exception Throws an exception when no address is available (which is caught by WooCommerce and displayed at checkout).
+	 * @throws BH_WP_Bitcoin_Gateway_Exception When the payment cannot be prepared (caught by WooCommerce and displayed at checkout).
 	 */
 	public function process_payment( $order_id ) {
+		try {
+			return $this->prepare_bitcoin_payment( (int) $order_id );
+		} catch ( BH_WP_Bitcoin_Gateway_Exception $exception ) {
+			// Already logged, and carries a customer-facing message.
+			throw $exception;
+		} catch ( Throwable $throwable ) {
+			// WooCommerce only catches `Exception`; an `Error` here would be a fatal at the checkout.
+			$this->logger->error(
+				'Error processing Bitcoin payment for `shop_order:' . $order_id . '`: ' . $throwable->getMessage(),
+				array(
+					'order_id'  => $order_id,
+					'exception' => $throwable,
+				)
+			);
+			throw new BH_WP_Bitcoin_Gateway_Exception(
+				esc_html__( 'There was a problem preparing your Bitcoin payment. Please try again or choose another payment method.', 'bh-wp-bitcoin-gateway' ),
+				0,
+				$throwable // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Previous exception, not output.
+			);
+		}
+	}
+
+	/**
+	 * Assign a payment address to the order and put it on-hold awaiting payment.
+	 *
+	 * @param int $order_id The id of the order being paid.
+	 *
+	 * @return array{result:string, redirect:string}
+	 * @throws BH_WP_Bitcoin_Gateway_Exception With a customer-facing message when the payment cannot be prepared.
+	 */
+	protected function prepare_bitcoin_payment( int $order_id ): array {
 
 		/**
 		 * Filter classname so that the class can be overridden if extended.
@@ -476,10 +542,26 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 		$order = new WC_Bitcoin_Order( $order_id );
 
 		$order->set_json_mapper( new JsonMapper_Helper()->build() );
+		$order->setLogger( $this->logger );
 
-		$fiat_total = Money::of( (string) $order->get_total(), $order->get_currency() );
+		try {
+			$fiat_total = Money::of( (string) $order->get_total(), $order->get_currency() );
 
-		$btc_total = $this->api->convert_fiat_to_btc( $fiat_total );
+			$btc_total = $this->api->convert_fiat_to_btc( $fiat_total );
+		} catch ( Throwable $throwable ) {
+			$this->logger->error(
+				'Could not convert order total to BTC for `shop_order:' . $order_id . '`: ' . $throwable->getMessage(),
+				array(
+					'order_id'  => $order_id,
+					'exception' => $throwable,
+				)
+			);
+			throw new BH_WP_Bitcoin_Gateway_Exception(
+				esc_html__( 'Unable to determine the Bitcoin exchange rate right now. Please choose another payment method.', 'bh-wp-bitcoin-gateway' ),
+				0,
+				$throwable // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Previous exception, not output.
+			);
+		}
 
 		/**
 		 * There should never really be an exception here, since the availability of a fresh address was checked before
@@ -494,9 +576,16 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 			 * @see Bitcoin_Address::get_raw_address()
 			 */
 			$btc_address = $this->api_woocommerce->assign_unused_address_to_order( $order, $btc_total );
-		} catch ( Exception $e ) {
-			$this->logger->error( $e->getMessage(), array( 'exception' => $e ) );
-			throw new BH_WP_Bitcoin_Gateway_Exception( 'Unable to find Bitcoin address to send to. Please choose another payment method.' );
+		} catch ( Throwable $throwable ) {
+			$this->logger->error(
+				'Could not assign a Bitcoin address to `shop_order:' . $order_id . '`: ' . $throwable->getMessage(),
+				array(
+					'order_id'  => $order_id,
+					'exception' => $throwable,
+				)
+			);
+			// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Static message; $throwable is the previous exception, not output.
+			throw new BH_WP_Bitcoin_Gateway_Exception( 'Unable to find Bitcoin address to send to. Please choose another payment method.', 0, $throwable );
 		}
 
 		/**
@@ -522,11 +611,22 @@ class Bitcoin_Gateway extends WC_Payment_Gateway {
 
 		$order->save();
 
-		// Reduce stock levels.
-		wc_reduce_stock_levels( $order_id );
+		// The order is now on-hold with an address; housekeeping failures must not undo that for the customer.
+		try {
+			// Reduce stock levels.
+			wc_reduce_stock_levels( $order_id );
 
-		// Remove cart.
-		WC()->cart->empty_cart();
+			// Remove cart.
+			WC()->cart->empty_cart();
+		} catch ( Throwable $throwable ) {
+			$this->logger->error(
+				'Order `shop_order:' . $order_id . '` placed but post-payment housekeeping failed: ' . $throwable->getMessage(),
+				array(
+					'order_id'  => $order_id,
+					'exception' => $throwable,
+				)
+			);
+		}
 
 		// Return thankyou redirect.
 		return array(

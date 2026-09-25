@@ -510,4 +510,77 @@ class API_Unit_Test extends \Codeception\Test\Unit {
 
 		$this->assertTrue( $logger->hasDebugThatPasses( $assert_log ) );
 	}
+
+	/**
+	 * An address that throws (not a rate limit) must be logged and skipped so the addresses after it are still
+	 * checked, rather than the batch stopping at the same point on every run.
+	 *
+	 * @covers ::check_new_addresses_for_transactions
+	 * @covers ::check_addresses_for_transactions
+	 */
+	public function test_check_new_addresses_for_transactions_skips_bad_address(): void {
+
+		$make_address = fn( string $raw ) => $this->makeEmpty(
+			Bitcoin_Address::class,
+			array(
+				'get_raw_address' => $raw,
+				'get_post_id'     => 1,
+				'get_status'      => Bitcoin_Address_Status::UNUSED,
+			)
+		);
+		$good_1       = $make_address( 'good1' );
+		$bad          = $make_address( 'bad' );
+		$good_2       = $make_address( 'good2' );
+
+		$wallet_service_mock = $this->make(
+			Bitcoin_Wallet_Service::class,
+			array(
+				'get_unknown_bitcoin_addresses'     => Expected::once( array( $good_1, $bad, $good_2 ) ),
+				'update_address_transactions_posts' => Expected::exactly( 2 ),
+			)
+		);
+
+		$payment_service_mock = $this->make(
+			Payment_Service::class,
+			array(
+				'update_address_transactions' => Expected::exactly(
+					3,
+					function ( Bitcoin_Address $address ) {
+						if ( 'bad' === $address->get_raw_address() ) {
+							throw new \RuntimeException( 'Malformed transaction JSON' );
+						}
+						return new Update_Address_Transactions_Result(
+							queried_address: $address,
+							known_tx_ids_before: null,
+							all_transactions: array()
+						);
+					}
+				),
+			)
+		);
+
+		$background_jobs_scheduler = $this->makeEmpty(
+			Background_Jobs_Scheduler_Interface::class,
+			array(
+				'schedule_check_newly_generated_bitcoin_addresses_for_transactions' => Expected::once(),
+			)
+		);
+
+		$logger = new ColorLogger();
+
+		$sut = $this->get_sut(
+			wallet_service: $wallet_service_mock,
+			payment_service: $payment_service_mock,
+			background_jobs_scheduler: $background_jobs_scheduler,
+			logger: $logger,
+		);
+
+		$result = $sut->check_new_addresses_for_transactions();
+
+		$this->assertSame( 2, $result->get_checked_addresses_count() );
+		$this->assertArrayHasKey( 'good2', $result->update_address_transactions_results );
+		$this->assertCount( 1, $result->unchecked_addresses );
+		$this->assertTrue( $result->was_follow_up_job_scheduled );
+		$this->assertTrue( $logger->hasErrorThatContains( 'Malformed transaction JSON' ) );
+	}
 }

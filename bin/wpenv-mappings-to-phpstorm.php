@@ -42,8 +42,8 @@ if ( ! is_array( $wp_env ) ) {
 	exit( 1 );
 }
 
-$port_raw    = $wp_env['port'] ?? 8888;
-$port        = is_int( $port_raw ) ? $port_raw : 8888;
+$port_raw    = $wp_env['port'] ?? 8885;
+$port        = is_int( $port_raw ) ? $port_raw : 8885;
 $server_name = "localhost:{$port}";
 
 $mappings_raw  = $wp_env['mappings'] ?? array();

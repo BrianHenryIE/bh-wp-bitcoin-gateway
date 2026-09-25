@@ -41,22 +41,19 @@ class Email_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 		$sent_to_admin = false;
 		$plain_text    = false;
 
+		// Record that the template was requested, then abort rendering it (the exception is caught and logged by the sut).
+		$template_requested = false;
 		add_filter(
 			'wc_get_template',
-			function (): string {
-				throw new \Exception();
+			function () use ( &$template_requested ): string {
+				$template_requested = true;
+				throw new \Exception( 'template requested' );
 			}
 		);
 
-		$e = null;
-		try {
-			$sut->print_instructions( $order, $sent_to_admin, $plain_text );
-		} catch ( \Exception $exception ) {
-			$e = $exception;
-		}
+		$sut->print_instructions( $order, $sent_to_admin, $plain_text );
 
-		// Is there a better way to say wc_get_template was called?
-		$this->assertNotNull( $e );
+		$this->assertTrue( $template_requested );
 	}
 
 
@@ -152,5 +149,36 @@ class Email_WPUnit_Test extends \lucatume\WPBrowser\TestCase\WPTestCase {
 
 		// Is there a better way to say wc_get_template was called?
 		$this->assertTrue( $logger->hasWarningThatContains( 'no address exception' ) );
+	}
+
+	/**
+	 * The email hook runs inside `payment_complete()`; an `Error` while loading the order previously escaped and
+	 * aborted payment processing.
+	 *
+	 * @covers ::print_instructions
+	 */
+	public function test_print_instructions_logs_and_does_not_throw_on_error(): void {
+
+		$logger = new ColorLogger();
+
+		$order = new WC_Order();
+		$order->save();
+
+		$api = $this->makeEmpty(
+			API_WooCommerce_Interface::class,
+			array(
+				'get_bitcoin_order' => Expected::once(
+					function () {
+						throw new \TypeError( 'Call to a member function getTimestamp() on null' );
+					}
+				),
+			)
+		);
+
+		$sut = new Email( $api, $logger );
+
+		$sut->print_instructions( $order, false, false );
+
+		$this->assertTrue( $logger->hasWarningThatContains( 'getTimestamp() on null' ) );
 	}
 }

@@ -20,7 +20,9 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Exception\UnknownCurrencyException;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Bitcoin_Gateway;
 use BrianHenryIE\WP_Bitcoin_Gateway\WP_Includes\Post_BH_Bitcoin_Address;
-use Exception;
+use Psr\Log\LoggerAwareTrait;
+use Psr\Log\LoggerInterface;
+use Throwable;
 use WP_Post;
 use WP_Post_Type;
 use WP_Posts_List_Table;
@@ -32,9 +34,10 @@ use WP_Screen;
  * @see wp-admin/edit.php?post_type=bh-bitcoin-address
  * @see WP_Posts_List_Table
  *
- * @phpstan-type Address_List_Table_Dependencies_Array array{api:API_Interface,bitcoin_address_repository:Bitcoin_Address_Repository,bitcoin_wallet_repository:Bitcoin_Wallet_Repository}
+ * @phpstan-type Address_List_Table_Dependencies_Array array{api:API_Interface,bitcoin_address_repository:Bitcoin_Address_Repository,bitcoin_wallet_repository:Bitcoin_Wallet_Repository,logger:LoggerInterface}
  */
 class Addresses_List_Table extends WP_Posts_List_Table {
+	use LoggerAwareTrait;
 
 	/**
 	 *
@@ -92,8 +95,32 @@ class Addresses_List_Table extends WP_Posts_List_Table {
 		$this->api                        = $post_type_object->dependencies['api'];
 		$this->bitcoin_address_repository = $post_type_object->dependencies['bitcoin_address_repository'];
 		$this->bitcoin_wallet_repository  = $post_type_object->dependencies['bitcoin_wallet_repository'];
+		$this->setLogger( $post_type_object->dependencies['logger'] );
 
 		add_filter( 'post_row_actions', array( $this, 'edit_row_actions' ), 10, 2 );
+	}
+
+	/**
+	 * Render one cell, logging and printing a placeholder rather than fataling the whole list when a row's data
+	 * is bad (e.g. a trashed wallet, missing meta, or a deleted transaction post).
+	 *
+	 * @param WP_Post  $item The post for the row being rendered.
+	 * @param string   $column The column name, for the log.
+	 * @param callable $render Prints the cell.
+	 */
+	protected function render_column_safely( WP_Post $item, string $column, callable $render ): void {
+		try {
+			$render();
+		} catch ( Throwable $throwable ) {
+			$this->logger->error(
+				"Failed to render {$column} column for `bh-bitcoin-address:{$item->ID}`: {$throwable->getMessage()}",
+				array(
+					'post_id'   => $item->ID,
+					'exception' => $throwable,
+				)
+			);
+			echo '<span class="dashicons dashicons-warning" title="' . esc_attr( $throwable->getMessage() ) . '"></span>';
+		}
 	}
 
 	/**
@@ -178,7 +205,18 @@ class Addresses_List_Table extends WP_Posts_List_Table {
 		parent::column_title( $post );
 		$render = (string) ob_get_clean();
 
-		$bitcoin_address = $this->get_bitcoin_address_object( $post );
+		try {
+			$bitcoin_address = $this->get_bitcoin_address_object( $post );
+		} catch ( Throwable $throwable ) {
+			$this->logger->error(
+				"Failed to render title column for `bh-bitcoin-address:{$post->ID}`: {$throwable->getMessage()}",
+				array(
+					'post_id'   => $post->ID,
+					'exception' => $throwable,
+				)
+			);
+			return wp_kses_post( $render );
+		}
 
 		$link = sprintf(
 			'https://www.blockchain.com/btc/address/%s',
@@ -199,10 +237,15 @@ class Addresses_List_Table extends WP_Posts_List_Table {
 	 * @return void Echos HTML.
 	 */
 	public function column_status( WP_Post $item ): void {
+		$this->render_column_safely(
+			$item,
+			'status',
+			function () use ( $item ): void {
+				$bitcoin_address = $this->get_bitcoin_address_object( $item );
 
-		$bitcoin_address = $this->get_bitcoin_address_object( $item );
-
-		echo esc_html( $bitcoin_address->get_status()->value );
+				echo esc_html( $bitcoin_address->get_status()->value );
+			}
+		);
 	}
 
 	/**
@@ -212,15 +255,20 @@ class Addresses_List_Table extends WP_Posts_List_Table {
 	 * @return void Echos HTML.
 	 */
 	public function column_order_id( WP_Post $item ): void {
+		$this->render_column_safely(
+			$item,
+			'order_id',
+			function () use ( $item ): void {
+				$bitcoin_address = $this->get_bitcoin_address_object( $item );
 
-		$bitcoin_address = $this->get_bitcoin_address_object( $item );
-
-		$order_id = $bitcoin_address->get_order_id();
-		if ( ! is_null( $order_id ) ) {
-			$url      = admin_url( "post.php?post={$order_id}&action=edit" );
-			$order_id = (string) $order_id;
-			echo '<a href="' . esc_url( $url ) . '">' . esc_html( $order_id ) . '</a>';
-		}
+				$order_id = $bitcoin_address->get_order_id();
+				if ( ! is_null( $order_id ) ) {
+					$url      = admin_url( "post.php?post={$order_id}&action=edit" );
+					$order_id = (string) $order_id;
+					echo '<a href="' . esc_url( $url ) . '">' . esc_html( $order_id ) . '</a>';
+				}
+			}
+		);
 	}
 
 	/**
@@ -230,15 +278,20 @@ class Addresses_List_Table extends WP_Posts_List_Table {
 	 * @return void Echos HTML.
 	 */
 	public function column_transactions_count( WP_Post $item ): void {
+		$this->render_column_safely(
+			$item,
+			'transactions_count',
+			function () use ( $item ): void {
+				$bitcoin_address = $this->get_bitcoin_address_object( $item );
 
-		$bitcoin_address = $this->get_bitcoin_address_object( $item );
-
-		$transactions = $this->api->get_saved_transactions( $bitcoin_address );
-		if ( is_array( $transactions ) ) {
-			echo count( $transactions );
-		} else {
-			echo '';
-		}
+				$transactions = $this->api->get_saved_transactions( $bitcoin_address );
+				if ( is_array( $transactions ) ) {
+					echo count( $transactions );
+				} else {
+					echo '';
+				}
+			}
+		);
 	}
 
 	/**
@@ -248,10 +301,15 @@ class Addresses_List_Table extends WP_Posts_List_Table {
 	 * @return void Echos HTML.
 	 */
 	public function column_received( WP_Post $item ): void {
+		$this->render_column_safely(
+			$item,
+			'received',
+			function () use ( $item ): void {
+				$bitcoin_address = $this->get_bitcoin_address_object( $item );
 
-		$bitcoin_address = $this->get_bitcoin_address_object( $item );
-
-		echo esc_html( $bitcoin_address->get_amount_received() ?? 'unknown' );
+				echo esc_html( $bitcoin_address->get_amount_received() ?? 'unknown' );
+			}
+		);
 	}
 
 	/**
@@ -268,14 +326,24 @@ class Addresses_List_Table extends WP_Posts_List_Table {
 
 		try {
 			$bitcoin_address = $this->get_bitcoin_address_object( $item );
-		} catch ( Exception ) {
+		} catch ( Throwable $throwable ) {
+			$this->logger->error(
+				"Failed to render wallet column for `bh-bitcoin-address:{$item->ID}`: {$throwable->getMessage()}",
+				array(
+					'post_id'   => $item->ID,
+					'exception' => $throwable,
+				)
+			);
 			return;
 		}
 
 		$wallet_post_id = $bitcoin_address->get_wallet_parent_post_id();
 		$wallet_post    = get_post( $wallet_post_id );
 		if ( ! $wallet_post ) {
-			// TODO: echo/log error.
+			$this->logger->warning(
+				"Wallet `bh-bitcoin-wallet:{$wallet_post_id}` for `bh-bitcoin-address:{$item->ID}` does not exist.",
+				array( 'post_id' => $item->ID )
+			);
 			return;
 		}
 
@@ -313,13 +381,16 @@ class Addresses_List_Table extends WP_Posts_List_Table {
 
 		try {
 			$bitcoin_address = $this->get_bitcoin_address_object( $item );
-		} catch ( Exception ) {
-			return;
-		}
-
-		try {
-			$bitcoin_wallet = $this->get_bitcoin_wallet_object( $bitcoin_address->get_wallet_parent_post_id() );
-		} catch ( Exception ) {
+			$bitcoin_wallet  = $this->get_bitcoin_wallet_object( $bitcoin_address->get_wallet_parent_post_id() );
+		} catch ( Throwable $throwable ) {
+			// E.g. the wallet has been deleted or trashed.
+			$this->logger->warning(
+				"Failed to render gateways column for `bh-bitcoin-address:{$item->ID}`: {$throwable->getMessage()}",
+				array(
+					'post_id'   => $item->ID,
+					'exception' => $throwable,
+				)
+			);
 			return;
 		}
 
@@ -385,12 +456,17 @@ class Addresses_List_Table extends WP_Posts_List_Table {
 	 * @return void Echos HTML.
 	 */
 	public function column_derive_path_sequence( WP_Post $item ) {
+		$this->render_column_safely(
+			$item,
+			'derive_path_sequence',
+			function () use ( $item ): void {
+				$bitcoin_address = $this->get_bitcoin_address_object( $item );
 
-		$bitcoin_address = $this->get_bitcoin_address_object( $item );
-
-		$nth  = $bitcoin_address->get_derivation_path_sequence_number();
-		$path = "0/$nth";
-		echo esc_html( $path );
+				$nth  = $bitcoin_address->get_derivation_path_sequence_number();
+				$path = "0/$nth";
+				echo esc_html( $path );
+			}
+		);
 	}
 
 	/**

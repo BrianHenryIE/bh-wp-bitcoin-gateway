@@ -12,6 +12,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
 use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
+use Throwable;
 use WC_Payment_Gateway;
 use WC_Payment_Gateways;
 
@@ -50,12 +51,20 @@ class Payment_Gateways {
 	 * @see WC_Payment_Gateways::init()
 	 */
 	public function add_to_woocommerce( array $gateways ): array {
-		$gateways[] = new Bitcoin_Gateway(
-			$this->api,
-			$this->api_woocommerce,
-			$this->settings,
-			$this->logger
-		);
+		try {
+			$gateways[] = new Bitcoin_Gateway(
+				$this->api,
+				$this->api_woocommerce,
+				$this->settings,
+				$this->logger
+			);
+		} catch ( Throwable $throwable ) {
+			// This filter runs on every request that loads gateways, for customers and admins alike.
+			$this->logger->error(
+				'Could not construct the Bitcoin gateway, it will be unavailable: ' . $throwable->getMessage(),
+				array( 'exception' => $throwable )
+			);
+		}
 
 		return $gateways;
 	}
@@ -71,14 +80,22 @@ class Payment_Gateways {
 	 */
 	public function register_woocommerce_block_checkout_support( PaymentMethodRegistry $payment_method_registry ): void {
 
-		foreach ( $this->api_woocommerce->get_bitcoin_gateways() as $gateway ) {
+		try {
+			foreach ( $this->api_woocommerce->get_bitcoin_gateways() as $gateway ) {
 
-			$support = new Bitcoin_Gateway_Blocks_Checkout_Support(
-				$gateway,
-				$this->api,
-				$this->settings
+				$support = new Bitcoin_Gateway_Blocks_Checkout_Support(
+					$gateway,
+					$this->api,
+					$this->settings,
+					$this->logger
+				);
+				$payment_method_registry->register( $support );
+			}
+		} catch ( Throwable $throwable ) {
+			$this->logger->error(
+				'Could not register the Bitcoin gateway with the blocks checkout: ' . $throwable->getMessage(),
+				array( 'exception' => $throwable )
 			);
-			$payment_method_registry->register( $support );
 		}
 	}
 }

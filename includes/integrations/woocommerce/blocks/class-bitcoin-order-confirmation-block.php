@@ -16,6 +16,9 @@ use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\API_WooCommerce_Int
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Details_Formatter;
 use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\Model\WC_Bitcoin_Order;
 use BrianHenryIE\WP_Bitcoin_Gateway\Settings_Interface;
+use Psr\Log\LoggerAwareTrait;
+use Psr\Log\LoggerInterface;
+use Throwable;
 use WC_Order;
 use WP_Block;
 use WP_Block_Type_Registry;
@@ -25,17 +28,44 @@ use WP_Block_Type_Registry;
  * @phpstan-type ParsedBlock array{blockName:string|null, attrs:array<mixed>, innerBlocks:array<ParsedBlockWithoutSubblock>, innerHTML:string, innerContent:array<int,string|null>}
  */
 class Bitcoin_Order_Confirmation_Block {
+	use LoggerAwareTrait;
+
+	/**
+	 * The context names this block provides to its inner blocks, i.e. the `usesContext` entries of the
+	 * order-confirmation child blocks' block.json files.
+	 *
+	 * The values are only declared here. They are computed from the order in the render callback and passed
+	 * to the (JavaScript rendered) child blocks as `data-context-*` attributes on the wrapper.
+	 *
+	 * @see self::render_block()
+	 * @see Details_Formatter::camel_case_keys()
+	 *
+	 * @var array<string, string> Context name : attribute name.
+	 */
+	protected const PROVIDES_CONTEXT = array(
+		'bh-wp-bitcoin-gateway/orderId'                    => 'orderId',
+		'bh-wp-bitcoin-gateway/paymentAddress'             => 'paymentAddress',
+		'bh-wp-bitcoin-gateway/paymentStatus'              => 'paymentStatus',
+		'bh-wp-bitcoin-gateway/btcTotalFormatted'          => 'btcTotalFormatted',
+		'bh-wp-bitcoin-gateway/btcAmountReceivedFormatted' => 'btcAmountReceivedFormatted',
+		'bh-wp-bitcoin-gateway/btcExchangeRateFormatted'   => 'btcExchangeRateFormatted',
+		'bh-wp-bitcoin-gateway/exchangeRateUrl'            => 'exchangeRateUrl',
+		'bh-wp-bitcoin-gateway/lastCheckedTimeFormatted'   => 'lastCheckedTimeFormatted',
+	);
 
 	/**
 	 * Constructor.
 	 *
 	 * @param Settings_Interface        $settings Plugin settings, plugin url required for serving script.
 	 * @param API_WooCommerce_Interface $api Used to get the formatted order details.
+	 * @param LoggerInterface           $logger A PSR logger.
 	 */
 	public function __construct(
 		protected Settings_Interface $settings,
 		protected API_WooCommerce_Interface $api,
+		LoggerInterface $logger,
 	) {
+		$this->setLogger( $logger );
 	}
 
 	/**
@@ -57,15 +87,6 @@ class Bitcoin_Order_Confirmation_Block {
 			array( 'in_footer' => true )
 		);
 
-		$provides_context = array(
-			'bh-wp-bitcoin-gateway/orderId' => 'orderId',
-		);
-		foreach ( $this->get_order_details_formatted_array() as $key => $value ) {
-			if ( is_string( $value ) ) {
-				$provides_context[ "bh-wp-bitcoin-gateway/$key" ] = $value;
-			}
-		}
-
 		register_block_type(
 			// TODO: rename to be explicitly a block for WooCommerce.
 			'bh-wp-bitcoin-gateway/bitcoin-order',
@@ -78,7 +99,7 @@ class Bitcoin_Order_Confirmation_Block {
 						'default' => 0,
 					),
 				),
-				'provides_context' => $provides_context,
+				'provides_context' => self::PROVIDES_CONTEXT,
 				'render_callback'  => $this->render_block( ... ),
 			)
 		);
@@ -101,6 +122,25 @@ class Bitcoin_Order_Confirmation_Block {
 	 * @return string Rendered block content.
 	 */
 	public function render_block( array $attributes, string $content, $block ): string {
+		try {
+			return $this->render_block_unguarded( $attributes, $content, $block );
+		} catch ( Throwable $throwable ) {
+			// Never break the (block theme) thank-you page or the site editor.
+			$this->logger->error(
+				'Error rendering bitcoin-order block: ' . $throwable->getMessage(),
+				array( 'exception' => $throwable )
+			);
+			return '';
+		}
+	}
+
+	/**
+	 * @param array{orderId?:int} $attributes Block attributes.
+	 * @param string              $content    Block content.
+	 * @param WP_Block            $block      Block instance.
+	 * @return string Rendered block content.
+	 */
+	protected function render_block_unguarded( array $attributes, string $content, $block ): string {
 		$order_id = $attributes['orderId'] ?? 0;
 
 		if ( 0 === $order_id ) {
@@ -155,16 +195,21 @@ class Bitcoin_Order_Confirmation_Block {
 	 * @return array<string,mixed> The formatted order details or null if no order found.
 	 */
 	protected function get_order_details_formatted_array(): array {
-		$order = $this->get_order();
-
-		if ( is_null( $order ) ) {
-			return array();
-		}
-
 		try {
+			$order = $this->get_order();
+
+			if ( is_null( $order ) ) {
+				return array();
+			}
+
 			$order_details_formatted_array = $this->api->get_formatted_order_details( $order );
 			return Details_Formatter::camel_case_keys( $order_details_formatted_array );
-		} catch ( \Exception ) {
+		} catch ( Throwable $throwable ) {
+			// This runs on `init` and in the render callback; a failure means the block renders empty, not a fatal.
+			$this->logger->warning(
+				'Could not get order details for bitcoin-order block: ' . $throwable->getMessage(),
+				array( 'exception' => $throwable )
+			);
 			return array();
 		}
 	}
@@ -252,7 +297,15 @@ class Bitcoin_Order_Confirmation_Block {
 			return $context;
 		}
 
-		$context['bh-wp-bitcoin-gateway/orderId'] = $this->detect_order_id();
+		try {
+			$context['bh-wp-bitcoin-gateway/orderId'] = $this->detect_order_id();
+		} catch ( Throwable $throwable ) {
+			// This filter runs for every block rendered on the front end.
+			$this->logger->error(
+				'Error detecting order id for block context: ' . $throwable->getMessage(),
+				array( 'exception' => $throwable )
+			);
+		}
 
 		return $context;
 	}

@@ -25,6 +25,7 @@ use DateTimeImmutable;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
+use Throwable;
 use WC_Order;
 use WC_Payment_Gateway;
 use WC_Payment_Gateways;
@@ -65,7 +66,7 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 	 * @param string|non-empty-string $gateway_id The id of the gateway to check.
 	 */
 	public function is_bitcoin_gateway( string $gateway_id ): bool {
-		if ( ! is_plugin_active( 'woocommerce/woocommerce.php' ) || ! class_exists( WC_Payment_Gateway::class ) ) {
+		if ( ! $this->is_woocommerce_active() || ! class_exists( WC_Payment_Gateway::class ) ) {
 			return false;
 		}
 		if ( empty( $gateway_id ) ) {
@@ -90,7 +91,7 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 	 */
 	public function get_bitcoin_gateways(): array {
 		// The second check here is because on the first page load after deleting a plugin, it is still in the active plugins list.
-		if ( ! is_plugin_active( 'woocommerce/woocommerce.php' ) || ! class_exists( WC_Payment_Gateways::class ) ) {
+		if ( ! $this->is_woocommerce_active() || ! class_exists( WC_Payment_Gateways::class ) ) {
 			return array();
 		}
 
@@ -113,11 +114,22 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 	 * @param int|string $order_id The id of the (presumed) WooCommerce order to check.
 	 */
 	public function is_order_has_bitcoin_gateway( int|string $order_id ): bool {
-		if ( ! is_plugin_active( 'woocommerce/woocommerce.php' ) || ! function_exists( 'wc_get_order' ) ) {
+		if ( ! $this->is_woocommerce_active() || ! function_exists( 'wc_get_order' ) ) {
 			return false;
 		}
 
 		return (bool) $this->get_bitcoin_order( (int) $order_id );
+	}
+
+	/**
+	 * `is_plugin_active()` lives in wp-admin/includes/plugin.php, which WordPress does not load on front-end
+	 * requests; this class is used on the thank-you and my-account pages, so load it rather than fatal.
+	 */
+	protected function is_woocommerce_active(): bool {
+		if ( ! function_exists( 'is_plugin_active' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		}
+		return is_plugin_active( 'woocommerce/woocommerce.php' );
 	}
 
 	/**
@@ -147,15 +159,14 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 		$bitcoin_order = $this->get_bitcoin_order( $order->get_id() );
 
 		if ( ! $bitcoin_order ) {
-			throw new BH_WP_Bitcoin_Gateway_Exception();
+			throw new BH_WP_Bitcoin_Gateway_Exception( esc_html( sprintf( '`shop_order:%d` is not a Bitcoin order.', $order->get_id() ) ) );
 		}
 
-		/**
-		 * Technically, this could return `null` but it's being called instantly on order creation, so I doubt it.
-		 *
-		 * @var Bitcoin_Gateway $bitcoin_gateway
-		 */
 		$bitcoin_gateway = $bitcoin_order->get_gateway();
+
+		if ( is_null( $bitcoin_gateway ) ) {
+			throw new BH_WP_Bitcoin_Gateway_Exception( esc_html( sprintf( 'No Bitcoin gateway found for `shop_order:%d`.', $order->get_id() ) ) );
+		}
 
 		$btc_address = $this->get_fresh_address_for_gateway( $bitcoin_gateway );
 
@@ -181,18 +192,29 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 			)
 		);
 
-		// Now that the address is assigned, schedule a job to check it for payment transactions.
-		$this->background_jobs_scheduler->schedule_single_check_assigned_addresses_for_transactions(
-			date_time: new DateTimeImmutable( 'now' )->add( new DateInterval( 'PT15M' ) )
-		);
+		// The address is assigned and saved; the scheduling below is housekeeping and must not fail the checkout.
+		try {
+			// Now that the address is assigned, schedule a job to check it for payment transactions.
+			$this->background_jobs_scheduler->schedule_single_check_assigned_addresses_for_transactions(
+				date_time: new DateTimeImmutable( 'now' )->add( new DateInterval( 'PT15M' ) )
+			);
 
-		// Queue a background job to prepare the next unused address, since this order has consumed one.
-		if ( $bitcoin_gateway->get_xpub() ) {
-			$wallet_for_assigned_address = $this->wallet_service->get_or_save_wallet_for_xpub( $bitcoin_gateway->get_xpub() )->wallet;
-			$this->background_jobs_scheduler->schedule_single_ensure_unused_addresses( $wallet_for_assigned_address );
-		} else {
-			// Seems implausible to reach here.
-			$this->logger->warning( 'Gateway has no master public key.' );
+			// Queue a background job to prepare the next unused address, since this order has consumed one.
+			if ( $bitcoin_gateway->get_xpub() ) {
+				$wallet_for_assigned_address = $this->wallet_service->get_or_save_wallet_for_xpub( $bitcoin_gateway->get_xpub() )->wallet;
+				$this->background_jobs_scheduler->schedule_single_ensure_unused_addresses( $wallet_for_assigned_address );
+			} else {
+				// Seems implausible to reach here.
+				$this->logger->warning( 'Gateway has no master public key.' );
+			}
+		} catch ( Throwable $throwable ) {
+			$this->logger->error(
+				'Address assigned to `shop_order:' . $order->get_id() . '` but scheduling follow-up jobs failed: ' . $throwable->getMessage(),
+				array(
+					'order_id'  => $order->get_id(),
+					'exception' => $throwable,
+				)
+			);
 		}
 
 		return $refreshed_address;
@@ -268,7 +290,10 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 		$bitcoin_address = $bitcoin_order->get_bitcoin_address();
 
 		if ( ! $bitcoin_address ) {
-			// TODO: log.
+			$this->logger->warning(
+				'Cannot check `shop_order:' . $order->get_id() . '` for payment: it has no Bitcoin address.',
+				array( 'order_id' => $order->get_id() )
+			);
 			return;
 		}
 
@@ -410,19 +435,20 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 		}
 
 		$order->set_json_mapper( $this->json_mapper );
+		$order->setLogger( $this->logger );
 
 		try {
 			$order->hydrate(
 				$this->wallet_service,
 				$this->payment_service,
 			);
-		} catch ( \Exception $exception ) {
+		} catch ( Throwable $throwable ) {
 			$this->logger->warning(
 				'Failed to hydrate order {order_id}: {message}',
 				array(
-					'message'   => $exception->getMessage(),
+					'message'   => $throwable->getMessage(),
 					'order_id'  => $order_id,
-					'exception' => $exception,
+					'exception' => $throwable,
 				)
 			);
 		}
@@ -454,7 +480,19 @@ class API_WooCommerce implements API_WooCommerce_Interface, LoggerAwareInterface
 			|| ! $bitcoin_order->get_bitcoin_address()
 			|| ! $bitcoin_order->get_raw_payment_address()
 		) {
-			throw new BH_WP_Bitcoin_Gateway_Exception();
+			$missing = array_keys(
+				array_filter(
+					array(
+						'BTC total'       => ! $bitcoin_order->get_btc_total_price(),
+						'exchange rate'   => ! $bitcoin_order->get_exchange_rate(),
+						'address object'  => ! $bitcoin_order->get_bitcoin_address(),
+						'payment address' => ! $bitcoin_order->get_raw_payment_address(),
+					)
+				)
+			);
+			throw new BH_WP_Bitcoin_Gateway_Exception(
+				esc_html( sprintf( '`shop_order:%d` is missing Bitcoin details: %s.', $bitcoin_order->get_id(), implode( ', ', $missing ) ) )
+			);
 		}
 
 		$formatted = new Details_Formatter( $bitcoin_order );

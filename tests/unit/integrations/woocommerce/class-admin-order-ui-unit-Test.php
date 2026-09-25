@@ -101,4 +101,49 @@ class Admin_Order_UI_Unit_Test extends \Codeception\Test\Unit {
 
 		$sut->register_address_transactions_meta_box();
 	}
+
+	/**
+	 * `add_meta_boxes` fires on every edit screen; a failure checking the order must be logged, not fatal.
+	 *
+	 * @covers ::register_address_transactions_meta_box
+	 */
+	public function test_register_address_transactions_meta_box_logs_and_does_not_throw_on_error(): void {
+
+		$logger = new ColorLogger();
+		$api    = $this->makeEmpty(
+			API_WooCommerce_Interface::class,
+			array(
+				'is_order_has_bitcoin_gateway' => Expected::once(
+					function () {
+						throw new \RuntimeException( 'Order data store unavailable' );
+					}
+				),
+			)
+		);
+
+		$order_post     = new \stdClass();
+		$order_post->ID = 123;
+
+		$GLOBALS['post'] = $order_post;
+		$_GET['post']    = $order_post->ID;
+
+		$sut = new Admin_Order_UI( $api, $logger );
+
+		WP_Mock::userFunction(
+			'add_meta_box',
+			array(
+				'times' => 0,
+			)
+		);
+
+		global $post;
+		$post = new class() {
+			public int $ID           = 123;
+			public string $post_type = 'shop_order';
+		};
+
+		$sut->register_address_transactions_meta_box();
+
+		$this->assertTrue( $logger->hasErrorThatContains( 'Order data store unavailable' ) );
+	}
 }

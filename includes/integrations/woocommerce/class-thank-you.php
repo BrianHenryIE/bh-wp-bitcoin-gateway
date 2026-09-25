@@ -10,7 +10,7 @@
 namespace BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce;
 
 use BrianHenryIE\WP_Bitcoin_Gateway\API_Interface;
-use Exception;
+use Throwable;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 use WC_Order;
@@ -50,30 +50,29 @@ class Thank_You {
 	 */
 	public function print_instructions( int $order_id ): void {
 
-		$order = $this->api->get_bitcoin_order( $order_id );
-
-		if ( ! $order ) {
-			return;
-		}
-
 		try {
+			$order = $this->api->get_bitcoin_order( $order_id );
+
+			if ( ! $order ) {
+				return;
+			}
+
 			$template_args = $this->api->get_formatted_order_details( $order );
-		} catch ( Exception $exception ) {
-			// Exception sometimes occurs when an order has no Bitcoin address, although that's not likely the case here.
+
+			$template_args['btc_logo_url'] = plugin_dir_url( dirname( __DIR__, 2 ) ) . 'assets/bitcoin.png';
+
+			$template_args['template'] = self::TEMPLATE_NAME;
+
+			wc_get_template( self::TEMPLATE_NAME, $template_args );
+		} catch ( Throwable $throwable ) {
+			// Typically an order with no Bitcoin address; whatever the cause, never break the thank-you page.
 			$this->logger->warning(
-				"Failed to get `shop_order:{$order_id}` details for Thank You template: {$exception->getMessage()}",
+				"Failed to print `shop_order:{$order_id}` details for Thank You template: {$throwable->getMessage()}",
 				array(
 					'order_id'  => $order_id,
-					'exception' => $exception,
+					'exception' => $throwable,
 				)
 			);
-			return;
 		}
-
-		$template_args['btc_logo_url'] = plugin_dir_url( dirname( __DIR__, 2 ) ) . 'assets/bitcoin.png';
-
-		$template_args['template'] = self::TEMPLATE_NAME;
-
-		wc_get_template( self::TEMPLATE_NAME, $template_args );
 	}
 }
