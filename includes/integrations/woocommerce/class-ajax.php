@@ -98,7 +98,25 @@ class AJAX {
 			wp_send_json_error( array( 'message' => 'Unexpected order error.' ), 500 );
 		}
 
-		wp_send_json_success( Frontend_Assets::filter_order_details_for_javascript( $result, $order_id ) );
+		// These are the only keys used by the JavaScript.
+		$allowed_keys = array(
+			'btc_address',
+			'btc_total',
+			'order_id',
+			'btc_amount_received',
+			'status',
+			'amount_received',
+			'order_status_formatted',
+			'last_checked_time_formatted',
+		);
+
+		foreach ( array_keys( $result ) as $key ) {
+			if ( ! in_array( $key, $allowed_keys, true ) ) {
+				unset( $result[ $key ] );
+			}
+		}
+
+		wp_send_json_success( $result );
 	}
 
 	/**

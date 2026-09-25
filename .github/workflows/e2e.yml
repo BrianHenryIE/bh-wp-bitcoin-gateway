@@ -91,7 +91,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Download plugin archive
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: plugin-archive
           path: dist-archive
@@ -107,9 +107,13 @@ jobs:
           # `direct_file_access`: `bh-wp-bitcoin-gateway.php`.
           # `direct_file_access`: `includes/integrations/woocommerce/class-api-woocommerce.php`.
           # `trademarks`: "bh-wp-bitcoin-gateway" - contains the restricted term "wp".
+          # TODO: remove direct_file_access when this issue is closed @see https://github.com/WordPress/plugin-check/issues/1361
           exclude-checks: |
             trademarks
-          # direct_file_access # TODO: enable this if it doesn't resolve itself. @see https://github.com/WordPress/plugin-check/issues/1361
+            direct_file_access
+          ignore-codes: |
+            PluginCheck.CodeAnalysis.Heredoc.NotAllowed
+            PluginCheck.CodeAnalysis.DiscouragedFunctions.load_plugin_textdomainFound
 
   e2e:
     name: E2E ${{ matrix.group }} PHP ${{ matrix.php }}
