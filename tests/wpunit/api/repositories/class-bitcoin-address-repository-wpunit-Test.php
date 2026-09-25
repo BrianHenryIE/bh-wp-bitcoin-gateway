@@ -10,6 +10,7 @@ use BrianHenryIE\WP_Bitcoin_Gateway\API\Model\Wallet\Bitcoin_Address_WP_Post_Int
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories\Bitcoin_Address_Factory;
 use BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\Factories\Bitcoin_Wallet_Factory;
 use BrianHenryIE\WP_Bitcoin_Gateway\Brick\Money\Money;
+use BrianHenryIE\WP_Bitcoin_Gateway\Integrations\WooCommerce\WooCommerce_Integration;
 use lucatume\WPBrowser\TestCase\WPTestCase;
 use wpdb;
 
@@ -449,6 +450,34 @@ class Bitcoin_Address_Repository_WPUnit_Test extends WPTestCase {
 		$unused_w1_retrieved = $this->sut->get_by_post_id( $unused_w1->get_post_id() );
 		$this->assertEquals( $wallet1->get_post_id(), $unused_w1_retrieved->get_wallet_parent_post_id() );
 		$this->assertEquals( Bitcoin_Address_Status::UNUSED, $unused_w1_retrieved->get_status() );
+	}
+
+	/**
+	 * Regression: the integration id is a namespaced class name. Every later update of the address (which happens
+	 * on every payment check) used to strip its backslashes, after which the WooCommerce integration ignored the
+	 * address's payment events and the order was never marked paid.
+	 *
+	 * @covers ::assign_to_order
+	 * @covers ::set_transactions_post_ids_to_address
+	 * @covers \BrianHenryIE\WP_Bitcoin_Gateway\API\Repositories\WP_Post_Repository_Abstract::update
+	 */
+	public function test_integration_id_survives_later_updates(): void {
+		$wallet  = $this->wallet_repository->save_new( 'xpub_test_slashes' );
+		$address = $this->sut->save_new_address( $wallet, 0, 'bc1qslashes' );
+
+		$this->sut->assign_to_order( $address, WooCommerce_Integration::class, 123, Money::of( '0.001', 'BTC' ) );
+
+		$this->assertSame( WooCommerce_Integration::class, $this->sut->refresh( $address )->get_integration_id() );
+
+		$this->sut->set_transactions_post_ids_to_address( $this->sut->refresh( $address ), array( 55 => 'txid' ) );
+
+		$updated = $this->sut->refresh( $address );
+
+		$this->assertSame( WooCommerce_Integration::class, $updated->get_integration_id() );
+		// Meta the later updates did not mention is still there.
+		$this->assertSame( 123, $updated->get_order_id() );
+		$this->assertTrue( Money::of( '0.001', 'BTC' )->isEqualTo( $updated->get_target_amount() ) );
+		$this->assertSame( array( 55 => 'txid' ), $updated->get_tx_ids() );
 	}
 
 	/**

@@ -124,7 +124,7 @@ class Bitcoin_Transaction_Repository extends WP_Post_Repository_Abstract {
 			/** @var WpUpdatePostArray $args */
 			$args = $insert_query->to_query_array();
 
-			$new_post_id = wp_insert_post( $args, true );
+			$new_post_id = wp_insert_post( self::slash_for_wordpress( $args ), true );
 
 			if ( is_wp_error( $new_post_id ) ) {
 				// TODO Log.
