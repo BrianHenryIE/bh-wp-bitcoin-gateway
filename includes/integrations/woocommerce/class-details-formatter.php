@@ -193,14 +193,15 @@ class Details_Formatter {
 		}
 
 		$address = $this->bitcoin_order->get_bitcoin_address();
-		$seen    = ( $address?->get_amount_received() ?? Money::of( 0, 'BTC' ) )
-			->plus( $address?->get_unconfirmed_amount_received() ?? Money::of( 0, 'BTC' ) );
 
-		if ( $seen->isNegativeOrZero() ) {
+		if ( is_null( $address ) || ! $address->has_payment_been_seen() ) {
 			return self::STATUS_AWAITING_PAYMENT;
 		}
 
-		$target = $address?->get_target_amount() ?? $this->bitcoin_order->get_btc_total_price();
+		$seen = ( $address->get_amount_received() ?? Money::of( 0, 'BTC' ) )
+			->plus( $address->get_unconfirmed_amount_received() ?? Money::of( 0, 'BTC' ) );
+
+		$target = $address->get_target_amount() ?? $this->bitcoin_order->get_btc_total_price();
 
 		if ( ! is_null( $target ) && $target->isLessThanOrEqualTo( $seen ) ) {
 			return self::STATUS_AWAITING_CONFIRMATION;
@@ -247,6 +248,7 @@ class Details_Formatter {
 		$result                                  = array();
 		$result['btc_total_formatted']           = $this->get_btc_total_formatted();
 		$result['btc_exchange_rate_formatted']   = $this->get_btc_exchange_rate_formatted();
+		$result['order_status']                  = $this->bitcoin_order->get_status();
 		$result['order_status_formatted']        = $this->get_wc_order_status_formatted() ?? 'unknown';
 		$result['btc_amount_received_formatted'] = $this->get_btc_amount_received_formatted();
 		$result['last_checked_time_formatted']   = $this->get_last_checked_time_formatted();

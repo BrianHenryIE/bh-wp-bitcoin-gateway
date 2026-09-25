@@ -55,34 +55,98 @@
 		startPolling();
 	} );
 
-	let pollTimer: ReturnType< typeof setInterval > | undefined;
-
 	/**
-	 * Poll the server (which polls the blockchain and mempool) until the order is paid, so the customer sees
-	 * "payment seen" without refreshing the page.
+	 * Polling schedule: first check after `poll_interval_ms`, then the gap doubles after every check up to
+	 * `poll_max_interval_ms`, and nothing more is scheduled once `poll_duration_ms` has passed since page load.
+	 * Exposed on `window` so tests can observe it.
 	 */
-	function startPolling(): void {
-		const intervalMs: number =
-			window.bh_wp_bitcoin_gateway_ajax_data?.poll_interval_ms ?? 0;
+	const polling = {
+		polls: 0,
+		schedules: 0,
+		next_delay_ms: null as number | null,
+		stopped_reason: null as string | null,
+	};
+	window.bh_wp_bitcoin_gateway_polling = polling;
 
-		if ( intervalMs <= 0 || isPaid( getCurrentStatusKey() ) ) {
+	let pollTimer: ReturnType< typeof setTimeout > | undefined;
+	let pollStartedAt = 0;
+	let currentDelayMs = 0;
+
+	function pollConfig(): {
+		initial: number;
+		max: number;
+		duration: number;
+	} {
+		const data = window.bh_wp_bitcoin_gateway_ajax_data;
+		return {
+			initial: data?.poll_interval_ms ?? 0,
+			max: data?.poll_max_interval_ms ?? 0,
+			duration: data?.poll_duration_ms ?? 0,
+		};
+	}
+
+	function startPolling(): void {
+		const { initial } = pollConfig();
+
+		if ( initial <= 0 ) {
 			return;
 		}
 
-		pollTimer = setInterval( checkNow, intervalMs );
+		const current = window.bh_wp_bitcoin_gateway_order_details;
+		if (
+			isPaid( current?.payment_status_key ?? '' ) ||
+			isTerminalOrderStatus( current?.order_status ?? '' )
+		) {
+			return;
+		}
+
+		pollStartedAt = Date.now();
+		currentDelayMs = initial;
+		scheduleNextPoll();
 	}
 
-	function stopPolling(): void {
+	/**
+	 * Schedule the next check, or stop (and say so on the page) if the next one would fall outside the polling
+	 * window.
+	 */
+	function scheduleNextPoll(): void {
+		const { max, duration } = pollConfig();
+		const elapsedMs = Date.now() - pollStartedAt;
+
+		if ( duration > 0 && elapsedMs + currentDelayMs > duration ) {
+			stopPolling( 'duration' );
+			return;
+		}
+
+		polling.next_delay_ms = currentDelayMs;
+		polling.schedules++;
+		pollTimer = setTimeout( function (): void {
+			pollTimer = undefined;
+			polling.polls++;
+			checkNow( true );
+		}, currentDelayMs );
+
+		// Back off for the following check.
+		currentDelayMs = Math.min(
+			currentDelayMs * 2,
+			max > 0 ? max : currentDelayMs * 2
+		);
+	}
+
+	/**
+	 * @param reason Why polling stopped. A note is shown on the page unless the order no longer needs checking.
+	 */
+	function stopPolling( reason: string ): void {
 		if ( pollTimer ) {
-			clearInterval( pollTimer );
+			clearTimeout( pollTimer );
 			pollTimer = undefined;
 		}
-	}
+		polling.next_delay_ms = null;
+		polling.stopped_reason = reason;
 
-	function getCurrentStatusKey(): string {
-		return (
-			window.bh_wp_bitcoin_gateway_order_details?.payment_status_key ?? ''
-		);
+		if ( 'paid' !== reason ) {
+			$( '.bh_wp_bitcoin_gateway_polling_stopped' ).fadeIn( 'slow' );
+		}
 	}
 
 	function isPaid( statusKey: string ): boolean {
@@ -91,6 +155,13 @@
 
 	function isPaymentSeen( statusKey: string ): boolean {
 		return statusKey === 'awaiting_confirmation' || statusKey === 'paid';
+	}
+
+	/**
+	 * An order that has been cancelled, failed or refunded will never be paid, so stop asking.
+	 */
+	function isTerminalOrderStatus( orderStatus: string ): boolean {
+		return [ 'cancelled', 'failed', 'refunded' ].includes( orderStatus );
 	}
 
 	/**
@@ -104,13 +175,15 @@
 			$( '.bh_wp_bitcoin_gateway_qr' ).show();
 			$( '.bh_wp_bitcoin_gateway_payment_seen' ).hide();
 		}
-
-		if ( isPaid( statusKey ) ) {
-			stopPolling();
-		}
 	}
 
-	function checkNow(): void {
+	/**
+	 * Ask the server to check the blockchain for this order's payment and update the page.
+	 *
+	 * @param scheduled Whether this check came from the polling schedule (which then decides what happens next)
+	 *                  or from the customer clicking "last checked".
+	 */
+	function checkNow( scheduled: boolean = false ): void {
 		const ajaxUrl: string = window.bh_wp_bitcoin_gateway_ajax_data.ajax_url;
 		const nonce: string = window.bh_wp_bitcoin_gateway_ajax_data.nonce;
 		const orderId: string =
@@ -127,66 +200,93 @@
 			order_id: orderId,
 		};
 
-		$.post( ajaxUrl, data, function ( response: AjaxResponse ): void {
+		function restoreOpacity(): void {
 			$( '.bh-wp-bitcoin-gateway-details' ).removeClass( 'blockUI' );
+			$( '.bh_wp_bitcoin_gateway_updatable' ).animate( {
+				opacity: 1.0,
+			} );
+		}
 
-			if ( ! response || ! response.success || ! response.data ) {
-				// The server logged the problem; leave the page as it was and stop hammering it.
-				$( '.bh_wp_bitcoin_gateway_updatable' ).animate( {
-					opacity: 1.0,
-				} );
-				stopPolling();
-				return;
-			}
+		$.post( ajaxUrl, data )
+			.done( function ( response: AjaxResponse ): void {
+				$( '.bh-wp-bitcoin-gateway-details' ).removeClass( 'blockUI' );
 
-			// Compare the existing values,
-			// If they are the same, just reset opacity,
-			// If they are different, display:none the slow fade in.
+				if ( ! response || ! response.success || ! response.data ) {
+					// The server logged the problem; leave the page as it was and stop hammering it.
+					restoreOpacity();
+					stopPolling( 'error' );
+					return;
+				}
 
-			const newData = response.data;
-			const current = window.bh_wp_bitcoin_gateway_order_details;
+				// Compare the existing values,
+				// If they are the same, just reset opacity,
+				// If they are different, display:none the slow fade in.
 
-			const changed =
-				current.btc_amount_received !== newData.btc_amount_received ||
-				current.amount_unconfirmed !== newData.amount_unconfirmed ||
-				current.payment_status_key !== newData.payment_status_key;
+				const newData = response.data;
+				const current = window.bh_wp_bitcoin_gateway_order_details;
 
-			if ( changed ) {
-				// We have a new payment (or a new confirmation)!
-				$( '.bh_wp_bitcoin_gateway_updatable' ).css(
-					'display',
-					'none'
+				const changed =
+					current.btc_amount_received !==
+						newData.btc_amount_received ||
+					current.amount_unconfirmed !== newData.amount_unconfirmed ||
+					current.payment_status_key !== newData.payment_status_key ||
+					current.order_status !== newData.order_status;
+
+				if ( changed ) {
+					// We have a new payment (or a new confirmation)!
+					$( '.bh_wp_bitcoin_gateway_updatable' ).css(
+						'display',
+						'none'
+					);
+
+					$( '.bh_wp_bitcoin_gateway_status' ).text( newData.status );
+					$( '.bh_wp_bitcoin_gateway_amount_received' ).text(
+						newData.amount_received
+					);
+					$( '.bh_wp_bitcoin_gateway_amount_unconfirmed' ).text(
+						newData.amount_unconfirmed
+					);
+					$( '.order-status' ).text( newData.order_status_formatted );
+
+					// TODO: Transactions.
+
+					$( '.bh_wp_bitcoin_gateway_updatable' ).fadeIn( 'slow' );
+
+					applyStatusKey( newData.payment_status_key );
+				} else {
+					// Return to regular opacity
+					$( '.bh_wp_bitcoin_gateway_updatable' ).animate( {
+						opacity: 1.0,
+					} );
+				}
+
+				$( '.bh_wp_bitcoin_gateway_last_checked_time' ).text(
+					newData.last_checked_time_formatted
 				);
 
-				$( '.bh_wp_bitcoin_gateway_status' ).text( newData.status );
-				$( '.bh_wp_bitcoin_gateway_amount_received' ).text(
-					newData.amount_received
+				for ( const key of Object.keys( newData ) ) {
+					window.bh_wp_bitcoin_gateway_order_details[ key ] =
+						newData[ key ];
+				}
+
+				if ( isPaid( newData.payment_status_key ) ) {
+					stopPolling( 'paid' );
+				} else if ( isTerminalOrderStatus( newData.order_status ) ) {
+					stopPolling( 'order_' + newData.order_status );
+				} else if ( scheduled ) {
+					scheduleNextPoll();
+				}
+			} )
+			.fail( function ( jqXHR: JQuery.jqXHR ): void {
+				// Non-2xx (expired nonce, unauthorized, server error): jQuery does not call the success callback
+				// for these, so handle them here. The server has logged anything it could; stop polling.
+				console.warn(
+					'Bitcoin payment check failed:',
+					jqXHR.status,
+					jqXHR.statusText
 				);
-				$( '.bh_wp_bitcoin_gateway_amount_unconfirmed' ).text(
-					newData.amount_unconfirmed
-				);
-				$( '.order-status' ).text( newData.order_status_formatted );
-
-				// TODO: Transactions.
-
-				$( '.bh_wp_bitcoin_gateway_updatable' ).fadeIn( 'slow' );
-			} else {
-				// Return to regular opacity
-				$( '.bh_wp_bitcoin_gateway_updatable' ).animate( {
-					opacity: 1.0,
-				} );
-			}
-
-			$( '.bh_wp_bitcoin_gateway_last_checked_time' ).text(
-				newData.last_checked_time_formatted
-			);
-
-			for ( const key of Object.keys( newData ) ) {
-				window.bh_wp_bitcoin_gateway_order_details[ key ] =
-					newData[ key ];
-			}
-
-			applyStatusKey( newData.payment_status_key );
-		} );
+				restoreOpacity();
+				stopPolling( 'http_' + jqXHR.status );
+			} );
 	}
 } )( jQuery );

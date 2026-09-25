@@ -343,7 +343,7 @@ class CLI {
 	 * ## EXAMPLES
 	 *
 	 *   $ wp bh_bitcoin gateway list
-	 *   $ wp bh_bitcoin gateway list --debug=<bh-wp-bitcoin-gateway
+	 *   $ wp bh_bitcoin gateway list --debug=<bh-wp-bitcoin-gateway>
 	 *
 	 * @param string[]             $_args No positional arguments.
 	 * @param array<string,string> $assoc_args List of named arguments.

@@ -182,6 +182,11 @@ class Bitcoin {
 			Bitcoin_Address_WP_Post_Interface::POST_TYPE => array(),
 		);
 
+		// Pending jobs for the wallets about to be deleted would otherwise fail (and be logged) when they run.
+		if ( function_exists( 'as_unschedule_all_actions' ) ) {
+			as_unschedule_all_actions( Background_Jobs_Actions_Interface::SINGLE_ENSURE_UNUSED_ADDRESSES_HOOK );
+		}
+
 		$wallet_posts = get_posts(
 			array(
 				'post_type'   => Bitcoin_Wallet_WP_Post_Interface::POST_TYPE,

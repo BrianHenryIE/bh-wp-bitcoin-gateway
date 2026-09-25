@@ -52,6 +52,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 	<p class="bh_wp_bitcoin_gateway_payment_seen" <?php echo $bh_wp_bitcoin_gateway_payment_seen ? '' : 'style="display:none"'; ?>>
 		<?php esc_html_e( 'Thank you, your payment has been seen on the Bitcoin network. Your order will be processed once the payment has been confirmed.', 'bh-wp-bitcoin-gateway' ); ?>
 	</p>
+
+	<p class="bh_wp_bitcoin_gateway_polling_stopped" style="display:none">
+		<?php esc_html_e( 'Automatic checking for your payment has stopped. Click "Last Checked" below to check again, or reload this page.', 'bh-wp-bitcoin-gateway' ); ?>
+	</p>
 	</div>
 
 	<table>

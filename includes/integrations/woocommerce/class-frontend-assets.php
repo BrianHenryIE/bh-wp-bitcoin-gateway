@@ -98,7 +98,7 @@ class Frontend_Assets {
 	 * @param array<string, mixed> $order_details The full formatted order details.
 	 * @param int                  $order_id The order the details are for.
 	 *
-	 * @return array{btc_address:string, btc_total:string, order_id:string, btc_amount_received:string, status:string, payment_status_key:string, amount_received:string, amount_unconfirmed:string, order_status_formatted:string, last_checked_time_formatted:string}
+	 * @return array{btc_address:string, btc_total:string, order_id:string, btc_amount_received:string, status:string, payment_status_key:string, amount_received:string, amount_unconfirmed:string, order_status:string, order_status_formatted:string, last_checked_time_formatted:string}
 	 */
 	public static function filter_order_details_for_javascript( array $order_details, int $order_id ): array {
 		$string = fn( string $key ): string => isset( $order_details[ $key ] ) && is_string( $order_details[ $key ] ) ? $order_details[ $key ] : '';
@@ -112,6 +112,7 @@ class Frontend_Assets {
 			'payment_status_key'          => $string( 'payment_status_key' ),
 			'amount_received'             => $string( 'btc_amount_received_formatted' ),
 			'amount_unconfirmed'          => $string( 'btc_amount_unconfirmed_formatted' ),
+			'order_status'                => $string( 'order_status' ),
 			'order_status_formatted'      => $string( 'order_status_formatted' ),
 			'last_checked_time_formatted' => $string( 'last_checked_time_formatted' ),
 		);
@@ -171,20 +172,33 @@ class Frontend_Assets {
 
 		$order_details_json = wp_json_encode( $filtered_order_details, JSON_PRETTY_PRINT );
 
+		// How the thank-you page asks the server to check the blockchain (and mempool) for the payment.
+		// Each poll is a synchronous blockchain API request, so the interval starts at `poll_interval_ms`,
+		// doubles after each check up to `poll_max_interval_ms`, and polling stops altogether once
+		// `poll_duration_ms` has passed since the page loaded (a note on the page says so). `0` for the initial
+		// interval disables polling; the customer can always click "last checked" to refresh.
+
 		/**
-		 * How often the thank-you page asks the server to check the blockchain (and mempool) for the payment.
-		 *
-		 * Each poll is a synchronous blockchain API request, so keep this generous. `0` disables polling; the
-		 * customer can still click "last checked" to refresh.
-		 *
-		 * @param int $poll_interval_ms Milliseconds between checks. Default one minute.
+		 * @param int $poll_interval_ms Milliseconds before the first check, and the base for doubling. Default one minute.
 		 */
 		$poll_interval_ms = (int) apply_filters( 'bh_wp_bitcoin_gateway_thank_you_poll_interval_ms', MINUTE_IN_SECONDS * 1000 );
 
+		/**
+		 * @param int $poll_max_interval_ms The longest gap between checks. Default ten minutes.
+		 */
+		$poll_max_interval_ms = (int) apply_filters( 'bh_wp_bitcoin_gateway_thank_you_poll_max_interval_ms', 10 * MINUTE_IN_SECONDS * 1000 );
+
+		/**
+		 * @param int $poll_duration_ms How long after page load to keep checking. Default one hour.
+		 */
+		$poll_duration_ms = (int) apply_filters( 'bh_wp_bitcoin_gateway_thank_you_poll_duration_ms', HOUR_IN_SECONDS * 1000 );
+
 		$ajax_data      = array(
-			'ajax_url'         => admin_url( 'admin-ajax.php' ),
-			'nonce'            => wp_create_nonce( self::class ),
-			'poll_interval_ms' => $poll_interval_ms,
+			'ajax_url'             => admin_url( 'admin-ajax.php' ),
+			'nonce'                => wp_create_nonce( self::class ),
+			'poll_interval_ms'     => $poll_interval_ms,
+			'poll_max_interval_ms' => $poll_max_interval_ms,
+			'poll_duration_ms'     => $poll_duration_ms,
 		);
 		$ajax_data_json = wp_json_encode( $ajax_data, JSON_PRETTY_PRINT );
 

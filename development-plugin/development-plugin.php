@@ -33,6 +33,19 @@ if ( ! is_plugin_active( 'bh-wp-bitcoin-gateway/bh-wp-bitcoin-gateway.php' ) ) {
 	return;
 }
 
+/**
+ * NEVER RUN THIS PLUGIN ON A REACHABLE SITE.
+ *
+ * It authenticates every non-Store REST request as the administrator, lets anyone log in as any user with
+ * `?login_as_user=`, and registers open endpoints that delete wallets, seed payment addresses without a blockchain
+ * check, and rewrite order dates. It exists only for the wp-env development site and CI. It is excluded from the
+ * distributed build by .distignore, and this guard refuses to load anywhere that is not a local environment with
+ * WP_DEBUG on.
+ */
+if ( 'local' !== wp_get_environment_type() || ! ( defined( 'WP_DEBUG' ) && WP_DEBUG ) ) {
+	return;
+}
+
 Autoloader::generate(
 	'BrianHenryIE\\WP_Bitcoin_Gateway\\Development_Plugin',
 	__DIR__,
