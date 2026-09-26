@@ -29,6 +29,24 @@ use WP_Error;
 abstract class WP_Post_Repository_Abstract {
 
 	/**
+	 * `wp_insert_post()` and `wp_update_post()` expect slashed data and call `wp_unslash()` on it (including each
+	 * `meta_input` value), so anything containing a backslash, e.g. a namespaced class name stored as a string or
+	 * inside JSON, must be slashed exactly once, here, at the boundary. Callers pass raw values.
+	 *
+	 * @param array<string,mixed> $args Post arguments as built by a query object.
+	 *
+	 * @phpstan-param WpUpdatePostArray $args
+	 * @phpstan-return WpUpdatePostArray
+	 *
+	 * @return array<string,mixed>
+	 */
+	protected static function slash_for_wordpress( array $args ): array {
+		/** @var WpUpdatePostArray $slashed */
+		$slashed = wp_slash( $args );
+		return $slashed;
+	}
+
+	/**
 	 * Run `wp_update_post()` (after setting the post id); throw on failure.
 	 *
 	 * TODO: This should return the object.
@@ -43,33 +61,21 @@ abstract class WP_Post_Repository_Abstract {
 		WP_Post_Query_Abstract $query
 	): void {
 
-		/** @var array<int|string,mixed> $existing_meta */
-		$existing_meta = get_post_meta( $model->get_post_id() );
-
 		/** @var WpUpdatePostArray $args */
 		$args       = $query->to_query_array();
 		$args['ID'] = $model->get_post_id();
 
-		$new_meta = $args['meta_input'] ?? array();
-
-		// Flatten the `get_post_meta()` result which treats all keys as not-single values.
-		$args['meta_input'] = array();
-		foreach ( $existing_meta as $key => $value ) {
-			if ( is_array( $value ) && count( $value ) === 1 && array_key_first( $value ) === 0 ) {
-				$args['meta_input'][ $key ] = $value[0];
-			} else {
-				$args['meta_input'][ $key ] = $value;
-			}
-		}
-		// Meta keys are string values; `array_merge()` re-indexes integer keys but that should be irrelevant here.
-		$args['meta_input'] = array_merge( $args['meta_input'], $new_meta );
-		if ( empty( $args['meta_input'] ) ) {
-			unset( $args['meta_input'] );
-		}
+		/**
+		 * Only the query's own fields and meta are written; `meta_input` keys that are absent are left untouched
+		 * by WordPress. Re-reading all existing meta and passing it back through `wp_update_post()` (as this once
+		 * did) unslashed it a second time, stripping the backslashes from stored class names such as the
+		 * address's `integration_id`, after which the WooCommerce integration no longer recognised its own
+		 * addresses and orders were never marked paid.
+		 */
 
 		/** @var int<1, max>|WP_Error $result */
 		$result = wp_update_post(
-			$args,
+			self::slash_for_wordpress( $args ),
 			wp_error: true
 		);
 

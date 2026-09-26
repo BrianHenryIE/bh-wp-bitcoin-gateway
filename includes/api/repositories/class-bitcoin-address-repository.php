@@ -264,7 +264,7 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 		/** @var WpUpdatePostArray $args */
 		$args = $query->to_query_array();
 
-		$post_id = wp_insert_post( $args, true );
+		$post_id = wp_insert_post( self::slash_for_wordpress( $args ), true );
 
 		if ( is_wp_error( $post_id ) ) {
 			// TODO Log.
@@ -318,7 +318,7 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 			model: $address,
 			query: new Bitcoin_Address_Query(
 				status: Bitcoin_Address_Status::ASSIGNED,
-				integration_id: wp_slash( $integration_id ),
+				integration_id: $integration_id,
 				associated_order_id: $order_id,
 				target_amount: $btc_total,
 			)

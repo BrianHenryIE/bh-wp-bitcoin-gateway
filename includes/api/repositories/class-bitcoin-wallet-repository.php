@@ -176,7 +176,7 @@ class Bitcoin_Wallet_Repository extends WP_Post_Repository_Abstract {
 		);
 
 		$query_args_array = $args->to_query_array();
-		$post_id          = wp_insert_post( $query_args_array, true );
+		$post_id          = wp_insert_post( self::slash_for_wordpress( $query_args_array ), true );
 
 		if ( is_wp_error( $post_id ) ) {
 			throw new BH_WP_Bitcoin_Gateway_Exception( 'Failed to save new wallet as wp_post' );
@@ -220,9 +220,6 @@ class Bitcoin_Wallet_Repository extends WP_Post_Repository_Abstract {
 	 */
 	public function append_gateway_details( Bitcoin_Wallet $wallet, array $new_gateway_details ): void {
 		$new_gateway_details['date_added'] = new DateTimeImmutable();
-
-		// TODO: does this need to be done for every one every time?
-		$new_gateway_details['integration'] = wp_slash( $new_gateway_details['integration'] );
 
 		$associated_gateway_details   = $wallet->get_associated_gateways_details();
 		$associated_gateway_details[] = $new_gateway_details;
