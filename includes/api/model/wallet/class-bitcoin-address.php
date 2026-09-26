@@ -40,7 +40,8 @@ class Bitcoin_Address implements Bitcoin_Address_Interface {
 	 * @param ?string                $integration_id The plugin the order was placed with.
 	 * @param ?int                   $order_id The WooCommerce order ID associated with this address.
 	 * @param array<int,string>|null $tx_ids Transaction IDs as post_id:tx_id.
-	 * @param ?Money                 $received The sum of incoming transactions for the address.
+	 * @param ?Money                 $received The sum of incoming transactions for the address with the required number of confirmations.
+	 * @param ?Money                 $unconfirmed_received The sum of incoming transactions without enough confirmations yet, including mempool.
 	 *
 	 * @throws InvalidArgumentException When the supplied post_id is not a post of this type.
 	 */
@@ -57,6 +58,7 @@ class Bitcoin_Address implements Bitcoin_Address_Interface {
 		protected ?int $order_id = null,
 		protected ?array $tx_ids = null,
 		protected ?Money $received = null,
+		protected ?Money $unconfirmed_received = null,
 	) {
 	}
 
@@ -111,6 +113,25 @@ class Bitcoin_Address implements Bitcoin_Address_Interface {
 	 */
 	public function get_amount_received(): ?Money {
 		return Bitcoin_Address_Status::UNKNOWN === $this->get_status() ? null : $this->received;
+	}
+
+	/**
+	 * The amount received in transactions that do not yet have the required number of confirmations, including
+	 * transactions that are only in the mempool, or null if the address status is unknown.
+	 *
+	 * Distinct from {@see self::get_amount_received()}: a customer whose payment is here has paid, but the order
+	 * should not be processed until the funds are confirmed.
+	 */
+	public function get_unconfirmed_amount_received(): ?Money {
+		return Bitcoin_Address_Status::UNKNOWN === $this->get_status() ? null : $this->unconfirmed_received;
+	}
+
+	/**
+	 * Has any payment been seen on the blockchain or in the mempool, confirmed or not?
+	 */
+	public function has_payment_been_seen(): bool {
+		return ( $this->get_amount_received()?->isPositive() ?? false )
+			|| ( $this->get_unconfirmed_amount_received()?->isPositive() ?? false );
 	}
 
 	/**

@@ -13,6 +13,12 @@ export const testConfig = {
 	products: {
 		simple: {
 			name: 'Beanie',
+			price: '20.00',
+		},
+		// Cheap enough that the payment already sitting at the test wallet's first address covers it.
+		cheap: {
+			name: 'Bitcoin Sticker',
+			price: '3.00',
 		},
 	},
 	addresses: {

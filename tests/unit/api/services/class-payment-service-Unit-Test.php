@@ -661,4 +661,105 @@ class Payment_Service_Unit_Test extends \Codeception\Test\Unit {
 		$this->assertEquals( '10.00000000', $received->getAmount()->__toString() );
 		$this->assertEquals( 'BTC', $received->getCurrency()->getCurrencyCode() );
 	}
+
+	/**
+	 * Mempool transactions (no block height) and transactions with too few confirmations count as unconfirmed;
+	 * confirmed ones do not.
+	 *
+	 * @covers ::get_address_unconfirmed_received
+	 */
+	public function test_get_address_unconfirmed_received_sums_mempool_and_recent_transactions(): void {
+		$sut = $this->get_sut();
+
+		$raw_address            = 'bc1qtest123';
+		$blockchain_height      = 800100;
+		$required_confirmations = 3;
+
+		$make_transaction = fn( string $tx_id, ?int $block_height, string $amount, string $to = 'bc1qtest123' ) => new Transaction(
+			tx_id: $tx_id,
+			block_time: is_null( $block_height ) ? null : new DateTimeImmutable( 'now' ),
+			version: 1,
+			v_in: array(),
+			v_out: array(
+				new Transaction_VOut(
+					value: Money::of( $amount, 'BTC' ),
+					scriptpubkey_address: $to,
+				),
+			),
+			block_height: $block_height,
+		);
+
+		$transactions = array(
+			$make_transaction( 'mempool', null, '0.5' ),
+			$make_transaction( 'one-confirmation', 800099, '0.25' ),
+			$make_transaction( 'confirmed', 800090, '1' ),
+			$make_transaction( 'someone-else', null, '9', 'bc1qother' ),
+		);
+
+		$unconfirmed = $sut->get_address_unconfirmed_received( $raw_address, $blockchain_height, $required_confirmations, $transactions );
+		$confirmed   = $sut->get_address_confirmed_received( $raw_address, $blockchain_height, $required_confirmations, $transactions );
+
+		$this->assertEquals( '0.75000000', $unconfirmed->getAmount()->__toString() );
+		$this->assertEquals( '1.00000000', $confirmed->getAmount()->__toString() );
+	}
+
+	/**
+	 * @covers ::check_address_for_payment
+	 */
+	public function test_check_address_for_payment_reports_awaiting_confirmation(): void {
+
+		$address = $this->makeEmpty(
+			Bitcoin_Address::class,
+			array(
+				'get_raw_address'   => 'bc1qtest123',
+				'get_target_amount' => Money::of( '0.5', 'BTC' ),
+				'get_tx_ids'        => null,
+			)
+		);
+
+		$mempool_transaction = new Transaction(
+			tx_id: 'mempool',
+			block_time: null,
+			version: 1,
+			v_in: array(),
+			v_out: array(
+				new Transaction_VOut(
+					value: Money::of( '0.5', 'BTC' ),
+					scriptpubkey_address: 'bc1qtest123',
+				),
+			),
+			block_height: null,
+		);
+
+		$saved_transaction = new Bitcoin_Transaction(
+			post_id: 1,
+			transaction: $mempool_transaction,
+			bitcoin_addresses: array(),
+		);
+
+		$blockchain_api = $this->makeEmpty(
+			Blockchain_API_Interface::class,
+			array(
+				'get_transactions_received' => Expected::once( array( $mempool_transaction ) ),
+				'get_blockchain_height'     => 800100,
+			)
+		);
+		$repository     = $this->makeEmpty(
+			Bitcoin_Transaction_Repository::class,
+			array(
+				'save_new' => Expected::once( $saved_transaction ),
+			)
+		);
+
+		WP_Mock::userFunction( 'get_transient', array( 'return' => false ) );
+		WP_Mock::userFunction( 'set_transient', array( 'return' => true ) );
+
+		$sut = $this->get_sut( blockchain_api: $blockchain_api, bitcoin_transaction_repository: $repository );
+
+		$result = $sut->check_address_for_payment( $address );
+
+		$this->assertFalse( $result->is_paid() );
+		$this->assertTrue( $result->is_awaiting_confirmation() );
+		$this->assertEquals( '0.50000000', $result->get_unconfirmed_received()->getAmount()->__toString() );
+	}
 }

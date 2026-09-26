@@ -326,6 +326,28 @@ class Bitcoin_Address_Repository extends WP_Post_Repository_Abstract {
 	}
 
 	/**
+	 * Record the amounts received at the address, so the UI can report a payment that has been seen but not yet
+	 * confirmed without querying the blockchain again.
+	 *
+	 * @param Bitcoin_Address $address The address that was checked.
+	 * @param Money           $confirmed_amount_received The sum received with the required number of confirmations.
+	 * @param Money           $unconfirmed_amount_received The sum received without the required confirmations, including mempool.
+	 */
+	public function set_amounts_received(
+		Bitcoin_Address $address,
+		Money $confirmed_amount_received,
+		Money $unconfirmed_amount_received,
+	): void {
+		$this->update(
+			model: $address,
+			query: new Bitcoin_Address_Query(
+				confirmed_amount_received: $confirmed_amount_received,
+				unconfirmed_amount_received: $unconfirmed_amount_received,
+			)
+		);
+	}
+
+	/**
 	 * An address wp_post's parent post_id for its wallet may need to be set if the original wallet wp_post was
 	 * deleted but the address's wp_post remained orphaned.
 	 *

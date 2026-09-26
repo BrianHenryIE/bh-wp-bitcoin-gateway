@@ -40,7 +40,7 @@ class AJAX_WPUnit_Test extends WPTestCase {
 			'btc_address'                                 => 'bc1q6w640pe0cg8w0xsvwja37agy0s0ru0pkf9m5tz',
 			'transactions'                                => null,
 			'btc_amount_received'                         => 0.0,
-			'status'                                      => 'Awaiting Payment',
+			'payment_status'                              => 'Awaiting Payment',
 		);
 
 		$api = $this->makeEmpty(
@@ -89,5 +89,11 @@ class AJAX_WPUnit_Test extends WPTestCase {
 		$this->assertArrayNotHasKey( 'btc_address_derivation_path_sequence_number', $result );
 		$this->assertArrayNotHasKey( 'parent_wallet_xpub_html', $result );
 		$this->assertArrayNotHasKey( 'order', $result );
+
+		// The keys the JavaScript reads are mapped from the formatted details, the same way as the page's initial data.
+		$this->assertSame( 'Awaiting Payment', $result['data']['status'] );
+		$this->assertSame( '฿ 0', $result['data']['amount_received'] );
+		$this->assertSame( (string) $order_id, $result['data']['order_id'] );
+		$this->assertArrayHasKey( 'payment_status_key', $result['data'] );
 	}
 }

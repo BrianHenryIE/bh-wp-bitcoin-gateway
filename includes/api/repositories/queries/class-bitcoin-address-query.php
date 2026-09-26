@@ -52,6 +52,8 @@ readonly class Bitcoin_Address_Query extends WP_Post_Query_Abstract {
 			Bitcoin_Address_WP_Post_Interface::ORDER_ID_META_KEY => $this->associated_order_id,
 			Bitcoin_Address_WP_Post_Interface::INTEGRATION_ID_META_KEY => $this->integration_id,
 			Bitcoin_Address_WP_Post_Interface::TARGET_AMOUNT_META_KEY => $this->target_amount,
+			Bitcoin_Address_WP_Post_Interface::CONFIRMED_AMOUNT_RECEIVED_META_KEY => $this->confirmed_amount_received,
+			Bitcoin_Address_WP_Post_Interface::UNCONFIRMED_AMOUNT_RECEIVED_META_KEY => $this->unconfirmed_amount_received,
 		);
 	}
 
@@ -68,6 +70,8 @@ readonly class Bitcoin_Address_Query extends WP_Post_Query_Abstract {
 	 * @param string|class-string     $integration_id The plugin that is using this address.
 	 * @param ?int                    $associated_order_id The wp_post ID for the order associated with the address.
 	 * @param ?Money                  $target_amount The target amount of bitcoin to receive for the order the address is associated with. Saved in post_meta as `array{amount:string,currency:string}`.
+	 * @param ?Money                  $confirmed_amount_received The sum received with the required number of confirmations.
+	 * @param ?Money                  $unconfirmed_amount_received The sum received without the required confirmations, including mempool.
 	 */
 	public function __construct(
 		public ?int $wallet_wp_post_parent_id = null,
@@ -78,6 +82,8 @@ readonly class Bitcoin_Address_Query extends WP_Post_Query_Abstract {
 		public ?string $integration_id = null,
 		public ?int $associated_order_id = null,
 		public ?Money $target_amount = null,
+		public ?Money $confirmed_amount_received = null,
+		public ?Money $unconfirmed_amount_received = null,
 	) {
 		parent::__construct();
 	}

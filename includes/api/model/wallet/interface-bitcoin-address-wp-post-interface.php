@@ -31,7 +31,12 @@ interface Bitcoin_Address_WP_Post_Interface {
 	 * @see WC_Bitcoin_Order::BITCOIN_AMOUNT_CONFIRMED_RECEIVED_META_KEY
 	 */
 	const string CONFIRMED_AMOUNT_RECEIVED_META_KEY = 'confirmed_amount_received';
-	const string INTEGRATION_ID_META_KEY            = 'integration_id';
-	const string ORDER_ID_META_KEY                  = 'order_id';
-	const string TARGET_AMOUNT_META_KEY             = 'target_amount';
+	/**
+	 * The sum received in transactions that do not yet have the required number of confirmations, including
+	 * transactions still in the mempool. Lets the customer be told their payment has been seen.
+	 */
+	const string UNCONFIRMED_AMOUNT_RECEIVED_META_KEY = 'unconfirmed_amount_received';
+	const string INTEGRATION_ID_META_KEY              = 'integration_id';
+	const string ORDER_ID_META_KEY                    = 'order_id';
+	const string TARGET_AMOUNT_META_KEY               = 'target_amount';
 }

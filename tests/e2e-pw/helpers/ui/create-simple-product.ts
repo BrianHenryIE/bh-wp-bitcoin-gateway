@@ -10,7 +10,12 @@ import { testConfig } from '../../config/test-config';
 
 import { loginAsAdmin, logout } from './login';
 
-export async function createSimpleProduct( page: Page ) {
+export type TestProduct = { name: string; price: string };
+
+export async function createSimpleProduct(
+	page: Page,
+	product: TestProduct = testConfig.products.simple
+) {
 	// Login as admin
 	await loginAsAdmin( page );
 
@@ -19,7 +24,7 @@ export async function createSimpleProduct( page: Page ) {
 
 	// Check if simple product already exists
 	const existingProduct = await page
-		.locator( `text="${ testConfig.products.simple.name }"` )
+		.locator( `text="${ product.name }"` )
 		.first();
 	const productExists = ( await existingProduct.count() ) > 0;
 
@@ -28,10 +33,10 @@ export async function createSimpleProduct( page: Page ) {
 		await page.click( '.page-title-action' );
 
 		// Fill product details
-		await page.fill( '#title', testConfig.products.simple.name );
+		await page.fill( '#title', product.name );
 
 		// Set regular price
-		await page.fill( '#_regular_price', '20.00' );
+		await page.fill( '#_regular_price', product.price );
 
 		// Publish product
 		await page.click( '#publish' );

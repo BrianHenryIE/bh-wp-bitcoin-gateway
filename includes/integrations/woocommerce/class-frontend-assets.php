@@ -89,6 +89,36 @@ class Frontend_Assets {
 	}
 
 	/**
+	 * Reduce the formatted order details to the explicit allow-list of keys the thank-you page JavaScript reads,
+	 * both for the initial page data and for each AJAX refresh, so the two always agree.
+	 *
+	 * @see API_WooCommerce_Interface::get_formatted_order_details()
+	 * @used-by AJAX::get_order_details()
+	 *
+	 * @param array<string, mixed> $order_details The full formatted order details.
+	 * @param int                  $order_id The order the details are for.
+	 *
+	 * @return array{btc_address:string, btc_total:string, order_id:string, btc_amount_received:string, status:string, payment_status_key:string, amount_received:string, amount_unconfirmed:string, order_status:string, order_status_formatted:string, last_checked_time_formatted:string}
+	 */
+	public static function filter_order_details_for_javascript( array $order_details, int $order_id ): array {
+		$string = fn( string $key ): string => isset( $order_details[ $key ] ) && is_string( $order_details[ $key ] ) ? $order_details[ $key ] : '';
+
+		return array(
+			'btc_address'                 => $string( 'btc_address' ),
+			'btc_total'                   => $string( 'btc_total' ),
+			'order_id'                    => (string) $order_id,
+			'btc_amount_received'         => $string( 'btc_amount_received' ),
+			'status'                      => $string( 'payment_status' ),
+			'payment_status_key'          => $string( 'payment_status_key' ),
+			'amount_received'             => $string( 'btc_amount_received_formatted' ),
+			'amount_unconfirmed'          => $string( 'btc_amount_unconfirmed_formatted' ),
+			'order_status'                => $string( 'order_status' ),
+			'order_status_formatted'      => $string( 'order_status_formatted' ),
+			'last_checked_time_formatted' => $string( 'last_checked_time_formatted' ),
+		);
+	}
+
+	/**
 	 * Register the JavaScript for the frontend-facing side of the site.
 	 *
 	 * @hooked wp_enqueue_scripts
@@ -138,23 +168,37 @@ class Frontend_Assets {
 
 		wp_enqueue_script( 'bh-wp-bitcoin-gateway-shortcode-thank-you' );
 
-		// Filter array to explicit allow-list containing only the required keys for frontend TypeScript.
-		$filtered_order_details = array(
-			'btc_address'                 => $order_details['btc_address'] ?? '',
-			'btc_total'                   => $order_details['btc_total'] ?? '',
-			'order_id'                    => (string) $order->get_id(),
-			'btc_amount_received'         => isset( $order_details['btc_amount_received'] ) && is_string( $order_details['btc_amount_received'] ) ? $order_details['btc_amount_received'] : '',
-			'status'                      => isset( $order_details['payment_status'] ) && is_string( $order_details['payment_status'] ) ? $order_details['payment_status'] : '',
-			'amount_received'             => isset( $order_details['btc_amount_received_formatted'] ) && is_string( $order_details['btc_amount_received_formatted'] ) ? $order_details['btc_amount_received_formatted'] : '',
-			'order_status_formatted'      => isset( $order_details['order_status_formatted'] ) && is_string( $order_details['order_status_formatted'] ) ? $order_details['order_status_formatted'] : '',
-			'last_checked_time_formatted' => isset( $order_details['last_checked_time_formatted'] ) && is_string( $order_details['last_checked_time_formatted'] ) ? $order_details['last_checked_time_formatted'] : '',
-		);
+		$filtered_order_details = self::filter_order_details_for_javascript( $order_details, $order->get_id() );
 
 		$order_details_json = wp_json_encode( $filtered_order_details, JSON_PRETTY_PRINT );
 
+		// How the thank-you page asks the server to check the blockchain (and mempool) for the payment.
+		// Each poll is a synchronous blockchain API request, so the interval starts at `poll_interval_ms`,
+		// doubles after each check up to `poll_max_interval_ms`, and polling stops altogether once
+		// `poll_duration_ms` has passed since the page loaded (a note on the page says so). `0` for the initial
+		// interval disables polling; the customer can always click "last checked" to refresh.
+
+		/**
+		 * @param int $poll_interval_ms Milliseconds before the first check, and the base for doubling. Default one minute.
+		 */
+		$poll_interval_ms = (int) apply_filters( 'bh_wp_bitcoin_gateway_thank_you_poll_interval_ms', MINUTE_IN_SECONDS * 1000 );
+
+		/**
+		 * @param int $poll_max_interval_ms The longest gap between checks. Default ten minutes.
+		 */
+		$poll_max_interval_ms = (int) apply_filters( 'bh_wp_bitcoin_gateway_thank_you_poll_max_interval_ms', 10 * MINUTE_IN_SECONDS * 1000 );
+
+		/**
+		 * @param int $poll_duration_ms How long after page load to keep checking. Default one hour.
+		 */
+		$poll_duration_ms = (int) apply_filters( 'bh_wp_bitcoin_gateway_thank_you_poll_duration_ms', HOUR_IN_SECONDS * 1000 );
+
 		$ajax_data      = array(
-			'ajax_url' => admin_url( 'admin-ajax.php' ),
-			'nonce'    => wp_create_nonce( self::class ),
+			'ajax_url'             => admin_url( 'admin-ajax.php' ),
+			'nonce'                => wp_create_nonce( self::class ),
+			'poll_interval_ms'     => $poll_interval_ms,
+			'poll_max_interval_ms' => $poll_max_interval_ms,
+			'poll_duration_ms'     => $poll_duration_ms,
 		);
 		$ajax_data_json = wp_json_encode( $ajax_data, JSON_PRETTY_PRINT );
 

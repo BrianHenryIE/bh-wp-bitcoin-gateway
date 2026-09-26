@@ -76,11 +76,19 @@ class Payment_Service implements LoggerAwareInterface {
 			transactions: $update_address_transactions_result->all_transactions
 		);
 
+		$unconfirmed_amount = $this->get_address_unconfirmed_received(
+			raw_address: $bitcoin_address->get_raw_address(),
+			blockchain_height: $blockchain_height,
+			required_confirmations: $required_confirmations,
+			transactions: $update_address_transactions_result->all_transactions
+		);
+
 		return new Check_Address_For_Payment_Service_Result(
 			update_address_transactions_result: $update_address_transactions_result,
 			blockchain_height: $blockchain_height,
 			required_confirmations: $required_confirmations,
 			confirmed_received: $confirmed_amount,
+			unconfirmed_received: $unconfirmed_amount,
 		);
 	}
 
@@ -157,7 +165,7 @@ class Payment_Service implements LoggerAwareInterface {
 
 		foreach ( $updated_transactions as $transaction ) {
 
-			// TODO: Don't overwrite an existing one. associate_bitcoin_address_post_ids_to_transaction().
+			// Creates the post the first time a txid is seen, and refreshes it (block height etc.) on later fetches.
 			$saved_transaction                                       = $this->bitcoin_transaction_repository->save_new(
 				$transaction,
 				$address
@@ -208,6 +216,34 @@ class Payment_Service implements LoggerAwareInterface {
 					return $carry;
 				}
 				if ( ( $blockchain_height - $transaction->get_block_height() ) >= $required_confirmations ) {
+					return $carry->plus( $this->get_value_for_transaction( $raw_address, $transaction ) );
+				}
+				return $carry;
+			},
+			Money::of( 0, 'BTC' )
+		);
+	}
+
+	/**
+	 * From the received transactions, sum those that do NOT yet have enough confirmations: transactions still in
+	 * the mempool (no block height) and transactions mined fewer than `$required_confirmations` blocks ago.
+	 *
+	 * A positive result means the customer's payment has been seen and is on its way.
+	 *
+	 * @param string                  $raw_address The raw Bitcoin address to calculate balance for.
+	 * @param int                     $blockchain_height The current blockchain height.
+	 * @param int                     $required_confirmations A confirmation is a subsequent block mined after the transaction.
+	 * @param Transaction_Interface[] $transactions Array of transactions to inspect for confirmations and relevant amounts received.
+	 *
+	 * @throws MoneyMismatchException If the calculations were somehow using two different currencies.
+	 * @throws UnknownCurrencyException If `BTC` has not correctly been added to Money's currency list.
+	 */
+	public function get_address_unconfirmed_received( string $raw_address, int $blockchain_height, int $required_confirmations, array $transactions ): Money {
+		return array_reduce(
+			$transactions,
+			function ( Money $carry, Transaction_Interface $transaction ) use ( $raw_address, $blockchain_height, $required_confirmations ) {
+				$block_height = $transaction->get_block_height();
+				if ( is_null( $block_height ) || ( $blockchain_height - $block_height ) < $required_confirmations ) {
 					return $carry->plus( $this->get_value_for_transaction( $raw_address, $transaction ) );
 				}
 				return $carry;
